@@ -39,10 +39,13 @@ status_t delete_area(area_id area) {
     mapped[area]=false; return B_OK;
 }
 struct Guard {
-    bool pinned=true,route=true,read=true,write=true,control=true;
+    bool pinned=true,route=true,read=true,write=true,control=true,dropRouteOnRead=false;
     bool ProvePinnedBar(uint64_t start,uint64_t end) { return pinned && start==BarStart && end==BarEnd; }
     bool ProveSelectedRoute(unsigned core) { return route && core==3; }
-    bool ProveReadAllowed(unsigned,unsigned,unsigned) { return read; }
+    bool ProveReadAllowed(unsigned,unsigned,unsigned) {
+        if (dropRouteOnRead) route=false;
+        return read;
+    }
     bool ProveWriteAllowed(unsigned,unsigned,unsigned,unsigned) { return write; }
     bool ProveControlWriteAllowed(unsigned,uint32_t,uint32_t) { return control; }
 };
@@ -95,7 +98,11 @@ int main()
         guard.route=true; guard.read=false;
         assert(!views.Read(3,DataflowRolePhysicalBriscRam,0,value,guard,&failure)
             && failure==ReadPreAuthority && value==99);
-        guard.read=true; platform.driftAfterReads=platform.reads+1;
+        guard.read=true; guard.dropRouteOnRead=true;
+        const unsigned beforeRead=platform.reads;
+        assert(!views.Read(3,DataflowRolePhysicalBriscRam,0,value,guard,&failure)
+            && failure==ReadPreRouteAgain && value==99 && platform.reads==beforeRead);
+        guard.route=true; guard.dropRouteOnRead=false; platform.driftAfterReads=platform.reads+1;
         assert(!views.Read(3,DataflowRolePhysicalBriscRam,0,value,guard,&failure)
             && failure==ReadPostRoute && value==99);
         guard.route=true; platform.driftAfterReads=0; platform.denyAfterReads=platform.reads+1;

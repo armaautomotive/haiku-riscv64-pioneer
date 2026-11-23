@@ -45,9 +45,12 @@ int main()
             && !r.restored && !r.mappings_closed);
         const auto* owner=f.context.qwen35RoleStageQualification;
         assert(owner && owner->prestack.releaseAttempted && owner->prestack.cancelAttempted
-            && owner->prestack.holdAttempted && !owner->prestack.copiesVerified
+            && owner->prestack.copiesCaptured && owner->prestack.holdAttempted && !owner->prestack.copiesVerified
             && !owner->prestack.handoffRestoreAttempts && !owner->prestack.resetRestoreAttempted
             && f.context.dispatchOwnerRetained && sColdRecoveryRequired && gRetains==1);
+        const unsigned reader=(DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address)/4;
+        assert(owner->prestack.copies[DataflowRoleReader][0]==gMemory[DataflowRolePhysicalBriscRam][0]
+            && owner->prestack.copies[DataflowRoleReader][0]!=gMemory[DataflowRolePhysicalExtraCode][reader]);
         assert(f.context.io.sharedResetWrites==1 && f.context.io.holdWrites==1);
         assert(acquire_sem(sLock)==B_OK);
         assert(f.context.qwen35RoleStageQualification->views.Close());
@@ -80,5 +83,5 @@ int main()
         gPerCoreRoleWindows=false;gAllowWrite=false;sColdRecoveryRequired=false;
         for (auto& windows:gRoleTileWindows) windows.clear();
     }
-    std::puts("PASS actual pre-stack control: B/NC-only release, cancel, RAM copies, restore and unconfirmed-release retention; SIMULATED ONLY");
+    std::puts("PASS actual pre-stack control: B/NC-only release, L1 copy audit, cancel, restoration and retained faults; SIMULATED ONLY");
 }

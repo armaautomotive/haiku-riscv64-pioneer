@@ -224,6 +224,24 @@ for role in reader writer; do
 		"$temporary/shared-role-images/${role}-shim.bin" "$role"
 done
 echo 'PASS reproducible shared reader/writer image export; OFFLINE ONLY'
+# An independent local-RAM restore witness has no driver or reset binding.
+# Execute its actual linked RV32 bytes, including fault and bypass cases.
+"$cxx" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" "$root/tools/pioneer/blackhole_qwen35_role_local_restore.S" \
+	-o "$temporary/local-restore.o"
+for role in reader writer; do
+	if [ "$role" = reader ]; then address=0x70000; else address=0x70100; fi
+	"$ld" -m elf32lriscv --no-relax --gc-sections -Ttext="$address" \
+		-e "qwen35_restore_${role}_start" "$temporary/local-restore.o" \
+		-o "$temporary/local-restore-${role}.elf"
+	if [ -n "$("$nm" -u "$temporary/local-restore-${role}.elf")" ]; then
+		echo 'local restore witness has unresolved imports' >&2; exit 1
+	fi
+	"$objcopy" -O binary -j .text "$temporary/local-restore-${role}.elf" \
+		"$temporary/local-restore-${role}.bin"
+	python3 "$directory/pioneer_qwen35_role_local_restore_test.py" \
+		"$temporary/local-restore-${role}.bin" "$role"
+done
 # Dedicated takeover entry has no private-RAM preservation or snapshot
 # handoff. Keep it separately linked and unavailable to the existing owner.
 "$cxx" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \

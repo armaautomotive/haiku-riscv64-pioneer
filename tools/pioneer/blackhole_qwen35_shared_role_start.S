@@ -29,6 +29,19 @@
     fence rw,rw
     lw t3,-4(t1)               /* wait for the copied L1 writes to be visible */
     mv zero,t3
+    /* Verify the complete copy through this core's own local-RAM mapping.
+       A mismatch parks before publishing ready or using the private stack.
+       This check does not establish exclusion of external writers. */
+    li t0,PIONEER_Q35_ROLE_PRIVATE_RAM_BASE
+    li t1,\ram_copy
+    li t2,PIONEER_Q35_ROLE_PRIVATE_STACK_TOP
+6:
+    lw t3,0(t0)
+    lw t4,0(t1)
+    bne t3,t4,2f
+    addi t0,t0,4
+    addi t1,t1,4
+    bne t0,t2,6b
     /* Until the host has verified the copy, no instruction may write local
        RAM. Each role owns one receipt; the host alone owns the release word.
        CANCEL publishes a separate receipt before parking; any other nonzero

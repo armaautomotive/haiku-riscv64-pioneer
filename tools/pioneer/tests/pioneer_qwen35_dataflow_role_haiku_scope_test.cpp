@@ -36,6 +36,7 @@ static void SelectRoleTestWindows(unsigned previous,unsigned next);
 static bool FailSelectAfterStageWrite();
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
 static void SimulatePrestackCopies();
+static void SimulatePrestackHoldMutation();
 #endif
 #endif
 #endif
@@ -165,7 +166,14 @@ struct PioneerSessionIO {
         if ((nocConfig[0] | nocConfig[1]) & (1U<<12)) ++resetReadsClockDisabled;
         return int(resetReads++)==resetChangeAt ? 0x6000 : reset;
     }
-    bool SharedRoleHoldReset() { ++holdWrites; if (!dropHoldWrite) reset=0x47800; return true; }
+    bool SharedRoleHoldReset() {
+        ++holdWrites;
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+        SimulatePrestackHoldMutation();
+#endif
+        if (!dropHoldWrite) reset=0x47800;
+        return true;
+    }
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
     bool simulatePrestack=true,dropPrestackRelease=false;
     bool SharedRolePrestackReleaseReset() {
@@ -373,6 +381,9 @@ static void SimulatePrestackCopies() {
         gMemory[DataflowRolePhysicalExtraCode].begin()+reader);
     std::copy(gMemory[DataflowRolePhysicalNcriscRam].begin(),gMemory[DataflowRolePhysicalNcriscRam].end(),
         gMemory[DataflowRolePhysicalExtraCode].begin()+writer);
+}
+static void SimulatePrestackHoldMutation() {
+    const unsigned reader=(DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address)/4;
     if (gPrestackCorruptCopy) gMemory[DataflowRolePhysicalExtraCode][reader]^=1;
 }
 #endif

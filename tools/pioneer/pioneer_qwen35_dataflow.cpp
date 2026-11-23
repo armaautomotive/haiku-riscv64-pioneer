@@ -800,7 +800,7 @@ static bool QualifyHeldFleet(bool stageRoles=false,bool prestack=false)
 	tt_pioneer_driver_reload initial{};initial.version=1;
 	bool okay=Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&initial,sizeof(initial))
 		&& initial.driver==TT_QWEN35_DATAFLOW_DRIVER
-		&& initial.build_tag==(prestack?UINT64_C(0x2026112300030009)
+		&& initial.build_tag==(prestack?UINT64_C(0x2026112300030010)
 			:stageRoles?UINT64_C(0x2026112300030005):UINT64_C(0x2026112300030004)) && initial.generation
 		&& !initial.cold && !initial.quiesced && !initial.active_owner
 		&& initial.open_count==1 && initial.guard_version==1;

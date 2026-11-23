@@ -9,17 +9,19 @@
 
 // Qualification only. A held-image owner must already retain the entire
 // fleet's boot, shim and extra-L1 snapshots. This starts B/NC on worker zero
-// without releasing any TRISC, cancels the pre-stack handoff, checks both
-// actual RAM copies against the held private RAM, and restores the handoff
-// and reset-preservation word. It does not prove concurrent firmware
+// without releasing any TRISC, audits the core-verified L1 copies before
+// and after cancellation, and restores the handoff and reset-preservation
+// word. It does not prove concurrent firmware
 // exclusion, initialization history, PCI fault recovery or inference.
 // Any failure retains this object and its containing image owner; it never
 // retries an uncertain store, release or hold.
 struct PioneerQwen35RolePrestackState {
     uint32_t handoff[3]{},resetDisable=0;
+    // The enclosing qualification owner is heap-allocated, not on the kernel stack.
+    uint32_t copies[PioneerQwen35::DataflowRoleCount][PioneerQwen35::DataflowRoleLocalRamWords]{};
     unsigned handoffZeroAttempts=0,handoffRestoreAttempts=0;
     bool attempted=false,captured=false,preserveAttempted=false,releaseAttempted=false;
-    bool cancelAttempted=false,holdAttempted=false,copiesVerified=false;
+    bool copiesCaptured=false,cancelAttempted=false,holdAttempted=false,copiesVerified=false;
     bool resetRestoreAttempted=false,complete=false;
 };
 template<class IO,class Scope,class Views,class Adapter>
@@ -57,6 +59,23 @@ class PioneerQwen35RolePrestackProbe {
                 return fIO.ResetRead()==reset && fIO.ResetRead()==reset;
             });
     }
+    // The verified shims are waiting without touching their private stacks.
+    // This guard permits only the two fixed L1 copy windows and samples the
+    // same running reset and selected route around every bounded read.
+    class RunningCopyGuard {
+        PioneerQwen35RolePrestackProbe& fProbe;
+    public:
+        explicit RunningCopyGuard(PioneerQwen35RolePrestackProbe& probe):fProbe(probe) {}
+        bool ProvePinnedBar(uint64_t start,uint64_t end) { return fProbe.fGuard.ProvePinnedBar(start,end); }
+        bool ProveSelectedRoute(unsigned core) { return fProbe.fGuard.ProveSelectedRoute(core); }
+        bool ProveReadAllowed(unsigned core,unsigned which,unsigned offset) {
+            using namespace PioneerQwen35;
+            return core==Core && which==DataflowRolePhysicalExtraCode
+                && offset>=DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address
+                && offset<DataflowRoleExtraL1Limit-DataflowRoleExtraL1Address
+                && fProbe.Select(Running);
+        }
+    };
     bool ReadHandoff(uint32_t reset,uint32_t (&out)[3]) {
         using namespace PioneerQwen35;
         if (!Select(reset)) return false;
@@ -81,22 +100,34 @@ class PioneerQwen35RolePrestackProbe {
             && fViews.Read(Core,DataflowRolePhysicalControl,0x224,second,fGuard)
             && first==expected && second==expected && Select(Held);
     }
-    bool ComparePrivateRam() {
+    bool CaptureRunningCopies() {
         using namespace PioneerQwen35;
-        // Keep the kernel stack bounded while checking all 4096 RAM words.
-        uint32_t copy[8],ram[8];
+        uint32_t handoff[3]{};
+        if (!ReadHandoff(Running,handoff) || handoff[0]!=DataflowRoleSnapshotReaderReady
+            || handoff[1]!=DataflowRoleSnapshotWriterReady || handoff[2]) return false;
+        RunningCopyGuard guard(*this);
         for (unsigned role=0;role<DataflowRoleCount;role++) {
             const unsigned copied=role==DataflowRoleReader?DataflowRoleReaderRamCopy:DataflowRoleWriterRamCopy;
-            const uint32_t base=role==DataflowRoleReader?DataflowRoleBriscLocalRam:DataflowRoleNcriscLocalRam;
-            for (unsigned offset=0;offset<DataflowRoleLocalRamBytes;offset+=sizeof(copy)) {
-                if (!fAdapter.Read(Core,copied+offset,copy,sizeof(copy))) {
-                    RamFailure(role,offset,1);return false;
-                }
-                if (!fAdapter.ReadRam(Core,role,base+offset,ram,sizeof(ram))) {
-                    RamFailure(role,offset,2);return false;
-                }
-                if (memcmp(copy,ram,sizeof(copy))) { RamFailure(role,offset,3);return false; }
-            }
+            if (!fViews.CopyWords(Core,DataflowRolePhysicalExtraCode,copied-DataflowRoleExtraL1Address,
+                    fState.copies[role],DataflowRoleLocalRamWords,guard)) { RamFailure(role,0,5);return false; }
+        }
+        // Check both complete copies again after all initial reads.
+        for (unsigned role=0;role<DataflowRoleCount;role++) {
+            const unsigned copied=role==DataflowRoleReader?DataflowRoleReaderRamCopy:DataflowRoleWriterRamCopy;
+            if (!fViews.Matches(Core,DataflowRolePhysicalExtraCode,copied-DataflowRoleExtraL1Address,
+                    fState.copies[role],DataflowRoleLocalRamWords,guard)) { RamFailure(role,0,6);return false; }
+        }
+        if (!ReadHandoff(Running,handoff) || handoff[0]!=DataflowRoleSnapshotReaderReady
+            || handoff[1]!=DataflowRoleSnapshotWriterReady || handoff[2]) return false;
+        fState.copiesCaptured=true;return true;
+    }
+    bool CompareHeldCopies() {
+        using namespace PioneerQwen35;
+        if (!fState.copiesCaptured || !Select(Held)) return false;
+        for (unsigned role=0;role<DataflowRoleCount;role++) {
+            const unsigned copied=role==DataflowRoleReader?DataflowRoleReaderRamCopy:DataflowRoleWriterRamCopy;
+            if (!fViews.Matches(Core,DataflowRolePhysicalExtraCode,copied-DataflowRoleExtraL1Address,
+                    fState.copies[role],DataflowRoleLocalRamWords,fGuard)) { RamFailure(role,0,7);return false; }
         }
         if (!fAdapter.AllRolesHeld(Core)) { RamFailure(DataflowRoleCount,0,4);return false; }
         return true;
@@ -143,6 +174,7 @@ public:
         }
         if (!ready) return false;
         Progress(3);
+        if (!CaptureRunningCopies()) return false;
         fState.cancelAttempted=true;
         if (!WriteHandoff(Running,2,DataflowRoleSnapshotCancel)) return false;
         bool parked=false;
@@ -169,7 +201,7 @@ public:
         Progress(43);
         if (!ResetDisable(preserved)) return false;
         Progress(44);
-        if (!ComparePrivateRam()) return false;
+        if (!CompareHeldCopies()) return false;
         fState.copiesVerified=true;Progress(5);
         for (unsigned i=0;i<3;i++) {
             fState.handoffRestoreAttempts|=1U<<i;

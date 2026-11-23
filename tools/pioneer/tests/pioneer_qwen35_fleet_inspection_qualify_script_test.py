@@ -23,28 +23,31 @@ def run_case(case, variant='l'):
                     'o':'e5f5a55347fe9438381626bf26b284827c9e6e524d8c30b32d7f19824d935818',
                     'p':'29721ab1e68fb6cc247319ae7fe07a160e008b746db5574af05dfbb5e74457f5',
                     'q':'5d5585c35d16e5fe5e19d6595ee7b1757d8a2225abb756beb5cb082536b83267',
-                    'r':'043707b207d895f523d21178c890432f4e8dafbdb56c0684642001849c8cc7e5'}
+                    'r':'043707b207d895f523d21178c890432f4e8dafbdb56c0684642001849c8cc7e5',
+                    's':'2776db17e4ea8be9e1ddc96395904cc5e6a935eb0706abf800eae8a1bbd8e2fa'}
         clients={'l':CLIENT,'m':'4e890c6ed33ebeeebb07b6259e78343b722b9de36579e3e8635dbcbdbefad3dd',
                  'n':'ef76ebfa01d675dd43449f9aa8b7b128477f8962a3ecd093975af1c666d85e1d',
                  'o':'a914af54a1cac088aeed7558f422c425fd6536600dcf96f047ae4adc1b8cf216',
                  'p':'040f1511e3439f372a994d40e2253d4dd03b0b9e9084a1ceb6ccc69590c0ac9c',
                  'q':'152811c4f454fda4d8094a3a54e04e6d620c10eed8ba8d61465f6c63ce6616c5',
-                 'r':'3000c7d74eafd055b1257e7d4499cbcf4ba503ac468518a5390259e56255dd37'}
-        tags={'l':'2026112300030003','m':'2026112300030004','n':'2026112300030005','o':'2026112300030006','p':'2026112300030007','q':'2026112300030008','r':'2026112300030009'}
+                 'r':'3000c7d74eafd055b1257e7d4499cbcf4ba503ac468518a5390259e56255dd37',
+                 's':'33083362025c9e7f6ea407a962ebbd6b37fad50ffda03abf22aa4dfcccc6385d'}
+        tags={'l':'2026112300030003','m':'2026112300030004','n':'2026112300030005','o':'2026112300030006','p':'2026112300030007','q':'2026112300030008','r':'2026112300030009','s':'2026112300030010'}
         scripts={'l':SCRIPT,'m':common.ROOT/'tools/pioneer/pioneer_qwen35_fleet_inspection_qualify_m.sh',
                  'n':common.ROOT/'tools/pioneer/pioneer_qwen35_role_stage_qualify.sh',
                  'o':common.ROOT/'tools/pioneer/pioneer_qwen35_role_prestack_qualify.sh',
                  'p':common.ROOT/'tools/pioneer/pioneer_qwen35_role_prestack_qualify_p.sh',
                  'q':common.ROOT/'tools/pioneer/pioneer_qwen35_role_prestack_qualify_q.sh',
-                 'r':common.ROOT/'tools/pioneer/pioneer_qwen35_role_prestack_qualify_r.sh'}
+                 'r':common.ROOT/'tools/pioneer/pioneer_qwen35_role_prestack_qualify_r.sh',
+                 's':common.ROOT/'tools/pioneer/pioneer_qwen35_role_prestack_qualify_s.sh'}
         candidate,client,tag,script=candidates[variant],clients[variant],tags[variant],scripts[variant]
-        stage=home/(('pioneer-q35-prestack-20261123-' if variant in ('o','p','q','r')
+        stage=home/(('pioneer-q35-prestack-20261123-' if variant in ('o','p','q','r','s')
                      else 'pioneer-q35-role-stage-20261123-' if variant=='n'
                      else 'pioneer-q35-fleet-inspect-20261123-')+variant)
         old_stage.rename(stage)
         guard.write_text('new guard')
         admin=home/'pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload'
-        admin.write_text(admin.read_text().replace("'2026112300030002')", "'2026112300030002','2026112300030003','2026112300030004','2026112300030005','2026112300030006','2026112300030007','2026112300030008','2026112300030009')"))
+        admin.write_text(admin.read_text().replace("'2026112300030002')", "'2026112300030002','2026112300030003','2026112300030004','2026112300030005','2026112300030006','2026112300030007','2026112300030008','2026112300030009','2026112300030010')"))
         common.put(stage/'client', '''#!/usr/bin/env python3
 import json, os, sys
 role=os.environ['MOCK_ROLE']
@@ -71,7 +74,7 @@ print('P100A_Q35_FLEET_INSPECTION clean_end=1',file=sys.stderr)
                          (candidate,stage/'candidate'),(client,stage/'client')):
             source=source.replace(old,hashlib.sha256(path.read_bytes()).hexdigest())
         wrapper=root/'inspect.sh';common.put(wrapper,source)
-        run_env=dict(env,MOCK_CASE=case,MOCK_ROLE='2' if variant in ('o','p','q','r') else '1' if variant=='n' else '0')
+        run_env=dict(env,MOCK_CASE=case,MOCK_ROLE='2' if variant in ('o','p','q','r','s') else '1' if variant=='n' else '0')
         result=subprocess.run(['bash',str(wrapper),'2'],env=run_env,
                               stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
         lock=home/'.pioneer-q35-dataflow-exclusive'
@@ -98,12 +101,12 @@ print('P100A_Q35_FLEET_INSPECTION clean_end=1',file=sys.stderr)
         else:
             assert (result.returncode==0)==(case=='success'),(result.stdout,result.stderr)
             assert installed.read_text()=='stable' and not lock.exists(),result.stderr
-            prefix='ROLE_PRESTACK' if variant in ('o','p','q','r') else 'ROLE_STAGE' if variant=='n' else 'FLEET_INSPECTION'
+            prefix='ROLE_PRESTACK' if variant in ('o','p','q','r','s') else 'ROLE_STAGE' if variant=='n' else 'FLEET_INSPECTION'
             expected=prefix+('_PASSED_STABLE_RESTORED' if case=='success' else '_FAILED_STABLE_RESTORED')
             assert (stage/'state').read_text().strip()==expected
 
 
-for variant in ('l','m','n','o','p','q','r'):
+for variant in ('l','m','n','o','p','q','r','s'):
     for scenario in ('success','clean_failure','invalid','retained','busy'):
         run_case(scenario,variant)
 print('PASS one-shot fleet inspection, clean restore, busy preflight and retained recovery; SIMULATED HOST ONLY')

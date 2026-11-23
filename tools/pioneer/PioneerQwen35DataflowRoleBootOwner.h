@@ -10,7 +10,8 @@ namespace PioneerQwen35 {
 // queue state and physical PC audits are NOT covered by this owner.
 class DataflowRoleBootOwner {
     enum Phase { Empty, Captured, Faulted, Staged, Restored };
-    enum : unsigned { ShimWords=(DataflowRoleWriterShimLimit-DataflowRoleReaderShimAddress)/4 };
+    enum : unsigned { ShimWords=(DataflowRoleWriterShimLimit-DataflowRoleReaderShimAddress)/4,
+        ChunkWords=16 };
     Phase fPhase=Empty;
     unsigned fCore=DataflowBarrierWorkers;
     uint32_t fBoot[DataflowRoleCount]{},fShim[ShimWords]{};
@@ -26,27 +27,35 @@ class DataflowRoleBootOwner {
         const unsigned address=role==DataflowRoleReader?DataflowRoleBriscBootAddress:DataflowRoleNcriscBootAddress;
         return Held(io) && io.ReadBoot(fCore,address,value);
     }
+    template<class IO> bool CompareShim(IO& io,bool staged) const {
+        if (staged && (!fReader || !fReaderWords || !fWriter || !fWriterWords)) return false;
+        uint32_t shim[ChunkWords];
+        const unsigned writerStart=(DataflowRoleWriterShimAddress-DataflowRoleReaderShimAddress)/4;
+        for (unsigned first=0;first<ShimWords;first+=ChunkWords) {
+            const unsigned count=ShimWords-first<ChunkWords?ShimWords-first:ChunkWords;
+            if (!Held(io) || !io.ReadShim(fCore,DataflowRoleReaderShimAddress+first*4,
+                    shim,count*4)) return false;
+            for (unsigned n=0;n<count;n++) {
+                const unsigned i=first+n;
+                const uint32_t expected=staged && i<fReaderWords?fReader[i]
+                    :staged && i>=writerStart && i-writerStart<fWriterWords?fWriter[i-writerStart]:fShim[i];
+                if (shim[n]!=expected) return false;
+            }
+        }
+        return Held(io);
+    }
     template<class IO> bool CompareOriginal(IO& io) const {
-        uint32_t value=0,shim[ShimWords];
+        uint32_t value=0;
         for (unsigned role=0;role<DataflowRoleCount;role++)
             if (!ReadBoot(io,role,value) || value!=fBoot[role]) return false;
-        if (!Held(io) || !io.ReadShim(fCore,DataflowRoleReaderShimAddress,shim,sizeof(shim))) return false;
-        for (unsigned i=0;i<ShimWords;i++) if (shim[i]!=fShim[i]) return false;
-        return Held(io);
+        return CompareShim(io,false);
     }
     template<class IO> bool VerifyImages(IO& io) const {
         if (!fReader || !fReaderWords || !fWriter || !fWriterWords) return false;
-        uint32_t value=0,shim[ShimWords];
+        uint32_t value=0;
         for (unsigned role=0;role<DataflowRoleCount;role++)
             if (!ReadBoot(io,role,value) || value!=fJump[role]) return false;
-        if (!Held(io) || !io.ReadShim(fCore,DataflowRoleReaderShimAddress,shim,sizeof(shim))) return false;
-        const unsigned writerStart=(DataflowRoleWriterShimAddress-DataflowRoleReaderShimAddress)/4;
-        for (unsigned i=0;i<ShimWords;i++) {
-            const uint32_t expected=i<fReaderWords?fReader[i]
-                :i>=writerStart && i-writerStart<fWriterWords?fWriter[i-writerStart]:fShim[i];
-            if (shim[i]!=expected) return false;
-        }
-        return Held(io);
+        return CompareShim(io,true);
     }
 public:
     DataflowRoleBootOwner()=default;
@@ -59,15 +68,13 @@ public:
         if (fPhase!=Empty || core>=DataflowBarrierWorkers) return false;
         fCore=core;
         if (!Held(io)) return false;
-        uint32_t repeat[ShimWords];
         for (unsigned role=0;role<DataflowRoleCount;role++) {
             uint32_t second=0;
             if (!ReadBoot(io,role,fBoot[role]) || !ReadBoot(io,role,second)
                 || fBoot[role]!=second) return false;
         }
         if (!io.ReadShim(core,DataflowRoleReaderShimAddress,fShim,sizeof(fShim))
-            || !io.ReadShim(core,DataflowRoleReaderShimAddress,repeat,sizeof(repeat))) return false;
-        for (unsigned i=0;i<ShimWords;i++) if (fShim[i]!=repeat[i]) return false;
+            || !CompareShim(io,false)) return false;
         if (!Held(io)) return false;
         fPhase=Captured;
         return true;
@@ -93,14 +100,7 @@ public:
             return false;
         // Before changing either boot word, verify both shims and every
         // untouched shim byte with the original boot words still present.
-        uint32_t shim[ShimWords];
-        if (!Held(io) || !io.ReadShim(fCore,DataflowRoleReaderShimAddress,shim,sizeof(shim))) return false;
-        const unsigned writerStart=(DataflowRoleWriterShimAddress-DataflowRoleReaderShimAddress)/4;
-        for (unsigned i=0;i<ShimWords;i++) {
-            const uint32_t expected=i<readerWords?reader[i]
-                :i>=writerStart && i-writerStart<writerWords?writer[i-writerStart]:fShim[i];
-            if (shim[i]!=expected) return false;
-        }
+        if (!CompareShim(io,true)) return false;
         for (unsigned role=0;role<DataflowRoleCount;role++) {
             uint32_t original=0;
             if (!ReadBoot(io,role,original) || original!=fBoot[role]) return false;

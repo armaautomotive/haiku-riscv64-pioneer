@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
-// Held-core, fixed-image snapshot/stage/restore qualification. It never
-// releases a core, issues a reset, uploads model data or performs inference.
+// Fixed-image snapshot/stage/restore qualification. Version 1 keeps every
+// core held; the separately restricted pre-stack version releases only B/NC
+// on worker zero while all TRISCs remain held. Neither runs model inference.
 // Any uncertain operation retains the heap owner and its snapshots/mappings.
 #if !defined(PIONEER_QWEN35_ROLE_STAGE_QUALIFY) || !defined(PIONEER_QWEN35_FLEET_INSPECTION_QUALIFY) || !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
 #error Role stage qualification requires its restricted held-fleet build

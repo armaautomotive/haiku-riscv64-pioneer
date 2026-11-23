@@ -10,7 +10,7 @@ def signed(value, bits):
     return value - (1 << bits) if value & (1 << (bits - 1)) else value
 
 
-def run(code, role, bypass_works, decision):
+def run(code, role, bypass_works, decision, corrupt_copy=False):
     base, target = (0x70000, 0xB8000) if role == "reader" else (0x70100, 0xBA000)
     handoff, ready_value = 0xAB540, (0x31 if role == "reader" else 0x32)
     cancelled_value = 0x71 if role == "reader" else 0x72
@@ -23,7 +23,8 @@ def run(code, role, bypass_works, decision):
     pc, cfg = base, 0
     writes, fences, visible, dependent, stack_writes = 0, 0, False, False, 0
     receipt, polls, release, cancel_visible, cancel_dependent = 0, 0, 0, False, False
-    for step in range(30000):
+    checked = 0
+    for step in range(50000):
         assert base <= pc <= base + len(code) - 4 and not (pc & 3)
         insn = struct.unpack_from("<I", code, pc - base)[0]
         opcode, rd, funct3 = insn & 127, (insn >> 7) & 31, (insn >> 12) & 7
@@ -63,10 +64,17 @@ def run(code, role, bypass_works, decision):
                 result = receipt
                 cancel_visible = True
             else:
-                assert address == target + count * 4 - 4 and writes == count and fences >= 2
-                assert copied == original
-                result = copied[-1]
-                visible = True
+                assert target <= address < target + count * 4 and writes == count and fences >= 2
+                if not visible:
+                    assert address == target + count * 4 - 4 and copied == original
+                    result = copied[-1]
+                    visible = True
+                    if corrupt_copy:
+                        copied[count // 2] ^= 1
+                else:
+                    assert address == target + checked * 4 and not receipt and not stack_writes
+                    result = copied[checked]
+                    checked += 1
         elif opcode == 0x23:  # SW
             assert funct3 == 2
             immediate = signed(((insn >> 25) << 5) | ((insn >> 7) & 31), 12)
@@ -76,7 +84,7 @@ def run(code, role, bypass_works, decision):
                 copied[writes] = regs[rs2]
                 writes += 1
             elif address == receipt_address:
-                assert writes == count and copied == original and dependent and not stack_writes
+                assert writes == count and checked == count and copied == original and dependent and not stack_writes
                 if not receipt:
                     # Each of 2048 words passes through a five-instruction
                     # single-issue loop before either shim publishes ready.
@@ -115,7 +123,9 @@ def run(code, role, bypass_works, decision):
             assert rd == 0
             if insn == 0x6F:
                 assert not stack_writes
-                if bypass_works:
+                if corrupt_copy:
+                    assert bypass_works and not receipt and 0 < checked < count and local == original
+                elif bypass_works:
                     assert (decision == "cancel" and receipt == cancelled_value and release == 0x43 and cancel_dependent) or (
                         decision == "invalid" and receipt == ready_value and release == 0x44)
                 else:
@@ -139,5 +149,6 @@ image = Path(sys.argv[1]).read_bytes()
 assert image and len(image) <= 256 and len(image) % 4 == 0
 for decision in ("wait", "release", "cancel", "invalid"):
     run(image, sys.argv[2], True, decision)
+run(image, sys.argv[2], True, "wait", corrupt_copy=True)
 run(image, sys.argv[2], False, "wait")
-print(f"PASS {sys.argv[2]} RV32 pre-stack copy, wait, release, cancel and failed-cache-bypass park; SIMULATED ONLY")
+print(f"PASS {sys.argv[2]} RV32 pre-stack copy, local verification, mismatch park, wait, release and cancel; SIMULATED ONLY")
