@@ -593,6 +593,31 @@ public:
             && fScope.ProveRoleImageInspectionAllowed(fIO,core)
             && fScope.ProveRoleStacklessSnapshotSafe(fIO,core);
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    // These checks admit no hardware unless Scope establishes lifetime
+    // ownership and freshness independently of the sampled words.
+    bool AutoRestoreArmSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        return reader && writer && StacklessCopiesSafe(core)
+            && fScope.ProveRoleAutoRestoreArmSafe(fIO,core,reader,writer)
+            && InspectRunningRoleRamCopies(core,reader,writer)
+            && StacklessCopiesSafe(core)
+            && fScope.ProveRoleAutoRestoreArmSafe(fIO,core,reader,writer);
+    }
+    bool AutoRestoreHeldSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        return StacklessHeldCopySourceSafe(core,reader,writer)
+            && fScope.ProveRoleAutoRestoreHeldSafe(fIO,core,reader,writer)
+            && AllRolesHeld(core) && DefaultBootRouting(core)
+            && fScope.ProveRoleAutoRestoreHeldSafe(fIO,core,reader,writer);
+    }
+    bool AutoRestoreRetirementSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        const uint32_t* r=nullptr;const uint32_t* w=nullptr;bool captured=false;
+        return reader && writer && RetirementRamSnapshotSources(core,r,w,captured)
+            && captured && r==reader && w==writer
+            && fScope.ProveRoleAutoRestoreRetirementSafe(fIO,core,reader,writer)
+            && fGuard.ProveSelectedRoute(core)
+            && fScope.ProveRoleAutoRestoreRetirementSafe(fIO,core,reader,writer);
+    }
+#endif
     bool StacklessFleetPreparationSafe(unsigned core) {
         return core<PioneerQwen35::DataflowBarrierWorkers
             && fScope.ProveExclusiveRewrite(fIO)

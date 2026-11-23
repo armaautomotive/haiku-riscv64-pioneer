@@ -13,6 +13,7 @@ struct RecoveryIO {
     bool stacklessPreparation=true,stacklessSafe=true,uncapturedProtected=true;
     bool coreRestoreProof=false,restoreReleaseReady=false,staleRestoreReceipt=false;
     bool restoreCompletion=false,restoreCompletedHeld=false;
+    bool autoArmProof=false,autoHeldProof=false,autoRetirementProof=false;
     DataflowRoleSnapshotHandoff restoreHandoff[DataflowBarrierWorkers]{};
     unsigned releaseReadyCalls=0,failReleaseReadyCall=0;
     bool copyProof=true,copyCaptured[DataflowBarrierWorkers]{};
@@ -86,6 +87,17 @@ struct RecoveryIO {
     bool StacklessCoreRestoreReleaseReady(unsigned core,const uint32_t* reader,const uint32_t* writer) {
         return ++releaseReadyCalls!=failReleaseReadyCall && restoreReleaseReady && !staleRestoreReceipt
             && StacklessHeldCopySourceSafe(core,reader,writer);
+    }
+    bool AutoRestoreArmSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) const {
+        return autoArmProof && !staleRestoreReceipt && !held && retainedRam && core<DataflowBarrierWorkers
+            && reader==retainedRam+core*RamPerCore
+            && writer==reader+DataflowRoleLocalRamWords;
+    }
+    bool AutoRestoreHeldSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        return autoHeldProof && StacklessHeldCopySourceSafe(core,reader,writer);
+    }
+    bool AutoRestoreRetirementSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        return autoRetirementProof && StacklessHeldCopySourceSafe(core,reader,writer);
     }
     bool RestoreHandoffHeldSafe(unsigned core) const { return held && core<DataflowBarrierWorkers; }
     bool RestoreCompletionSafe(unsigned core) const { return !held && restoreCompletion && core<DataflowBarrierWorkers; }
@@ -204,15 +216,89 @@ int main()
     std::vector<uint32_t> ramSnapshot(DataflowRoleFleetRecoveryOwner::RamWords());
     const uint32_t codeA[]={1,2,3},codeB[]={4,5},shimA[]={6,7},shimB[]={8,9};
     {
+        RecoveryIO io; const auto originalRam=io.ram,originalCode=io.code,originalBoots=io.boots,
+            originalShims=io.shims,originalDisable=io.resetDisable;
+        DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.SelectAutoRestoreMode() && owner.AutoRestoreMode()
+            && !owner.SelectAutoRestoreMode() && !owner.SelectCoreLocalRestoreMode());
+        assert(owner.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
+            ramSnapshot.data(),ramSnapshot.size(),io));
+        assert(owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io)
+            && owner.PreparePossibleRelease(io) && owner.BeginReleaseAttempt(io));
+        io.retainedRam=ramSnapshot.data();io.held=false;
+        assert(!owner.ArmAutoRestoreCore(0,io)); // no captured copy
+        assert(owner.CaptureStacklessCore(0,io));
+        io.autoArmProof=true;
+        assert(!owner.ArmAutoRestoreCore(0,io)); // RAM not yet marked possibly dirty
+        assert(owner.MarkStacklessMayRun(0,io));
+        io.staleRestoreReceipt=true;
+        assert(!owner.ArmAutoRestoreCore(0,io));
+        io.staleRestoreReceipt=false;
+        assert(owner.ArmAutoRestoreCore(0,io) && !owner.ArmAutoRestoreCore(0,io));
+        io.ram[0]^=1;io.held=true;io.InstallHeldCopies(0);
+        assert(!owner.MarkAutoRestoredCore(0,io));
+        io.autoHeldProof=true;io.coreRestoreProof=true;
+        assert(!owner.MarkAutoRestoredCore(0,io)); // saved RAM does not yet match
+        io.ram[0]=originalRam[0];
+        assert(owner.MarkAutoRestoredCore(0,io) && !owner.MarkAutoRestoredCore(0,io));
+        assert(!owner.StageCoreLocalRestore(0,shimA,2,shimB,2,io));
+        const unsigned writes=io.writes,reads=io.privateRamReads;
+        io.retirementProof=true;
+        assert(!owner.RestoreAfterCoreLocalFleetProof(io)); // never use the separate-shim path
+        assert(!owner.RestoreAfterAutoRestoreFleetProof(io) && io.writes==writes);
+        io.autoRetirementProof=true;io.wrongCopyPointer=true;
+        assert(!owner.RestoreAfterAutoRestoreFleetProof(io) && io.writes==writes);
+        io.wrongCopyPointer=false;
+        io.failRetirementCodeCore=0;
+        assert(!owner.RestoreAfterAutoRestoreFleetProof(io) && owner.RestorationRequired());
+        const unsigned partial=io.writes;
+        assert(!owner.RestoreAfterAutoRestoreFleetProof(io) && io.writes==partial);
+        io.retirementRetry=true;
+        assert(owner.RestoreAfterAutoRestoreFleetProof(io) && owner.CoveredStateRestored()
+            && owner.VerifyAfterAutoResidentRestore(io) && io.privateRamReads==reads);
+        assert(io.ram==originalRam && io.code==originalCode && io.boots==originalBoots
+            && io.shims==originalShims && io.resetDisable==originalDisable);
+        io.autoRetirementProof=false;
+        assert(!owner.VerifyAfterAutoResidentRestore(io) && owner.RestorationRequired());
+    }
+    {
+        // A partial fleet cannot retire until every captured core has an
+        // independently proved restore, even when another core is complete.
+        RecoveryIO io; DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.SelectAutoRestoreMode()
+            && owner.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
+                ramSnapshot.data(),ramSnapshot.size(),io)
+            && owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io)
+            && owner.PreparePossibleRelease(io) && owner.BeginReleaseAttempt(io));
+        io.retainedRam=ramSnapshot.data();io.held=false;io.autoArmProof=true;
+        for (unsigned core=0;core<2;core++)
+            assert(owner.CaptureStacklessCore(core,io) && owner.MarkStacklessMayRun(core,io)
+                && owner.ArmAutoRestoreCore(core,io));
+        io.held=true;io.InstallHeldCopies(0);io.InstallHeldCopies(1);
+        io.autoHeldProof=true;io.coreRestoreProof=true;
+        assert(owner.MarkAutoRestoredCore(0,io));
+        io.retirementProof=true;io.autoRetirementProof=true;
+        const unsigned writes=io.writes;
+        assert(!owner.RestoreAfterAutoRestoreFleetProof(io) && io.writes==writes);
+        io.autoHeldProof=false;
+        assert(!owner.MarkAutoRestoredCore(1,io));
+        io.autoHeldProof=true;
+        assert(owner.MarkAutoRestoredCore(1,io)
+            && owner.RestoreAfterAutoRestoreFleetProof(io)
+            && owner.VerifyAfterAutoResidentRestore(io));
+    }
+    for (bool autoMode:{false,true}) {
         // Before any release ledger, cleanup has no captured private RAM to
         // touch and can safely restore staged images without a host RAM read.
         RecoveryIO io; const auto code=io.code,boots=io.boots,shims=io.shims,disable=io.resetDisable;
         DataflowRoleFleetRecoveryOwner owner;
-        assert(owner.SelectCoreLocalRestoreMode()
+        assert((autoMode?owner.SelectAutoRestoreMode():owner.SelectCoreLocalRestoreMode())
             && owner.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
                 ramSnapshot.data(),ramSnapshot.size(),io)
             && owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
+        assert(!owner.CopyAwareReleaseStarted());
         assert(owner.RestoreAll(io) && owner.CoveredStateRestored() && !io.privateRamReads);
+        assert(owner.VerifyAfterResidentRestore(io));
         assert(io.code==code && io.boots==boots && io.shims==shims && io.resetDisable==disable);
     }
     {

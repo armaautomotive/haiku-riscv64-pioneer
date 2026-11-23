@@ -37,6 +37,7 @@ class PioneerQwen35SharedRoleBinding {
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
     bool fAutoRestoreOnStop=false;
     bool fAutoRestoreParked[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fAutoRestoreRecorded[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fCoreRestoreReleaseWrites[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fCoreRestoreHoldWrites[PioneerQwen35::DataflowBarrierWorkers]{};
 #endif
@@ -145,10 +146,10 @@ public:
         return !fCaptureAttempted && fOwner.SelectCoreLocalRestoreMode();
     }
     // The qualified stop-to-restore images may be selected only before any
-    // capture. Release remains denied until the auto-restore ledger and stop
-    // path are connected; this opt-in stages no device bytes by itself.
+    // capture. Release remains denied until partial-start recovery and the
+    // physical scope are qualified; selection stages no device bytes.
     bool SelectAutoRestoreOnStop() {
-        if (fCaptureAttempted || fAutoRestoreOnStop || !fOwner.SelectCoreLocalRestoreMode()) return false;
+        if (fCaptureAttempted || fAutoRestoreOnStop || !fOwner.SelectAutoRestoreMode()) return false;
         fAutoRestoreOnStop=true;return true;
     }
     __attribute__((noinline)) bool StageCoreLocalRestore(unsigned core) {
@@ -268,7 +269,7 @@ public:
         auto* scope=Scope();
         if (!scope || !fViews.Opened()) return false;
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
-        // The auto-restore stop ledger is not yet wired to this release path.
+        // Partial-start recovery and physical lifetime proofs remain incomplete.
         if (fAutoRestoreOnStop) return false;
 #endif
         Adapter io(fContext.io,*scope,fViews);
@@ -322,6 +323,9 @@ public:
             || !io.InspectRunningRoleRamCopies(core,fOwner.OriginalRamWords(core,DataflowRoleReader),
                 fOwner.OriginalRamWords(core,DataflowRoleWriter))
             || !io.StartupHandoffWriteAllowed(core) || !fOwner.MarkStacklessMayRun(core,io)) return false;
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+        if (fAutoRestoreOnStop && !fOwner.ArmAutoRestoreCore(core,io)) return false;
+#endif
         // Consume the one-shot submission before calling the transport. The
         // transport marks the actual store immediately before issuing it.
         fStackReleaseSubmitted[core]=true; fStackReleaseWriting[core]=true;
@@ -524,6 +528,16 @@ public:
                 if (fReleaseHeld[i] && !io.UnconfirmedReleaseHeld(i)) { stage=15;core=i;return false; }
                 if (!io.AllRolesHeld(i)) { stage=14;core=i;return false; }
             }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+            if (fAutoRestoreOnStop) {
+                for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
+                    if (!fOwner.StacklessCopiesCaptured(i) || fAutoRestoreRecorded[i]) continue;
+                    if (!fStackReleaseConfirmed[i] || !fAutoRestoreParked[i]
+                        || !fOwner.MarkAutoRestoredCore(i,io)) { stage=17;core=i;return false; }
+                    fAutoRestoreRecorded[i]=true;
+                }
+            }
+#endif
             stage=0;core=PioneerQwen35::DataflowBarrierWorkers;return true;
         }
         return fContext.io.StopAndAuditAll(stage,core);
@@ -539,6 +553,16 @@ public:
         if (!scope || !OpenForRecovery(*scope)) return false;
         Adapter io(fContext.io,*scope,fViews);
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+        // Before a copy-aware release ledger starts, no role can have used
+        // stack RAM. Restore the staged fleet through the existing held path.
+        if (fOwner.CoreLocalRestoreMode() && !fOwner.CopyAwareReleaseStarted()) {
+            if (fOwner.CoveredStateRestored()) return fOwner.VerifyAfterResidentRestore(io);
+            return fOwner.RestoreAll(io);
+        }
+        if (fAutoRestoreOnStop) {
+            if (fOwner.CoveredStateRestored()) return fOwner.VerifyAfterAutoResidentRestore(io);
+            return fOwner.RestoreAfterAutoRestoreFleetProof(io);
+        }
         if (fOwner.CoreLocalRestoreMode()) {
             if (fOwner.CoveredStateRestored()) return fOwner.VerifyAfterCoreLocalResidentRestore(io);
             return fOwner.RestoreAfterCoreLocalFleetProof(io);
@@ -557,6 +581,10 @@ public:
         if (!scope || !OpenForRecovery(*scope)) return false;
         Adapter io(fContext.io,*scope,fViews);
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+        if (fOwner.CoreLocalRestoreMode() && !fOwner.CopyAwareReleaseStarted())
+            return fOwner.CoveredStateRestored() && fOwner.VerifyAfterResidentRestore(io);
+        if (fAutoRestoreOnStop)
+            return fOwner.CoveredStateRestored() && fOwner.VerifyAfterAutoResidentRestore(io);
         if (fOwner.CoreLocalRestoreMode())
             return fOwner.CoveredStateRestored() && fOwner.VerifyAfterCoreLocalResidentRestore(io);
 #endif

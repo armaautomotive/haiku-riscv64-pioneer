@@ -298,6 +298,9 @@ public:
     // A parked receipt is an observation, not lifetime exclusion of a later
     // reset, writer or misroute. The real scope still denies this proof.
     bool ProveRoleAutoRestoreCompletionSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleAutoRestoreArmSafe(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
+    bool ProveRoleAutoRestoreHeldSafe(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
+    bool ProveRoleAutoRestoreRetirementSafe(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
 #endif
     bool ProveComputeStopSafe(PioneerSessionIO& io,unsigned core) const {
         return CanObserveDedicatedCleanStop(io,core);

@@ -26,10 +26,14 @@ class DataflowRoleFleetRecoveryOwner {
     bool fResetDisableCaptured=false,fResetDisableTouched=false;
     bool fStackless=false;
     bool fCoreLocalRestoreMode=false;
+    bool fAutoRestoreMode=false;
     bool fCoreLocalReleaseLedger=false;
     bool fCoreResetRestoreAttempted=false;
     bool fCoreRestoreStaged[DataflowBarrierWorkers]{};
     bool fCoreRestoreReleaseAttempted[DataflowBarrierWorkers]{};
+    bool fAutoRestoreMayRun[DataflowBarrierWorkers]{};
+    bool fAutoRestoreArmed[DataflowBarrierWorkers]{};
+    bool fAutoRestoreCompleted[DataflowBarrierWorkers]{};
     DataflowRoleRestoreHandoffOwner fCoreRestoreHandoff[DataflowBarrierWorkers];
     template<class IO> static bool AllSafe(IO& io) {
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)
@@ -76,6 +80,25 @@ class DataflowRoleFleetRecoveryOwner {
                     || reader!=fRam.OriginalWords(core,DataflowRoleReader)
                     || writer!=fRam.OriginalWords(core,DataflowRoleWriter) || !reader || !writer) return false;
             } else if (reader || writer || !fCoreRestoreHandoff[core].Untouched()) return false;
+        }
+        return true;
+    }
+    // In the resident stop-to-restore flow the parent resident owner owns
+    // the original handoff. It restores that handoff later, so the IO proof
+    // must remain valid both before and after that parent's restoration.
+    template<class IO> bool VerifyAutoRetirementLedger(IO& io) {
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            const uint32_t* reader=nullptr;const uint32_t* writer=nullptr;bool captured=false;
+            if (!io.RetirementRamSnapshotSources(core,reader,writer,captured)
+                || captured!=fRam.StacklessCopiesCaptured(core)) return false;
+            if (captured) {
+                if (!reader || !writer || reader!=fRam.OriginalWords(core,DataflowRoleReader)
+                    || writer!=fRam.OriginalWords(core,DataflowRoleWriter)
+                    || !fAutoRestoreArmed[core] || !fAutoRestoreCompleted[core]
+                    || !fCoreRestoreHandoff[core].Untouched()
+                    || !io.AutoRestoreRetirementSafe(core,reader,writer)) return false;
+            } else if (reader || writer || fAutoRestoreArmed[core] || fAutoRestoreCompleted[core]
+                || !fCoreRestoreHandoff[core].Untouched()) return false;
         }
         return true;
     }
@@ -135,7 +158,13 @@ public:
         if (fPhase!=Empty || fCoreLocalRestoreMode) return false;
         fCoreLocalRestoreMode=true;return true;
     }
+    bool SelectAutoRestoreMode() {
+        if (!SelectCoreLocalRestoreMode()) return false;
+        fAutoRestoreMode=true;return true;
+    }
+    bool AutoRestoreMode() const { return fAutoRestoreMode; }
     bool CoreLocalRestoreMode() const { return fCoreLocalRestoreMode; }
+    bool CopyAwareReleaseStarted() const { return fCoreLocalReleaseLedger; }
     const uint32_t* OriginalRamWords(unsigned core,unsigned role) const {
         return fRam.OriginalWords(core,role);
     }
@@ -198,7 +227,36 @@ public:
     template<class IO> bool MarkStacklessMayRun(unsigned core,IO& io) {
         if (!fStackless || fPhase!=ReleaseAttempted) return false;
         if (!fRam.MarkStacklessMayRun(core,io)) { fPhase=Faulted; return false; }
+        if (fAutoRestoreMode) fAutoRestoreMayRun[core]=true;
         return true;
+    }
+    // Arm immediately before the first stack release attempt, including an
+    // uncertain transport write. This is only a ledger: IO must bind the
+    // exact retained sources, fresh handoff, images and exclusive writers.
+    template<class IO> bool ArmAutoRestoreCore(unsigned core,IO& io) {
+        if (!fAutoRestoreMode || !fCoreLocalReleaseLedger || !fStackless
+            || fPhase!=ReleaseAttempted || core>=DataflowBarrierWorkers
+            || !fRam.StacklessCopiesCaptured(core) || !fAutoRestoreMayRun[core]
+            || fAutoRestoreArmed[core]) return false;
+        const uint32_t* reader=fRam.OriginalWords(core,DataflowRoleReader);
+        const uint32_t* writer=fRam.OriginalWords(core,DataflowRoleWriter);
+        if (!reader || !writer || !io.AutoRestoreArmSafe(core,reader,writer)
+            || !io.AutoRestoreArmSafe(core,reader,writer)) return false;
+        fAutoRestoreArmed[core]=true;return true;
+    }
+    // Called only after observed stop, restore park and held reset. The
+    // observations do not replace IO's independent source and writer proof.
+    template<class IO> bool MarkAutoRestoredCore(unsigned core,IO& io) {
+        if (!fAutoRestoreMode || !fCoreLocalReleaseLedger || !fStackless
+            || (fPhase!=ReleaseAttempted && fPhase!=Faulted) || core>=DataflowBarrierWorkers
+            || !fAutoRestoreArmed[core] || fAutoRestoreCompleted[core]) return false;
+        fPhase=Faulted;
+        const uint32_t* reader=fRam.OriginalWords(core,DataflowRoleReader);
+        const uint32_t* writer=fRam.OriginalWords(core,DataflowRoleWriter);
+        if (!reader || !writer || !io.AutoRestoreHeldSafe(core,reader,writer)
+            || !fRam.MarkCoreRestoredByCore(core,io)
+            || !io.AutoRestoreHeldSafe(core,reader,writer)) return false;
+        fAutoRestoreCompleted[core]=true;return true;
     }
     // Replace a held core's startup shims with its local restore shims. The
     // fleet's own RAM ledger and the IO scope must identify the same retained
@@ -207,7 +265,7 @@ public:
     // that the restore program ran. A failed audit retains the fleet.
     template<class IO> bool StageCoreLocalRestore(unsigned core,const uint32_t* reader,
         unsigned readerWords,const uint32_t* writer,unsigned writerWords,IO& io) {
-        if (!fCoreLocalRestoreMode || !fCoreLocalReleaseLedger || !fStackless
+        if (!fCoreLocalRestoreMode || fAutoRestoreMode || !fCoreLocalReleaseLedger || !fStackless
             || (fPhase!=ReleaseAttempted && fPhase!=Faulted)
             || !fRam.StacklessCopiesCaptured(core) || fCoreRestoreStaged[core]
             || fCoreRestoreReleaseAttempted[core]) return false;
@@ -273,7 +331,7 @@ public:
     // receipt, held routes and writer exclusion. This records RAM proof only;
     // image retirement, reset restoration and safe resume remain separate.
     template<class IO> bool MarkCoreRestoredByCore(unsigned core,IO& io) {
-        if (!fCoreLocalRestoreMode || !fStackless
+        if (!fCoreLocalRestoreMode || fAutoRestoreMode || !fStackless
             || (fPhase!=ReleaseAttempted && fPhase!=Faulted)
             || core>=DataflowBarrierWorkers || !fCoreRestoreReleaseAttempted[core]
             || !fCoreRestoreHandoff[core].CompletionConfirmed()) return false;
@@ -391,7 +449,7 @@ public:
     // the copy windows are overwritten. Incomplete cleanup retains this
     // owner. No host private-RAM access or physical proof is supplied here.
     template<class IO> bool RestoreAfterCoreLocalFleetProof(IO& io) {
-        if (!fCoreLocalRestoreMode || !fCoreLocalReleaseLedger || !fStackless
+        if (!fCoreLocalRestoreMode || fAutoRestoreMode || !fCoreLocalReleaseLedger || !fStackless
             || (fPhase!=ReleaseAttempted && fPhase!=Faulted)) return false;
         fPhase=Faulted;
         if (!io.FleetRamImageRetirementSafe() || !AllHeldAndRouted(io)
@@ -409,10 +467,40 @@ public:
             || !fImages.VerifyOriginalAll(io) || !AllHeldAndRouted(io)) return false;
         fPhase=Restored;return true;
     }
+    // Auto-restored handoffs are owned by the resident parent. They are not
+    // rewritten here; IO must prove that retained state through retirement.
+    template<class IO> bool RestoreAfterAutoRestoreFleetProof(IO& io) {
+        if (!fAutoRestoreMode || !fCoreLocalReleaseLedger || !fStackless
+            || (fPhase!=ReleaseAttempted && fPhase!=Faulted)) return false;
+        fPhase=Faulted;
+        if (!io.FleetRamImageRetirementSafe() || !AllHeldAndRouted(io)
+            || (!fCoreResetRestoreAttempted && !VerifyResetDisable(io,true))
+            || (fCoreResetRestoreAttempted && !io.FleetRamImageRetirementRetrySafe())
+            || !VerifyAutoRetirementLedger(io) || !fRam.VerifyStacklessRestoredByCore(io)) return false;
+        if (fImages.RestorationRequired()) {
+            if (!fImages.RestoreAfterFleetRamProof(io)) return false;
+        } else if (!fImages.VerifyOriginalAll(io)) return false;
+        if (!io.FleetRamImageRetirementSafe() || !VerifyAutoRetirementLedger(io)
+            || !fRam.VerifyStacklessRestoredByCore(io) || !fImages.VerifyOriginalAll(io)) return false;
+        fCoreResetRestoreAttempted=true;
+        if (!RestoreResetDisable(io) || !io.FleetRamImageRetirementSafe()
+            || !VerifyAutoRetirementLedger(io) || !fRam.VerifyStacklessRestoredByCore(io)
+            || !fImages.VerifyOriginalAll(io) || !AllHeldAndRouted(io)) return false;
+        fPhase=Restored;return true;
+    }
+    template<class IO> bool VerifyAfterAutoResidentRestore(IO& io) {
+        if (!fAutoRestoreMode || !fCoreLocalReleaseLedger || !fStackless || fPhase!=Restored) return false;
+        fPhase=Faulted;
+        if (!io.FleetRamImageRetirementSafe() || !AllHeldAndRouted(io)
+            || !VerifyAutoRetirementLedger(io) || !fRam.VerifyStacklessRestoredByCore(io)
+            || !fImages.VerifyOriginalAll(io) || !VerifyResetDisable(io,false)
+            || !AllHeldAndRouted(io)) return false;
+        fPhase=Restored;return true;
+    }
     // The resident owner may touch overlapping L1 after the role cleanup.
     // Reaudit without falling back to a host private-RAM read.
     template<class IO> bool VerifyAfterCoreLocalResidentRestore(IO& io) {
-        if (!fCoreLocalRestoreMode || !fCoreLocalReleaseLedger || !fStackless || fPhase!=Restored) return false;
+        if (!fCoreLocalRestoreMode || fAutoRestoreMode || !fCoreLocalReleaseLedger || !fStackless || fPhase!=Restored) return false;
         fPhase=Faulted;
         if (!io.FleetRamImageRetirementSafe() || !AllHeldAndRouted(io)
             || !VerifyRetirementLedger(io) || !fRam.VerifyStacklessRestoredByCore(io)
