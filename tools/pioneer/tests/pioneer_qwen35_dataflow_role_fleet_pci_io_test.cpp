@@ -28,6 +28,8 @@ struct FleetPciTestScope {
     bool ProveRoleLocalRamStable(PioneerSessionIO&,unsigned) const { return held && stable; }
     bool ProveRoleStartupHandoffSafe(PioneerSessionIO&,unsigned) const { return runtime; }
     bool ProveRoleStacklessSnapshotSafe(PioneerSessionIO&,unsigned) const { return stacklessSnapshot; }
+    bool ProveRoleStacklessFleetPreparationSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleUncapturedRamProtected(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleStackReleaseWriteDrained(PioneerSessionIO&,unsigned) const {
         return stackReleaseDrained && stackDrainChecks++!=stackDrainFailAt;
     }

@@ -452,6 +452,16 @@ public:
             && fScope.ProveRoleImageInspectionAllowed(fIO,core)
             && fScope.ProveRoleStacklessSnapshotSafe(fIO,core);
     }
+    bool StacklessFleetPreparationSafe(unsigned core) {
+        return core<PioneerQwen35::DataflowBarrierWorkers
+            && fScope.ProveExclusiveRewrite(fIO)
+            && fScope.ProveRoleStacklessFleetPreparationSafe(fIO,core);
+    }
+    bool StacklessUncapturedRamProtected(unsigned core) {
+        return core<PioneerQwen35::DataflowBarrierWorkers
+            && fScope.ProveExclusiveRewrite(fIO)
+            && fScope.ProveRoleUncapturedRamProtected(fIO,core);
+    }
     bool ReadStacklessRamCopy(unsigned core,unsigned role,unsigned offset,uint32_t* output,unsigned bytes) {
         using namespace PioneerQwen35;
         if (role>=DataflowRoleCount || !output || !bytes || (offset&3) || (bytes&3)

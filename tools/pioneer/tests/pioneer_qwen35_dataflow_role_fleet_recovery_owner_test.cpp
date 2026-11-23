@@ -7,9 +7,12 @@ using namespace PioneerQwen35;
 struct RecoveryIO {
     static constexpr unsigned CodePerCore=DataflowRoleCodeOwner::RequiredWords();
     static constexpr unsigned RamPerCore=DataflowRoleLocalRamOwner::RequiredWords();
-    std::vector<uint32_t> code,ram,boots,shims,resetDisable;
+    std::vector<uint32_t> code,ram,boots,shims,resetDisable,stacklessCopies;
     bool held=true,defaultRoute=true,stable=true,corruptRamOnBoot=false,corruptBootOnRam=false;
     bool corruptPriorDisableOnWrite=false;
+    bool stacklessPreparation=true,stacklessSafe=true,uncapturedProtected=true;
+    unsigned privateRamReads=0;
+    unsigned copyCalls=0,failCopyCall=UINT32_MAX;
     unsigned failDisableCore=UINT32_MAX;
     unsigned writes=0;
     mutable unsigned heldChecks=0,failHeldCheck=0;
@@ -21,6 +24,7 @@ struct RecoveryIO {
         for (unsigned i=0;i<boots.size();i++) boots[i]=i^0x5678abcdU;
         for (unsigned i=0;i<shims.size();i++) shims[i]=i^0x9abc1234U;
         for (unsigned i=0;i<resetDisable.size();i++) resetDisable[i]=(i*37U)&0x3ffU;
+        stacklessCopies=ram;
     }
     bool AllRolesHeld(unsigned core) const {
         if (++heldChecks==failHeldCheck) return false;
@@ -28,6 +32,24 @@ struct RecoveryIO {
     }
     bool DefaultBootRouting(unsigned core) const { return defaultRoute && core<DataflowBarrierWorkers; }
     bool LocalRamStable(unsigned core) const { return stable && core<DataflowBarrierWorkers; }
+    bool StacklessFleetPreparationSafe(unsigned core) const {
+        return held && stacklessPreparation && core<DataflowBarrierWorkers;
+    }
+    bool StacklessUncapturedRamProtected(unsigned core) const {
+        return held && uncapturedProtected && core<DataflowBarrierWorkers;
+    }
+    bool StacklessCopiesSafe(unsigned core) const {
+        return !held && stacklessSafe && core<DataflowBarrierWorkers;
+    }
+    bool ReadStacklessRamCopy(unsigned core,unsigned role,unsigned offset,uint32_t* out,unsigned bytes) {
+        if (!StacklessCopiesSafe(core) || role>=DataflowRoleCount || !out || !bytes
+            || (offset&3) || (bytes&3) || offset>DataflowRoleLocalRamBytes
+            || bytes>DataflowRoleLocalRamBytes-offset) return false;
+        if (copyCalls++==failCopyCall) return false;
+        const unsigned at=core*RamPerCore+role*DataflowRoleLocalRamWords+offset/4;
+        for (unsigned i=0;i<bytes/4;i++) out[i]=stacklessCopies[at+i];
+        return true;
+    }
     bool ReadResetDisable(unsigned core,uint32_t& value) {
         if (!AllRolesHeld(core)) return false;
         value=resetDisable[core]; return true;
@@ -83,6 +105,7 @@ struct RecoveryIO {
     }
     bool ReadRam(unsigned core,unsigned role,uint32_t address,uint32_t* out,unsigned bytes) {
         assert(AllRolesHeld(core) && LocalRamStable(core) && out && DataflowRoleLocalRamRange(role,address,bytes));
+        ++privateRamReads;
         const uint32_t base=role==DataflowRoleReader?DataflowRoleBriscLocalRam:DataflowRoleNcriscLocalRam;
         const unsigned at=core*RamPerCore+role*DataflowRoleLocalRamWords+(address-base)/4;
         for (unsigned i=0;i<bytes/4;i++) out[i]=ram[at+i];
@@ -102,6 +125,67 @@ int main()
     std::vector<uint32_t> codeSnapshot(DataflowRoleFleetRecoveryOwner::CodeWords());
     std::vector<uint32_t> ramSnapshot(DataflowRoleFleetRecoveryOwner::RamWords());
     const uint32_t codeA[]={1,2,3},codeB[]={4,5},shimA[]={6,7},shimB[]={8,9};
+    {
+        RecoveryIO io; DataflowRoleFleetRecoveryOwner owner;
+        io.stacklessPreparation=false;
+        assert(!owner.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
+            ramSnapshot.data(),ramSnapshot.size(),io));
+        assert(owner.Untouched() && !io.writes && !io.privateRamReads);
+    }
+    {
+        RecoveryIO io; const auto code=io.code,ram=io.ram,boots=io.boots,shims=io.shims,disable=io.resetDisable;
+        DataflowRoleFleetRecoveryOwner owner;
+        io.stable=false; // deferred preparation must not read private RAM
+        assert(owner.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
+            ramSnapshot.data(),ramSnapshot.size(),io));
+        assert(!io.privateRamReads && !owner.OriginalRamWords(0,DataflowRoleReader));
+        assert(owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
+        assert(owner.PreparePossibleRelease(io) && owner.ReleaseLedgerPrepared());
+        assert(owner.BeginReleaseAttempt(io) && !io.privateRamReads);
+        io.held=false;
+        assert(owner.CaptureStacklessCore(0,io) && owner.MarkStacklessMayRun(0,io));
+        assert(owner.CaptureStacklessCore(1,io)); // snapshot retained, stack not released
+        assert(owner.OriginalRamWords(0,DataflowRoleReader)[0]==ram[0]);
+        io.ram[0]^=1; io.held=true; io.stable=true; io.uncapturedProtected=false;
+        const unsigned writes=io.writes;
+        assert(!owner.RestoreAll(io) && owner.RestorationRequired() && io.writes==writes);
+        io.uncapturedProtected=true;
+        assert(owner.RestoreAll(io) && owner.CoveredStateRestored());
+        assert(owner.VerifyAfterResidentRestore(io));
+        assert(io.code==code && io.ram==ram && io.boots==boots && io.shims==shims && io.resetDisable==disable);
+    }
+    {
+        RecoveryIO io; const auto ram=io.ram;
+        DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
+            ramSnapshot.data(),ramSnapshot.size(),io));
+        assert(owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
+        assert(owner.PreparePossibleRelease(io) && owner.BeginReleaseAttempt(io));
+        io.held=false;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            assert(owner.CaptureStacklessCore(core,io));
+            assert(owner.MarkStacklessMayRun(core,io));
+        }
+        assert(!io.privateRamReads);
+        io.ram[119*RecoveryIO::RamPerCore]^=1; io.held=true;
+        assert(owner.RestoreAll(io) && owner.VerifyAfterResidentRestore(io) && io.ram==ram);
+    }
+    {
+        RecoveryIO io; const auto ram=io.ram;
+        DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
+            ramSnapshot.data(),ramSnapshot.size(),io));
+        assert(owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
+        assert(owner.PreparePossibleRelease(io) && owner.BeginReleaseAttempt(io));
+        io.held=false;
+        assert(owner.CaptureStacklessCore(0,io) && owner.MarkStacklessMayRun(0,io));
+        io.ram[0]^=1; io.failCopyCall=io.copyCalls+2;
+        assert(!owner.CaptureStacklessCore(1,io) && owner.RestorationRequired());
+        assert(!owner.OriginalRamWords(1,DataflowRoleReader));
+        assert(!owner.CaptureStacklessCore(2,io));
+        io.held=true; io.failCopyCall=UINT32_MAX;
+        assert(owner.RestoreAll(io) && owner.VerifyAfterResidentRestore(io) && io.ram==ram);
+    }
     // Fail the composed image and inner code fleet preflights after the
     // parent safety audit, with every original snapshot already captured.
     for (unsigned check : {DataflowBarrierWorkers+1U,2U*DataflowBarrierWorkers+1U}) {

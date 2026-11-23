@@ -154,6 +154,11 @@ public:
     // private RAMs across release, and exclusion of every conflicting writer
     // or release for the full snapshot. Receipts and reads alone do not.
     bool ProveRoleStacklessSnapshotSafe(PioneerSessionIO&,unsigned) const { return false; }
+    // Deferred snapshots require independent guarantees about the prior RAM
+    // state, reset preservation, all conflicting agents, and recovery of
+    // unsnapshotted tiles (including misrouted restoration writes).
+    bool ProveRoleStacklessFleetPreparationSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleUncapturedRamProtected(PioneerSessionIO&,unsigned) const { return false; }
     // Must fence this tile's particular attempted stack-release write and
     // exclude all later writes to the handoff for the recovery transaction.
     bool ProveRoleStackReleaseWriteDrained(PioneerSessionIO&,unsigned) const { return false; }

@@ -3,9 +3,10 @@
 #define PIONEER_QWEN35_DATAFLOW_ROLE_FLEET_LOCAL_RAM_OWNER_H
 #include "PioneerQwen35DataflowRoleLocalRamOwner.h"
 namespace PioneerQwen35 {
-// Offline fleet ledger for B/NC private RAM only. Capture and mark all 120
-// snapshots dirty BEFORE the caller attempts ANY role release. This class
-// does not release roles or prove reset, NoC, boot, code or cache safety.
+// Offline fleet ledger for B/NC private RAM only. The original mode captures
+// and marks all snapshots before role release. The deferred mode requires a
+// protected stackless handoff and marks each snapshot before stack release.
+// Neither mode proves reset, NoC, boot, code, cache or physical ownership.
 class DataflowRoleFleetLocalRamOwner {
     enum Phase { Empty, Captured, Dirty, Restored, Unavailable,
         StacklessPrepared, StacklessFaulted, StacklessRestored };
@@ -57,6 +58,7 @@ public:
         return DataflowBarrierWorkers*DataflowRoleLocalRamOwner::RequiredWords();
     }
     bool MarkedForPossibleRelease() const { return fPhase==Dirty && fReleaseLedgerReady; }
+    bool StacklessCapturePrepared() const { return fPhase==StacklessPrepared && fStacklessStorage; }
     bool RestorationRequired() const {
         return fPhase==Dirty || fPhase==StacklessPrepared || fPhase==StacklessFaulted;
     }

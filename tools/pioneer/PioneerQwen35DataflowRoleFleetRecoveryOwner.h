@@ -11,10 +11,11 @@ namespace PioneerQwen35 {
 // Offline composition for 120 tiles' additional code, low shims, boot words
 // and B/NC private RAM. It does not release or stop RISCs, reset hardware,
 // audit physical PCs/NoCs, own the existing TRISC0 image, or provide PCI IO.
-// IO must serialize the entire fleet and prove held/quiet/default routing and
-// the private-RAM initialization window independently. Allocate this owner
-// outside the kernel stack. A release attempt is allowed only after the
-// caller has obtained every OTHER required physical proof as well.
+// IO must serialize the fleet and prove held/quiet/default routing. Slow
+// private-RAM accesses need an independent initialization-window proof;
+// deferred capture instead needs the original-state, preservation and
+// unsnapshotted-tile proofs. Allocate outside the kernel stack. A release
+// attempt requires every OTHER physical proof as well.
 class DataflowRoleFleetRecoveryOwner {
     enum Phase { Empty, Captured, Faulted, Staged, Armed, ReleaseAttempted, Restored, Unavailable };
     Phase fPhase=Empty;
@@ -22,10 +23,22 @@ class DataflowRoleFleetRecoveryOwner {
     DataflowRoleFleetLocalRamOwner fRam;
     uint32_t fResetDisable[DataflowBarrierWorkers]{};
     bool fResetDisableCaptured=false,fResetDisableTouched=false;
+    bool fStackless=false;
     template<class IO> static bool AllSafe(IO& io) {
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)
             if (!io.AllRolesHeld(core) || !io.DefaultBootRouting(core)
                 || !io.LocalRamStable(core)) return false;
+        return true;
+    }
+    template<class IO> static bool AllHeldAndRouted(IO& io) {
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++)
+            if (!io.AllRolesHeld(core) || !io.DefaultBootRouting(core)) return false;
+        return true;
+    }
+    template<class IO> static bool AllStacklessPreparationSafe(IO& io) {
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++)
+            if (!io.AllRolesHeld(core) || !io.DefaultBootRouting(core)
+                || !io.StacklessFleetPreparationSafe(core)) return false;
         return true;
     }
     template<class IO> bool VerifyResetDisable(IO& io,bool preserved) {
@@ -72,7 +85,8 @@ public:
     DataflowRoleFleetRecoveryOwner& operator=(const DataflowRoleFleetRecoveryOwner&)=delete;
     static constexpr unsigned CodeWords() { return DataflowRoleFleetImagesOwner::RequiredWords(); }
     static constexpr unsigned RamWords() { return DataflowRoleFleetLocalRamOwner::RequiredWords(); }
-    bool ReleaseLedgerPrepared() const { return fPhase==Armed && fRam.MarkedForPossibleRelease(); }
+    bool ReleaseLedgerPrepared() const { return fPhase==Armed
+        && (fStackless?fRam.StacklessCapturePrepared():fRam.MarkedForPossibleRelease()); }
     bool RestorationRequired() const {
         return fPhase==Faulted || fPhase==Staged || fPhase==Armed || fPhase==ReleaseAttempted;
     }
@@ -104,10 +118,50 @@ public:
         }
         fPhase=Captured; return true;
     }
+    // Deferred mode snapshots no private RAM before release. IO must prove
+    // that the prior RAM state can be preserved and that partial releases
+    // and unsnapshotted tiles can be recovered before admitting this mode.
+    template<class IO> bool CaptureAllStackless(uint32_t* code,unsigned codeWords,uint32_t* ram,
+        unsigned ramWords,IO& io) {
+        if (fPhase!=Empty || !AllStacklessPreparationSafe(io)) return false;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            uint32_t first=0,second=0;
+            if (!io.AllRolesHeld(core) || !io.ReadResetDisable(core,first)
+                || !io.ReadResetDisable(core,second) || first!=second) {
+                fPhase=Unavailable; return false;
+            }
+            fResetDisable[core]=first;
+        }
+        fResetDisableCaptured=true;
+        if (!fImages.CaptureAll(code,codeWords,io) || !fRam.PrepareStackless(ram,ramWords)) {
+            fPhase=Unavailable; return false;
+        }
+        fStackless=true;
+        if (!AllStacklessPreparationSafe(io)) { fPhase=Faulted; return false; }
+        fPhase=Captured; return true;
+    }
+    template<class IO> bool CaptureStacklessCore(unsigned core,IO& io) {
+        if (!fStackless || fPhase!=ReleaseAttempted) return false;
+        if (!fRam.CaptureStacklessCore(core,io)) { fPhase=Faulted; return false; }
+        return true;
+    }
+    template<class IO> bool MarkStacklessMayRun(unsigned core,IO& io) {
+        if (!fStackless || fPhase!=ReleaseAttempted) return false;
+        if (!fRam.MarkStacklessMayRun(core,io)) { fPhase=Faulted; return false; }
+        return true;
+    }
     template<class IO> bool StageImages(const uint32_t* reader,unsigned readerWords,
         const uint32_t* writer,unsigned writerWords,const uint32_t* readerShim,
         unsigned readerShimWords,const uint32_t* writerShim,unsigned writerShimWords,IO& io) {
         if (fPhase!=Captured) return false;
+        if (fStackless) {
+            fPhase=Faulted;
+            if (!AllStacklessPreparationSafe(io)
+                || !fImages.StageAll(reader,readerWords,writer,writerWords,
+                    readerShim,readerShimWords,writerShim,writerShimWords,io)
+                || !AllStacklessPreparationSafe(io)) return false;
+            fPhase=Staged; return true;
+        }
         if (!AllSafe(io)) {
             (void)fRam.MarkMayRunAll(io); // no release is authorized by a failed audit
             fPhase=Faulted; return false;
@@ -118,11 +172,18 @@ public:
             || !fRam.VerifyOriginalAll(io) || !AllSafe(io)) return false;
         fPhase=Staged; return true;
     }
-    // Ledger only: no processor is released. If any later release attempt is
-    // uncertain, all private RAM snapshots remain retained for restoration.
+    // Ledger only: no processor is released. In deferred mode snapshots are
+    // captured per tile before stack release, and uncaptured tiles require
+    // independent protection throughout recovery.
     template<class IO> bool PreparePossibleRelease(IO& io) {
         if (fPhase!=Staged) return false;
         fPhase=Faulted;
+        if (fStackless) {
+            if (!AllStacklessPreparationSafe(io) || !fRam.StacklessCapturePrepared()
+                || !fImages.VerifyStagedAll(io) || !ArmResetPreservation(io)
+                || !fImages.VerifyStagedAll(io) || !AllStacklessPreparationSafe(io)) return false;
+            fPhase=Armed; return true;
+        }
         if (!AllSafe(io) || !fImages.VerifyStagedAll(io) || !fRam.VerifyOriginalAll(io)
             || !fRam.MarkMayRunAll(io) || !ArmResetPreservation(io)
             || !fImages.VerifyStagedAll(io) || !AllSafe(io))
@@ -134,6 +195,12 @@ public:
     template<class IO> bool BeginReleaseAttempt(IO& io) {
         if (fPhase!=Armed) return false;
         fPhase=Faulted;
+        if (fStackless) {
+            if (!AllStacklessPreparationSafe(io) || !fRam.StacklessCapturePrepared()
+                || !VerifyResetDisable(io,true) || !fImages.VerifyStagedAll(io)
+                || !AllStacklessPreparationSafe(io)) return false;
+            fPhase=ReleaseAttempted; return true;
+        }
         if (!AllSafe(io) || !fRam.MarkedForPossibleRelease() || !VerifyResetDisable(io,true)
             || !fImages.VerifyStagedAll(io) || !AllSafe(io)) return false;
         fPhase=ReleaseAttempted; return true;
@@ -141,6 +208,19 @@ public:
     template<class IO> bool RestoreAll(IO& io) {
         if (fPhase!=Faulted && fPhase!=Staged && fPhase!=Armed && fPhase!=ReleaseAttempted) return false;
         fPhase=Faulted;
+        if (fStackless) {
+            if (!AllHeldAndRouted(io)) return false;
+            if (fRam.RestoredOriginal()) {
+                if (!fRam.VerifyStacklessRestored(io)) return false;
+            } else if (!fRam.RestoreStackless(io)) return false;
+            if (fImages.RestorationRequired()) {
+                if (!fImages.RestoreAll(io)) return false;
+            } else if (!fImages.VerifyOriginalAll(io)) return false;
+            if (!fRam.VerifyStacklessRestored(io) || !fImages.VerifyOriginalAll(io)
+                || !RestoreResetDisable(io) || !fImages.VerifyOriginalAll(io)
+                || !fRam.VerifyStacklessRestored(io) || !AllHeldAndRouted(io)) return false;
+            fPhase=Restored; return true;
+        }
         if (!AllSafe(io)) return false;
         if (fImages.RestorationRequired()) {
             if (!fImages.RestoreAll(io)) return false;
@@ -164,6 +244,12 @@ public:
     template<class IO> bool VerifyAfterResidentRestore(IO& io) {
         if (fPhase!=Restored) return false;
         fPhase=Faulted;
+        if (fStackless) {
+            if (!AllHeldAndRouted(io) || !fImages.VerifyOriginalAll(io)
+                || !fRam.VerifyStacklessRestored(io) || !VerifyResetDisable(io,false)
+                || !AllHeldAndRouted(io)) return false;
+            fPhase=Restored; return true;
+        }
         if (!AllSafe(io) || !fImages.VerifyOriginalAll(io)
             || !fRam.VerifyOriginalAll(io) || !VerifyResetDisable(io,false)
             || !AllSafe(io)) return false;

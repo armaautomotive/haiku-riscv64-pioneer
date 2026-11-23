@@ -86,7 +86,7 @@ public:
         // No role mappings or role memory writes occur without that proof.
         if (!scope->ProveRoleFleetHeldAndQuiet(fContext.io,0) || !OpenForRecovery(*scope)) return false;
         Adapter io(fContext.io,*scope,fViews);
-        if (!fOwner.CaptureAll(fCodeSnapshot,DataflowRoleFleetRecoveryOwner::CodeWords(),
+        if (!fOwner.CaptureAllStackless(fCodeSnapshot,DataflowRoleFleetRecoveryOwner::CodeWords(),
                 fRamSnapshot,DataflowRoleFleetRecoveryOwner::RamWords(),io)) return false;
         return fOwner.StageImages(DataflowSharedReaderCodeWords,
             sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),DataflowSharedWriterCodeWords,
@@ -130,9 +130,10 @@ public:
             fContext.io.Pause();
         }
         if (!ready || !io.InspectRunningRoleImages(core,RoleImage())
+            || !fOwner.CaptureStacklessCore(core,io)
             || !io.InspectRunningRoleRamCopies(core,fOwner.OriginalRamWords(core,DataflowRoleReader),
                 fOwner.OriginalRamWords(core,DataflowRoleWriter))
-            || !io.StartupHandoffWriteAllowed(core)) return false;
+            || !io.StartupHandoffWriteAllowed(core) || !fOwner.MarkStacklessMayRun(core,io)) return false;
         // Consume the one-shot submission before calling the transport. The
         // transport marks the actual store immediately before issuing it.
         fStackReleaseSubmitted[core]=true; fStackReleaseWriting[core]=true;

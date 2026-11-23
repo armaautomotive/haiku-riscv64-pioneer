@@ -26,7 +26,7 @@ struct CombinedSharedIO : MockDataflowIO {
         savedRam(DataflowRoleFleetRecoveryOwner::RamWords()) {}
     bool SharedCaptureAndStageHeld() {
         if (!MockDataflowIO::SharedCaptureAndStageHeld()) return false;
-        if (!roleOwner.CaptureAll(savedCode.data(),savedCode.size(),savedRam.data(),savedRam.size(),roles))
+        if (!roleOwner.CaptureAllStackless(savedCode.data(),savedCode.size(),savedRam.data(),savedRam.size(),roles))
             return false;
         roleCaptured=true;
 #ifdef PIONEER_QWEN35_EXPORTED_SHARED_IMAGES
@@ -52,6 +52,7 @@ struct CombinedSharedIO : MockDataflowIO {
         return true;
     }
     bool SharedPrepareRoleStacks(unsigned core) {
+        if (!roleOwner.CaptureStacklessCore(core,roles) || !roleOwner.MarkStacklessMayRun(core,roles)) return false;
         if (!MockDataflowIO::SharedPrepareRoleStacks(core)) return false;
         // The private stack is touched only after the copy handoff.
         roles.ram[core*RecoveryIO::RamPerCore]^=0x11;
@@ -92,6 +93,7 @@ int main()
         const auto codeBefore=io->roles.code,ramBefore=io->roles.ram;
         const auto bootBefore=io->roles.boots,shimBefore=io->roles.shims,disableBefore=io->roles.resetDisable;
         assert(owner->Install(image,*io)==DataflowServiceComplete && owner->Ready());
+        assert(!io->roles.privateRamReads);
         for (unsigned core=0;core<DataflowCoreCount;core++)
             assert(io->roles.resetDisable[core]==(disableBefore[core]|DataflowRolePreserveResetMask));
 #ifdef PIONEER_QWEN35_EXPORTED_SHARED_IMAGES
@@ -118,6 +120,20 @@ int main()
         assert(io->roles.code==codeBefore && io->roles.ram==ramBefore);
         assert(io->roles.boots==bootBefore && io->roles.shims==shimBefore);
         assert(io->roles.resetDisable==disableBefore);
+    }
+    {
+        auto io=std::make_unique<CombinedSharedIO>();
+        auto owner=std::make_unique<DataflowServiceOwner>();
+        const auto disableBefore=io->roles.resetDisable;
+        const auto ramBefore=io->roles.ram;
+        const unsigned readsPerTile=DataflowRoleCount*(DataflowRoleLocalRamWords/64)*3;
+        io->roles.failCopyCall=3*readsPerTile+2;
+        assert(owner->Install(image,*io)==DataflowServiceStartFailed && io->roleStarts==DataflowCoreCount);
+        assert(io->roleOwner.RestorationRequired() && io->roleOwner.OriginalRamWords(0,DataflowRoleReader));
+        assert(!io->roleOwner.OriginalRamWords(3,DataflowRoleReader) && !io->roles.privateRamReads);
+        io->roles.failCopyCall=UINT32_MAX;
+        assert(owner->Close(*io)==DataflowServiceClosed && io->resumeCount==1);
+        assert(io->roles.ram==ramBefore && io->roles.resetDisable==disableBefore);
     }
     {
         auto io=std::make_unique<CombinedSharedIO>();
