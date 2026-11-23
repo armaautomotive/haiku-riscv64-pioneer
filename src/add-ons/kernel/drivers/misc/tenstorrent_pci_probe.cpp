@@ -3942,6 +3942,7 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 #include "PioneerFirmwareResetTransport.inc"
 #include "PioneerFirmwareRecoveryOwner.h"
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && !defined(PIONEER_QWEN35_RECOVERY_QUALIFY)
+#define PIONEER_QWEN35_FIRMWARE_RESET_WITNESS 1
 // Compile the real Haiku adapter only in the non-loadable witness. No driver
 // operation constructs it until ownership, retirement and recovery are wired.
 using PioneerFirmwareResetCompileTransport = PioneerFirmwareResetTransport<PioneerSessionIO,pioneer_driver_recovery_guard_v2_info>;
@@ -3987,6 +3988,10 @@ struct PioneerStoreContext {
 	PioneerPostResetMapping* recoveryMapping=NULL;
 	bool recoveryAttempted=false;
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+#ifdef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS
+	PioneerPostResetMapping* recoveryPreResetMapping=NULL;
+	PioneerFirmwareRecoveryOwner<PioneerSessionIO,pioneer_driver_recovery_guard_v2_info>* recoveryFirmwareResetOwner=NULL;
+#endif
 	PioneerRecoveryDbiSnapshot recoveryDbi={};
 	PioneerPciePayloadSnapshot recoveryPayload={};
 	uint64 recoveryPrepareTicket=0;
@@ -4199,6 +4204,12 @@ struct PioneerStoreContext {
 		PioneerQ35GraphOwnerDestroy(qwen35GraphOwner);
 #endif
 #ifdef PIONEER_QWEN35_INPLACE_RECOVERY
+	#ifdef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS
+		if (recoveryPreResetMapping
+			|| (recoveryFirmwareResetOwner && !recoveryFirmwareResetOwner->Retired())) sColdRecoveryRequired=true;
+		delete recoveryFirmwareResetOwner;
+		delete recoveryPreResetMapping;
+	#endif
 		delete recoveryMapping; // only after its explicit successful Close
 #endif
 		delete qwen35DataflowService;
@@ -11390,6 +11401,10 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 		|| context->recoveryPreparePending || context->recoveryFirmwarePending || context->recoveryMappingPending || !context->recoveryAttempted
 		|| !context->recoveryMapping || !context->recoveryPayload.valid))
 		return B_NOT_ALLOWED;
+#ifdef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS
+	if (context->recoveryResetPending && (!context->recoveryPreResetMapping || !context->recoveryFirmwareResetOwner))
+		return B_NOT_ALLOWED;
+#endif
 	if (context->recoveryFirmwarePending && (context->recoveryFinishPending
 		|| context->recoveryPreparePending || context->recoveryResetPending || context->recoveryMappingPending || !context->recoveryAttempted
 		|| !context->recoveryMapping || !context->recoveryPayload.valid || !context->recoveryFirmwareTicket))
@@ -11470,7 +11485,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	if (context->recoveryFinishPending) return Qwen35RecoveryFinishLocked(owner,context,guard,r,liveTakeoverOwner);
 #endif
 	PioneerPciePayloadSnapshot payload{},payloadCheck{};
+#ifndef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS
 	Qwen35RecoveryResetIO resetIo(context->io,context);BlackholeAsicResetResult reset{};
+#endif
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	if (context->recoveryFirmwarePending) {
 		payload=context->recoveryPayload;
@@ -11479,6 +11496,14 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 		payload=context->recoveryPayload;
 	} else {
 	if (context->recoveryResetPending) {
+	#ifdef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS
+		payload=context->recoveryPayload;
+		r.stage=PIONEER_RECOVERY_STAGE_ASIC_RESET;
+		if (!context->recoveryFirmwareResetOwner->Resume(guard,ticket,100)) {
+			r.detail=BLACKHOLE_ASIC_RESET_TIMEOUT;
+			put_module(guardName);return B_DEV_NOT_READY;
+		}
+	#else
 		payload=context->recoveryPayload;reset=context->recoveryResetResult;
 		r.stage=PIONEER_RECOVERY_STAGE_ASIC_RESET;
 		if (!BlackholeAsicResetResumeWait(resetIo,100,reset)) {
@@ -11489,6 +11514,7 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 			context->recoveryResetPending=false;context->recoveryResetTicket=0;
 			return fail(B_DEV_NOT_READY);
 		}
+	#endif
 	} else
 #endif
 	{
@@ -11524,6 +11550,24 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 		Qwen35QualificationTrace(context,PIONEER_PCIE_TRACE_BEFORE_RESET);
 #endif
 		r.stage=PIONEER_RECOVERY_STAGE_ASIC_RESET;
+	#ifdef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS
+		context->recoveryPreResetMapping=new(std::nothrow) PioneerPostResetMapping(context->profile);
+		if (!context->recoveryPreResetMapping) return fail(B_NO_MEMORY);
+		tt_arc_scratch_result preFirmware{};
+		if (!context->recoveryPreResetMapping->Open()
+			|| !context->recoveryPreResetMapping->ProbeFirmware(100,preFirmware)) return fail(B_DEV_NOT_READY);
+		context->recoveryFirmwareResetOwner=new(std::nothrow)
+			PioneerFirmwareRecoveryOwner<PioneerSessionIO,pioneer_driver_recovery_guard_v2_info>(
+				*context->recoveryPreResetMapping,context->io,ticket);
+		if (!context->recoveryFirmwareResetOwner) return fail(B_NO_MEMORY);
+		if (!context->recoveryFirmwareResetOwner->Start(guard,ticket,preFirmware,
+			context->recoveryPreResetMapping->firmwareTelemetry)) return fail(B_DEV_NOT_READY);
+		context->recoveryResetPending=true;context->recoveryResetTicket=ticket;
+		if (!context->recoveryFirmwareResetOwner->Resume(guard,ticket,100)) {
+			r.detail=BLACKHOLE_ASIC_RESET_TIMEOUT;
+			put_module(guardName);return B_DEV_NOT_READY;
+		}
+	#else
 		if (!BlackholeAsicReset(resetIo,100,reset)) {
 			r.detail=reset.stage;
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
@@ -11535,6 +11579,7 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 #endif
 			return fail(B_DEV_NOT_READY);
 		}
+	#endif
 	}
 #ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
 	Qwen35QualificationTrace(context,PIONEER_PCIE_TRACE_AFTER_RESET);
@@ -11543,7 +11588,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	// Keep the completion record until the same ticket is revalidated. A
 	// transient validation failure must not cause another reset write.
 	context->recoveryResetPending=true;context->recoveryResetTicket=ticket;
+	#ifndef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS
 	context->recoveryResetResult=reset;
+	#endif
 	status=guard->validate(ticket);
 	if (status!=B_OK) { put_module(guardName);return status; }
 	context->recoveryResetPending=false;context->recoveryResetTicket=0;
@@ -11628,6 +11675,13 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	// The guard ticket uniquely identifies this reset and its firmware audit.
 	proof.reset_generation=ticket;proof.firmware_generation=ticket;
 	r.stage=PIONEER_RECOVERY_STAGE_OWNER_RELEASE;
+#ifdef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS
+	if (!context->recoveryFirmwareResetOwner || !context->recoveryPreResetMapping) return fail(B_BAD_VALUE);
+	status=context->recoveryFirmwareResetOwner->Retire(guard,ticket,proof);
+	if (status!=B_OK) return fail(status);
+	delete context->recoveryFirmwareResetOwner;context->recoveryFirmwareResetOwner=NULL;
+	delete context->recoveryPreResetMapping;context->recoveryPreResetMapping=NULL;
+#endif
 	status=context->io.DisposeAfterVerifiedReset(proof);
 	if (status!=B_OK) return fail(status);
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE

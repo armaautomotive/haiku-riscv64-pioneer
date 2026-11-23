@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #define B_DEVICE_OP_CODES_END 1000
 #define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026112100010121)
+#ifdef TEST_FIRMWARE_RESET
+#define PIONEER_QWEN35_FIRMWARE_RESET_WITNESS 1
+#endif
 #ifdef TEST_LIVE_TAKEOVER
 #ifndef TEST_GRAPH_RECOVERY
 #error Live takeover recovery test requires the shared-role and graph owners
@@ -41,6 +44,10 @@ static bool ticketPending=false,invalidTicket=false,guardV2Missing=false;
 static unsigned validateCalls=0,invalidateOnValidate=0;
 static bool resetTimeout=false,resumeResetTimeout=false;
 static unsigned resetResumeWaits=0;
+#ifdef TEST_FIRMWARE_RESET
+static unsigned mappingCreates=0,preOpens=0,preProbes=0,firmwareStarts=0,firmwareResumes=0,firmwareRetires=0;
+static bool failPreOpen=false,failPreProbe=false,failFirmwareStart=false,failFirmwareRetire=false;
+#endif
 #ifdef TEST_RECOVERY_QUALIFY
 static uint32 fakeCardPciStatus=0,fakeRootPciStatus=0;
 static bool fakeAerAvailable=true,fakeAerFailAfterPre=false;
@@ -103,6 +110,7 @@ static ColdLatch sColdRecoveryRequired;
 static bool sReloadQuiesced=false,sBankStorageOnly=true;
 static int guard=1;static int* sReloadGuard=&guard;static uint64 sReloadGeneration=3;static uint32 sOpenCookies=1;
 struct tt_arc_scratch_result {uint32 state=0;};
+struct tt_arc_telemetry_result {};
 struct tt_arc_queue_result {uint32 state=0;};
 struct PioneerPostResetAuditResult {uint32 failure=0,noc=0,core=0;};
 struct PioneerPostResetPciResult {uint32 stage=0;};
@@ -187,10 +195,24 @@ static bool PioneerPostResetPciFinish(PioneerSessionIO&,const FakePciResult&,uns
 struct PioneerPostResetMapping {
 	bool firmwareRetryable=false;
 	uint32 firmwareDiagnostic=2,dbiDiagnostic=0x166084;
+	tt_arc_telemetry_result firmwareTelemetry{};
+#ifdef TEST_FIRMWARE_RESET
+	bool isPre=false;
+	explicit PioneerPostResetMapping(FakeProfile&):isPre(++mappingCreates==2) {}
+#else
 	explicit PioneerPostResetMapping(FakeProfile&) {}
-	bool Open(){return Step(PIONEER_RECOVERY_STAGE_MAPPING);}
+#endif
+	bool Open(){
+#ifdef TEST_FIRMWARE_RESET
+		if (isPre) {++preOpens;return !failPreOpen;}
+#endif
+		return Step(PIONEER_RECOVERY_STAGE_MAPPING);
+	}
 	bool PrepareOpenRetry(){return retryableMappingFailure;}
 	bool ProbeFirmware(unsigned,tt_arc_scratch_result& r){
+#ifdef TEST_FIRMWARE_RESET
+		if (isPre) {++preProbes;r.state=1;return !failPreProbe;}
+#endif
 		r.state=2;firmwareRetryable=firmwareNotReady;
 		return Step(PIONEER_RECOVERY_STAGE_FIRMWARE) && !firmwareNotReady;
 	}
@@ -203,6 +225,29 @@ struct PioneerPostResetMapping {
 	bool AuditHostDma(){return Step(PIONEER_RECOVERY_STAGE_HOST_DMA);}
 	bool Close(){return Step(PIONEER_RECOVERY_STAGE_CLOSE_MAPPING);}
 };
+#ifdef TEST_FIRMWARE_RESET
+template<class IO,class Guard> class PioneerFirmwareRecoveryOwner {
+	IO& ownerIo;uint64 ticket;bool started=false,retired=false;
+public:
+	PioneerFirmwareRecoveryOwner(PioneerPostResetMapping& m,IO& io,uint64 t):ownerIo(io),ticket(t) {assert(m.isPre);}
+	bool Start(Guard* guard,uint64 t,const tt_arc_scratch_result&,const tt_arc_telemetry_result&) {
+		assert(guard && t==ticket && !started);++firmwareStarts;
+		if (!Step(PIONEER_RECOVERY_STAGE_ASIC_RESET) || failFirmwareStart) return false;
+		started=true;return true;
+	}
+	bool Resume(Guard* guard,uint64 t,unsigned) {
+		assert(guard && t==ticket && started && !retired);++firmwareResumes;
+		return !resetTimeout && !resumeResetTimeout;
+	}
+	status_t Retire(Guard* guard,uint64 t,const PioneerDriverRecoveryProof& p) {
+		assert(guard && t==ticket && started && !retired && !ownerIo.postResetDisposeComplete && p.ReadyToRetireOneOwner()
+			&& p.reset_generation==t && p.firmware_generation==t);++firmwareRetires;
+		if (failFirmwareRetire) return B_DEV_NOT_READY;
+		retired=true;return B_OK;
+	}
+	bool Retired() const {return retired;}
+};
+#endif
 #ifdef TEST_LIVE_TAKEOVER
 struct FakeDataflowService { bool ready=true,faulted=true;bool StoppedResetReady()const{return ready;}
 	bool Faulted()const{return faulted;} };
@@ -213,6 +258,10 @@ struct PioneerStoreContext {
 	tt_pioneer_pcie_trace_sample qualificationTrace[PIONEER_PCIE_TRACE_SAMPLES]={};
 #endif
 	PioneerPostResetMapping* recoveryMapping=nullptr;bool recoveryAttempted=false,dispatchOwnerRetained=true;
+#ifdef TEST_FIRMWARE_RESET
+	PioneerPostResetMapping* recoveryPreResetMapping=nullptr;
+	PioneerFirmwareRecoveryOwner<PioneerSessionIO,pioneer_driver_recovery_guard_v2_info>* recoveryFirmwareResetOwner=nullptr;
+#endif
 	PioneerDriverRecoveryProof recoveryFinishProof{};uint64 recoveryFinishTicket=0;bool recoveryFinishPending=false;
 	PioneerPciePayloadSnapshot recoveryPayload{};bool recoveryFinishNeedsAudit=false;
 	uint64 recoveryPrepareTicket=0;bool recoveryPreparePending=false;
@@ -235,7 +284,11 @@ struct PioneerStoreContext {
 	struct {bool config_attempted=true,map_attempted=true;} transaction;
 	FakeProfile profile;FakePciResult pci;PioneerSessionIO io;
 	FakePciResult& Pci(){return pci;}
-	~PioneerStoreContext(){contextDeleted++;delete recoveryMapping;}
+	~PioneerStoreContext(){contextDeleted++;delete recoveryMapping;
+#ifdef TEST_FIRMWARE_RESET
+		delete recoveryFirmwareResetOwner;delete recoveryPreResetMapping;
+#endif
+	}
 };
 #ifdef TEST_GRAPH_RECOVERY
 static bool PioneerQ35ReleaseSharedRoleAfterReset(FakeSharedRoleOwner*& owner,
@@ -296,6 +349,10 @@ static void Setup() {
 	ticketPending=invalidTicket=guardV2Missing=false;
 	validateCalls=invalidateOnValidate=0;
 	resetTimeout=resumeResetTimeout=false;resetResumeWaits=0;
+#ifdef TEST_FIRMWARE_RESET
+	mappingCreates=preOpens=preProbes=firmwareStarts=firmwareResumes=firmwareRetires=0;
+	failPreOpen=failPreProbe=failFirmwareStart=failFirmwareRetire=false;
+#endif
 #ifdef TEST_GRAPH_RECOVERY
 	failGraphRelease=failSharedRoleRelease=graphReleased=false;graphReleases=sharedRoleReleases=0;
 #endif
@@ -307,6 +364,67 @@ static void Setup() {
 	sRuntimeOwner=new PioneerProbeCookie;sRuntimeOwner->context=new PioneerStoreContext;sRuntimeOwner->finalFreeRetained=true;
 }
 static void Cleanup(){if(sRuntimeOwner){delete sRuntimeOwner->context;delete sRuntimeOwner;sRuntimeOwner=nullptr;}}
+#ifdef TEST_FIRMWARE_RESET
+int main(){
+	PioneerProbeCookie inspector;
+	Setup();auto r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && !sColdRecoveryRequired && completeCount==1 && !abortCount);
+	assert(preOpens==1 && preProbes==1 && firmwareStarts==1 && firmwareResumes==1 && firmwareRetires==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
+	Setup();resetTimeout=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.detail==BLACKHOLE_ASIC_RESET_TIMEOUT && sRuntimeOwner->context->recoveryResetPending
+		&& sRuntimeOwner->context->recoveryPreResetMapping && sRuntimeOwner->context->recoveryFirmwareResetOwner
+		&& ticketPending && !abortCount && firmwareStarts==1 && firmwareResumes==1);
+	r=Request();assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK
+		&& r.operation_status==B_DEV_NOT_READY && firmwareStarts==1 && firmwareResumes==2);
+	resetTimeout=false;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && firmwareStarts==1 && firmwareResumes==3 && firmwareRetires==1);
+	Setup();firmwareNotReady=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& sRuntimeOwner->context->recoveryFirmwarePending && sRuntimeOwner->context->recoveryFirmwareResetOwner
+		&& firmwareStarts==1 && firmwareResumes==1 && !firmwareRetires);
+	firmwareNotReady=false;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& firmwareStarts==1 && firmwareResumes==1 && firmwareRetires==1 && !sRuntimeOwner);
+	Setup();failStage=PIONEER_RECOVERY_STAGE_MAPPING;retryableMappingFailure=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& sRuntimeOwner->context->recoveryMappingPending && sRuntimeOwner->context->recoveryFirmwareResetOwner
+		&& firmwareStarts==1 && firmwareResumes==1 && !firmwareRetires);
+	failStage=0;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& firmwareStarts==1 && firmwareResumes==1 && firmwareRetires==1 && !sRuntimeOwner);
+	Setup();invalidateOnValidate=2;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& sRuntimeOwner->context->recoveryResetPending && firmwareStarts==1 && firmwareResumes==1
+		&& ticketPending && !abortCount && sColdRecoveryRequired);
+	const auto afterCompletedReset=trace;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& trace==afterCompletedReset && firmwareStarts==1 && firmwareResumes==1);
+	Cleanup();
+	Setup();resetTimeout=true;r=Request();assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK);
+	invalidTicket=true;const auto before=trace;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& trace==before && firmwareStarts==1 && firmwareResumes==1 && sColdRecoveryRequired);
+	Cleanup();
+	for (unsigned fault=0;fault<4;fault++) {
+		Setup();if (fault==0) failPreOpen=true;else if (fault==1) failPreProbe=true;
+		else if (fault==2) failFirmwareStart=true;else failStage=PIONEER_RECOVERY_STAGE_HOST_DMA;
+		r=Request();assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK
+			&& r.operation_status==B_DEV_NOT_READY && sRuntimeOwner && sColdRecoveryRequired
+			&& sRuntimeOwner->context->recoveryPreResetMapping && !firmwareRetires && abortCount==1);
+		Cleanup();
+	}
+	Setup();failFirmwareRetire=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& sRuntimeOwner && sRuntimeOwner->context->recoveryFirmwareResetOwner && firmwareRetires==1
+		&& sColdRecoveryRequired && abortCount==1 && !completeCount);
+	Cleanup();
+	puts("PASS firmware reset wired into actual recovery sequence: one-shot resume, proof retirement and fault retention; SIMULATED ONLY");
+}
+#else
 int main(){
 	PioneerProbeCookie inspector;
 #ifdef TEST_RECOVERY_DISABLED
@@ -705,3 +823,4 @@ int main(){
 	puts("PASS actual recovery operation: ordered success, every injected stage failure stays cold, owner/FD/generation admission; SIMULATED HARDWARE ONLY");
 #endif
 }
+#endif

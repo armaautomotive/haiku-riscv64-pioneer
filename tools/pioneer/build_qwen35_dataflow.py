@@ -13,7 +13,7 @@ GRAPH_TRIAL_TAG = '2026112100020168'
 RECOVERY_QUALIFICATION_TAG = '2026112300030001'
 
 
-def verify_kernel_stack_budget(driver_directory, qualification=False):
+def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_recovery=False):
     usage_file = driver_directory / 'tenstorrent_pci_probe.su'
     entries = []
     for line in usage_file.read_text().splitlines():
@@ -25,6 +25,27 @@ def verify_kernel_stack_budget(driver_directory, qualification=False):
         except ValueError:
             continue
         entries.append((fields[0], frame, fields[-1]))
+
+    if firmware_recovery:
+        markers = ('Qwen35Recovery', 'PioneerFirmware', 'PioneerPostReset',
+                   'PioneerQ38ArcQueue', 'BlackholeArc', 'PioneerPciePayload',
+                   'PioneerRecoveryRootCommand', 'PioneerPreReset', 'ProbeControl')
+        selected = [(name, frame, kind) for name, frame, kind in entries
+                    if any(marker in name for marker in markers)]
+        for required in ('Qwen35RecoveryRequest(', 'Qwen35RecoveryFinishLocked(',
+                         'PioneerFirmwareRecoveryOwner<OwnerIO, Guard>::Start(',
+                         'PioneerFirmwareRecoveryOwner<OwnerIO, Guard>::Resume(',
+                         'PioneerFirmwareRecoveryOwner<OwnerIO, Guard>::Retire(',
+                         'PioneerFirmwareReset<IO>::Start(', 'ProbeControl('):
+            if not any(required in name for name, _, _ in selected):
+                raise RuntimeError('missing firmware recovery stack frame: ' + required)
+        if any(kind != 'static' for _, _, kind in selected):
+            raise RuntimeError('unbounded firmware recovery stack frame')
+        bound = sum(frame for _, frame, _ in selected) + 4096
+        if bound > 18432:
+            raise RuntimeError(f'firmware recovery stack envelope is {bound} bytes')
+        print(f'qwen35_firmware_recovery_stack_envelope_bytes={bound}/18432 '
+              '(sum of selected frames plus 4096-byte allowance; not a whole-program proof)')
 
     if qualification:
         markers = ('Recovery', 'PostReset', 'AsicReset', 'BlackholeArc',
@@ -344,7 +365,8 @@ def main():
         driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL'] = '1'
     subprocess.run(['sh', HERE / 'build_qwen38_banks_driver.sh', build, driver],
                    check=True, env=driver_env)
-    verify_kernel_stack_budget(driver, args.build_recovery_qualification)
+    verify_kernel_stack_budget(driver, args.build_recovery_qualification,
+                               args.compile_recovery_prototype and not args.compile_device_dispatch_prototype)
 
     cxx = build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-g++'
     objects = build / 'objects/haiku/riscv64'
