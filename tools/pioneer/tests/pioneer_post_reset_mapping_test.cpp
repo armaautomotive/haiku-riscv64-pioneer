@@ -160,7 +160,7 @@ int main() {
 	hdmaPage[0x100/4]=1;
 	assert(dbiDmaBusy.Open() && dbiDmaBusy.ProbeFirmware(3,arc)
 		&& !dbiDmaBusy.RestoreInternalDbi(dbiSnapshot,0x2040) && mapCalls==7
-		&& dbiDmaBusy.dbiUnsafe && dbiDmaBusy.dbiDiagnostic==0x200000 && !dbiDmaBusy.Close());
+		&& dbiDmaBusy.dbiUnsafe && dbiDmaBusy.dbiDiagnostic==0x254001 && !dbiDmaBusy.Close());
 	ResetFake();PioneerPostResetMapping dbiTlbLost(profile);
 	assert(dbiTlbLost.Open() && dbiTlbLost.ProbeFirmware(3,arc));blockDbiTlbRestore=true;
 	assert(!dbiTlbLost.RestoreInternalDbi(dbiSnapshot,0x2040) && mapCalls==7
@@ -214,15 +214,15 @@ int main() {
 	cardBars[0]=12;assert(retained.Close());
 	ResetFake();PioneerPostResetMapping dmaBusy(profile);
 	assert(dmaBusy.Open() && dmaBusy.ProbeFirmware(3,arc) && dmaBusy.Audit(r));
-	hdmaPage[0x100/4]=1;assert(!dmaBusy.AuditHostDma());
+	hdmaPage[0x100/4]=1;assert(!dmaBusy.AuditHostDma() && dmaBusy.dmaDiagnostic==0x54001);
 	assert(dmaBusy.Close() && tlbPage[0x960/4]==10);
 	ResetFake();PioneerPostResetMapping pending(profile);
 	assert(pending.Open() && pending.ProbeFirmware(3,arc) && pending.Audit(r));
-	fakePciPendingPeer=0;assert(!pending.AuditHostDma());
+	fakePciPendingPeer=0;assert(!pending.AuditHostDma() && pending.dmaDiagnostic==0x40020);
 	assert(pending.Close());
 	ResetFake();PioneerPostResetMapping rootPending(profile);
 	assert(rootPending.Open() && rootPending.ProbeFirmware(3,arc) && rootPending.Audit(r));
-	fakePciPendingPeer=1;assert(!rootPending.AuditHostDma());
+	fakePciPendingPeer=1;assert(!rootPending.AuditHostDma() && rootPending.dmaDiagnostic==0x48020);
 	assert(rootPending.Close());
 	ResetFake();PioneerPostResetMapping changingDma(profile);
 	assert(changingDma.Open() && changingDma.ProbeFirmware(3,arc) && changingDma.Audit(r));

@@ -48,7 +48,9 @@ def exercise(suffix, script, candidate_hash):
         restore = restore.replace('= 0:1 ]', f'= {os.getuid()}:1 ]').replace('= 0:700 ]', f'= {os.getuid()}:700 ]')
         for old, path in ((common.OLD_DRIVER, stage/'restore.incoming'), (common.NEW_GUARD, guard),
                           (common.ADMIN, home/'pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload'),
-                          (common.CANDIDATE, stage/'candidate'), (candidate_hash, stage/'candidate')):
+                          (common.CANDIDATE, stage/'candidate'),
+                          ('cabebd7d42b60106c6d97216353400bbfd76a58b0f982b24389715dbc95f3e70', stage/'candidate'),
+                          (candidate_hash, stage/'candidate')):
             restore = restore.replace(old, hashlib.sha256(path.read_bytes()).hexdigest())
         restore_path = root/'restore.sh'
         common.put(restore_path, restore)
@@ -62,6 +64,8 @@ def main():
     exercise('-b', 'pioneer_qwen35_recovery_qualify_retry.sh', common.CANDIDATE)
     exercise('-c', 'pioneer_qwen35_recovery_qualify_firmware.sh',
              'cabebd7d42b60106c6d97216353400bbfd76a58b0f982b24389715dbc95f3e70')
+    exercise('-d', 'pioneer_qwen35_recovery_qualify_audit.sh',
+             '1326f14e7d2f5997b2f2048e2308fc51747b46b949e6cd7417a78a474b61b292')
     print('PASS existing-guard qualifications and retained failure; SIMULATED HOST ONLY')
 
 

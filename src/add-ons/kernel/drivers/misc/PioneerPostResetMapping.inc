@@ -28,7 +28,7 @@ struct PioneerPostResetMapping : ConfigIO {
 	bool attempted=false,ready=false,savedValid=false,modified=false,dmaModified=false;
 	bool mappingAllocationFailed=false;
 	bool firmwareAttempted=false,firmwareRetryable=false,firmwareReady=false,topologyReady=false;
-	uint32 firmwareDiagnostic=0,dbiDiagnostic=0;
+	uint32 firmwareDiagnostic=0,dbiDiagnostic=0,dmaDiagnostic=0;
 	bool queueAttempted=false,queueReady=false,queueUnsafe=false;
 	bool fleetAudited=false,dmaAudited=false;
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
@@ -234,7 +234,7 @@ struct PioneerPostResetMapping : ConfigIO {
 			return false;
 		}
 		dbiDiagnostic=0x200000; // host DMA audit
-		if (!AuditHostDma()) return false;
+		if (!AuditHostDma()) { dbiDiagnostic|=dmaDiagnostic&0x0fffff; return false; }
 		dbiDiagnostic=0x300000; // stable topology and PCI route
 		if (!SourceStable()) return false;
 		// The DMA audit uses slot 0 read-only. Restore its fresh post-reset
@@ -316,33 +316,45 @@ struct PioneerPostResetMapping : ConfigIO {
 	// subsequent resource retirement succeed.
 	bool AuditHostDma() {
 		dmaAudited=false;
+		dmaDiagnostic=0x10000; // fleet, source, and PCI identity
 		if (!fleetAudited || !SourceStable() || !savedValid
 			|| (PioneerRead32(node+0x44/4)&0xfff)!=2
 			|| !BlackholeHostSourceRoute(topology.source)) return false;
 		dmaModified=true;
+		dmaDiagnostic=0x20000; // configure and verify the fixed DBI TLB
 		for (unsigned i=0;i<3;i++) PioneerWrite32(tlb-3+i,BlackholeHostDbiTlbWord(i));
 		for (unsigned i=0;i<3;i++)
 			if (PioneerRead32(tlb-3+i)!=BlackholeHostDbiTlbWord(i)) return false;
 		uint32 firstStatus[2]={},firstDma[4]={};
 		for (unsigned sample=0;sample<3;sample++) {
+			dmaDiagnostic=0x30000 | sample;
 			if (!PciReady()) return false;
 			for (unsigned peer=0;peer<2;peer++) {
 				uint32 status=0;
 				if (!BlackholeHostPcieStatus(*this,peer,status)
-					|| (sample && status!=firstStatus[peer])) return false;
+					|| (sample && status!=firstStatus[peer])) {
+					dmaDiagnostic=0x40000 | (peer<<15) | (sample<<13) | (status&0x1fff);
+					return false;
+				}
 				if (!sample) firstStatus[peer]=status;
 			}
 			for (unsigned i=0;i<4;i++) {
 				const uint32 value=PioneerRead32(hdma+BlackholeHostHdmaOffset(i)/4);
 				if ((i%2==0 && value!=0) || (i%2==1 && value!=0 && value!=3)
-					|| (sample && value!=firstDma[i])) return false;
+					|| (sample && value!=firstDma[i])) {
+					dmaDiagnostic=0x50000 | (i<<13) | (sample<<11)
+						| ((value & ~0x3ffU)?0x400:0) | (value&0x3ff);
+					return false;
+				}
 				if (!sample) firstDma[i]=value;
 			}
 			if (sample<2) PostResetAuditPause();
 		}
+		dmaDiagnostic=0x60000; // final reset and source continuity
 		uint32 resetState=0;
 		dmaAudited=ReadPostResetState(resetState) && resetState==PIONEER_POST_RESET_HELD
 			&& SourceStable();
+		if (dmaAudited) dmaDiagnostic=0;
 		return dmaAudited;
 	}
 	bool Close() {
