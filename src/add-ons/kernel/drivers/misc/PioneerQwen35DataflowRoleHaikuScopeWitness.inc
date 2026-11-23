@@ -185,8 +185,9 @@ public:
     // stop/hold path before permitting any physical reset release.
     bool ProveRoleReleaseSafe(PioneerSessionIO&,unsigned) const { return false; }
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
-    // Dedicated images discard old private RAM and therefore need a proven
-    // stop/reset/reinitialization route for every partial fleet launch.
+    // This independent dedicated-takeover proof must cover exclusive
+    // ownership, role/compute stop and hold, and reset/reinitialization for
+    // every partial launch; it does not rely on snapshot-path recovery.
     bool ProveRoleDedicatedReleaseSafe(PioneerSessionIO&,unsigned) const { return false; }
 #endif
     // A reset read alone cannot rule out a delayed posted release write. This

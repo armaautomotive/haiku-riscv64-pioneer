@@ -19,7 +19,11 @@ struct FleetPciTestScope {
     bool faultAudit=false,faultAck=false;
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     bool dedicatedRelease=false;
-    bool ProveRoleDedicatedReleaseSafe(PioneerSessionIO&,unsigned) const { return dedicatedRelease; }
+    mutable unsigned dedicatedChecks=0;
+    unsigned dedicatedFailAt=UINT32_MAX;
+    bool ProveRoleDedicatedReleaseSafe(PioneerSessionIO&,unsigned) const {
+        return dedicatedRelease && dedicatedChecks++!=dedicatedFailAt;
+    }
 #endif
     bool ProveExclusiveRewrite(PioneerSessionIO&) const { return gLocked && exclusive; }
     bool ProveRoleMemoryReadSafe(PioneerSessionIO&,unsigned,unsigned) const { return held && stable && read; }
@@ -584,7 +588,14 @@ int main()
         bool dedicatedAttempted=false;
         assert(!io.ReleaseDedicatedCore(4,dedicatedAttempted) && !dedicatedAttempted
             && context.io.sharedResetWrites==prior);
+        // The dedicated takeover has its own complete release/recovery
+        // contract; it must not require the legacy snapshot release hook.
+        scope.release=false;
         scope.dedicatedRelease=true;
+        scope.dedicatedChecks=0;scope.dedicatedFailAt=1;
+        assert(!io.ReleaseDedicatedCore(4,dedicatedAttempted) && !dedicatedAttempted
+            && context.io.sharedResetWrites==prior); // proof lost just before release
+        scope.dedicatedFailAt=UINT32_MAX;
         assert(io.ReleaseDedicatedCore(4,dedicatedAttempted) && dedicatedAttempted
             && context.io.sharedResetWrites==prior+1 && context.io.reset==0x6000);
         assert(!io.ReleaseDedicatedCore(4,dedicatedAttempted));
