@@ -262,12 +262,24 @@ struct PioneerSessionIO {
     void Pause() {}
 };
 struct PioneerResidentBanks { static constexpr uint64 Total=123456; };
+#ifdef TEST_FLEET_INSPECTION_CONTROL
+struct FakeInspectionDispatch { unsigned prepared=0;bool bootAttempted=false,booted=false,closed=false,unsafe=false; };
+#endif
 struct PioneerStoreContext {
     PioneerSessionIO io; bool bankStorageOnly=true; uint64 bytes=PioneerResidentBanks::Total;
 #ifdef TEST_SHARED_POST_RESET
     void* recoveryMapping=nullptr;
 #endif
     FakeService* qwen35DataflowService=nullptr; FakeGraph* qwen35GraphOwner=nullptr;
+#ifdef TEST_FLEET_INSPECTION_CONTROL
+    bool initialized=true,dispatchOwnerRetained=false,q38DispatchRoutes=false,qwen35DedicatedFleet=false;
+    bool qwen35FleetInspectionAttempted=false;
+    unsigned uploadedPages=0;
+    FakeInspectionDispatch dispatch;
+    FakeInspectionDispatch* q38Dispatch=nullptr;
+    void* qwen35DataflowMemory=nullptr;
+    bool Unsafe() const { return false; }
+#endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
     PioneerQwen35SharedRoleBinding* qwen35SharedRoleBinding=nullptr;
 #endif
@@ -289,6 +301,9 @@ static PioneerProbeCookie* sRuntimeOwner=nullptr;
 static PioneerProbeCookie* sQwen35ExclusiveCookie=nullptr;
 static bool sColdRecoveryRequired=false,sReloadQuiesced=false,sBankStorageOnly=true;
 static uint64 sReloadGeneration=42;
+#ifdef TEST_FLEET_INSPECTION_CONTROL
+static unsigned sOpenCookies=1;
+#endif
 static int32_t sLock=1;
 static bool gLocked=false,gReleaseFail=false;
 static bool gAllowWrite=false;

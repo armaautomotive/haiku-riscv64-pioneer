@@ -71,6 +71,12 @@ case "$stage" in
 	/boot/home/pioneer-q35-recovery-qualify-20261123-k)
 		candidateTag=2026112300030002
 		candidateSHA=638b3a74449e0574ccfe11e0ba078632f1c7f19c3e61d0ef64326ab04a2b5c15 ;;
+	/boot/home/pioneer-q35-fleet-inspect-20261123-l)
+		candidateTag=2026112300030003
+		candidateSHA=ed99af51ccb5b6c63a6463aea98ff08588226a58afdec846985cf04efecc5844 ;;
+	/boot/home/pioneer-q35-fleet-inspect-20261123-m)
+		candidateTag=2026112300030004
+		candidateSHA=fb891e48d4b32b8aeb83a2c5327a9bdc0cac7e9d2e9b2d51fe99da80f4905df6 ;;
 	*) exit 2;;
 esac
 test -d "$stage" && test ! -L "$stage" && [ "$(stat -c '%u:%a' "$stage")" = 0:700 ] || fail stage

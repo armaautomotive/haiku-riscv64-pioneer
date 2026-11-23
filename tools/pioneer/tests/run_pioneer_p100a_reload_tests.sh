@@ -23,6 +23,8 @@ awk '/PIONEER_QWEN35_LIVE_RESET_CLIENT_BEGIN/ {copying=1;next} /PIONEER_QWEN35_L
  "$directory/../pioneer_qwen35_dataflow.cpp" > "$temporary/pioneer_live_reset_client.inc"
 awk '/PIONEER_QWEN35_QUALIFY_CLIENT_BEGIN/ {copying=1;next} /PIONEER_QWEN35_QUALIFY_CLIENT_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
  "$directory/../pioneer_qwen35_dataflow.cpp" > "$temporary/pioneer_qualify_client.inc"
+awk '/PIONEER_QWEN35_FLEET_INSPECTION_CLIENT_BEGIN/ {copying=1;next} /PIONEER_QWEN35_FLEET_INSPECTION_CLIENT_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+ "$directory/../pioneer_qwen35_dataflow.cpp" > "$temporary/pioneer_fleet_inspection_client.inc"
 for pair in CLOSE:close END:end; do
  section=${pair%%:*}; name=${pair#*:}
  awk -v begin="PIONEER_QWEN35_${section}_CLIENT_BEGIN" -v end="PIONEER_QWEN35_${section}_CLIENT_END" \
@@ -89,6 +91,18 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  -I"$temporary" "$directory/pioneer_qwen35_recovery_qualification_routing_test.cpp" -o "$temporary/qualification-routing-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/qualification-routing-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DPIONEER_QWEN35_FLEET_INSPECTION_QUALIFY -I"$temporary" "$directory/pioneer_qwen35_recovery_qualification_routing_test.cpp" -o "$temporary/fleet-inspection-routing-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fleet-inspection-routing-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -I"$directory/role_haiku_stubs" "$directory/pioneer_qwen35_fleet_inspection_control_test.cpp" -o "$temporary/fleet-inspection-control-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fleet-inspection-control-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_qwen35_active_root_lease_test.cpp" -o "$temporary/active-root-lease-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/active-root-lease-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -I"$temporary" "$directory/pioneer_qwen35_fleet_inspection_client_test.cpp" -o "$temporary/fleet-inspection-client-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fleet-inspection-client-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I"$temporary" "$directory/pioneer_qwen35_recovery_qualification_guard_test.cpp" -o "$temporary/qualification-guard-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/qualification-guard-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
@@ -125,4 +139,5 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/idl
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -DTEST_RECOVERY_DISABLED -I"$temporary" "$directory/pioneer_qwen35_recovery_run_test.cpp" -o "$temporary/recovery-disabled-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/recovery-disabled-test"
+python3 "$directory/pioneer_qwen35_fleet_inspection_qualify_script_test.py"
 printf 'Offline reload guard evidence retained at %s\n' "$temporary"
