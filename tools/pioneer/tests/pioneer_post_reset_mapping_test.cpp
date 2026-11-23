@@ -219,10 +219,21 @@ int main() {
 	assert(delayed.Open() && delayed.ProbeFirmware(3,arc) && sleeps==2 && delayed.Close());
 	ResetFake();scratchPage[(0x400+2*4)/4]=0;PioneerPostResetMapping notReady(profile);
 	assert(notReady.Open() && !notReady.ProbeFirmware(2,arc)
-		&& sleeps==1 && arc.state==TT_ARC_SCRATCH_NOT_READY && !notReady.Audit(r) && notReady.Close());
+		&& sleeps==1 && arc.state==TT_ARC_SCRATCH_NOT_READY && notReady.FirmwareRetryable()
+		&& !notReady.Audit(r));
+	assert(!notReady.ProbeFirmware(2,arc) && notReady.FirmwareRetryable() && sleeps==2);
+	scratchPage[(0x400+2*4)/4]=5;
+	assert(notReady.ProbeFirmware(2,arc) && !notReady.FirmwareRetryable() && notReady.Close());
+	ResetFake();scratchPage[(0x400+2*4)/4]=0;PioneerPostResetMapping drift(profile);
+	assert(drift.Open() && !drift.ProbeFirmware(1,arc) && drift.FirmwareRetryable());
+	tlbPage[0x96c/4]=6;
+	assert(!drift.ProbeFirmware(1,arc) && !drift.FirmwareRetryable());
+	tlbPage[0x96c/4]=7;
+	assert(!drift.ProbeFirmware(1,arc) && drift.Close());
 	ResetFake();scratchPage[(0x400+2*4)/4]=0;sleepFails=true;
 	PioneerPostResetMapping interrupted(profile);
-	assert(interrupted.Open() && !interrupted.ProbeFirmware(3,arc) && sleeps==1 && interrupted.Close());
+	assert(interrupted.Open() && !interrupted.ProbeFirmware(3,arc) && sleeps==1
+		&& !interrupted.FirmwareRetryable() && !interrupted.ProbeFirmware(3,arc) && interrupted.Close());
 	ResetFake();scratchPage[(0x400+4*4)/4]=2;PioneerPostResetMapping fwError(profile);
 	assert(fwError.Open() && !fwError.ProbeFirmware(1,arc) && fwError.Close());
 	ResetFake();csmPage[0x1000/4]=0x13000000;PioneerPostResetMapping wrongFirmware(profile);
@@ -231,7 +242,7 @@ int main() {
 	ResetFake();PioneerPostResetMapping badRestore(profile);
 	assert(badRestore.Open());blockTlbRestore=true;
 	assert(!badRestore.ProbeFirmware(3,arc) && arc.state==TT_ARC_SCRATCH_RESTORE_FAILED
-		&& !sleeps && !badRestore.Close() && !unmapCalls);
+		&& !badRestore.FirmwareRetryable() && !sleeps && !badRestore.Close() && !unmapCalls);
 	blockTlbRestore=false;assert(badRestore.Close());
 	puts("PASS post-reset ARC scratch/telemetry, fleet mapping and DMA gates; SIMULATED MMIO ONLY");
 }

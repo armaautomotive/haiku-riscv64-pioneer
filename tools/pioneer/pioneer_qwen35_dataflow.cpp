@@ -425,6 +425,8 @@ static bool ResetStoppedRewrite(int fd,bool force)
 				&& reset.new_generation && verifyIdle(reset.new_generation,true);
 		const bool pending=reset.operation_status==B_DEV_NOT_READY
 			&& ((reset.stage==PIONEER_RECOVERY_STAGE_ASIC_RESET && reset.detail==BLACKHOLE_ASIC_RESET_TIMEOUT)
+				|| (reset.stage==PIONEER_RECOVERY_STAGE_FIRMWARE
+					&& reset.detail==PIONEER_RECOVERY_DETAIL_FIRMWARE_WAIT)
 				|| reset.stage==PIONEER_RECOVERY_STAGE_OWNER_RELEASE);
 		if (!pending || attempt==3 || snooze(1000000)!=B_OK) return false;
 	}

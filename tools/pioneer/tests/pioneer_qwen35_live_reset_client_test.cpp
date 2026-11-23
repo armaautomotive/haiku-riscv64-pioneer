@@ -37,22 +37,27 @@ static bool Call(int fd,uint32_t operation,void* output,size_t bytes) {
         r.operation_status=B_DEV_NOT_READY;r.stage=PIONEER_RECOVERY_STAGE_OWNER_RELEASE;return true;
     }
     if (mode==10) { r.operation_status=B_DEV_NOT_READY;r.stage=PIONEER_RECOVERY_STAGE_FIRMWARE;return true; }
+    if ((mode==11 && !attempt) || mode==12) {
+        r.operation_status=B_DEV_NOT_READY;r.stage=PIONEER_RECOVERY_STAGE_FIRMWARE;
+        r.detail=PIONEER_RECOVERY_DETAIL_FIRMWARE_WAIT;return true;
+    }
     r.operation_status=B_OK;r.stage=PIONEER_RECOVERY_STAGE_COMPLETE;r.build_tag=0x123;
     r.new_generation=mode==6?5:4;return true;
 }
 static int snooze(int delay) { assert(delay==1000000);++delays;return B_OK; }
 #include "pioneer_live_reset_client.inc"
 int main() {
-    for (unsigned forced=0;forced<2;forced++) for (mode=1;mode<=10;mode++) {
+    for (unsigned forced=0;forced<2;forced++) for (mode=1;mode<=12;mode++) {
         forceMode=forced;
         statusCalls=resetCalls=delays=0;
         const bool success=ResetStoppedRewrite(10,forceMode);
-        assert(success==(mode==1 || mode==2 || mode==3 || mode==7));
-        if (mode==2 || mode==7) assert(resetCalls==2 && delays==1);
+        assert(success==(mode==1 || mode==2 || mode==3 || mode==7 || mode==11));
+        if (mode==2 || mode==7 || mode==11) assert(resetCalls==2 && delays==1);
         if (mode==3 || mode==4) assert(resetCalls==1 && !delays);
         if (mode==5) assert(!resetCalls);
         if (mode==8) assert(resetCalls==4 && delays==3);
         if (mode==10) assert(resetCalls==1 && !delays);
+        if (mode==12) assert(resetCalls==4 && delays==3);
     }
     std::puts("PASS live reset client: retained ticket retry, lost reply, generation and idle checks; SIMULATED ONLY");
 }

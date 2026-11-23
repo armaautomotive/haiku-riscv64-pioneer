@@ -27,6 +27,7 @@ using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uin
 constexpr int B_OK=0,B_BAD_VALUE=-1,B_NOT_ALLOWED=-2,B_BUSY=-3,B_DEV_NOT_READY=-4,B_NO_MEMORY=-5;
 static unsigned failStage=0,abortCount=0,completeCount=0,contextDeleted=0,cookieDeleted=0;
 static bool failPayloadRead=false,failPayloadRestore=false,failFirmwareQueue=false,failDbi=false;
+static bool firmwareNotReady=false;
 static bool ticketPending=false,invalidTicket=false,guardV2Missing=false;
 static unsigned validateCalls=0,invalidateOnValidate=0;
 static bool resetTimeout=false,resumeResetTimeout=false;
@@ -137,9 +138,14 @@ static bool PioneerPostResetPciFinish(PioneerSessionIO&,const FakePciResult&,uns
 	stage=2;return Step(PIONEER_RECOVERY_STAGE_PCI_IDLE);
 }
 struct PioneerPostResetMapping {
+	bool firmwareRetryable=false;
 	explicit PioneerPostResetMapping(FakeProfile&) {}
 	bool Open(){return Step(PIONEER_RECOVERY_STAGE_MAPPING);}
-	bool ProbeFirmware(unsigned,tt_arc_scratch_result& r){r.state=2;return Step(PIONEER_RECOVERY_STAGE_FIRMWARE);}
+	bool ProbeFirmware(unsigned,tt_arc_scratch_result& r){
+		r.state=2;firmwareRetryable=firmwareNotReady;
+		return Step(PIONEER_RECOVERY_STAGE_FIRMWARE) && !firmwareNotReady;
+	}
+	bool FirmwareRetryable() const {return firmwareRetryable;}
 	bool RestoreInternalDbi(const PioneerRecoveryDbiSnapshot& s,uint32 control) {
 		assert(s.valid && s.mps==(control&PIONEER_RECOVERY_DBI_MPS_MASK));return !failDbi;
 	}
@@ -157,6 +163,7 @@ struct PioneerStoreContext {
 	PioneerDriverRecoveryProof recoveryFinishProof{};uint64 recoveryFinishTicket=0;bool recoveryFinishPending=false;
 	PioneerPciePayloadSnapshot recoveryPayload{};bool recoveryFinishNeedsAudit=false;
 	BlackholeAsicResetResult recoveryResetResult{};uint64 recoveryResetTicket=0;bool recoveryResetPending=false;
+	uint64 recoveryFirmwareTicket=0;bool recoveryFirmwarePending=false;
 #ifdef TEST_GRAPH_RECOVERY
 	FakeGraphOwner graphOwner;FakeGraphOwner* qwen35GraphOwner=&graphOwner;
 	FakeSharedRoleOwner sharedRoleOwner;FakeSharedRoleOwner* qwen35SharedRoleBinding=&sharedRoleOwner;
@@ -220,6 +227,7 @@ static tt_pioneer_recovery_run Request(){tt_pioneer_recovery_run r={};r.version=
 static void Setup() {
 	failStage=abortCount=completeCount=contextDeleted=cookieDeleted=0;trace.clear();
 	failPayloadRead=failPayloadRestore=failFirmwareQueue=failDbi=false;
+	firmwareNotReady=false;
 	ticketPending=invalidTicket=guardV2Missing=false;
 	validateCalls=invalidateOnValidate=0;
 	resetTimeout=resumeResetTimeout=false;resetResumeWaits=0;
@@ -261,6 +269,27 @@ int main(){
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
 		&& !sRuntimeOwner && !sColdRecoveryRequired && resetResumeWaits==2
 		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
+	Setup();firmwareNotReady=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.stage==PIONEER_RECOVERY_STAGE_FIRMWARE && r.detail==PIONEER_RECOVERY_DETAIL_FIRMWARE_WAIT && sRuntimeOwner
+		&& sRuntimeOwner->context->recoveryFirmwarePending && !sRuntimeOwner->context->recoveryResetPending
+		&& sRuntimeOwner->context->recoveryFirmwareTicket==9 && ticketPending && !abortCount && sColdRecoveryRequired);
+	r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& sRuntimeOwner && sRuntimeOwner->context->recoveryFirmwarePending && ticketPending && !abortCount);
+	firmwareNotReady=false;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && !sColdRecoveryRequired && completeCount==1 && !abortCount
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_PCI_RESTORE)==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_MAPPING)==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_FIRMWARE)==3);
+	Setup();firmwareNotReady=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY);
+	invalidTicket=true;const auto firmwareTrace=trace;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& trace==firmwareTrace && sRuntimeOwner && sColdRecoveryRequired && ticketPending);
+	Cleanup();
 	Setup();resetTimeout=true;r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY);
 	invalidTicket=true;const auto resetTrace=trace;r=Request();
@@ -390,6 +419,16 @@ int main(){
 		&& !sRuntimeOwner && !fault->context && !sColdRecoveryRequired && retainCalls==1
 		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
 	sQwen35ExclusiveCookie=nullptr;delete fault;
+	// If the live client exits while firmware is still starting, a new
+	// inspector can resume the retained ticket without reissuing reset.
+	Setup();fault=sRuntimeOwner;fault->finalFreeRetained=false;sQwen35ExclusiveCookie=fault;
+	firmwareNotReady=true;r=Request();
+	assert(Qwen35RecoveryForce(fault,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& fault->context->recoveryFirmwarePending && ticketPending);
+	fault->finalFreeRetained=true;sQwen35ExclusiveCookie=nullptr;firmwareNotReady=false;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && !sColdRecoveryRequired && cookieDeleted==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
 	// A retained graph is a fault even if its service has not changed phase.
 	Setup();fault=sRuntimeOwner;fault->finalFreeRetained=false;sQwen35ExclusiveCookie=fault;
 	fault->context->service.ready=true;fault->context->service.faulted=false;

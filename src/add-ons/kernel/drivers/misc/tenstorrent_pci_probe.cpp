@@ -3945,6 +3945,8 @@ struct PioneerStoreContext {
 	BlackholeAsicResetResult recoveryResetResult={};
 	uint64 recoveryResetTicket=0;
 	bool recoveryResetPending=false;
+	uint64 recoveryFirmwareTicket=0;
+	bool recoveryFirmwarePending=false;
 	PioneerDriverRecoveryProof recoveryFinishProof={};
 	uint64 recoveryFinishTicket=0;
 	bool recoveryFinishPending=false;
@@ -11288,16 +11290,21 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	PioneerStoreContext* context=owner->context;
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	if (context->recoveryResetPending && (context->recoveryFinishPending
-		|| !context->recoveryAttempted || !context->recoveryMapping || !context->recoveryPayload.valid))
+		|| context->recoveryFirmwarePending || !context->recoveryAttempted
+		|| !context->recoveryMapping || !context->recoveryPayload.valid))
+		return B_NOT_ALLOWED;
+	if (context->recoveryFirmwarePending && (context->recoveryFinishPending
+		|| context->recoveryResetPending || !context->recoveryAttempted
+		|| !context->recoveryMapping || !context->recoveryPayload.valid || !context->recoveryFirmwareTicket))
 		return B_NOT_ALLOWED;
 #endif
 	if ((context->recoveryAttempted
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
-		&& !context->recoveryFinishPending && !context->recoveryResetPending
+		&& !context->recoveryFinishPending && !context->recoveryResetPending && !context->recoveryFirmwarePending
 #endif
 		) || (context->recoveryMapping
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
-		&& !context->recoveryResetPending
+		&& !context->recoveryResetPending && !context->recoveryFirmwarePending
 #endif
 		)
 		|| !context->transaction.config_attempted || !context->transaction.map_attempted)
@@ -11335,6 +11342,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	} else if (context->recoveryResetPending) {
 		ticket=context->recoveryResetTicket;
 		status=ticket?guard->validate(ticket):B_BAD_VALUE;
+	} else if (context->recoveryFirmwarePending) {
+		ticket=context->recoveryFirmwareTicket;
+		status=ticket?guard->validate(ticket):B_BAD_VALUE;
 	} else status=guard->begin(sReloadGeneration,&ticket);
 #else
 	if (!guard || guard->version!=1) status=B_BAD_VALUE;
@@ -11355,6 +11365,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	PioneerPciePayloadSnapshot payload{},payloadCheck{};
 	Qwen35RecoveryResetIO resetIo(context->io);BlackholeAsicResetResult reset{};
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	if (context->recoveryFirmwarePending) {
+		payload=context->recoveryPayload;
+	} else {
 	if (context->recoveryResetPending) {
 		payload=context->recoveryPayload;reset=context->recoveryResetResult;
 		r.stage=PIONEER_RECOVERY_STAGE_ASIC_RESET;
@@ -11412,10 +11425,25 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	if (!PioneerPciePayloadRestore(context->io,payload)) return fail(B_DEV_NOT_READY);
 	r.stage=PIONEER_RECOVERY_STAGE_MAPPING;
 	if (!context->recoveryMapping->Open()) return fail(B_DEV_NOT_READY);
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	} // A resumed firmware poll keeps the existing mapping and reset ticket.
+#endif
 	r.stage=PIONEER_RECOVERY_STAGE_FIRMWARE;
 	tt_arc_scratch_result firmware{};
-	if (!context->recoveryMapping->ProbeFirmware(100,firmware)) { r.detail=firmware.state;return fail(B_DEV_NOT_READY); }
+	if (!context->recoveryMapping->ProbeFirmware(100,firmware)) {
+		r.detail=firmware.state;
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+		if (context->recoveryMapping->FirmwareRetryable()) {
+			context->recoveryFirmwarePending=true;context->recoveryFirmwareTicket=ticket;
+			r.detail=PIONEER_RECOVERY_DETAIL_FIRMWARE_WAIT;
+			put_module(guardName);return B_DEV_NOT_READY;
+		}
+		context->recoveryFirmwarePending=false;context->recoveryFirmwareTicket=0;
+#endif
+		return fail(B_DEV_NOT_READY);
+	}
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	context->recoveryFirmwarePending=false;context->recoveryFirmwareTicket=0;
 	if (!context->recoveryMapping->RestoreInternalDbi(context->recoveryDbi,payload.control))
 		return fail(B_DEV_NOT_READY);
 #endif

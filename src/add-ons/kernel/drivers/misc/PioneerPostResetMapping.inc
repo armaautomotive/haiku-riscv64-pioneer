@@ -26,7 +26,7 @@ struct PioneerPostResetMapping : ConfigIO {
 	tt_arc_telemetry_result firmwareTelemetry={};
 	uint32 saved[3]={},dmaSaved[3]={};
 	bool attempted=false,ready=false,savedValid=false,modified=false,dmaModified=false;
-	bool firmwareAttempted=false,firmwareReady=false,topologyReady=false;
+	bool firmwareAttempted=false,firmwareRetryable=false,firmwareReady=false,topologyReady=false;
 	bool queueAttempted=false,queueReady=false,queueUnsafe=false;
 	bool fleetAudited=false,dmaAudited=false;
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
@@ -105,22 +105,34 @@ struct PioneerPostResetMapping : ConfigIO {
 		return BlackholeTelemetryRange(address,4)
 			?PioneerRead32(csm+(address-0x10000000)/4):UINT32_MAX;
 	}
-	// One bounded attempt. A failed TLB restore ends the attempt immediately;
-	// the caller retains this mapping and the old owner for diagnosis.
+	// A bounded boot poll may be resumed only if every scratch access restored
+	// its TLB and the final PCI route remains intact. Uncertain mapping,
+	// telemetry, sleep or routing failures remain one-shot and retained.
+	bool FirmwareRetryable() const { return ready && firmwareRetryable; }
 	bool ProbeFirmware(unsigned pollLimit,tt_arc_scratch_result& result) {
 		result={};
-		if (!ready || firmwareAttempted || !pollLimit || pollLimit>100 || !PciReady()) return false;
+		if (firmwareAttempted && !firmwareRetryable) return false;
+		firmwareRetryable=false;
+		if (!ready || !pollLimit || pollLimit>100 || !PciReady()) return false;
 		firmwareAttempted=true;
 		bool bootReady=false;
 		for (unsigned poll=0;poll<pollLimit;poll++) {
-			if (!PciReady()) return false;
+			if (!PciReady() || !savedValid) return false;
+			for (unsigned i=0;i<3;i++) if (TlbRead(i)!=saved[i]) return false;
 			if (BlackholeArcScratchProbe(*this,result)) {
 				bootReady=true;break;
 			}
 			if (!result.tlb_restored || result.state!=TT_ARC_SCRATCH_NOT_READY) return false;
 			if (poll+1<pollLimit && snooze(100000)!=B_OK) return false;
 		}
-		if (!bootReady || !PciReady()
+		if (!bootReady) {
+			firmwareRetryable=result.state==TT_ARC_SCRATCH_NOT_READY
+				&& result.tlb_restored && PciReady();
+			for (unsigned i=0;firmwareRetryable && i<3;i++)
+				if (TlbRead(i)!=saved[i]) firmwareRetryable=false;
+			return false;
+		}
+		if (!PciReady()
 			|| !BlackholeArcTelemetryProbe(*this,result,firmwareTelemetry)
 			|| (firmwareTelemetry.present_mask&0x3c1)!=0x3c1
 			|| firmwareTelemetry.values[0]!=0x12050001
