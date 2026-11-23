@@ -578,7 +578,7 @@ for name in sys.argv[1:]:
 markers=('qwen35_dataflow_service_main()', 'PioneerQwen35DataflowBlackholeWorkerService()',
     'qwen35_graph_run_descriptor(', 'PioneerQwen35DeviceGraphRun(',
     'DataflowDeviceGraph<IO, BarrierIO>::Tick()', 'qwen35_graph_authorize(',
-    'DataflowDynamicPatch(', 'DataflowConvInvocation::Valid()',
+    'DataflowDynamicPatcher::PatchValidated(', 'DataflowConvInvocation::Valid()',
     'DataflowDeviceBarrier<IO>::Poll()', 'DataflowDeviceBarrier<IO>::ReleaseChildren()',
     'DataflowBlackholeNoc<Noc>::Transfer(', 'qwen35_graph_execute(',
     'DataflowWorkerExecuteAuthorized(', 'qwen35_shared_compute_coordinate(',

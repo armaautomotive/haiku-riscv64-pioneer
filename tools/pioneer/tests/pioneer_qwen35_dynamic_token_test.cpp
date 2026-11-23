@@ -78,9 +78,16 @@ int main() {
 			DataflowGraphRunDescriptor descriptor{};
 			assert(DataflowGraphRunBuild(plan->binding[core],plan->lease[core],fixture->routes,
 				dynamic1,localTicket,5,3,0,descriptor));
-			auto record=base.records[size_t(step)*DataflowCoreCount+core];
+			const auto& original=base.records[size_t(step)*DataflowCoreCount+core];
+			auto record=original;
 			assert(DataflowDynamicPatch(record,dynamic1,99,step+1,core));
-			for (unsigned word=0;word<record.header[6]/4;word++) localProgram[word]=record.payload[word];
+			FetchIO fastRead{original};DataflowStreamRecord fetched{};
+			unsigned fetchStage=99;
+			assert(DataflowStreamFetchDynamic(fastRead,plan->binding[core],plan->lease[core],
+				fixture->routes,core,step,fetched,localProgram,sizeof(localProgram),dynamic1,&fetchStage)
+				&& fetchStage==DataflowStreamFetchOkay);
+			assert(!std::memcmp(&fetched,&record,sizeof(record))
+				&& !std::memcmp(localProgram,record.payload,record.header[6]));
 			assert(DataflowGraphFetchedCommandMatches(descriptor,step,record,localProgram,sizeof(localProgram)));
 			localProgram[0]=0;
 			assert(!DataflowGraphFetchedCommandMatches(descriptor,step,record,localProgram,sizeof(localProgram)));
@@ -113,6 +120,12 @@ int main() {
 	assert(!DataflowStreamFetchDynamic(read,plan->binding[0],plan->lease[0],fixture->routes,
 		0,0,staging,program,sizeof(program),rejectedRun));
 	assert(program[0]==0 && program[1]==0xfacefeed);
+	DataflowStreamRecord corrupted=base.records[0];corrupted.payload[DataflowStreamPayloadWords-1]=1;
+	FetchIO corruptRead{corrupted};unsigned corruptStage=99;
+	program[0]=0xfeedface;program[1]=0xfacefeed;
+	assert(!DataflowStreamFetchDynamic(corruptRead,plan->binding[0],plan->lease[0],fixture->routes,
+		0,0,staging,program,sizeof(program),dynamic1,&corruptStage)
+		&& corruptStage==DataflowStreamFetchRecord && program[0]==0 && program[1]==0xfacefeed);
 	DataflowDynamicTokenContext dynamic2{};
 	assert(DataflowDynamicTokenContext::Build(fixture->manifest,Vocabulary-1,2,dynamic2));
 	CompareSink compare2{base,dynamic2};

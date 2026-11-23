@@ -160,7 +160,7 @@ groups = (
     'PioneerQwen35DeviceGraphRun(',
     'DataflowDeviceGraph<IO, BarrierIO>::Tick()',
     'qwen35_graph_authorize(',
-    'DataflowDynamicPatch(',
+    'DataflowDynamicPatcher::PatchValidated(',
     'DataflowConvInvocation::Valid()',
     'DataflowDeviceBarrier<IO>::Poll()',
     'DataflowDeviceBarrier<IO>::ReleaseChildren()',

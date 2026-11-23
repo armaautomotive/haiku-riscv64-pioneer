@@ -46,56 +46,80 @@ inline void DataflowDynamicWrite(DataflowStreamRecord& record,const Invocation& 
 	for (unsigned i=0;i<sizeof(invocation);i++) output[i]=input[i];
 }
 
-// Patch only a private L1 staging copy after validating the sealed template.
+// The unchecked inner patch is private: only Checked() and Fetch() can call it.
+// Checked() validates the template itself; Fetch() uses the validation already
+// performed by DataflowStreamFetchTransform before it invokes the callback.
+// The latter still validates the patched result before publishing a command.
+class DataflowDynamicPatcher {
+	__attribute__((noinline)) static bool PatchValidated(DataflowStreamRecord& record,
+		const DataflowDynamicTokenContext& run)
+	{
+		if (!run.Valid()) return false;
+		switch (record.header[5]) {
+		case DataflowEmbeddingMagic: {
+			DataflowEmbeddingInvocation invocation{};DataflowDynamicRead(record,invocation);
+			Range embedding{};
+			if (!run.tied.Resolve(run.token&~15U,16,0,run.tied.rowBytes*16,embedding)
+				|| embedding.bytes!=DataflowEmbeddingTileCount*DataflowQ6KEmbeddingTileBytes) return false;
+			invocation.token=run.token;invocation.lane=run.token&15U;
+			invocation.weightBank=embedding.bank;invocation.weightBase=embedding.address;
+			if (!invocation.Valid()) return false;
+			DataflowDynamicWrite(record,invocation);break;
+		}
+		case DataflowConvMagic: {
+			DataflowConvInvocation invocation{};DataflowDynamicRead(record,invocation);
+			if ((invocation.position^run.position)&1U) {
+				const RowSpace old=invocation.historyRead;
+				invocation.historyRead=invocation.historyWrite;invocation.historyWrite=old;
+			}
+			invocation.position=run.position;
+			if (!invocation.Valid()) return false;
+			DataflowDynamicWrite(record,invocation);break;
+		}
+		case DataflowDeltaMagic: {
+			DataflowDeltaInvocation invocation{};DataflowDynamicRead(record,invocation);
+			if ((invocation.program.position^run.position)&1U) {
+				const RowSpace old=invocation.program.stateRead;
+				invocation.program.stateRead=invocation.program.stateWrite;invocation.program.stateWrite=old;
+			}
+			invocation.program.position=run.position;
+			if (!invocation.Valid()) return false;
+			DataflowDynamicWrite(record,invocation);break;
+		}
+		case DataflowDenseAttentionMagic: {
+			DataflowDenseAttentionInvocation invocation{};DataflowDynamicRead(record,invocation);
+			if (invocation.program.context!=run.context) return false;
+			invocation.program.position=run.position;
+			if (!invocation.Valid()) return false;
+			DataflowDynamicWrite(record,invocation);break;
+		}
+		default:break;
+		}
+		record.header[7]=DataflowStreamChecksum(record.payload,record.header[6]/4);
+		return true;
+	}
+public:
+	static bool Checked(DataflowStreamRecord& record,const DataflowDynamicTokenContext& run,
+		unsigned templateEpoch,unsigned step,unsigned core) {
+		return run.Valid() && DataflowStreamRecordStructureValid(record,templateEpoch,step,core)
+			&& PatchValidated(record,run);
+	}
+	template<class IO> static bool Fetch(IO& io,const DataflowStreamBinding& binding,const Range& lease,
+		const unsigned (&routes)[2][Banks],unsigned core,unsigned index,
+		DataflowStreamRecord& staging,uint32_t* program,unsigned programBytes,
+		const DataflowDynamicTokenContext& run,unsigned* failedStage) {
+		auto patch=[&](DataflowStreamRecord& r) { return PatchValidated(r,run); };
+		return DataflowStreamFetchTransform(io,binding,lease,routes,core,index,
+			staging,program,programBytes,patch,failedStage);
+	}
+};
+
 // The token, position and tied rows must come from the trusted run binding.
-// Barriers and sequence numbers use fresh per-run values, independent of the
-// template epoch. No static model address is accepted from the token itself.
+// A direct caller still validates the entire record before patching it.
 inline bool DataflowDynamicPatch(DataflowStreamRecord& record,
 	const DataflowDynamicTokenContext& run,unsigned templateEpoch,unsigned step,unsigned core)
 {
-	if (!run.Valid() || !DataflowStreamRecordStructureValid(record,templateEpoch,step,core)) return false;
-	switch (record.header[5]) {
-	case DataflowEmbeddingMagic: {
-		DataflowEmbeddingInvocation invocation{};DataflowDynamicRead(record,invocation);
-		Range embedding{};
-		if (!run.tied.Resolve(run.token&~15U,16,0,run.tied.rowBytes*16,embedding)
-			|| embedding.bytes!=DataflowEmbeddingTileCount*DataflowQ6KEmbeddingTileBytes) return false;
-		invocation.token=run.token;invocation.lane=run.token&15U;
-		invocation.weightBank=embedding.bank;invocation.weightBase=embedding.address;
-		if (!invocation.Valid()) return false;
-		DataflowDynamicWrite(record,invocation);break;
-	}
-	case DataflowConvMagic: {
-		DataflowConvInvocation invocation{};DataflowDynamicRead(record,invocation);
-		if ((invocation.position^run.position)&1U) {
-			const RowSpace old=invocation.historyRead;
-			invocation.historyRead=invocation.historyWrite;invocation.historyWrite=old;
-		}
-		invocation.position=run.position;
-		if (!invocation.Valid()) return false;
-		DataflowDynamicWrite(record,invocation);break;
-	}
-	case DataflowDeltaMagic: {
-		DataflowDeltaInvocation invocation{};DataflowDynamicRead(record,invocation);
-		if ((invocation.program.position^run.position)&1U) {
-			const RowSpace old=invocation.program.stateRead;
-			invocation.program.stateRead=invocation.program.stateWrite;invocation.program.stateWrite=old;
-		}
-		invocation.program.position=run.position;
-		if (!invocation.Valid()) return false;
-		DataflowDynamicWrite(record,invocation);break;
-	}
-	case DataflowDenseAttentionMagic: {
-		DataflowDenseAttentionInvocation invocation{};DataflowDynamicRead(record,invocation);
-		if (invocation.program.context!=run.context) return false;
-		invocation.program.position=run.position;
-		if (!invocation.Valid()) return false;
-		DataflowDynamicWrite(record,invocation);break;
-	}
-	default:break;
-	}
-	record.header[7]=DataflowStreamChecksum(record.payload,record.header[6]/4);
-	return true;
+	return DataflowDynamicPatcher::Checked(record,run,templateEpoch,step,core);
 }
 
 template<class IO>
@@ -104,11 +128,8 @@ bool DataflowStreamFetchDynamic(IO& io,const DataflowStreamBinding& binding,cons
 	DataflowStreamRecord& staging,uint32_t* program,unsigned programBytes,
 	const DataflowDynamicTokenContext& run,unsigned* failedStage=nullptr)
 {
-	auto patch=[&](DataflowStreamRecord& r) {
-		return DataflowDynamicPatch(r,run,binding.epoch,index+1,core);
-	};
-	return DataflowStreamFetchTransform(io,binding,lease,routes,core,index,
-		staging,program,programBytes,patch,failedStage);
+	return DataflowDynamicPatcher::Fetch(io,binding,lease,routes,core,index,
+		staging,program,programBytes,run,failedStage);
 }
 
 inline bool DataflowBlackholeStreamFetchDynamic(const DataflowStreamBinding& binding,
