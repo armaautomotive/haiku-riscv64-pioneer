@@ -1,0 +1,82 @@
+/* Distributed under the MIT License. */
+#include <atomic>
+#include <cassert>
+#include <condition_variable>
+#include <cstdint>
+#include <cstdio>
+#include <mutex>
+#include <thread>
+#include "../../../src/add-ons/kernel/busses/pci/ecam/Sg2042RecoveryLease.h"
+using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uint64_t;
+using vuint8=volatile uint8;using vuint16=volatile uint16;using vuint32=volatile uint32;
+using addr_t=uintptr_t;using thread_id=int;using status_t=int;
+enum {B_OK=0,B_BAD_VALUE=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,B_ENTRY_NOT_FOUND=-4};
+enum {PCI_header_type=0x0e,PCI_header_type_mask=0x7f,PCI_header_type_PCI_to_PCI_bridge=1};
+static constexpr uint32 kSg2042AtPciAddress0=0,kSg2042AtDescriptor0=8;
+#define ROUNDDOWN(value,alignment) ((value)&~((alignment)-1))
+#define dprintf(...) ((void)0)
+template<class T> static T Sg2042MmioRead(volatile T* p) {return *p;}
+template<class T> static void Sg2042MmioWrite(volatile T* p,T v) {*p=v;}
+static uint32 TranslateSg2042BridgeBusNumbers(uint32 v,uint16,uint8,uint8,uint8,bool) {return v;}
+struct mutex {std::mutex native;};
+static void mutex_lock(mutex* m) {m->native.lock();}
+static void mutex_unlock(mutex* m) {m->native.unlock();}
+static thread_local thread_id current=-1;
+static thread_id find_thread(const char*) {return current;}
+struct FakeCondition {
+	std::condition_variable cv;std::atomic<unsigned> waiting{0};
+	status_t Wait(mutex* m) {
+		std::unique_lock<std::mutex> lock(m->native,std::adopt_lock);
+		++waiting;cv.wait(lock);--waiting;lock.release();return B_OK;
+	}
+	void NotifyAll() {cv.notify_all();}
+};
+class ECAMPCIController {
+public:
+	mutex fLock;bool fIsSg2042=true,fPrivatePioneerRoot=true;
+	uint8 fStartBus=0x80,fEndBus=0xbf;uint64 fRegsPhysical=0x4800000000ULL;
+	Sg2042RecoveryLease fPioneerRecoveryLease;FakeCondition fPioneerRecoveryCondition;
+	alignas(4) uint8 root[4096]={},config[4096]={},translation[16]={};
+	volatile uint8* fControllerRegs=root;volatile uint8* fRegs=config;volatile uint8* fAtRegs=translation;
+	bool fRootConfigReadLogged=true,fDownstreamConfigReadLogged=true;uint8 fSg2042FunctionsLogged=0;
+	status_t BeginPioneerRecovery(uint64& ticket);
+	status_t EndPioneerRecovery(uint64 ticket);
+	status_t WaitPioneerConfigAccess();
+	status_t ReadSg2042Config(uint8,uint8,uint8,uint16,uint8,uint32&);
+	status_t WriteSg2042Config(uint8,uint8,uint8,uint16,uint8,uint32);
+};
+#include "sg2042_recovery_controller.inc"
+#include "sg2042_config_access.inc"
+
+int main()
+{
+	ECAMPCIController controller,other;current=11;uint64 ticket=0,wrong=0;
+	controller.fPrivatePioneerRoot=false;
+	assert(controller.BeginPioneerRecovery(ticket)==B_NOT_ALLOWED && !ticket);
+	controller.fPrivatePioneerRoot=true;
+	assert(controller.BeginPioneerRecovery(ticket)==B_OK && ticket==1);
+	assert(controller.BeginPioneerRecovery(wrong)==B_BUSY && !wrong);
+	mutex_lock(&controller.fLock);assert(controller.WaitPioneerConfigAccess()==B_OK);mutex_unlock(&controller.fLock);
+	std::atomic<bool> done{false};
+	std::thread reader([&] {current=22;mutex_lock(&controller.fLock);
+		assert(controller.WaitPioneerConfigAccess()==B_OK);done=true;mutex_unlock(&controller.fLock);});
+	while (!controller.fPioneerRecoveryCondition.waiting.load()) std::this_thread::yield();
+	assert(!done.load() && controller.EndPioneerRecovery(ticket+1)==B_BAD_VALUE);
+	assert(other.BeginPioneerRecovery(wrong)==B_OK && other.EndPioneerRecovery(wrong)==B_OK);
+	assert(controller.EndPioneerRecovery(ticket)==B_OK);reader.join();assert(done.load());
+	assert(controller.EndPioneerRecovery(ticket)==B_BAD_VALUE);
+	assert(controller.BeginPioneerRecovery(ticket)==B_OK);
+	*reinterpret_cast<uint32*>(controller.root)=0x20421e30;
+	uint32 ownerRead=0;
+	assert(controller.ReadSg2042Config(0,0,0,0,4,ownerRead)==B_OK && ownerRead==0x20421e30);
+	std::atomic<bool> readDone{false},writeDone{false};uint32 observed=0;
+	std::thread configReader([&] {current=22;
+		assert(controller.ReadSg2042Config(0,0,0,0,4,observed)==B_OK);readDone=true;});
+	std::thread configWriter([&] {current=33;
+		assert(controller.WriteSg2042Config(0,0,0,4,4,0x402)==B_OK);writeDone=true;});
+	while (controller.fPioneerRecoveryCondition.waiting.load()!=2) std::this_thread::yield();
+	assert(!readDone.load() && !writeDone.load() && *reinterpret_cast<uint32*>(controller.root+4)==0);
+	assert(controller.EndPioneerRecovery(ticket)==B_OK);configReader.join();configWriter.join();
+	assert(readDone && writeDone && observed==0x20421e30 && *reinterpret_cast<uint32*>(controller.root+4)==0x402);
+	std::puts("PASS actual SG2042 controller lease and config methods: private-root admission, owner access, blocked read/write and wake; SIMULATED ONLY");
+}

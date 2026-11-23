@@ -3953,12 +3953,18 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 #define PIONEER_QWEN35_FIRMWARE_RESET_WITNESS 1
 #endif
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && !defined(PIONEER_QWEN35_RECOVERY_QUALIFY)
+#include "../../busses/pci/ecam/PioneerSg2042RecoveryModule.h"
+#include "PioneerPciRootLeaseScope.h"
 // Compile the real Haiku adapter only in the non-loadable witness. No driver
 // operation constructs it until ownership, retirement and recovery are wired.
 using PioneerFirmwareResetCompileTransport = PioneerFirmwareResetTransport<PioneerSessionIO,pioneer_driver_recovery_guard_v2_info>;
 template class PioneerFirmwareResetTransport<PioneerSessionIO,pioneer_driver_recovery_guard_v2_info>;
 template class PioneerFirmwareReset<PioneerFirmwareResetCompileTransport>;
 template class PioneerFirmwareRecoveryOwner<PioneerSessionIO,pioneer_driver_recovery_guard_v2_info>;
+struct PioneerRootLeaseCompileQuarantine {
+	void Quarantine() { sColdRecoveryRequired=true; }
+};
+template class PioneerPciRootLeaseScope<PioneerRootLeaseCompileQuarantine,pioneer_sg2042_recovery_module_info>;
 #endif
 #endif
 #ifdef PIONEER_QWEN35_RECOVERY_QUALIFY

@@ -5,6 +5,9 @@
 
 
 #include "ECAMPCIController.h"
+#ifdef PIONEER_SG2042_RECOVERY_WITNESS
+#include "PioneerSg2042RecoveryModule.h"
+#endif
 
 
 device_manager_info* gDeviceManager;
@@ -58,6 +61,18 @@ pci_controller_module_info gPciControllerDriver = {
 	}
 };
 
+#ifdef PIONEER_SG2042_RECOVERY_WITNESS
+pioneer_sg2042_recovery_module_info gPioneerRecovery = {
+	.info = { .name = PIONEER_SG2042_RECOVERY_MODULE },
+	.begin = [](void* cookie, uint64* ticket) {
+		(void)cookie;(void)ticket;return B_NOT_ALLOWED;
+	},
+	.end = [](void* cookie, uint64 ticket) {
+		(void)cookie;(void)ticket;return B_NOT_ALLOWED;
+	}
+};
+#endif
+
 
 _EXPORT module_dependency module_dependencies[] = {
 	{ B_DEVICE_MANAGER_MODULE_NAME, (module_info**)&gDeviceManager },
@@ -67,5 +82,8 @@ _EXPORT module_dependency module_dependencies[] = {
 
 _EXPORT module_info *modules[] = {
 	(module_info *)&gPciControllerDriver,
+	#ifdef PIONEER_SG2042_RECOVERY_WITNESS
+	(module_info *)&gPioneerRecovery,
+	#endif
 	NULL
 };

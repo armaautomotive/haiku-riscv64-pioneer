@@ -6,6 +6,7 @@
 
 #include "ECAMPCIController.h"
 #include <acpi.h>
+#include <KernelExport.h>
 
 #include <AutoDeleterDrivers.h>
 
@@ -118,6 +119,11 @@ ECAMPCIController::RegisterDevice(device_node* parent)
 status_t
 ECAMPCIController::InitDriver(device_node* node, ECAMPCIController*& outDriver)
 {
+#ifdef PIONEER_SG2042_RECOVERY_WITNESS
+	// Never let this unqualified witness replace an active host controller.
+	(void)node;(void)outDriver;
+	return B_NOT_ALLOWED;
+#else
 	dprintf("P232:ECAM init host\n");
 	DeviceNodePutter<&gDeviceManager> parentNode(gDeviceManager->get_parent_node(node));
 
@@ -149,6 +155,7 @@ ECAMPCIController::InitDriver(device_node* node, ECAMPCIController*& outDriver)
 
 	dprintf("-ECAMPCIController::InitDriver()\n");
 	return B_OK;
+#endif
 }
 
 
@@ -181,6 +188,55 @@ ECAMPCIController::ConfigAddress(uint8 bus, uint8 device, uint8 function, uint16
 
 
 //#pragma mark - PCI controller
+
+#ifdef PIONEER_SG2042_RECOVERY_WITNESS
+// PIONEER_SG2042_RECOVERY_LEASE_BEGIN
+status_t
+ECAMPCIController::BeginPioneerRecovery(uint64& ticket)
+{
+	ticket = 0;
+	const thread_id thread = find_thread(NULL);
+	if (thread < B_OK)
+		return B_BAD_VALUE;
+	mutex_lock(&fLock);
+	const bool eligible = fIsSg2042 && fPrivatePioneerRoot && fStartBus == 0x80
+		&& fEndBus == 0xbf && fRegsPhysical == 0x4800000000ULL;
+	const bool acquired = fPioneerRecoveryLease.Begin(eligible, thread, ticket);
+	mutex_unlock(&fLock);
+	return acquired ? B_OK : eligible ? B_BUSY : B_NOT_ALLOWED;
+}
+
+
+status_t
+ECAMPCIController::EndPioneerRecovery(uint64 ticket)
+{
+	const thread_id thread = find_thread(NULL);
+	if (thread < B_OK)
+		return B_BAD_VALUE;
+	mutex_lock(&fLock);
+	const bool released = fPioneerRecoveryLease.End(thread, ticket);
+	if (released)
+		fPioneerRecoveryCondition.NotifyAll();
+	mutex_unlock(&fLock);
+	return released ? B_OK : B_BAD_VALUE;
+}
+
+
+status_t
+ECAMPCIController::WaitPioneerConfigAccess()
+{
+	const thread_id thread = find_thread(NULL);
+	if (thread < B_OK)
+		return B_BAD_VALUE;
+	while (fPioneerRecoveryLease.Active() && !fPioneerRecoveryLease.Allows(thread)) {
+		const status_t status = fPioneerRecoveryCondition.Wait(&fLock);
+		if (status != B_OK)
+			return status;
+	}
+	return B_OK;
+}
+// PIONEER_SG2042_RECOVERY_LEASE_END
+#endif
 
 
 status_t
@@ -229,6 +285,7 @@ ECAMPCIController::WriteConfig(uint8 bus, uint8 device, uint8 function,
 }
 
 
+// PIONEER_SG2042_CONFIG_ACCESS_BEGIN
 status_t
 ECAMPCIController::ReadSg2042Config(uint8 bus, uint8 device, uint8 function,
 	uint16 offset, uint8 size, uint32& value)
@@ -239,6 +296,14 @@ ECAMPCIController::ReadSg2042Config(uint8 bus, uint8 device, uint8 function,
 		return ERANGE;
 
 	mutex_lock(&fLock);
+	#ifdef PIONEER_SG2042_RECOVERY_WITNESS
+	const status_t access = WaitPioneerConfigAccess();
+	if (access != B_OK) {
+		value = size == 1 ? 0xff : size == 2 ? 0xffff : 0xffffffff;
+		mutex_unlock(&fLock);
+		return access;
+	}
+	#endif
 	addr_t address;
 	if (bus == 0) {
 		// The SG2042 root port only accepts naturally aligned 32-bit accesses.
@@ -329,6 +394,13 @@ ECAMPCIController::WriteSg2042Config(uint8 bus, uint8 device, uint8 function,
 		return ERANGE;
 
 	mutex_lock(&fLock);
+	#ifdef PIONEER_SG2042_RECOVERY_WITNESS
+	const status_t access = WaitPioneerConfigAccess();
+	if (access != B_OK) {
+		mutex_unlock(&fLock);
+		return access;
+	}
+	#endif
 	addr_t address;
 	if (bus == 0) {
 		if (device != 0 || function != 0) {
@@ -378,6 +450,7 @@ ECAMPCIController::WriteSg2042Config(uint8 bus, uint8 device, uint8 function,
 	mutex_unlock(&fLock);
 	return B_OK;
 }
+// PIONEER_SG2042_CONFIG_ACCESS_END
 
 
 status_t

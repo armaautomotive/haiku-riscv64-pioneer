@@ -14,6 +14,10 @@
 #include <AutoDeleterOS.h>
 #include <lock.h>
 #include <util/Vector.h>
+#ifdef PIONEER_SG2042_RECOVERY_WITNESS
+#include "Sg2042RecoveryLease.h"
+#include <condition_variable.h>
+#endif
 
 
 #define CHECK_RET(err) {status_t _err = (err); if (_err < B_OK) return _err;}
@@ -117,6 +121,9 @@ Sg2042MmioWrite(Type volatile* address, Type value)
 
 class ECAMPCIController {
 public:
+#ifdef PIONEER_SG2042_RECOVERY_WITNESS
+	ECAMPCIController() { fPioneerRecoveryCondition.Init(this, "Pioneer PCI recovery"); }
+#endif
 	virtual ~ECAMPCIController() = default;
 
 	static float SupportsDevice(device_node* parent);
@@ -143,6 +150,11 @@ public:
 				uint8 pin, uint8 irq);
 
 	status_t GetRange(uint32 index, pci_resource_range* range);
+#ifdef PIONEER_SG2042_RECOVERY_WITNESS
+	status_t BeginPioneerRecovery(uint64& ticket);
+	status_t EndPioneerRecovery(uint64 ticket);
+	status_t WaitPioneerConfigAccess(); // fLock held on entry and return
+#endif
 
 	virtual status_t Finalize() = 0;
 
@@ -174,6 +186,11 @@ protected:
 	AreaDeleter fAtRegsArea;
 	uint8 volatile* fAtRegs{};
 	bool fIsSg2042{};
+#ifdef PIONEER_SG2042_RECOVERY_WITNESS
+	bool fPrivatePioneerRoot{};
+	Sg2042RecoveryLease fPioneerRecoveryLease;
+	ConditionVariable fPioneerRecoveryCondition;
+#endif
 	bool fRootConfigReadLogged{};
 	bool fDownstreamConfigReadLogged{};
 	uint8 fSg2042FunctionsLogged{};

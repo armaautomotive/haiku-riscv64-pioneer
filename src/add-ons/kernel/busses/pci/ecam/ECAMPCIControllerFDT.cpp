@@ -294,6 +294,9 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 			dprintf("PIONEER-P100A: unexpected root register layout; refusing\n");
 			return B_UNSUPPORTED;
 		}
+		#ifdef PIONEER_SG2042_RECOVERY_WITNESS
+		fPrivatePioneerRoot = blackholeRootProbe;
+		#endif
 		fControllerRegsLen = B_PAGE_SIZE;
 		fControllerRegsArea.SetTo(map_physical_memory("SG2042 PCIe root config",
 			controllerRegs + kSg2042RootPortConfigOffset, B_PAGE_SIZE,

@@ -3,6 +3,10 @@ set -eu
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-p100a-reload.XXXXXXXX")
 source=$directory/../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp
+awk '/PIONEER_SG2042_RECOVERY_LEASE_BEGIN/ {copying=1;next} /PIONEER_SG2042_RECOVERY_LEASE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+ "$directory/../../../src/add-ons/kernel/busses/pci/ecam/ECAMPCIController.cpp" > "$temporary/sg2042_recovery_controller.inc"
+awk '/PIONEER_SG2042_CONFIG_ACCESS_BEGIN/ {copying=1;next} /PIONEER_SG2042_CONFIG_ACCESS_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+ "$directory/../../../src/add-ons/kernel/busses/pci/ecam/ECAMPCIController.cpp" > "$temporary/sg2042_config_access.inc"
 for pair in DRIVER_RELOAD_STATE:reload_state DRIVER_RELOAD_CONTROL:reload_control PROBE_LOCK:lock QWEN35_PROBE_OPEN:probe_open QWEN35_PROBE_FREE:probe_free QWEN35_RECOVERY_STATUS:recovery_status QWEN35_RECOVERY_RUN:recovery_run QWEN35_DBI_CAPTURE:dbi_capture Q38_DISPATCH_COOKIE_RELEASE:cookie_release; do
  section=${pair%%:*}; name=${pair#*:}
  awk -v begin="PIONEER_${section}_BEGIN" -v end="PIONEER_${section}_END" '
@@ -31,6 +35,15 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/tes
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/blackhole_asic_reset_test.cpp" -o "$temporary/asic-reset-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/asic-reset-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined -pthread \
+ "$directory/sg2042_recovery_lease_test.cpp" -o "$temporary/sg2042-recovery-lease-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sg2042-recovery-lease-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined -pthread \
+ -DPIONEER_SG2042_RECOVERY_WITNESS -I"$temporary" "$directory/sg2042_recovery_controller_test.cpp" -o "$temporary/sg2042-recovery-controller-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sg2042-recovery-controller-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_pci_root_lease_scope_test.cpp" -o "$temporary/pioneer-pci-root-lease-scope-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pioneer-pci-root-lease-scope-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_post_reset_audit_test.cpp" -o "$temporary/post-reset-audit-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/post-reset-audit-test"
