@@ -20,8 +20,10 @@ extern "C" bool qwen35_shared_reader_once()
 }
 extern "C" bool qwen35_shared_writer_once()
 {
+    DataflowDeviceContext context;
+    if (!DataflowBindLocalContext(context,DataflowFailureWriter)) return false;
     DataflowBlackholeWriterOps writer;
-    return PioneerQwen35DataflowWriterEntry(writer);
+    return PioneerQwen35SharedActivationWriter(*context.program,context.queues[2],writer);
 }
 extern "C" unsigned qwen35_shared_reader_tick(DataflowRoleMailbox* box,DataflowRoleTickState* state)
 {

@@ -452,6 +452,15 @@ public:
 		return fProgram && OwnsOutput(bank,address,bytes)
 			&& fNoc.Write(address,fProgram->bankRoute[1][bank],input,bytes);
 	}
+
+	bool WriteOutputPair(unsigned bank,uint32_t address,const uint8_t* input) const
+	{
+		return fProgram && address<=UINT32_MAX-DataflowOutputPageBytes
+			&& OwnsOutput(bank,address,DataflowOutputPageBytes)
+			&& OwnsOutput(bank,address+DataflowOutputPageBytes,DataflowOutputPageBytes)
+			&& fNoc.Write(address,fProgram->bankRoute[1][bank],input,
+				2*DataflowOutputPageBytes);
+	}
 };
 
 } // namespace PioneerQwen35

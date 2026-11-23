@@ -114,5 +114,47 @@ bool PioneerQwen35SharedActivationCompute(const DataflowCoreInvocation& program,
     }
     return DataflowQueuePopFront(ready,readyTicket) || fail();
 }
+
+// Coalesce only pages that are already ready, adjacent in both the circular
+// buffer and the same destination segment. Never wait for a second page:
+// the writer remains concurrent with compute even for a one-group shard.
+template<class Ops>
+bool PioneerQwen35SharedActivationWriter(const DataflowCoreInvocation& program,
+    DataflowQueueView& outputs,Ops& ops)
+{
+    auto fail=[&]() { DataflowQueueFail(outputs,DataflowFailureWriter);return false; };
+    if (!DataflowCoreHeaderValid(program) || !DataflowQueueValid(outputs)
+        || !ops.Bind(program)) return fail();
+    for (unsigned s=0;s<program.assignment.segmentCount;s++) {
+        const auto& segment=program.assignment.output[s];
+        const unsigned groups=segment.rows/16;
+        for (unsigned group=0;group<groups;) {
+            uint32_t ticket=0;uint8_t* page=nullptr;
+            const uint64_t address=uint64_t(segment.address)
+                +uint64_t(group)*DataflowOutputPageBytes;
+            if (!DataflowQueueWaitFront(outputs,ticket,page) || !page
+                || address>UINT32_MAX) return fail();
+            const uint32_t produced=DataflowLoadAcquire(outputs.control->produced);
+            const uint32_t available=produced-ticket;
+            if (!available || available>outputs.layout->pages) return fail();
+            const bool pair=group+1<groups && available>=2
+                && ticket%outputs.layout->pages==0
+                && outputs.layout->pageStride==DataflowOutputPageBytes;
+            if (pair) {
+                if (address>UINT32_MAX-DataflowOutputPageBytes
+                    || !ops.WriteOutputPair(segment.bank,uint32_t(address),page)
+                    || !DataflowQueuePopFront(outputs,ticket)
+                    || !DataflowQueuePopFront(outputs,ticket+1)) return fail();
+                group+=2;
+            } else {
+                if (!ops.WriteOutput(segment.bank,uint32_t(address),page,
+                        DataflowOutputPageBytes)
+                    || !DataflowQueuePopFront(outputs,ticket)) return fail();
+                group++;
+            }
+        }
+    }
+    return true;
+}
 }
 #endif

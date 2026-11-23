@@ -182,6 +182,16 @@ struct RoleTestOps {
 		counters.outputWrites.fetch_add(1,std::memory_order_relaxed);
 		return true;
 	}
+	bool WriteOutputPair(unsigned bank,uint32_t address,const uint8_t* input)
+	{
+		if (!bound || bank>=Banks || address<BankBase || address>=BankLimit-128
+			|| !input || input[0]!=uint8_t(0x5a^generation)
+			|| input[DataflowOutputPageBytes]!=uint8_t(0x5a^generation)) {
+			counters.Fail(); return false;
+		}
+		counters.outputWrites.fetch_add(2,std::memory_order_relaxed);
+		return true;
+	}
 };
 
 struct SharedComputeOps : RoleTestOps {
@@ -489,7 +499,7 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 		std::atomic<unsigned>& generation;
 		bool Run() {
 			ops.bound=false; ops.generation=generation.load(); ops.projectionType=program.type;
-			return PioneerQwen35DataflowWriter(program,queues[2],ops);
+			return PioneerQwen35SharedActivationWriter(program,queues[2],ops);
 		}
 	} writerBody{invocation,queues,writerOps,generation};
 	struct Coordinator {
@@ -607,6 +617,68 @@ static void Rows(RowSpace& space,unsigned rows,unsigned rowBytes,uint32_t base)
 	}
 }
 
+static void CheckSharedWriterCoalescing()
+{
+	TensorSpace weight{};weight.type=13;weight.inputs=Hidden;
+	Rows(weight.place,3840,Hidden/256*(PioneerQwen35Projection::TileBytes(13)/16),0x08000000);
+	RowSpace input{},output{};
+	Rows(input,Ffn,sizeof(float),0x04000000);
+	Rows(output,3840,sizeof(float),0x06000000);
+	DataflowProjectionProgram program{};
+	assert(BuildProgram(weight,input,Hidden,output,program));
+	for (unsigned scenario=0;scenario<5;scenario++) {
+		DataflowCoreInvocation invocation{};
+		assert(DataflowProgramBuilder::BindCore(program,scenario==4?17:0,invocation));
+		assert(invocation.assignment.segmentCount==(scenario==4?2U:1U)
+			&& invocation.assignment.groups==2);
+		DataflowQueueControl controls[DataflowCircularBufferCount]{};
+		uint8_t local[DataflowLocalBufferEnd-DataflowWeightBufferAddress]{};
+		DataflowQueueView queues[DataflowCircularBufferCount]{};
+		assert(DataflowBindQueues(invocation,controls,local,queues));
+		auto& queue=queues[2];
+		if (scenario==2) controls[2].produced=controls[2].consumed=1;
+		auto publish=[&](unsigned value) {
+			uint32_t ticket=0;assert(DataflowQueueReserveBack(queue,ticket));
+			uint8_t* page=DataflowQueueWritePage(queue,ticket);assert(page);
+			std::memset(page,int(value),DataflowOutputPageBytes);
+			assert(DataflowQueuePublishBack(queue,ticket));
+		};
+		publish(0x41);
+		if (scenario!=1) publish(0x42);
+		struct Writer {
+			DataflowQueueView& queue;unsigned scenario;unsigned pages=0,calls=0,pairs=0;
+			const DataflowCoreInvocation& program;
+			bool Bind(const DataflowCoreInvocation&) { return true; }
+			bool WriteOutput(unsigned b,uint32_t a,const uint8_t* p,unsigned n) {
+				const auto& segment=program.assignment.output[scenario==4?pages:0];
+				assert(b==segment.bank && a==segment.address+(scenario==4?0:pages*64)
+					&& n==64 && p[0]==0x41+pages);
+				calls++;pages++;
+				if (scenario==1 && pages==1) {
+					uint32_t ticket=0;assert(DataflowQueueReserveBack(queue,ticket));
+					auto* next=DataflowQueueWritePage(queue,ticket);assert(next);
+					std::memset(next,0x42,64);assert(DataflowQueuePublishBack(queue,ticket));
+				}
+				return true;
+			}
+			bool WriteOutputPair(unsigned b,uint32_t a,const uint8_t* p) {
+				assert(scenario!=4 && b==program.assignment.output[0].bank
+					&& a==program.assignment.output[0].address && p[0]==0x41 && p[64]==0x42);
+				calls++;pairs++;if (scenario==3) return false;pages+=2;return true;
+			}
+		} writer{queue,scenario,0,0,0,invocation};
+		const bool okay=PioneerQwen35SharedActivationWriter(invocation,queue,writer);
+		if (scenario==3) {
+			assert(!okay && writer.pairs==1 && !controls[2].consumed
+				&& DataflowQueueFailure(controls[2])==DataflowFailureWriter);
+		} else {
+			assert(okay && writer.pages==2 && controls[2].produced==controls[2].consumed);
+			assert(writer.pairs==(scenario==0?1U:0U));
+			assert(writer.calls==(scenario==0?1U:2U));
+		}
+	}
+}
+
 static void CheckTiedOutputProjection()
 {
 	DeviceLayout manifest{};
@@ -710,6 +782,7 @@ int main()
 	CompileRoleInterfaces();
 	CheckDynamicWeightAddresses();
 	CheckConcurrentRoles();
+	CheckSharedWriterCoalescing();
 	CheckCoordinatedRoles();
 	for (unsigned type:{8U,12U,13U,14U}) CheckCoordinatedSharedActivationRoles(type);
 	CheckCoordinatedSharedActivationRoles(13,true);
