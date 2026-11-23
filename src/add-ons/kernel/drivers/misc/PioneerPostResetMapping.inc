@@ -70,10 +70,10 @@ struct PioneerPostResetMapping : ConfigIO {
 		const size_t lengths[]={B_PAGE_SIZE,B_PAGE_SIZE,B_PAGE_SIZE,0x12000,B_PAGE_SIZE,B_PAGE_SIZE,0x20000};
 		void* views[7]={};
 		for (unsigned i=0;i<7;i++) {
-			uint32 flags=B_KERNEL_READ_AREA|B_UNCACHED_MEMORY;
+			uint32 flags=B_KERNEL_READ_AREA;
 			if (!i) flags|=B_KERNEL_WRITE_AREA;
 			areas[i]=map_physical_memory("P100A fresh post-reset audit window",
-				profile.bar0_host_start+offsets[i],lengths[i],B_ANY_KERNEL_ADDRESS,
+				profile.bar0_host_start+offsets[i],lengths[i],B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,
 				flags,&views[i]);
 			if (areas[i]<B_OK || !views[i]) return false;
 		}
@@ -140,13 +140,13 @@ struct PioneerPostResetMapping : ConfigIO {
 		if (!ready || !firmwareReady || !topologyReady || queueAttempted || !PciReady()) return false;
 		queueAttempted=true;void* view=NULL;
 		queueArea=map_physical_memory("P100A post-reset ARC queue",
-			profile.bar0_host_start+0x19200000,TT_ARC_QUEUE_CSM_BYTES,B_ANY_KERNEL_ADDRESS,
-			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
+			profile.bar0_host_start+0x19200000,TT_ARC_QUEUE_CSM_BYTES,B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,
+			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA,&view);
 		if (queueArea<B_OK || !view) return false;
 		queueView=(volatile uint32*)view;view=NULL;
 		queueMsiArea=map_physical_memory("P100A post-reset ARC notification",
-			profile.bar0_host_start+0x192b0000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
-			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
+			profile.bar0_host_start+0x192b0000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,
+			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA,&view);
 		if (queueMsiArea<B_OK || !view) return false;
 		queueMsi=(volatile uint32*)view;
 		struct Transport {
@@ -200,8 +200,8 @@ struct PioneerPostResetMapping : ConfigIO {
 		dmaModified=false;
 		void* view=NULL;
 		dbiArea=map_physical_memory("P100A fresh post-reset DBI",
-			profile.bar0_host_start+0x19000000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
-			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
+			profile.bar0_host_start+0x19000000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,
+			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA,&view);
 		if (dbiArea<B_OK || !view) return false;
 		dbi=(volatile uint32*)((uint8*)view+0x78);
 		struct RestoreIO {

@@ -47,7 +47,9 @@ struct ConfigIO {
 		if(offset>=0x10 && offset<=0x24)return cardBars[(offset-0x10)/4];return 0;
 	}
 };
-static int map_physical_memory(const char*,uint64_t addr,size_t size,int,uint32 flags,void** out) {
+static int map_physical_memory(const char*,uint64_t addr,size_t size,int addressSpec,uint32 flags,void** out) {
+	assert(addressSpec==(B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY));
+	assert((flags&B_KERNEL_READ_AREA) && !(flags&B_UNCACHED_MEMORY));
 	const unsigned call=mapCalls++;if(int(call)==failMap)return -1;
 	const uint64_t base=0x100000000ULL;
 	if(addr==base+0x1fc00000 && size==4096 && (flags&B_KERNEL_WRITE_AREA)) *out=tlbPage;
