@@ -4,6 +4,7 @@
 #undef main
 #include "../PioneerQwen35DataflowDynamicToken.h"
 #include "../PioneerQwen35DataflowGraphAuthorization.h"
+#include "../PioneerQwen35DataflowResidentStreamCache.h"
 #include <vector>
 
 struct CaptureSink {
@@ -37,8 +38,10 @@ struct CompareSink {
 };
 struct FetchIO {
 	const DataflowStreamRecord& record;
+	unsigned lastBytes=0;
 	bool ReadStream(unsigned,unsigned,unsigned,uint8_t* output,unsigned bytes) {
-		if (bytes!=sizeof(record)) return false;
+		if (!bytes || bytes>sizeof(record)) return false;
+		lastBytes=bytes;
 		std::memcpy(output,&record,bytes);return true;
 	}
 };
@@ -59,6 +62,8 @@ int main() {
 	const unsigned otherToken=fixture->manifest.tied.place.parts[0].rows+17;
 	DataflowDynamicTokenContext dynamic1{};
 	assert(DataflowDynamicTokenContext::Build(fixture->manifest,otherToken,1,dynamic1));
+	DataflowDynamicTokenContext dynamic2{};
+	assert(DataflowDynamicTokenContext::Build(fixture->manifest,Vocabulary-1,2,dynamic2));
 	CompareSink compare1{base,dynamic1};
 	assert(DataflowStreamRecording::Build(fixture->packed,*candidate0,*candidate1,*plan,fixture->routes,
 		1,otherToken,0,true,compare1,*scratch,*projection,stage));
@@ -89,11 +94,85 @@ int main() {
 			assert(!std::memcmp(&fetched,&record,sizeof(record))
 				&& !std::memcmp(localProgram,record.payload,record.header[6]));
 			assert(DataflowGraphFetchedCommandMatches(descriptor,step,record,localProgram,sizeof(localProgram)));
+			const unsigned prefix=DataflowStreamRecordReadBytes(original.header[6]);
+			std::memset(&fetched,0xa5,sizeof(fetched));
+			assert(DataflowStreamFetchDynamic(fastRead,plan->binding[core],plan->lease[core],
+				fixture->routes,core,step,fetched,localProgram,sizeof(localProgram),dynamic1,&fetchStage,prefix));
+			assert(DataflowGraphFetchedCommandMatches(descriptor,step,fetched,localProgram,sizeof(localProgram),prefix));
 			localProgram[0]=0;
 			assert(!DataflowGraphFetchedCommandMatches(descriptor,step,record,localProgram,sizeof(localProgram)));
 		}
 	}
 	for (bool checked:localTested) assert(checked);
+	// Exercise the actual recorded graph on every worker: a complete first
+	// read establishes each size and a later token fetches only its prefix.
+	auto caches=std::make_unique<DataflowResidentStreamCache[]>(DataflowCoreCount);
+	for (unsigned core=0;core<DataflowCoreCount;core++) {
+		std::memset(&caches[core],0xa5,sizeof(caches[core]));
+		DataflowResidentStreamCacheReset(caches[core]);
+		assert(DataflowResidentStreamCacheBind(caches[core],plan->binding[core]));
+	}
+	uint64_t fullBytes=0,warmBytes=0;
+	for (unsigned step=0;step<548;step++) for (unsigned core=0;core<DataflowCoreCount;core++) {
+		const auto& original=base.records[size_t(step)*DataflowCoreCount+core];
+		DataflowStreamRecord fetched{},expected=original;
+		alignas(64) uint32_t program[DataflowProgramRegionBytes/4]{};
+		FetchIO io{original};unsigned failed=99;
+		assert(DataflowResidentStreamCacheHint(caches[core],step)==0);
+		assert(DataflowStreamFetchDynamic(io,plan->binding[core],plan->lease[core],fixture->routes,
+			core,step,fetched,program,sizeof(program),dynamic1,&failed));
+		fullBytes+=io.lastBytes;
+		assert(DataflowResidentStreamCacheRecord(caches[core],step,fetched,io.lastBytes));
+		const unsigned hint=DataflowResidentStreamCacheHint(caches[core],step);
+		assert(hint==DataflowStreamRecordReadBytes(original.header[6]));
+		std::memset(&fetched,0xa5,sizeof(fetched));
+		assert(DataflowStreamFetchDynamic(io,plan->binding[core],plan->lease[core],fixture->routes,
+			core,step,fetched,program,sizeof(program),dynamic2,&failed,hint));
+		warmBytes+=io.lastBytes;
+		assert(DataflowDynamicPatch(expected,dynamic2,plan->epoch,step+1,core));
+		assert(!std::memcmp(fetched.header,expected.header,sizeof(expected.header))
+			&& !std::memcmp(fetched.payload,expected.payload,expected.header[6])
+			&& !std::memcmp(program,expected.payload,expected.header[6]));
+		assert(DataflowResidentStreamCacheRecord(caches[core],step,fetched,hint));
+	}
+	assert(fullBytes==uint64_t(548)*DataflowCoreCount*DataflowStreamRecordBytes
+		&& warmBytes<fullBytes);
+	std::printf("resident stream simulation: cold=%llu warm=%llu bytes for 548 steps across 120 cores\n",
+		static_cast<unsigned long long>(fullBytes),static_cast<unsigned long long>(warmBytes));
+	{
+		const auto& original=base.records[0];FetchIO io{original};DataflowStreamRecord fetched{};
+		alignas(64) uint32_t program[DataflowProgramRegionBytes/4]{};unsigned failed=99;
+		const unsigned hint=DataflowResidentStreamCacheHint(caches[0],0);
+		assert(hint>64 && hint+64<DataflowStreamRecordBytes);
+		assert(!DataflowStreamFetchDynamic(io,plan->binding[0],plan->lease[0],fixture->routes,
+			0,0,fetched,program,sizeof(program),dynamic1,&failed,hint-64)
+			&& failed==DataflowStreamFetchRecord && !program[0]);
+		assert(!DataflowStreamFetchDynamic(io,plan->binding[0],plan->lease[0],fixture->routes,
+			0,0,fetched,program,sizeof(program),dynamic1,&failed,hint+64)
+			&& failed==DataflowStreamFetchRecord && !program[0]);
+		auto damaged=original;damaged.payload[5]^=1;FetchIO corrupt{damaged};
+		assert(!DataflowStreamFetchDynamic(corrupt,plan->binding[0],plan->lease[0],fixture->routes,
+			0,0,fetched,program,sizeof(program),dynamic1,&failed,hint)
+			&& failed==DataflowStreamFetchRecord && !program[0]);
+		unsigned paddedStep=0;
+		while (paddedStep<548 && !(base.records[size_t(paddedStep)*DataflowCoreCount].header[6]&63U))
+			paddedStep++;
+		assert(paddedStep<548);
+		const auto& padded=base.records[size_t(paddedStep)*DataflowCoreCount];
+		damaged=padded;damaged.payload[padded.header[6]/4]=1;FetchIO badPadding{damaged};
+		const unsigned paddedHint=DataflowResidentStreamCacheHint(caches[0],paddedStep);
+		assert(!DataflowStreamFetchDynamic(badPadding,plan->binding[0],plan->lease[0],fixture->routes,
+			0,paddedStep,fetched,program,sizeof(program),dynamic1,&failed,paddedHint)
+			&& failed==DataflowStreamFetchRecord && !program[0]);
+	}
+	auto& cache=caches[0];
+	cache.readBytes[0]=65;
+	assert(DataflowResidentStreamCacheHint(cache,0)==UINT32_MAX);
+	auto otherBinding=plan->binding[0];otherBinding.epoch++;
+	assert(!DataflowResidentStreamCacheBind(cache,otherBinding));
+	DataflowResidentStreamCacheReset(cache);
+	assert(DataflowResidentStreamCacheBind(cache,otherBinding)
+		&& DataflowResidentStreamCacheHint(cache,0)==0);
 	// The prompt-only program must be byte-identical to the first 545
 	// operations of the decode stream, including after a dynamic token patch.
 	auto promptPlan=std::make_unique<DataflowStreamPlan>();
@@ -126,8 +205,6 @@ int main() {
 	assert(!DataflowStreamFetchDynamic(corruptRead,plan->binding[0],plan->lease[0],fixture->routes,
 		0,0,staging,program,sizeof(program),dynamic1,&corruptStage)
 		&& corruptStage==DataflowStreamFetchRecord && program[0]==0 && program[1]==0xfacefeed);
-	DataflowDynamicTokenContext dynamic2{};
-	assert(DataflowDynamicTokenContext::Build(fixture->manifest,Vocabulary-1,2,dynamic2));
 	CompareSink compare2{base,dynamic2};
 	assert(DataflowStreamRecording::Build(fixture->packed,*candidate1,*candidate2,*plan,fixture->routes,
 		2,Vocabulary-1,0,true,compare2,*scratch,*projection,stage));

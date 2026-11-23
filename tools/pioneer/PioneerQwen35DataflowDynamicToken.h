@@ -107,10 +107,10 @@ public:
 	template<class IO> static bool Fetch(IO& io,const DataflowStreamBinding& binding,const Range& lease,
 		const unsigned (&routes)[2][Banks],unsigned core,unsigned index,
 		DataflowStreamRecord& staging,uint32_t* program,unsigned programBytes,
-		const DataflowDynamicTokenContext& run,unsigned* failedStage) {
+		const DataflowDynamicTokenContext& run,unsigned* failedStage,unsigned readBytes) {
 		auto patch=[&](DataflowStreamRecord& r) { return PatchValidated(r,run); };
 		return DataflowStreamFetchTransform(io,binding,lease,routes,core,index,
-			staging,program,programBytes,patch,failedStage);
+			staging,program,programBytes,patch,failedStage,readBytes);
 	}
 };
 
@@ -126,21 +126,22 @@ template<class IO>
 bool DataflowStreamFetchDynamic(IO& io,const DataflowStreamBinding& binding,const Range& lease,
 	const unsigned (&routes)[2][Banks],unsigned core,unsigned index,
 	DataflowStreamRecord& staging,uint32_t* program,unsigned programBytes,
-	const DataflowDynamicTokenContext& run,unsigned* failedStage=nullptr)
+	const DataflowDynamicTokenContext& run,unsigned* failedStage=nullptr,
+	unsigned readBytes=DataflowStreamRecordBytes)
 {
 	return DataflowDynamicPatcher::Fetch(io,binding,lease,routes,core,index,
-		staging,program,programBytes,run,failedStage);
+		staging,program,programBytes,run,failedStage,readBytes);
 }
 
 inline bool DataflowBlackholeStreamFetchDynamic(const DataflowStreamBinding& binding,
 	const Range& lease,const unsigned (&routes)[2][Banks],unsigned core,unsigned index,
 	const DataflowDynamicTokenContext& run,unsigned* failedStage=nullptr,
-	DataflowNocDiagnostic* diagnostic=nullptr)
+	DataflowNocDiagnostic* diagnostic=nullptr,unsigned readBytes=DataflowStreamRecordBytes)
 {
 	DataflowBlackholeStreamIO io(diagnostic);
 	auto* staging=reinterpret_cast<DataflowStreamRecord*>(static_cast<uintptr_t>(DataflowStreamStagingAddress));
 	auto* program=reinterpret_cast<uint32_t*>(static_cast<uintptr_t>(DataflowProgramAddress));
-	return DataflowStreamFetchDynamic(io,binding,lease,routes,core,index,*staging,program,DataflowProgramRegionBytes,run,failedStage);
+	return DataflowStreamFetchDynamic(io,binding,lease,routes,core,index,*staging,program,DataflowProgramRegionBytes,run,failedStage,readBytes);
 }
 }
 #endif

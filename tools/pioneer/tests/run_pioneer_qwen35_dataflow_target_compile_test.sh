@@ -602,11 +602,22 @@ fi
 	-o "$temporary/role-graph-service.o"
 "$cxx" $role_flags -I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 	-c "$root/tools/pioneer/PioneerQwen35DataflowSharedRoles.cpp" -o "$temporary/role-graph-compute.o"
+mkdir "$temporary/role-graph"
+for piece in stream barrier; do
+	"$cxx" $role_flags -O2 -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+		-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -I"$root/tools/pioneer" -I"$sdk/headers" \
+		-idirafter "$sdk/headers/posix" -c "$directory/pioneer_qwen35_dataflow_device_${piece}_target_probe.cpp" \
+		-o "$temporary/role-graph/device-${piece}.o"
+done
+"$cxx" $role_flags -O2 -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+	-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -I"$root/tools/pioneer" -I"$sdk/headers" \
+	-idirafter "$sdk/headers/posix" -c "$root/tools/pioneer/PioneerQwen35DataflowDeviceDispatch.cpp" \
+	-o "$temporary/role-graph/device-graph.o"
 "$ld" -m elf32lriscv --no-relax --gc-sections -u PioneerQwen35DeviceGraphRun \
 	-T "$root/tools/pioneer/blackhole_qwen35_dataflow_dispatch_witness.ld" \
 	"$temporary/graph-service/start.o" "$temporary/role-graph-service.o" "$temporary/graph-service/memory.o" \
-	"$temporary/graph-service/device-stream.o" "$temporary/graph-service/device-barrier.o" \
-	"$temporary/graph-service/device-graph.o" "$temporary/role-graph-compute.o" \
+	"$temporary/role-graph/device-stream.o" "$temporary/role-graph/device-barrier.o" \
+	"$temporary/role-graph/device-graph.o" "$temporary/role-graph-compute.o" \
 	-o "$temporary/role-graph-witness.elf"
 if [ -n "$("$nm" -u "$temporary/role-graph-witness.elf")" ]; then
 	echo 'shared-role graph witness has unresolved imports' >&2
@@ -617,9 +628,13 @@ if ! grep -E 'jalr.*<qwen35_shared_compute_coordinate>' "$temporary/role-graph-w
 	echo 'graph witness does not call the shared-role compute coordinator' >&2
 	exit 1
 fi
+if ! grep -E 'jalr.*<qwen35_resident_stream_cache_bind>' "$temporary/role-graph-witness.disassembly" >/dev/null; then
+	echo 'shared-role graph witness does not bind the resident stream cache' >&2
+	exit 1
+fi
 "$size" -A "$temporary/role-graph-witness.elf"
 python3 - "$temporary/role-graph-service.su" "$temporary/role-graph-compute.su" \
-	"$temporary/graph-service/device-graph.su" <<'PYROLESTACK'
+	"$temporary/role-graph/device-graph.su" <<'PYROLESTACK'
 from pathlib import Path
 import sys
 entries=[]

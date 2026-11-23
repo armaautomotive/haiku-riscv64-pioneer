@@ -44,11 +44,13 @@ case "$dispatch" in
 		"$output/start.o" "$output/service.o" "$output/memory.o" \
 		-Map "$output/service.map" -o "$output/service.elf";;
 1)
-	"$cross-g++" $flags -O2 -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	graph_flags=
+	if [ "$role_graph" = 1 ]; then graph_flags=$service_flags; fi
+	"$cross-g++" $flags -O2 $graph_flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 		-c "$directory/tests/pioneer_qwen35_dataflow_device_stream_target_probe.cpp" -o "$output/device-stream.o"
-	"$cross-g++" $flags -O2 -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	"$cross-g++" $flags -O2 $graph_flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 		-c "$directory/tests/pioneer_qwen35_dataflow_device_barrier_target_probe.cpp" -o "$output/device-barrier.o"
-	"$cross-g++" $flags -O2 -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+	"$cross-g++" $flags -O2 $graph_flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 		-c "$directory/PioneerQwen35DataflowDeviceDispatch.cpp" -o "$output/device-graph.o"
 	if [ "$role_graph" = 1 ]; then
 		"$cross-g++" $flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \

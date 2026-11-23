@@ -158,21 +158,38 @@ bool DataflowStreamEncode(const Invocation& invocation,unsigned epoch,unsigned s
 
 // Structural/transfer check only; the command executor must still validate
 // its typed invocation, and the kernel must authorize it against the model.
-inline bool DataflowStreamRecordStructureValid(const DataflowStreamRecord& r,
-	unsigned epoch,unsigned step,unsigned core)
+inline unsigned DataflowStreamRecordReadBytes(unsigned payloadBytes)
+{
+	const unsigned header=DataflowStreamHeaderWords*sizeof(uint32_t);
+	return payloadBytes && payloadBytes<=DataflowStreamPayloadWords*sizeof(uint32_t)
+		?((header+payloadBytes+63U)&~63U):0;
+}
+
+// A shorter read is valid only when it contains the entire typed payload and
+// its final alignment padding. Unread trailing bytes never enter the command.
+inline bool DataflowStreamRecordStructureValidBytes(const DataflowStreamRecord& r,
+	unsigned epoch,unsigned step,unsigned core,unsigned readBytes)
 {
 	const unsigned bytes=DataflowStreamInvocationBytes(r.header[5]);
-	if (!epoch || !step || step>DataflowStreamMaxRecords || core>=DataflowCoreCount
+	if (readBytes<DataflowStreamHeaderWords*sizeof(uint32_t) || readBytes>DataflowStreamRecordBytes
+		|| (readBytes&63U) || !epoch || !step || step>DataflowStreamMaxRecords || core>=DataflowCoreCount
 		|| r.header[0]!=DataflowStreamRecordMagic || r.header[1]!=DataflowStreamVersion
 		|| r.header[2]!=epoch || r.header[3]!=step || r.header[4]!=core
 		|| !bytes || bytes!=r.header[6] || (bytes&3) || bytes>sizeof(r.payload)
+		|| DataflowStreamRecordReadBytes(bytes)>readBytes
+		|| (readBytes!=DataflowStreamRecordBytes && DataflowStreamRecordReadBytes(bytes)!=readBytes)
 		|| r.payload[0]!=r.header[5] || DataflowStreamCoreWord(r.header[5])>=bytes/4
 		|| r.payload[DataflowStreamCoreWord(r.header[5])]!=core
 		|| r.payload[1]!=DataflowStreamInvocationVersion(r.header[5])
 		|| DataflowStreamChecksum(r.payload,bytes/4)!=r.header[7]) return false;
 	for (unsigned i=8;i<DataflowStreamHeaderWords;i++) if (r.header[i]) return false;
-	for (unsigned i=bytes/4;i<DataflowStreamPayloadWords;i++) if (r.payload[i]) return false;
+	for (unsigned i=bytes/4;i<(readBytes/4)-DataflowStreamHeaderWords;i++) if (r.payload[i]) return false;
 	return true;
+}
+inline bool DataflowStreamRecordStructureValid(const DataflowStreamRecord& r,
+	unsigned epoch,unsigned step,unsigned core)
+{
+	return DataflowStreamRecordStructureValidBytes(r,epoch,step,core,DataflowStreamRecordBytes);
 }
 
 // A read failure is an uncertain NoC operation: the caller must stop and
@@ -182,12 +199,13 @@ template<class IO,class Transform>
 bool DataflowStreamFetchTransform(IO& io,const DataflowStreamBinding& binding,const Range& lease,
 	const unsigned (&routes)[2][Banks],unsigned core,unsigned index,
 	DataflowStreamRecord& staging,uint32_t* program,unsigned programBytes,Transform& transform,
-	unsigned* failedStage=nullptr)
+	unsigned* failedStage=nullptr,unsigned readBytes=DataflowStreamRecordBytes)
 {
 	if (failedStage) *failedStage=DataflowStreamFetchBinding;
 	if (!DataflowStreamBindingMatches(binding,lease,routes,core)
 		|| index>=binding.count || !program
-		|| programBytes<DataflowProgramRegionBytes
+		|| programBytes<DataflowProgramRegionBytes || readBytes<DataflowStreamHeaderWords*sizeof(uint32_t)
+		|| readBytes>DataflowStreamRecordBytes || (readBytes&63U)
 		|| (reinterpret_cast<uintptr_t>(&staging)&63)
 		|| (reinterpret_cast<uintptr_t>(program)&3)) return false;
 	const uintptr_t start=reinterpret_cast<uintptr_t>(&staging),out=reinterpret_cast<uintptr_t>(program);
@@ -200,13 +218,13 @@ bool DataflowStreamFetchTransform(IO& io,const DataflowStreamBinding& binding,co
 	DataflowStoreRelease(program[0],0);
 	if (failedStage) *failedStage=DataflowStreamFetchRead;
 	if (!io.ReadStream(binding.bank,address,binding.route,
-		reinterpret_cast<uint8_t*>(&staging),sizeof(staging))) return false;
+		reinterpret_cast<uint8_t*>(&staging),readBytes)) return false;
 	if (failedStage) *failedStage=DataflowStreamFetchRecord;
-	if (!DataflowStreamRecordStructureValid(staging,binding.epoch,index+1,core)) return false;
+	if (!DataflowStreamRecordStructureValidBytes(staging,binding.epoch,index+1,core,readBytes)) return false;
 	if (failedStage) *failedStage=DataflowStreamFetchPatch;
 	if (!transform(staging)) return false;
 	if (failedStage) *failedStage=DataflowStreamFetchPatchedRecord;
-	if (!DataflowStreamRecordStructureValid(staging,binding.epoch,index+1,core)) return false;
+	if (!DataflowStreamRecordStructureValidBytes(staging,binding.epoch,index+1,core,readBytes)) return false;
 	for (unsigned i=1;i<staging.header[6]/4;i++) program[i]=staging.payload[i];
 	DataflowStoreRelease(program[0],staging.payload[0]);
 	if (failedStage) *failedStage=DataflowStreamFetchOkay;
@@ -230,7 +248,8 @@ public:
 	explicit DataflowBlackholeStreamIO(DataflowNocDiagnostic* detail=nullptr):diagnostic(detail) {}
 	bool ReadStream(unsigned bank,unsigned address,unsigned route,uint8_t* output,unsigned bytes) {
 		return bank<Banks && output==reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(DataflowStreamStagingAddress))
-			&& bytes==DataflowStreamRecordBytes && noc.Read(address,route,output,bytes,diagnostic);
+			&& bytes>=64 && bytes<=DataflowStreamRecordBytes && !(bytes&63U)
+			&& noc.Read(address,route,output,bytes,diagnostic);
 	}
 };
 

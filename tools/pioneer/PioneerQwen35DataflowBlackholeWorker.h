@@ -17,6 +17,7 @@
 #error Shared-role graph bridge is a non-loadable recovery witness only
 #endif
 #include "PioneerQwen35DataflowRoleCoordinator.h"
+#include "PioneerQwen35DataflowResidentStreamCache.h"
 extern "C" unsigned qwen35_shared_compute_coordinate(
 	PioneerQwen35::DataflowRoleMailbox*,unsigned,unsigned);
 #endif
@@ -475,6 +476,12 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 		for (;;) asm volatile("" ::: "memory");
 	}
 	const unsigned core=mailbox->logicalCore;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+	// Invalidate stale cache metadata before the worker accepts a command.
+	auto* streamCache=reinterpret_cast<DataflowResidentStreamCache*>(
+		static_cast<uintptr_t>(DataflowResidentStreamCacheAddress));
+	DataflowResidentStreamCacheReset(*streamCache);
+#endif
 	const unsigned rawLocalRoute=*reinterpret_cast<volatile uint32_t*>(
 		static_cast<uintptr_t>(DataflowNoc0Base+DataflowNocLogicalIdOffset));
 	uint32_t localRoute=0;

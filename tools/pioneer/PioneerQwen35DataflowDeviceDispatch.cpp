@@ -5,16 +5,28 @@
 #include "PioneerQwen35DataflowGraphAuthorization.h"
 #include "PioneerQwen35DataflowGraphTrace.h"
 #include "PioneerQwen35DataflowGraphProfile.h"
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+#include "PioneerQwen35DataflowResidentStreamCache.h"
+static_assert(unsigned(PioneerQwen35::DataflowResidentStreamCacheEntries)==unsigned(PioneerQwen35::DataflowGraphDecodeSteps),
+	"the resident length cache covers the complete decode graph");
+extern "C" __attribute__((noinline)) bool qwen35_resident_stream_cache_bind(
+	const PioneerQwen35::DataflowStreamBinding* binding) {
+	if (!binding) return false;
+	auto* cache=reinterpret_cast<PioneerQwen35::DataflowResidentStreamCache*>(static_cast<uintptr_t>(
+		PioneerQwen35::DataflowResidentStreamCacheAddress));
+	return PioneerQwen35::DataflowResidentStreamCacheBind(*cache,*binding);
+}
+#endif
 
 // The graph dispatcher remains non-loadable until the kernel owns its sealed
 // model and session lifetimes and the device path has been qualified.
 extern "C" __attribute__((noinline)) bool qwen35_graph_authorize(
-	const PioneerQwen35::DataflowGraphRunDescriptor* run,unsigned index) {
+	const PioneerQwen35::DataflowGraphRunDescriptor* run,unsigned index,unsigned readBytes) {
 	using namespace PioneerQwen35;
 	if (!run) return false;
 	const auto* record=reinterpret_cast<const DataflowStreamRecord*>(static_cast<uintptr_t>(DataflowStreamStagingAddress));
 	const auto* program=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(DataflowProgramAddress));
-	return DataflowGraphFetchedCommandMatches(*run,index,*record,program,DataflowProgramRegionBytes);
+	return DataflowGraphFetchedCommandMatches(*run,index,*record,program,DataflowProgramRegionBytes,readBytes);
 }
 extern "C" bool qwen35_graph_execute(unsigned core,unsigned sequence,
 	PioneerQwen35::DataflowWorkerMailbox* mailbox,unsigned* detail);
@@ -39,6 +51,7 @@ struct GraphWitnessExecution {
 	PioneerQwen35::DataflowWorkerMailbox* mailbox;
 	unsigned fetchStage=0;
 	unsigned index=0;
+	unsigned readBytes=PioneerQwen35::DataflowStreamRecordBytes;
 	PioneerQwen35::DataflowNocDiagnostic fetchNoC{};
 	PioneerQwen35::DataflowGraphProfile* profile=nullptr;
 	void Mark(unsigned phase) {
@@ -61,14 +74,30 @@ struct GraphWitnessExecution {
 				DataflowStoreRelease(trace[0],0);
 			}
 		}
-		const bool okay=PioneerQwen35::DataflowBlackholeStreamFetchDynamic(run.binding,run.lease,run.routes,run.core,index,run.token,&fetchStage,&fetchNoC);
+		readBytes=PioneerQwen35::DataflowStreamRecordBytes;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+		auto* cache=reinterpret_cast<PioneerQwen35::DataflowResidentStreamCache*>(static_cast<uintptr_t>(
+			PioneerQwen35::DataflowResidentStreamCacheAddress));
+		const unsigned hint=PioneerQwen35::DataflowResidentStreamCacheHint(*cache,index);
+		if (hint==UINT32_MAX) { fetchStage=PioneerQwen35::DataflowStreamFetchBinding;return false; }
+		if (hint) readBytes=hint;
+#endif
+		bool okay=PioneerQwen35::DataflowBlackholeStreamFetchDynamic(run.binding,run.lease,run.routes,run.core,index,run.token,&fetchStage,&fetchNoC,readBytes);
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+		if (okay) {
+			const auto* record=reinterpret_cast<const PioneerQwen35::DataflowStreamRecord*>(static_cast<uintptr_t>(
+				PioneerQwen35::DataflowStreamStagingAddress));
+			okay=PioneerQwen35::DataflowResidentStreamCacheRecord(*cache,index,*record,readBytes);
+			if (!okay) fetchStage=PioneerQwen35::DataflowStreamFetchRecord;
+		}
+#endif
 		if (profile) profile->Add(PioneerQwen35::DataflowProfileFetch,start,DataflowProfileCycle());
 		return okay;
 	}
 	bool Authorize(unsigned step) {
 		const uint64_t start=profile?DataflowProfileCycle():0;
 		Mark(PioneerQwen35::DataflowGraphProgressAuthorize);
-		const bool okay=qwen35_graph_authorize(&run,step);
+		const bool okay=qwen35_graph_authorize(&run,step,readBytes);
 		if (profile) profile->Add(PioneerQwen35::DataflowProfileAuthorize,start,DataflowProfileCycle());
 		return okay;
 	}
@@ -113,6 +142,9 @@ extern "C" unsigned PioneerQwen35DeviceGraphRun(
 	PioneerQwen35::DataflowWorkerMailbox* mailbox)
 {
 	if (!mailbox || !PioneerQwen35::DataflowGraphRunValid(run,mailbox->logicalCore)) return PioneerQwen35::DataflowGraphInvalid;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+	if (!qwen35_resident_stream_cache_bind(&run.binding)) return PioneerQwen35::DataflowGraphInvalid;
+#endif
 	PioneerQwen35::DataflowGraphProfile profile;
 	GraphWitnessExecution execution{run,mailbox};
 	if (run.core==0 && run.ticket.count==PioneerQwen35::DataflowGraphDecodeSteps) {
