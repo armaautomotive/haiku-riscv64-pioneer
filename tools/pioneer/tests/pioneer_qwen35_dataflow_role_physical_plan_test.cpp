@@ -29,6 +29,8 @@ int main()
     assert(!DataflowRolePhysicalReadAllowed(DataflowRolePhysicalShim,DataflowRoleShimWords*4));
     assert(DataflowRolePhysicalReadAllowed(DataflowRolePhysicalControl,0x1b0));
     assert(!DataflowRolePhysicalReadAllowed(DataflowRolePhysicalControl,0));
+    assert(!DataflowRolePhysicalReadAllowed(DataflowRolePhysicalControl,0x1f0));
+    assert(!DataflowRolePhysicalReadAllowed(DataflowRolePhysicalControl,0x1f4));
     assert(DataflowRolePhysicalReadAllowed(DataflowRolePhysicalPc,0x148));
     assert(!DataflowRolePhysicalReadAllowed(DataflowRolePhysicalPc,0x14c));
     const unsigned nocs[]={DataflowRolePhysicalNoc0,DataflowRolePhysicalNoc1};

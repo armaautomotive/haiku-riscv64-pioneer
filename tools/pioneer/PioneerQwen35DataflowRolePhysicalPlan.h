@@ -62,6 +62,10 @@ inline bool DataflowRolePhysicalReadAllowed(unsigned which,unsigned offset)
         case DataflowRolePhysicalBriscRam:
         case DataflowRolePhysicalNcriscRam: return offset<DataflowRoleLocalRamBytes;
         case DataflowRolePhysicalControl:
+            // WALL_CLOCK_L (0x1f0) is deliberately excluded: Tenstorrent's
+            // get_timestamp documents that reading it samples/freezes the
+            // shared high-half readback. This is not an independent,
+            // side-effect-free status read for an unowned tile.
             return offset==0x1b0 || offset==0x224 || offset==0x234
                 || offset==0x238 || offset==0x23c;
         case DataflowRolePhysicalPc: return offset>=0x138 && offset<=0x148;
