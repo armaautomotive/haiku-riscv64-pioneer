@@ -121,6 +121,11 @@ public:
 	}
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 	bool Q35StreamClaimed() const { return q35StreamOwner!=nullptr; }
+	// Checks identity and the immutable reservation count without implying
+	// that an unsealed stream is ready to execute. Caller holds the bank lock.
+	bool Q35StreamOwnerMatches(const tt_dram_samples_result& baseline,const void* owner,unsigned count) const {
+		return owner && owner==q35StreamOwner && count==120 && q35StreamCount==count && Matches(baseline);
+	}
 	// A private, sticky claim. The caller must independently validate the
 	// plan against the live packed model and hold the global session lock.
 	// Ordinary bank access cannot enter these ranges after the claim.
@@ -150,8 +155,7 @@ public:
 	// Called with the global session lock held. This is only an identity and
 	// range proof for an existing sealed claim, not permission to execute it.
 	bool Q35SealedOwner(const tt_dram_samples_result& baseline,const void* owner,unsigned count) const {
-		return owner && owner==q35StreamOwner && q35StreamSealed
-			&& count==120 && q35StreamCount==count && Matches(baseline);
+		return q35StreamSealed && Q35StreamOwnerMatches(baseline,owner,count);
 	}
 	bool Q35SealedRange(const void* owner,unsigned index,const PioneerQ35StreamBankRange& expected) const {
 		if (!owner || owner!=q35StreamOwner || !q35StreamSealed || index>=q35StreamCount || quarantined) return false;

@@ -74,9 +74,34 @@ public:
     PioneerQ35ProjectionScratch& operator=(const PioneerQ35ProjectionScratch&)=delete;
     bool IsCaptured() const { return phase==Captured; }
     bool IsStaged() const { return phase==Staged; }
+    bool IsRunning() const { return phase==Running; }
     bool IsRestored() const { return phase==Restored; }
     bool FailedTransfer() const { return transferFailed; }
     bool OutputVerified() const { return outputVerified; }
+    bool MatchesStagedLease(unsigned whichBank,unsigned address,unsigned bytes) const {
+        return phase==Staged && whichBank==bank && address==PioneerResidentBanks::Base+firstOffset
+            && bytes==Fixture::ScratchBytes;
+    }
+    bool MatchesBankClaimOwner(const PioneerResidentBanks& banks,const tt_dram_samples_result& dram) const {
+        return phase!=Empty && phase!=Failed
+            && banks.Q35StreamOwnerMatches(dram,this,PioneerQwen35::DataflowCoreCount);
+    }
+    // Checks the live bank owner's sticky claim, not merely this object's
+    // recorded address. The scope must still prove session/firmware lifetime
+    // and compare its independently audited routes before execution.
+    bool MatchesBankClaim(const PioneerResidentBanks& banks,const tt_dram_samples_result& dram) const {
+        if (!MatchesBankClaimOwner(banks,dram) || bank>=PioneerQwen35::Banks) return false;
+        const uint32_t expectedRoute=dram.translated[bank][0]|(dram.translated[bank][1]<<6);
+        for (unsigned n=0;n<Fixture::ScratchPages;n++) {
+            uint32_t address=0,route=0,index=0;
+            const unsigned offset=firstOffset+n*Fixture::PageBytes;
+            if (!banks.Q35StreamPage(dram,this,bank,offset,false,address,route,index)
+                || address!=PioneerResidentBanks::Base+offset || route!=expectedRoute
+                || index!=bank*(PioneerResidentBanks::Capacity/Fixture::PageBytes)+offset/Fixture::PageBytes)
+                return false;
+        }
+        return true;
+    }
 
     template<class IO,class Scope>
     bool Capture(IO& io,Scope& scope,const tt_dram_samples_result& dram,

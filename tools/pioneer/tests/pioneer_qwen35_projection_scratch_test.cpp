@@ -70,6 +70,7 @@ template<class Raw=BanksMock> struct ScratchDevice {
     }
 };
 
+#ifndef PIONEER_QWEN35_PROJECTION_SCRATCH_MOCK_ONLY
 int main()
 {
     (void)&Input; (void)&Prepare; (void)&Upload; (void)&Close;
@@ -81,7 +82,16 @@ int main()
         assert(device->Capture(*owner) && owner->IsCaptured() && device->snapshot==device->original);
         assert(!device->banks.Range(device->dram,0,0)); // claimed pages are private
         assert(device->Stage(*owner) && owner->IsStaged());
+        assert(owner->MatchesStagedLease(0,PioneerResidentBanks::Base,Fixture::ScratchBytes)
+            && !owner->MatchesStagedLease(1,PioneerResidentBanks::Base,Fixture::ScratchBytes)
+            && !owner->MatchesStagedLease(0,PioneerResidentBanks::Base+4096,Fixture::ScratchBytes)
+            && !owner->MatchesStagedLease(0,PioneerResidentBanks::Base,Fixture::ScratchBytes-1));
+        PioneerResidentBanks otherBanks;
+        assert(owner->MatchesBankClaim(device->banks,device->dram)
+            && owner->MatchesBankClaimOwner(device->banks,device->dram)
+            && !owner->MatchesBankClaim(otherBanks,device->dram));
         assert(owner->MarkRunning(device->scope));
+        assert(!owner->MatchesStagedLease(0,PioneerResidentBanks::Base,Fixture::ScratchBytes));
         assert(!device->Verify(*owner) && !device->Restore(*owner) && !owner->MarkStopped(device->scope));
         device->SetOutput();device->scope.stopped=true;
         assert(owner->MarkStopped(device->scope));
@@ -125,3 +135,4 @@ int main()
     std::puts("PASS private 680-page Q4_K scratch capture, stage, output and verified restoration; SIMULATED DEVICE");
     return 0;
 }
+#endif

@@ -45,6 +45,7 @@ struct ProjectionServiceIO : MockDataflowIO {
     }
 };
 
+#ifndef PIONEER_QWEN35_PROJECTION_SERVICE_MOCK_ONLY
 int main()
 {
     auto io=std::make_unique<ProjectionServiceIO>();
@@ -91,3 +92,4 @@ int main()
     std::puts("PASS resident service dispatch, simulated Q4_K results and fault recovery, then clean close; NO HARDWARE");
     return 0;
 }
+#endif
