@@ -31,6 +31,10 @@ public:
     bool MarkedForPossibleRelease() const { return fPhase==Dirty && fReleaseLedgerReady; }
     bool RestorationRequired() const { return fPhase==Dirty; }
     bool RestoredOriginal() const { return fPhase==Restored; }
+    const uint32_t* OriginalWords(unsigned core,unsigned role) const {
+        return core<DataflowBarrierWorkers && fPhase!=Empty && fPhase!=Unavailable
+            ?fCore[core].OriginalWords(role):nullptr;
+    }
     template<class IO> bool CaptureAll(uint32_t* storage,unsigned words,IO& io) {
         if (fPhase!=Empty || !storage || words!=RequiredWords()) return false;
         if (!AllStable(io)) { fPhase=Unavailable; return false; }

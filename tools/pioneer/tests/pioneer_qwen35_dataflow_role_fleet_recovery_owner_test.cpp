@@ -107,7 +107,14 @@ int main()
     for (unsigned check : {DataflowBarrierWorkers+1U,2U*DataflowBarrierWorkers+1U}) {
         RecoveryIO io; const auto code=io.code,ram=io.ram,boots=io.boots,shims=io.shims,disable=io.resetDisable;
         DataflowRoleFleetRecoveryOwner owner;
+        assert(!owner.OriginalRamWords(0,DataflowRoleReader));
         assert(owner.CaptureAll(codeSnapshot.data(),codeSnapshot.size(),ramSnapshot.data(),ramSnapshot.size(),io));
+        for (unsigned core:{0U,60U,119U}) for (unsigned role=0;role<DataflowRoleCount;role++) {
+            const auto* saved=owner.OriginalRamWords(core,role);
+            const unsigned offset=core*RecoveryIO::RamPerCore+role*DataflowRoleLocalRamWords;
+            assert(saved && saved[0]==ram[offset] && saved[DataflowRoleLocalRamWords-1]==ram[offset+DataflowRoleLocalRamWords-1]);
+        }
+        assert(!owner.OriginalRamWords(DataflowBarrierWorkers,0) && !owner.OriginalRamWords(0,DataflowRoleCount));
         io.heldChecks=0; io.failHeldCheck=check;
         assert(!owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
         assert(owner.RestorationRequired() && io.writes==0 && io.heldChecks==check);

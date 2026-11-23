@@ -58,6 +58,10 @@ public:
     static constexpr unsigned RequiredWords() { return TotalWords; }
     bool RestorationRequired() const { return fPhase==Dirty; }
     bool RestoredOriginal() const { return fPhase==Restored; }
+    const uint32_t* OriginalWords(unsigned role) const {
+        return role<DataflowRoleCount && fPhase!=Empty && fSnapshot
+            ?fSnapshot+role*DataflowRoleLocalRamWords:nullptr;
+    }
     template<class IO> bool Capture(unsigned core,uint32_t* storage,unsigned words,IO& io) {
         if (fPhase!=Empty || core>=DataflowBarrierWorkers || !storage || words!=TotalWords) return false;
         fCore=core;

@@ -7,7 +7,7 @@ int main()
 {
     const uint32_t offsets[]={0x19000000,0x19012000,0x19070000,0x190b0000,
         0x19314000,0x19316000,0x19312000,0x19313000,0x19320000,0x19330000};
-    const uint32_t sizes[]={4096,4096,4096,32768,8192,8192,4096,4096,8192,8192};
+    const uint32_t sizes[]={4096,4096,4096,49152,8192,8192,4096,4096,8192,8192};
     static_assert(sizeof(offsets)/sizeof(offsets[0])==DataflowRolePhysicalWindowCount,"one fixed mapping per window");
     for (unsigned i=0;i<DataflowRolePhysicalWindowCount;i++) {
         DataflowRolePhysicalWindow w{}; assert(DataflowRolePhysicalWindowPlan(i,w));

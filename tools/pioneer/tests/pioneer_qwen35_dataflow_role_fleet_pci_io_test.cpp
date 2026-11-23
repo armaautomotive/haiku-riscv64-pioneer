@@ -57,6 +57,19 @@ struct ChangingImageViews {
         return true;
     }
 };
+struct ChangingRamCopyViews {
+    DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>& views;
+    unsigned matches=0;
+    bool Opened() const { return views.Opened(); }
+    template<class Guard>
+    bool Matches(unsigned core,unsigned which,unsigned offset,const uint32_t* expected,
+        unsigned words,Guard& guard) {
+        if (!views.Matches(core,which,offset,expected,words,guard)) return false;
+        if (++matches==2)
+            gMemory[DataflowRolePhysicalExtraCode][(DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address)/4]^=1;
+        return true;
+    }
+};
 int main()
 {
     PioneerStoreContext context; FakeService service; FakeGraph graph;
@@ -316,8 +329,32 @@ int main()
         gMemory[DataflowRolePhysicalExtraCode][0]^=1;
         auto bad=image; bad.code[0]=nullptr;
         assert(!io.InspectRunningRoleImages(11,bad));
+        std::vector<uint32_t> readerRam(DataflowRoleLocalRamWords),writerRam(DataflowRoleLocalRamWords);
+        const unsigned readerCopy=(DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address)/4;
+        const unsigned writerCopy=(DataflowRoleWriterRamCopy-DataflowRoleExtraL1Address)/4;
+        for (unsigned i=0;i<DataflowRoleLocalRamWords;i++) {
+            readerRam[i]=0x12340000U^i; writerRam[i]=0x98760000U^i;
+            gMemory[DataflowRolePhysicalExtraCode][readerCopy+i]=readerRam[i];
+            gMemory[DataflowRolePhysicalExtraCode][writerCopy+i]=writerRam[i];
+        }
+        for (unsigned core:{0U,60U,119U})
+            assert(io.InspectRunningRoleRamCopies(core,readerRam.data(),writerRam.data()));
+        gMemory[DataflowRolePhysicalExtraCode][readerCopy+123]^=1;
+        assert(!io.InspectRunningRoleRamCopies(11,readerRam.data(),writerRam.data()));
+        gMemory[DataflowRolePhysicalExtraCode][readerCopy+123]^=1;
+        gMemory[DataflowRolePhysicalExtraCode][writerCopy+DataflowRoleLocalRamWords-1]^=1;
+        assert(!io.InspectRunningRoleRamCopies(11,readerRam.data(),writerRam.data()));
+        gMemory[DataflowRolePhysicalExtraCode][writerCopy+DataflowRoleLocalRamWords-1]^=1;
+        ChangingRamCopyViews changingCopy{views};
+        PioneerQwen35RoleFleetPciIO<PioneerSessionIO,FleetPciTestScope,ChangingRamCopyViews>
+            changingCopyIO(context.io,scope,changingCopy);
+        assert(!changingCopyIO.InspectRunningRoleRamCopies(11,readerRam.data(),writerRam.data())
+            && changingCopy.matches==2);
+        gMemory[DataflowRolePhysicalExtraCode][readerCopy]^=1;
+        assert(!io.InspectRunningRoleRamCopies(11,nullptr,writerRam.data()));
         context.io.reset=0x47800;
         assert(!io.InspectRunningRoleImages(11,image));
+        assert(!io.InspectRunningRoleRamCopies(11,readerRam.data(),writerRam.data()));
         context.io.reset=0x6000; scope.imageInspection=false;
     }
     DataflowRoleProgramBounds bounds={{32,32},{64,64},

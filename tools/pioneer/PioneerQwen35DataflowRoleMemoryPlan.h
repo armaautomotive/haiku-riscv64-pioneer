@@ -25,8 +25,11 @@ enum : unsigned {
     DataflowRoleReaderCodeLimit=0xb5000,
     DataflowRoleWriterCodeAddress=0xb5000,
     DataflowRoleWriterCodeLimit=0xb8000,
+    DataflowRoleReaderRamCopy=PIONEER_Q35_ROLE_READER_RAM_COPY,
+    DataflowRoleWriterRamCopy=PIONEER_Q35_ROLE_WRITER_RAM_COPY,
+    DataflowRoleRamCopyBytes=8192,
     DataflowRoleExtraL1Address=DataflowRoleReaderCodeAddress,
-    DataflowRoleExtraL1Limit=DataflowRoleWriterCodeLimit,
+    DataflowRoleExtraL1Limit=DataflowRoleWriterRamCopy+DataflowRoleRamCopyBytes,
     DataflowRoleBriscBootAddress=0x00000,
     DataflowRoleNcriscBootAddress=0x12000,
     DataflowRolePrivateStackBase=0xffb00000,
@@ -39,8 +42,10 @@ static_assert(DataflowRoleReaderShimLimit==DataflowRoleWriterShimAddress
     "proposed low shims are disjoint from existing Tensix source windows");
 static_assert(unsigned(DataflowRoleExtraL1Address)==unsigned(DataflowBarrierL1Limit)
     && DataflowRoleReaderCodeLimit==DataflowRoleWriterCodeAddress
+    && DataflowRoleWriterCodeLimit==DataflowRoleReaderRamCopy
+    && DataflowRoleReaderRamCopy+DataflowRoleRamCopyBytes==DataflowRoleWriterRamCopy
     && DataflowRoleExtraL1Limit<=0x180000,
-    "proposed additional role code follows, but is not in, the saved L1 view");
+    "role code and pre-stack RAM copies occupy disjoint, saved L1 ranges");
 inline bool DataflowRoleExtraL1Range(unsigned address,unsigned bytes)
 {
     return bytes && !(address&3) && !(bytes&3)

@@ -117,7 +117,10 @@ public:
             || !fReleaseAuthorized || !fViews.Opened()) return false;
         Adapter io(fContext.io,*scope,fViews);
         if (!fRunningImagesObserved[core]) {
-            if (!io.InspectRunningRoleImages(core,RoleImage())) return false;
+            if (!io.InspectRunningRoleImages(core,RoleImage())
+                || !io.InspectRunningRoleRamCopies(core,
+                    fOwner.OriginalRamWords(core,PioneerQwen35::DataflowRoleReader),
+                    fOwner.OriginalRamWords(core,PioneerQwen35::DataflowRoleWriter))) return false;
         }
         if (!io.RunningReady(core,snapshot,
             sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),

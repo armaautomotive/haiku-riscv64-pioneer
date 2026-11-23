@@ -109,6 +109,9 @@ public:
             || !Verify(io,DataflowRoleWriterCodeAddress,fWriterImage,fWriterWords)
             || !Verify(io,DataflowRoleWriterCodeAddress+fWriterWords*4,
                 fSnapshot+writerOffset+fWriterWords,writerSlot-fWriterWords)
+            || !Verify(io,DataflowRoleWriterCodeLimit,
+                fSnapshot+(DataflowRoleWriterCodeLimit-DataflowRoleExtraL1Address)/4,
+                (DataflowRoleExtraL1Limit-DataflowRoleWriterCodeLimit)/4)
             || !io.AllRolesHeld(fCore)) { fPhase=Faulted; return false; }
         fCodeVerified=true;
         return true;

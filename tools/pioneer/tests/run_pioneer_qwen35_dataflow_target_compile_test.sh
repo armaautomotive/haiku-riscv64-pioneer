@@ -220,6 +220,8 @@ for role in reader writer; do
 			"$temporary/expected-${role}-${suffix}.bin"
 		cmp "$temporary/expected-${role}-${suffix}.bin" "$temporary/shared-role-images/${role}-${suffix}.bin"
 	done
+	python3 "$directory/pioneer_qwen35_role_stackless_copy_test.py" \
+		"$temporary/shared-role-images/${role}-shim.bin" "$role"
 done
 echo 'PASS reproducible shared reader/writer image export; OFFLINE ONLY'
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \

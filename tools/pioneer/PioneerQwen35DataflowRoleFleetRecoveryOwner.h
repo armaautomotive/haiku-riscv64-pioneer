@@ -77,6 +77,9 @@ public:
         return fPhase==Faulted || fPhase==Staged || fPhase==Armed || fPhase==ReleaseAttempted;
     }
     bool CoveredStateRestored() const { return fPhase==Restored; }
+    const uint32_t* OriginalRamWords(unsigned core,unsigned role) const {
+        return fRam.OriginalWords(core,role);
+    }
     // Capture is read-only; these states have not performed any role write.
     bool Untouched() const { return fPhase==Empty || fPhase==Captured || fPhase==Unavailable; }
     template<class IO> bool CaptureAll(uint32_t* code,unsigned codeWords,uint32_t* ram,

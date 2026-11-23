@@ -343,6 +343,26 @@ public:
         return fScope.ProveRoleImageInspectionAllowed(fIO,core) && SelectForStop(core)
             && fScope.ProveRoleImageInspectionAllowed(fIO,core);
     }
+    // Read the two L1 copies made by the startup shims before their first
+    // private-stack store. This compares against snapshots already retained
+    // by the owner; it does not replace the still-missing physical timing,
+    // ownership, release or recovery proofs.
+    bool InspectRunningRoleRamCopies(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || !reader || !writer || !fViews.Opened()
+            || !fScope.ProveExclusiveRewrite(fIO) || !SelectForStop(core)
+            || !fScope.ProveRoleImageInspectionAllowed(fIO,core)) return false;
+        ImageReadGuard guard(*this);
+        for (unsigned pass=0;pass<2;pass++) {
+            if (!fViews.Matches(core,DataflowRolePhysicalExtraCode,
+                    DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address,reader,DataflowRoleLocalRamWords,guard)
+                || !fViews.Matches(core,DataflowRolePhysicalExtraCode,
+                    DataflowRoleWriterRamCopy-DataflowRoleExtraL1Address,writer,DataflowRoleLocalRamWords,guard)) return false;
+            fIO.Pause();
+        }
+        return fScope.ProveRoleImageInspectionAllowed(fIO,core) && SelectForStop(core)
+            && fScope.ProveRoleImageInspectionAllowed(fIO,core);
+    }
     bool CompletedForAcknowledgement(unsigned core,unsigned textWords,unsigned dispatchWords) {
         using namespace PioneerQwen35;
         if (!RuntimeStable(core,textWords,dispatchWords)) return false;

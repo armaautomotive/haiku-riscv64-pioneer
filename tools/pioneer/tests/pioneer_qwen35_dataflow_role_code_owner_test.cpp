@@ -102,6 +102,14 @@ int main() {
     holeIO.memory[reader.size()+5]^=1; // outside both staged code images
     assert(!hole.VerifyStaged(holeIO) && hole.NeedsRestore());
     assert(hole.Restore(holeIO) && holeIO.memory==original);
+    SimulatedIO copyIO;
+    DataflowRoleCodeOwner copy;
+    assert(copy.Capture(4,saved.data(),saved.size(),copyIO));
+    assert(copy.Stage(true,reader.data(),reader.size(),copyIO));
+    assert(copy.Stage(false,writer.data(),writer.size(),copyIO));
+    copyIO.memory[(DataflowRoleWriterRamCopy-DataflowRoleExtraL1Address)/4]^=1;
+    assert(!copy.VerifyStaged(copyIO) && copy.NeedsRestore());
+    assert(copy.Restore(copyIO) && copyIO.memory==original);
     SimulatedIO failedIO;
     DataflowRoleCodeOwner failed;
     assert(failed.Capture(4,saved.data(),saved.size(),failedIO));
