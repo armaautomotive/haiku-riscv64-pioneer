@@ -22,6 +22,18 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
     Scope& fScope;
     Views& fViews;
     PioneerQwen35RoleRouteGuard<IO,Scope> fGuard;
+    class ImageReadGuard {
+        PioneerQwen35RoleFleetPciIO& fOwner;
+    public:
+        explicit ImageReadGuard(PioneerQwen35RoleFleetPciIO& owner):fOwner(owner) {}
+        bool ProvePinnedBar(uint64_t start,uint64_t end) { return fOwner.fGuard.ProvePinnedBar(start,end); }
+        bool ProveSelectedRoute(unsigned core) { return fOwner.fGuard.ProveSelectedRoute(core); }
+        bool ProveReadAllowed(unsigned core,unsigned which,unsigned offset) {
+            return which<=PioneerQwen35::DataflowRolePhysicalExtraCode
+                && PioneerQwen35::DataflowRolePhysicalReadAllowed(which,offset)
+                && fOwner.fScope.ProveRoleImageInspectionAllowed(fOwner.fIO,core);
+        }
+    };
     bool Select(unsigned core) {
         return core<PioneerQwen35::DataflowBarrierWorkers && fScope.ProveExclusiveRewrite(fIO)
             // This prerequisite is independent of the selected TLB. Do not
@@ -299,6 +311,33 @@ public:
                 return false;
         return allowed() && fGuard.ProveSelectedRoute(core)
             && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+    }
+    // Compare the actual B/NC boot words, shims and text against the exported
+    // images twice while the selected running tile and route remain owned.
+    // This is a startup observation, not proof against a later writer.
+    bool InspectRunningRoleImages(unsigned core,const PioneerQwen35::DataflowRoleProgramImage& image) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || !image.Valid() || !fViews.Opened()
+            || !fScope.ProveExclusiveRewrite(fIO) || !SelectForStop(core)
+            || !fScope.ProveRoleImageInspectionAllowed(fIO,core)) return false;
+        ImageReadGuard guard(*this);
+        for (unsigned pass=0;pass<2;pass++) {
+            for (unsigned role=0;role<DataflowRoleCount;role++) {
+                const unsigned shim=role==DataflowRoleReader?DataflowRoleReaderShimAddress:DataflowRoleWriterShimAddress;
+                const unsigned code=role==DataflowRoleReader?DataflowRoleReaderCodeAddress:DataflowRoleWriterCodeAddress;
+                const unsigned bootWindow=role==DataflowRoleReader?DataflowRolePhysicalBriscBoot:DataflowRolePhysicalNcriscBoot;
+                uint32_t boot=0;
+                if (!DataflowRoleBootWord(role,shim,boot)
+                    || !fViews.Matches(core,bootWindow,0,&boot,1,guard)
+                    || !fViews.Matches(core,DataflowRolePhysicalShim,shim-DataflowRoleReaderShimAddress,
+                        image.shim[role],image.bounds.shimWords[role],guard)
+                    || !fViews.Matches(core,DataflowRolePhysicalExtraCode,code-DataflowRoleExtraL1Address,
+                        image.code[role],image.bounds.codeWords[role],guard)) return false;
+            }
+            fIO.Pause();
+        }
+        return fScope.ProveRoleImageInspectionAllowed(fIO,core) && SelectForStop(core)
+            && fScope.ProveRoleImageInspectionAllowed(fIO,core);
     }
     bool CompletedForAcknowledgement(unsigned core,unsigned textWords,unsigned dispatchWords) {
         using namespace PioneerQwen35;

@@ -44,6 +44,18 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
     context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
     assert(context->qwen35SharedRoleBinding);
     io.runtimeCore=7; io.simulateArc=true; io.firmwareMatches=true; io.selectCalls=io.tlbWrites=0;
+    auto* scope=io.qwen35BorrowedRoleScope;
+    assert(scope->ProveRoleImageInspectionAllowed(io,7));
+    assert(!scope->ProveRoleImageInspectionAllowed(io,8));
+    io.firmwareMatches=false;
+    assert(!scope->ProveRoleImageInspectionAllowed(io,7));
+    io.firmwareMatches=true;
+    io.mapping=false;
+    assert(!scope->ProveRoleImageInspectionAllowed(io,7));
+    io.mapping=true;
+    context->qwen35DataflowService->capturePending=false;
+    assert(!scope->ProveRoleImageInspectionAllowed(io,7));
+    context->qwen35DataflowService->capturePending=true;
     unsigned sensitive=0;
     for (unsigned noc=0;noc<2;noc++) {
         io.nocConfig[noc]=1U<<12; io.resetReads=0;

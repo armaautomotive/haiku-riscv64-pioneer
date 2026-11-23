@@ -125,6 +125,12 @@ public:
             && fContext->qwen35DataflowService->SharedRoleCapturePending()
             && io.SharedRoleFirmwareMatches();
     }
+    // Read-only image comparison during the locked installation callback.
+    // This does not establish that an image is stable or authorize writes.
+    bool ProveRoleImageInspectionAllowed(PioneerSessionIO& io,unsigned core) const {
+        return core<PioneerQwen35::DataflowBarrierWorkers && io.runtimeCore==core
+            && io.DataflowPanelMappingStable() && ProveRoleStatusInspectionAllowed(io);
+    }
 #endif
     bool ProveRoleMemoryWriteSafe(PioneerSessionIO&,unsigned,unsigned,unsigned,unsigned) const { return false; }
     bool ProveRoleControlWriteSafe(PioneerSessionIO&,unsigned,uint32_t,uint32_t) const { return false; }

@@ -10,6 +10,7 @@ struct FleetPciTestScope {
     bool exclusive=true,held=true,routing=true,stable=true,read=true,write=true,control=true,release=false,stop=false,park=false;
     bool computeStop=false,computePark=false,hold=false,heldAfter=false,releaseDrained=false;
     bool runtime=false;
+    bool imageInspection=false;
     bool faultAudit=false,faultAck=false;
     bool ProveExclusiveRewrite(PioneerSessionIO&) const { return gLocked && exclusive; }
     bool ProveRoleMemoryReadSafe(PioneerSessionIO&,unsigned,unsigned) const { return held && stable && read; }
@@ -29,6 +30,8 @@ struct FleetPciTestScope {
     bool ProveRoleHoldSafe(PioneerSessionIO&,unsigned) const { return hold; }
     bool ProveRoleHeldAfterAttempt(PioneerSessionIO&,unsigned) const { return heldAfter; }
     bool ProveRoleRuntimeSafe(PioneerSessionIO&,unsigned) const { return runtime; }
+    bool ProveRoleImageInspectionAllowed(PioneerSessionIO& io,unsigned core) const
+        { return imageInspection && io.runtimeCore==core; }
     bool ProveRoleFaultAuditSafe(PioneerSessionIO&,unsigned) const { return faultAudit; }
     bool ProveRoleFaultAckSafe(PioneerSessionIO&,unsigned) const { return faultAck; }
 };
@@ -39,6 +42,18 @@ struct DriftViews {
     bool Read(unsigned core,unsigned which,unsigned offset,uint32_t& value,Guard& guard) {
         if (!views.Read(core,which,offset,value,guard)) return false;
         if (reads++==0) gMemory[DataflowRolePhysicalControl][0x234/4]^=1U;
+        return true;
+    }
+};
+struct ChangingImageViews {
+    DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>& views;
+    unsigned matches=0;
+    bool Opened() const { return views.Opened(); }
+    template<class Guard>
+    bool Matches(unsigned core,unsigned which,unsigned offset,const uint32_t* expected,
+        unsigned words,Guard& guard) {
+        if (!views.Matches(core,which,offset,expected,words,guard)) return false;
+        if (++matches==6) gMemory[DataflowRolePhysicalExtraCode][0]^=1;
         return true;
     }
 };
@@ -246,6 +261,50 @@ int main()
     assert(!io.RunningReady(11,readySnapshot,0x1000,0x100));
     scope.runtime=true;
     assert(io.RunningReady(11,readySnapshot,0x1000,0x100));
+    {
+        const uint32_t readerShim[]={1,2,3,4},writerShim[]={5,6,7,8};
+        const uint32_t readerCode[]={9,10,11},writerCode[]={12,13,14};
+        DataflowRoleProgramImage image={{{4,4},{3,3},
+            {DataflowRoleReaderShimAddress+8,DataflowRoleWriterShimAddress+8}},
+            {readerShim,writerShim},{readerCode,writerCode}};
+        uint32_t readerBoot=0,writerBoot=0;
+        assert(DataflowRoleBootWord(DataflowRoleReader,DataflowRoleReaderShimAddress,readerBoot));
+        assert(DataflowRoleBootWord(DataflowRoleWriter,DataflowRoleWriterShimAddress,writerBoot));
+        gMemory[DataflowRolePhysicalBriscBoot][0]=readerBoot;
+        gMemory[DataflowRolePhysicalNcriscBoot][0]=writerBoot;
+        for (unsigned i=0;i<4;i++) {
+            gMemory[DataflowRolePhysicalShim][i]=readerShim[i];
+            gMemory[DataflowRolePhysicalShim][32+i]=writerShim[i];
+        }
+        const unsigned writerOffset=(DataflowRoleWriterCodeAddress-DataflowRoleExtraL1Address)/4;
+        for (unsigned i=0;i<3;i++) {
+            gMemory[DataflowRolePhysicalExtraCode][i]=readerCode[i];
+            gMemory[DataflowRolePhysicalExtraCode][writerOffset+i]=writerCode[i];
+        }
+        assert(!io.InspectRunningRoleImages(11,image));
+        scope.imageInspection=true;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++)
+            assert(io.InspectRunningRoleImages(core,image));
+        for (unsigned window : {DataflowRolePhysicalBriscBoot,DataflowRolePhysicalNcriscBoot,
+                DataflowRolePhysicalShim,DataflowRolePhysicalExtraCode}) {
+            gMemory[window][0]^=1;
+            assert(!io.InspectRunningRoleImages(11,image));
+            gMemory[window][0]^=1;
+        }
+        gMemory[DataflowRolePhysicalExtraCode][writerOffset+2]^=1;
+        assert(!io.InspectRunningRoleImages(11,image));
+        gMemory[DataflowRolePhysicalExtraCode][writerOffset+2]^=1;
+        ChangingImageViews changing{views};
+        PioneerQwen35RoleFleetPciIO<PioneerSessionIO,FleetPciTestScope,ChangingImageViews>
+            changingIO(context.io,scope,changing);
+        assert(!changingIO.InspectRunningRoleImages(11,image) && changing.matches==8);
+        gMemory[DataflowRolePhysicalExtraCode][0]^=1;
+        auto bad=image; bad.code[0]=nullptr;
+        assert(!io.InspectRunningRoleImages(11,bad));
+        context.io.reset=0x47800;
+        assert(!io.InspectRunningRoleImages(11,image));
+        context.io.reset=0x6000; scope.imageInspection=false;
+    }
     DataflowRoleProgramBounds bounds={{32,32},{64,64},
         {DataflowRoleReaderShimAddress+0x44,DataflowRoleWriterShimAddress+0x44}};
     assert(io.RunningRolePcs(11,bounds,false));

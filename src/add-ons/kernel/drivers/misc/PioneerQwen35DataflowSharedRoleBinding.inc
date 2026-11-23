@@ -20,6 +20,7 @@ class PioneerQwen35SharedRoleBinding {
     bool fReleaseAuthorized=false;
     bool fReleaseAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fReleaseConfirmed[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fRunningImagesObserved[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fReleaseHeld[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStopAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     uint32_t fStopToken[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -42,6 +43,11 @@ class PioneerQwen35SharedRoleBinding {
                 {sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),
                  sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t)},
                 {DataflowSharedReaderParkAddress,DataflowSharedWriterParkAddress}};
+    }
+    static PioneerQwen35::DataflowRoleProgramImage RoleImage() {
+        using namespace PioneerQwen35;
+        return {RoleBounds(),{DataflowSharedReaderShimWords,DataflowSharedWriterShimWords},
+            {DataflowSharedReaderCodeWords,DataflowSharedWriterCodeWords}};
     }
 public:
     explicit PioneerQwen35SharedRoleBinding(PioneerStoreContext& context)
@@ -110,10 +116,15 @@ public:
         if (!scope || core>=PioneerQwen35::DataflowBarrierWorkers || !fReleaseConfirmed[core]
             || !fReleaseAuthorized || !fViews.Opened()) return false;
         Adapter io(fContext.io,*scope,fViews);
-        return io.RunningReady(core,snapshot,
+        if (!fRunningImagesObserved[core]) {
+            if (!io.InspectRunningRoleImages(core,RoleImage())) return false;
+        }
+        if (!io.RunningReady(core,snapshot,
             sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
             sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t))
-            && io.RunningRolePcs(core,RoleBounds(),false);
+            || !io.RunningRolePcs(core,RoleBounds(),false)) return false;
+        fRunningImagesObserved[core]=true;
+        return true;
     }
     __attribute__((noinline)) bool RuntimeStable(unsigned core) {
         auto* scope=Scope();

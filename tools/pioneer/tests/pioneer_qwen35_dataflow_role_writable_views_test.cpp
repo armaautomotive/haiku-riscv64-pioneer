@@ -48,13 +48,15 @@ struct Guard {
 struct Platform {
     PioneerQwen35RoleHaikuMap actual;
     Guard* guard=nullptr;
-    unsigned writes=0,driftAfter=0;
+    unsigned writes=0,driftAfter=0,reads=0,driftAfterReads=0;
     bool corruptReadback=false;
     bool MapReadWrite(uint64_t p,unsigned n,int32_t& a,volatile uint32_t*& v)
         { return actual.MapReadWrite(p,n,a,v); }
     bool Unmap(int32_t area) { return actual.Unmap(area); }
     uint32_t ReadWord(const volatile uint32_t* p) {
         const uint32_t value=actual.ReadWord(p);
+        ++reads;
+        if (driftAfterReads && reads==driftAfterReads) guard->route=false;
         return corruptReadback?value^1U:value;
     }
     void WriteWord(volatile uint32_t* p,uint32_t value) {
@@ -81,6 +83,21 @@ int main()
         assert(views.WriteWords(3,DataflowRolePhysicalExtraCode,0x7ff8,words,8,guard));
         assert(views.WriteWords(3,DataflowRolePhysicalBriscRam,0x1ff8,words,8,guard));
         assert(views.WriteWords(3,DataflowRolePhysicalNcriscRam,0x1ff8,words,8,guard));
+        assert(views.Matches(3,DataflowRolePhysicalExtraCode,0x7ff8,words,2,guard));
+        uint32_t mismatch[]={words[0],words[1]^1};
+        assert(!views.Matches(3,DataflowRolePhysicalExtraCode,0x7ff8,mismatch,2,guard));
+        assert(!views.Matches(3,DataflowRolePhysicalBriscRam,0x1ff8,words,2,guard));
+        assert(!views.Matches(3,DataflowRolePhysicalExtraCode,0x7ffc,words,2,guard));
+        guard.read=false; assert(!views.Matches(3,DataflowRolePhysicalExtraCode,0x7ff8,words,2,guard));
+        guard.read=true; platform.driftAfterReads=platform.reads+1;
+        assert(!views.Matches(3,DataflowRolePhysicalExtraCode,0x7ff8,words,2,guard));
+        assert(!guard.route); guard.route=true; platform.driftAfterReads=0;
+        std::vector<uint32_t> longImage(65,0x72341609U);
+        for (unsigned i=0;i<longImage.size();i++) memory[DataflowRolePhysicalExtraCode][i]=longImage[i];
+        assert(views.Matches(3,DataflowRolePhysicalExtraCode,0,longImage.data(),longImage.size(),guard));
+        longImage[64]^=1;
+        assert(!views.Matches(3,DataflowRolePhysicalExtraCode,0,longImage.data(),longImage.size(),guard));
+        memory[DataflowRolePhysicalExtraCode][0]=memory[DataflowRolePhysicalExtraCode][1]=0;
         const unsigned before=platform.writes;
         assert(!views.WriteWords(3,DataflowRolePhysicalBriscBoot,0,words,8,guard));
         assert(!views.WriteWords(3,DataflowRolePhysicalShim,0xfc,words,8,guard));

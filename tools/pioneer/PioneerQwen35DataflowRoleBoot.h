@@ -32,6 +32,15 @@ struct DataflowRoleProgramBounds {
             || (pc>=code && pc-code<codeWords[role]*4);
     }
 };
+struct DataflowRoleProgramImage {
+    DataflowRoleProgramBounds bounds;
+    const uint32_t* shim[DataflowRoleCount];
+    const uint32_t* code[DataflowRoleCount];
+    bool Valid() const {
+        return bounds.Valid() && shim[DataflowRoleReader] && shim[DataflowRoleWriter]
+            && code[DataflowRoleReader] && code[DataflowRoleWriter];
+    }
+};
 // Link-only boot-word planning. The target must be the audited startup shim
 // inside its low-L1 shim slot; encoding a jump does not establish that a
 // shim exists or that reset, boot memory, or local RAM are owned.
