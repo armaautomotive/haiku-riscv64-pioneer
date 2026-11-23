@@ -23,8 +23,8 @@ images, closed mappings and ended the bank session cleanly. See the
 The wrapper returned success and hot-reloaded stable55 without reboot. The
 independent postflight observed generation 8 idle (`cold0 active_owner0`), the
 expected stable driver hash, no model or 27B diagnostic process, no exclusive
-lock and expected metadata for both model files. A full postflight content
-hash was started separately.
+lock and expected metadata for both model files. Both full model hashes matched
+before and after the run; see the [postflight hashes](post-model-hashes.txt).
 
 This is a one-worker idle lifecycle qualification. It did not send projection
 work, exercise the two-read NoC pipeline, release a TRISC, run model inference,
