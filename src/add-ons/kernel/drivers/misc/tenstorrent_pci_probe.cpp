@@ -165,6 +165,10 @@
 	|| (!defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && !defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL)))
 #error Device dispatch requires a non-loadable witness or the dedicated qualification build
 #endif
+#if defined(PIONEER_QWEN35_PAIRED_RECURRENCE) && (!defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
+	|| !defined(PIONEER_QWEN35_DEVICE_DISPATCH))
+#error Paired recurrence is restricted to the shared-role graph witness
+#endif
 #if defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL) && (!defined(PIONEER_QWEN35_DEVICE_DISPATCH) \
 	|| !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026112100020168ULL \
 	|| defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE))

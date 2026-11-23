@@ -169,6 +169,15 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
             ('page transfer', ('PioneerResidentStorePage(', 'PioneerSessionIO')),
             ('page command', ('PioneerResidentStoreCommand(', 'PioneerSessionIO')),
         ]
+        # Paired recurrence adds a non-inlined bridge and compatibility
+        # check on the recording path; include both even though the latter
+        # does not overlap every other conservative branch above.
+        if any('DataflowRecurrentLayerSequence::TryPair(' in n and 'DataflowStreamRecorder<' in n
+               for n, _, _ in entries):
+            groups.extend([
+                ('paired projection bridge', ('DataflowRecurrentLayerSequence::TryPair(', 'DataflowStreamRecorder<')),
+                ('paired projection compatibility', ('DataflowProjectionPair::Compatible(',)),
+            ])
         total = 2048  # unmeasured small helpers and future caller are not certified
         recorded_frames = {}
         for label, markers in groups:

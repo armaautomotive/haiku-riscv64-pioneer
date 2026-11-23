@@ -2070,7 +2070,7 @@ public:
 		DataflowBoundWorkspace workspace;
 		if (!manifest || !graph || !workspace.Initialize(live)) return false;
 		static_assert(Layers==32,"record count requires the Qwen35 32-layer sequence");
-		const unsigned count=selectNextToken?548U:545U;
+		const unsigned count=selectNextToken?DataflowGraphDecodeSteps:DataflowGraphPromptSteps;
 		if (!DataflowStreamPlanBuilder::Build(workspace,*manifest,*graph,live.PlanningRope(),
 			context.qwen35DataflowRoutes,epoch,count,plan)) return false;
 		recorded=DataflowStreamRecording::Build(workspace,live,candidate,plan,

@@ -7,7 +7,7 @@
 #include "PioneerQwen35DataflowGraphProfile.h"
 #ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
 #include "PioneerQwen35DataflowResidentStreamCache.h"
-static_assert(unsigned(PioneerQwen35::DataflowResidentStreamCacheEntries)==unsigned(PioneerQwen35::DataflowGraphDecodeSteps),
+static_assert(unsigned(PioneerQwen35::DataflowResidentStreamCacheEntries)>=unsigned(PioneerQwen35::DataflowGraphDecodeSteps),
 	"the resident length cache covers the complete decode graph");
 extern "C" __attribute__((noinline)) bool qwen35_resident_stream_cache_bind(
 	const PioneerQwen35::DataflowStreamBinding* binding) {

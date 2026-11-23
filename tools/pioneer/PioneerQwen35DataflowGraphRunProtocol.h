@@ -18,8 +18,13 @@ enum : unsigned {
 	DataflowGraphFaultMagic=0x31464735,
 	DataflowGraphProgressMagic=0x51350000,
 	DataflowGraphRunMaxPolls=1048576,
+#ifdef PIONEER_QWEN35_PAIRED_RECURRENCE
+	DataflowGraphDecodeSteps=524,
+	DataflowGraphPromptSteps=521
+#else
 	DataflowGraphDecodeSteps=548,
 	DataflowGraphPromptSteps=545
+#endif
 };
 
 // This single-word observation is diagnostic only: it does not prove that a

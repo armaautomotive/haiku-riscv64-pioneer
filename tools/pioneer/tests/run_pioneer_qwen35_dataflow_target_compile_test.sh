@@ -601,7 +601,7 @@ if "$cxx" $role_flags -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_SHARED_R
 	exit 1
 fi
 "$cxx" $role_flags -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
-	-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -I"$root/tools/pioneer" -I"$sdk/headers" \
+	-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE -I"$root/tools/pioneer" -I"$sdk/headers" \
 	-idirafter "$sdk/headers/posix" -c "$root/tools/pioneer/PioneerQwen35DataflowServiceImage.cpp" \
 	-o "$temporary/role-graph-service.o"
 "$cxx" $role_flags -I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
@@ -609,12 +609,12 @@ fi
 mkdir "$temporary/role-graph"
 for piece in stream barrier; do
 	"$cxx" $role_flags -O2 -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
-		-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -I"$root/tools/pioneer" -I"$sdk/headers" \
+		-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE -I"$root/tools/pioneer" -I"$sdk/headers" \
 		-idirafter "$sdk/headers/posix" -c "$directory/pioneer_qwen35_dataflow_device_${piece}_target_probe.cpp" \
 		-o "$temporary/role-graph/device-${piece}.o"
 done
 "$cxx" $role_flags -O2 -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
-	-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -I"$root/tools/pioneer" -I"$sdk/headers" \
+	-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE -I"$root/tools/pioneer" -I"$sdk/headers" \
 	-idirafter "$sdk/headers/posix" -c "$root/tools/pioneer/PioneerQwen35DataflowDeviceDispatch.cpp" \
 	-o "$temporary/role-graph/device-graph.o"
 "$ld" -m elf32lriscv --no-relax --gc-sections -u PioneerQwen35DeviceGraphRun \
@@ -810,6 +810,14 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_stream_recorder_test.cpp" \
 	-o "$temporary/stream-recorder-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/stream-recorder-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -Wno-misleading-indentation \
+    -fsanitize=address,undefined "$directory/pioneer_qwen35_projection_pair_test.cpp" \
+    -o "$temporary/projection-pair-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-pair-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -Wno-misleading-indentation \
+    -fsanitize=address,undefined "$directory/pioneer_qwen35_projection_pair_graph_test.cpp" \
+    -o "$temporary/projection-pair-graph-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-pair-graph-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_stream_bank_sink_test.cpp" \
 	-o "$temporary/stream-bank-sink-test"

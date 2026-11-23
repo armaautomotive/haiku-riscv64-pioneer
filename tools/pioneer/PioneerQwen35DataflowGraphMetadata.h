@@ -5,6 +5,9 @@
 #include "PioneerQwen35DataflowAuthorization.h"
 #include "PioneerQwen35DataflowDecoderSequence.h"
 #include "PioneerQwen35DataflowGraphRunProtocol.h"
+#ifdef PIONEER_QWEN35_PAIRED_RECURRENCE
+#include "PioneerQwen35DataflowProjectionPair.h"
+#endif
 
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 namespace PioneerQwen35 {
@@ -27,6 +30,14 @@ public:
 	template<class IO> int RunProjection(const DataflowProjectionProgram& p,IO&) {
 		return Done(candidate.Begin(p) && candidate.Complete(p));
 	}
+#ifdef PIONEER_QWEN35_PAIRED_RECURRENCE
+	template<class IO> int RunIndependentProjectionPair(const DataflowProjectionProgram& a,
+		const DataflowProjectionProgram& b,IO&) {
+		return Done(DataflowProjectionPair::Compatible(a,b) && candidate.Authorize(a)
+			&& candidate.Authorize(b) && candidate.Begin(a) && candidate.Complete(a)
+			&& candidate.Begin(b) && candidate.Complete(b));
+	}
+#endif
 	template<class IO> int RunRms(const DataflowRmsProgram& p,IO&) {
 		return Done(candidate.BeginRms(p) && candidate.CompleteRms(p));
 	}

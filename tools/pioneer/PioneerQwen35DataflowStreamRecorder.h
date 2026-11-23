@@ -4,6 +4,8 @@
 
 #include "PioneerQwen35DataflowDecoderSequence.h"
 #include "PioneerQwen35DataflowStreamPlan.h"
+#include "PioneerQwen35DataflowProjectionPair.h"
+#include <new>
 
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 namespace PioneerQwen35 {
@@ -44,9 +46,31 @@ public:
 		return candidate.BeginEmbedding(p) && Emit<DataflowEmbeddingProgramBuilder,DataflowEmbeddingInvocation>(p)
 			&& candidate.CompleteEmbedding(p)?0:Fail();
 	}
-	template<class IO> int RunProjection(const DataflowProjectionProgram& p,IO&) {
+	template<class IO> __attribute__((noinline)) int RunProjection(const DataflowProjectionProgram& p,IO&) {
 		return candidate.Begin(p) && Emit<DataflowProgramBuilder,DataflowCoreInvocation>(p)
 			&& candidate.Complete(p)?0:Fail();
+	}
+	// The caller must build both programs from this candidate before calling;
+	// this path advances only speculative metadata until the full graph passes.
+	template<class IO> __attribute__((noinline)) int RunIndependentProjectionPair(const DataflowProjectionProgram& a,
+		const DataflowProjectionProgram& b,IO&) {
+		if (failed || steps>=plan.count || !DataflowProjectionPair::Compatible(a,b)
+			|| !candidate.Authorize(a) || !candidate.Authorize(b)
+			|| !candidate.Begin(a) || !candidate.Complete(a)
+			|| !candidate.Begin(b) || !candidate.Complete(b)) return Fail();
+		// Kept off Haiku's small kernel stack; the model graph is recorded
+		// once, and no allocation occurs in the resident token loop.
+		auto* invocation=new(std::nothrow) DataflowCoreInvocation;
+		if (!invocation) return Fail();
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			if (!DataflowProjectionPair::BindCore(a,b,core,*invocation)
+				|| !DataflowStreamEncode(*invocation,plan.epoch,steps+1,record)
+				|| !sink.StageRecord(plan.binding[core],plan.lease[core],steps,record)) {
+				delete invocation;return Fail();
+			}
+		}
+		delete invocation;
+		steps++;return 0;
 	}
 	template<class IO> int RunRms(const DataflowRmsProgram& p,IO&) {
 		return candidate.BeginRms(p) && Emit<DataflowRmsProgramBuilder,DataflowRmsInvocation>(p)

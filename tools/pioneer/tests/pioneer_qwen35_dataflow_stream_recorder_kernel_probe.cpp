@@ -20,3 +20,14 @@ extern "C" bool pioneer_q35_stream_recording_kernel_probe(const PackedProbe& pac
 	return DataflowStreamRecording::Build(packed,live,candidate,plan,routes,position,token,
 		slot,select,sink,record,scratch,stage);
 }
+
+// Compile the actual paired-recording method in the Haiku kernel ABI. The
+// caller supplies already model-authorized, immutable programs and storage.
+extern "C" int pioneer_q35_stream_record_pair_kernel_probe(
+    DataflowProjectionAuthority& authority,const DataflowStreamPlan& plan,
+    SinkProbe& sink,DataflowStreamRecord& record,
+    const DataflowProjectionProgram& first,const DataflowProjectionProgram& second)
+{
+    DataflowStreamRecorder<SinkProbe> recorder(authority,plan,sink,record);
+    return recorder.RunIndependentProjectionPair(first,second,sink);
+}

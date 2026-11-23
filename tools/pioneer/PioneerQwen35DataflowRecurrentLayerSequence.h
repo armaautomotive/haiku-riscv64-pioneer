@@ -3,6 +3,9 @@
 #define PIONEER_QWEN35_DATAFLOW_RECURRENT_LAYER_SEQUENCE_H
 
 #include "PioneerQwen35DataflowFfnSequence.h"
+#ifdef PIONEER_QWEN35_PAIRED_RECURRENCE
+#include <new>
+#endif
 
 namespace PioneerQwen35 {
 
@@ -30,6 +33,7 @@ enum DataflowRecurrentLayerSequenceResult {
 	DataflowRecurrentAddBuildFailed=20,
 	DataflowRecurrentAddRunFailed=21,
 	DataflowRecurrentFfnFailed=22,
+	DataflowRecurrentPairRunFailed=23,
 	DataflowRecurrentFfnStageBase=32
 };
 
@@ -41,6 +45,28 @@ static_assert(DataflowRecurrentFfnStageBase+DataflowFfnAddRunFailed<256,
 // projections, recurrent convolution and delta state, RecurrentOut, residual
 // add, and the existing feed-forward sequence. It performs no tensor math.
 class DataflowRecurrentLayerSequence {
+#ifdef PIONEER_QWEN35_PAIRED_RECURRENCE
+	template<class Authority,class Service,class IO>
+	static __attribute__((noinline)) auto TryPair(unsigned layer,unsigned normalizedSlot,Authority& authority,
+		Service& service,IO& io,DataflowProjectionProgram& first,int)
+		-> decltype(service.RunIndependentProjectionPair(first,first,io),int())
+	{
+		auto* second=new(std::nothrow) DataflowProjectionProgram;
+		if (!second) return DataflowRecurrentBetaBuildFailed;
+		int result=DataflowRecurrentLayerComplete;
+		if (!authority.BuildProjection(layer,Alpha,normalizedSlot,
+			DataflowGraphRecurrentAlphaOutputSlot,first)) result=DataflowRecurrentAlphaBuildFailed;
+		else if (!authority.BuildProjection(layer,Beta,normalizedSlot,
+			DataflowGraphRecurrentBetaOutputSlot,*second)) result=DataflowRecurrentBetaBuildFailed;
+		else if (service.RunIndependentProjectionPair(first,*second,io)!=0)
+			result=DataflowRecurrentPairRunFailed;
+		delete second;
+		return result;
+	}
+	template<class Authority,class Service,class IO>
+	static int TryPair(unsigned,unsigned,Authority&,Service&,IO&,DataflowProjectionProgram&,long)
+		{ return -1; }
+#endif
 public:
 	template<class Authority,class Service,class IO>
 	static DataflowRecurrentLayerSequenceResult Run(unsigned layer,
@@ -82,7 +108,11 @@ public:
 		const unsigned runStages[4]={DataflowRecurrentQkvRunFailed,
 			DataflowRecurrentGateRunFailed,DataflowRecurrentAlphaRunFailed,
 			DataflowRecurrentBetaRunFailed};
-		for (unsigned i=0;i<4;i++) {
+		unsigned projectionCount=4;
+#ifdef PIONEER_QWEN35_PAIRED_RECURRENCE
+		projectionCount=2;
+#endif
+		for (unsigned i=0;i<projectionCount;i++) {
 			DataflowProjectionProgram& projection=projectionScratch;
 			if (!authority.BuildProjection(layer,projectionRoles[i],normalizedSlot,
 				projectionSlots[i],projection))
@@ -92,6 +122,20 @@ public:
 				return static_cast<DataflowRecurrentLayerSequenceResult>(
 					stage=runStages[i]);
 		}
+
+#ifdef PIONEER_QWEN35_PAIRED_RECURRENCE
+		const int pairResult=TryPair(layer,normalizedSlot,authority,service,io,projectionScratch,0);
+		if (pairResult<0) {
+			for (unsigned i=2;i<4;i++) {
+				if (!authority.BuildProjection(layer,projectionRoles[i],normalizedSlot,
+					projectionSlots[i],projectionScratch))
+					return static_cast<DataflowRecurrentLayerSequenceResult>(stage=buildStages[i]);
+				if (service.RunProjection(projectionScratch,io)!=0)
+					return static_cast<DataflowRecurrentLayerSequenceResult>(stage=runStages[i]);
+			}
+		} else if (pairResult!=DataflowRecurrentLayerComplete)
+			return static_cast<DataflowRecurrentLayerSequenceResult>(stage=unsigned(pairResult));
+#endif
 
 		DataflowConvProgram conv{};
 		if (!authority.BuildConv(layer,position,conv))
