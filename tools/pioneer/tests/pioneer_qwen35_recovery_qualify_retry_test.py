@@ -34,7 +34,7 @@ def exercise(suffix, script, candidate_hash, client_hash='34af989cb81827835f8e1f
         wrapper = root/'retry.sh'
         common.put(wrapper, source)
         def run(mode, extra=None):
-            return subprocess.run(['bash', str(wrapper), mode, '2'], env=dict(env, MOCK_AER_FORMAT='1' if suffix in ('-g','-h') else '0', **(extra or {})),
+            return subprocess.run(['bash', str(wrapper), mode, '2'], env=dict(env, MOCK_AER_FORMAT='1' if suffix in ('-g','-h','-i') else '0', **(extra or {})),
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         assert run('--prepare-existing-guard').returncode == 0
         if reject:
@@ -60,6 +60,7 @@ def exercise(suffix, script, candidate_hash, client_hash='34af989cb81827835f8e1f
                           ('bdbcc8dc0d9823c2e249dba7eb508289be2332d70b78fe5174c3966f8841c265', stage/'candidate'),
                           ('138e21ff9cd5ecc6d3c734dac835189815164532af276df8984b6550d312e60c', stage/'candidate'),
                           ('698b972450841061a27d33d4d7853a708092ede1539315788fff5afa9d4700f9', stage/'candidate'),
+                          ('e685a5aa888a6b0ddaeb61245c0455a4dc6181b30cc5d005e87c15d05ab698bb', stage/'candidate'),
                           (candidate_hash, stage/'candidate')):
             restore = restore.replace(old, hashlib.sha256(path.read_bytes()).hexdigest())
         restore_path = root/'restore.sh'
@@ -96,6 +97,12 @@ def main():
     exercise('-h', 'pioneer_qwen35_recovery_qualify_aer_baseline.sh',
              'e685a5aa888a6b0ddaeb61245c0455a4dc6181b30cc5d005e87c15d05ab698bb',
              '1ffd7dd54584ac13a0f768b5446405973fbf18b5d6fc829c9ca2e58f16b43c1c', reject=True)
+    exercise('-i', 'pioneer_qwen35_recovery_qualify_pcie_trace.sh',
+             '034d147f06c2192371e00c447e5e340844ccd92683a054c370eb3a716aa03c27',
+             '1b3a01c993e200ddab2fe88cf7ad3f40f9315cdecdc0a7c2de8a28dbadbbfc5d')
+    exercise('-i', 'pioneer_qwen35_recovery_qualify_pcie_trace.sh',
+             '034d147f06c2192371e00c447e5e340844ccd92683a054c370eb3a716aa03c27',
+             '1b3a01c993e200ddab2fe88cf7ad3f40f9315cdecdc0a7c2de8a28dbadbbfc5d', reject=True)
     print('PASS existing-guard qualifications and retained failure; SIMULATED HOST ONLY')
 
 

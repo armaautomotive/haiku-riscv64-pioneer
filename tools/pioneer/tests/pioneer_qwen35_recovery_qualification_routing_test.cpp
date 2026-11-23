@@ -16,6 +16,7 @@ static int Qwen35RecoveryStatus(void*,void*,size_t) { return 3; }
 static int Qwen35RecoveryRun(void*,void*,size_t) { return 4; }
 static int Qwen35RecoveryForce(void*,void*,size_t) { return 5; }
 static int Qwen35RecoveryQualify(void*,void*,size_t) { return 6; }
+static int Qwen35RecoveryPcieEvidence(void*,void*,size_t) { return 7; }
 static int Route(uint32_t operation) {
     void* instance=nullptr;void* data=nullptr;size_t length=0;
 #include "pioneer_recovery_qualify_routing.inc"
@@ -31,6 +32,7 @@ int main() {
         if (op==TT_PCI_PROBE_RECOVERY_RUN) expected=4;
         if (op==TT_PCI_PROBE_RECOVERY_FORCE) expected=5;
         if (op==TT_PCI_PROBE_RECOVERY_QUALIFY) expected=6;
+        if (op==TT_PCI_PROBE_RECOVERY_PCIE_EVIDENCE) expected=7;
         assert(Route(op)==expected);
     }
     std::puts("PASS recovery qualification routes only bank, reload and recovery operations; SIMULATED ONLY");

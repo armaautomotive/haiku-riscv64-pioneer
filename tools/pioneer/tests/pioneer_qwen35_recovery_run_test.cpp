@@ -45,7 +45,7 @@ static unsigned resetResumeWaits=0;
 static uint32 fakeCardPciStatus=0,fakeRootPciStatus=0;
 static bool fakeAerAvailable=true,fakeAerFailAfterPre=false;
 static uint32 fakeAerPre=0,fakeAerPost=0x20;
-static unsigned fakeAerReads=0;
+static bool fakeResetIssued=false;
 template<class IO> static bool BlackholeHostPcieStatus(IO&,unsigned peer,uint32& status) {
 	status=peer?fakeRootPciStatus:fakeCardPciStatus;return status==0;
 }
@@ -122,16 +122,27 @@ struct PioneerSessionIO {
 	uint32 CardRead(uint16,uint8){return 0;}
 	uint32 RootRead(uint16 offset,uint8){
 #ifdef TEST_RECOVERY_QUALIFY
-		if (fakeAerAvailable && !(fakeAerFailAfterPre && fakeAerReads)) {
+		if (fakeAerAvailable && !(fakeAerFailAfterPre && fakeResetIssued)) {
 			if (offset==0) return 0x20421e30;
+			if (offset==0x34) return 0x40;
+			if (offset==0x40) return 0x0010;
+			if (offset==0x42) return 0x0042;
+			if (offset==0x4a) return fakeResetIssued?6:0;
+			if (offset==0x52) return 0x1234;
 			if (offset==0x100) return 0x00010001;
-			if (offset==0x104) return fakeAerReads++?fakeAerPost:fakeAerPre;
+			if (offset==0x104) return fakeResetIssued?fakeAerPost:fakeAerPre;
 			if (offset==0x134) return 0x01000000;
 		}
 #endif
 		(void)offset;return 0;
 	}
-	void CardWrite(uint16,uint8,uint32){}
+	void CardWrite(uint16 offset,uint8 size,uint32 value){
+#ifdef TEST_RECOVERY_QUALIFY
+		if (offset==0x930 && size==4 && value==0x11) fakeResetIssued=true;
+#else
+		(void)offset;(void)size;(void)value;
+#endif
+	}
 	status_t DisposeAfterVerifiedReset(const PioneerDriverRecoveryProof& p) {
 		assert(p.ReadyToRetireOneOwner());
 		if (!Step(PIONEER_RECOVERY_STAGE_OWNER_RELEASE)) return B_DEV_NOT_READY;
@@ -148,6 +159,9 @@ static bool PioneerPciePayloadRestore(PioneerSessionIO&,const PioneerPciePayload
 template<class IO> static bool BlackholeAsicReset(IO&,unsigned,BlackholeAsicResetResult& r) {
 	r.stage=7;
 	if (!Step(PIONEER_RECOVERY_STAGE_ASIC_RESET)) return false;
+#ifdef TEST_RECOVERY_QUALIFY
+	fakeResetIssued=true;
+#endif
 	r.trigger_target=1;r.trigger_control=0x11;
 	r.stage=resetTimeout?BLACKHOLE_ASIC_RESET_TIMEOUT:BLACKHOLE_ASIC_RESET_COMPLETE;
 	return !resetTimeout;
@@ -194,6 +208,10 @@ struct FakeDataflowService { bool ready=true,faulted=true;bool StoppedResetReady
 	bool Faulted()const{return faulted;} };
 #endif
 struct PioneerStoreContext {
+#ifdef TEST_RECOVERY_QUALIFY
+	bool qualificationTraceActive=false;
+	tt_pioneer_pcie_trace_sample qualificationTrace[PIONEER_PCIE_TRACE_SAMPLES]={};
+#endif
 	PioneerPostResetMapping* recoveryMapping=nullptr;bool recoveryAttempted=false,dispatchOwnerRetained=true;
 	PioneerDriverRecoveryProof recoveryFinishProof{};uint64 recoveryFinishTicket=0;bool recoveryFinishPending=false;
 	PioneerPciePayloadSnapshot recoveryPayload{};bool recoveryFinishNeedsAudit=false;
@@ -270,7 +288,7 @@ static void Setup() {
 	failStage=abortCount=completeCount=contextDeleted=cookieDeleted=0;trace.clear();
 #ifdef TEST_RECOVERY_QUALIFY
 	fakeCardPciStatus=fakeRootPciStatus=0;fakeAerAvailable=true;fakeAerFailAfterPre=false;
-	fakeAerPre=0;fakeAerPost=0x20;fakeAerReads=0;
+	fakeAerPre=0;fakeAerPost=0x20;fakeResetIssued=false;
 #endif
 	failPayloadRead=failPayloadRestore=failFirmwareQueue=failDbi=false;
 	payloadReads=payloadDriftAt=0;
@@ -510,6 +528,16 @@ int main(){
 	Cleanup();
 #ifdef TEST_LIVE_TAKEOVER
 	#ifdef TEST_RECOVERY_QUALIFY
+	Setup();auto* traced=sRuntimeOwner->context;traced->qualificationTraceActive=true;
+	Qwen35RecoveryResetIO traceIo(traced->io,traced);
+	traceIo.CardRead(0,4);traceIo.RecoveryDelay();
+	assert(!traced->qualificationTrace[PIONEER_PCIE_TRACE_AFTER_TRIGGER].valid);
+	traceIo.CardWrite(0x930,4,0x11);traceIo.RecoveryDelay();traceIo.CardRead(0,4);traceIo.CardRead(4,2);
+	assert(traced->qualificationTrace[PIONEER_PCIE_TRACE_AFTER_TRIGGER].valid
+		&& traced->qualificationTrace[PIONEER_PCIE_TRACE_BEFORE_FIRST_POLL].valid
+		&& traced->qualificationTrace[PIONEER_PCIE_TRACE_AFTER_FIRST_VENDOR].valid
+		&& traced->qualificationTrace[PIONEER_PCIE_TRACE_AFTER_FIRST_MARKER].valid);
+	Cleanup();
 	for (unsigned invalid=0;invalid<6;invalid++) {
 		Setup();auto* candidate=sRuntimeOwner;candidate->finalFreeRetained=false;sQwen35ExclusiveCookie=candidate;
 		auto* c=candidate->context;c->qwen35DataflowService=nullptr;c->qwen35GraphOwner=nullptr;
@@ -538,10 +566,10 @@ int main(){
 	fakeCardPciStatus=0;fakeAerAvailable=false;r=Request();
 	assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
 		&& r.new_generation==UINT64_MAX && trace.empty() && !retainCalls && !sColdRecoveryRequired);
-	fakeAerAvailable=true;fakeAerPre=1;fakeAerReads=0;r=Request();
+	fakeAerAvailable=true;fakeAerPre=1;r=Request();
 	assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
 		&& r.new_generation==UINT64_C(0x00000001ffffffff) && trace.empty() && !retainCalls && !sColdRecoveryRequired);
-	fakeAerPre=0;fakeAerReads=0;fakeAerFailAfterPre=true;
+	fakeAerPre=0;fakeAerFailAfterPre=true;
 	failDbi=true;r=Request();
 	assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
 		&& r.stage==PIONEER_RECOVERY_STAGE_FIRMWARE && r.new_generation==UINT64_C(0x00000000ffffffff)
@@ -553,6 +581,22 @@ int main(){
 	sColdRecoveryRequired=false;fakeAerAvailable=true;failDbi=true;r=Request();
 	assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
 		&& r.new_generation==UINT64_C(0x0000000000000020) && sColdRecoveryRequired);
+	tt_pioneer_pcie_evidence evidence{};evidence.version=1;
+	evidence.expected_tag=PIONEER_DRIVER_BUILD_TAG;evidence.expected_generation=3;
+	assert(Qwen35RecoveryPcieEvidence(candidate,&evidence,sizeof(evidence))==B_OK
+		&& evidence.samples[PIONEER_PCIE_TRACE_BEFORE_RESET].valid
+		&& evidence.samples[PIONEER_PCIE_TRACE_BEFORE_RESET].device_status==0
+		&& evidence.samples[PIONEER_PCIE_TRACE_AFTER_RESET].valid
+		&& evidence.samples[PIONEER_PCIE_TRACE_AFTER_RESET].device_status==6
+		&& evidence.samples[PIONEER_PCIE_TRACE_ON_FAILURE].uncorrectable==0x20);
+	assert(Qwen35RecoveryPcieEvidence(candidate,&evidence,sizeof(evidence))==B_BAD_VALUE);
+	evidence={};evidence.version=1;evidence.expected_tag=PIONEER_DRIVER_BUILD_TAG;evidence.expected_generation=3;
+	activeTeam=18;assert(Qwen35RecoveryPcieEvidence(candidate,&evidence,sizeof(evidence))==B_NOT_ALLOWED);
+	activeTeam=17;sOpenCookies=2;assert(Qwen35RecoveryPcieEvidence(candidate,&evidence,sizeof(evidence))==B_NOT_ALLOWED);
+	sOpenCookies=1;evidence.expected_generation=4;
+	assert(Qwen35RecoveryPcieEvidence(candidate,&evidence,sizeof(evidence))==B_BAD_VALUE);
+	evidence.expected_generation=3;sQwen35ExclusiveCookie=nullptr;
+	assert(Qwen35RecoveryPcieEvidence(candidate,&evidence,sizeof(evidence))==B_NOT_ALLOWED);
 	sQwen35ExclusiveCookie=nullptr;Cleanup();
 	Setup();candidate=sRuntimeOwner;candidate->finalFreeRetained=false;sQwen35ExclusiveCookie=candidate;
 	candidate->context->qwen35DataflowService=nullptr;candidate->context->qwen35GraphOwner=nullptr;

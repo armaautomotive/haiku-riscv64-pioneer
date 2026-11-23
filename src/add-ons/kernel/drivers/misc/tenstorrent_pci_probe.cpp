@@ -3938,6 +3938,9 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 #include "PioneerPostResetPci.h"
 #include "PioneerPostResetMapping.inc"
+#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+#include "PioneerPcieRootAerSnapshot.h"
+#endif
 #endif
 #include "PioneerQwen35WorkBinding.inc"
 
@@ -3963,6 +3966,10 @@ static PioneerQwen35SharedRoleBinding* PioneerQ35CreateSharedRoleBinding(Pioneer
 static bool PioneerQ35DestroySharedRoleBinding(PioneerQwen35SharedRoleBinding* binding);
 #endif
 struct PioneerStoreContext {
+#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+	bool qualificationTraceActive=false;
+	tt_pioneer_pcie_trace_sample qualificationTrace[PIONEER_PCIE_TRACE_SAMPLES]={};
+#endif
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 #ifdef PIONEER_QWEN35_INPLACE_RECOVERY
 	PioneerPostResetMapping* recoveryMapping=NULL;
@@ -11155,14 +11162,55 @@ Qwen35RecoveryStatus(PioneerProbeCookie* cookie,void* data,size_t length)
 // PIONEER_QWEN35_RECOVERY_STATUS_END
 
 // PIONEER_QWEN35_RECOVERY_RUN_BEGIN
+#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+static void
+Qwen35QualificationTrace(PioneerStoreContext* context,unsigned sample)
+{
+	if (context && context->qualificationTraceActive && sample<PIONEER_PCIE_TRACE_SAMPLES)
+		(void)PioneerPcieRootTraceSample(context->io,context->qualificationTrace[sample]);
+}
+#endif
 struct Qwen35RecoveryResetIO {
 	PioneerSessionIO& io;
 	bool delayFailed=false;
-	explicit Qwen35RecoveryResetIO(PioneerSessionIO& owned):io(owned) {}
-	uint32 CardRead(uint16 offset,uint8 size) { return delayFailed?UINT32_MAX:io.CardRead(offset,size); }
+	#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+	PioneerStoreContext* traceContext;
+	bool triggered=false,firstDelay=false,firstVendor=false,firstMarker=false;
+	explicit Qwen35RecoveryResetIO(PioneerSessionIO& owned,PioneerStoreContext* context)
+		:io(owned),traceContext(context) {}
+	#else
+	explicit Qwen35RecoveryResetIO(PioneerSessionIO& owned,PioneerStoreContext*):io(owned) {}
+	#endif
+	uint32 CardRead(uint16 offset,uint8 size) {
+		const uint32 result=delayFailed?UINT32_MAX:io.CardRead(offset,size);
+		#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+		if (triggered && firstDelay && !delayFailed) {
+			if (!firstVendor && offset==0 && size==4) {
+				firstVendor=true;Qwen35QualificationTrace(traceContext,PIONEER_PCIE_TRACE_AFTER_FIRST_VENDOR);
+			} else if (firstVendor && !firstMarker && offset==4 && size==2) {
+				firstMarker=true;Qwen35QualificationTrace(traceContext,PIONEER_PCIE_TRACE_AFTER_FIRST_MARKER);
+			}
+		}
+		#endif
+		return result;
+	}
 	uint32 RootRead(uint16 offset,uint8 size) { return delayFailed?UINT32_MAX:io.RootRead(offset,size); }
-	void CardWrite(uint16 offset,uint8 size,uint32 value) { io.CardWrite(offset,size,value); }
-	void RecoveryDelay() { if (snooze(100000)!=B_OK) delayFailed=true; }
+	void CardWrite(uint16 offset,uint8 size,uint32 value) {
+		io.CardWrite(offset,size,value);
+		#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+		if (!triggered && offset==0x930 && size==4 && value==0x11) {
+			triggered=true;Qwen35QualificationTrace(traceContext,PIONEER_PCIE_TRACE_AFTER_TRIGGER);
+		}
+		#endif
+	}
+	void RecoveryDelay() {
+		if (snooze(100000)!=B_OK) delayFailed=true;
+		#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+		if (triggered && !firstDelay && !delayFailed) {
+			firstDelay=true;Qwen35QualificationTrace(traceContext,PIONEER_PCIE_TRACE_BEFORE_FIRST_POLL);
+		}
+		#endif
+	}
 };
 
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
@@ -11410,7 +11458,7 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	if (context->recoveryFinishPending) return Qwen35RecoveryFinishLocked(owner,context,guard,r,liveTakeoverOwner);
 #endif
 	PioneerPciePayloadSnapshot payload{},payloadCheck{};
-	Qwen35RecoveryResetIO resetIo(context->io);BlackholeAsicResetResult reset{};
+	Qwen35RecoveryResetIO resetIo(context->io,context);BlackholeAsicResetResult reset{};
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	if (context->recoveryFirmwarePending) {
 		payload=context->recoveryPayload;
@@ -11460,6 +11508,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 #else
 		if (!prepared) return fail(B_DEV_NOT_READY);
 #endif
+#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+		Qwen35QualificationTrace(context,PIONEER_PCIE_TRACE_BEFORE_RESET);
+#endif
 		r.stage=PIONEER_RECOVERY_STAGE_ASIC_RESET;
 		if (!BlackholeAsicReset(resetIo,100,reset)) {
 			r.detail=reset.stage;
@@ -11473,6 +11524,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 			return fail(B_DEV_NOT_READY);
 		}
 	}
+#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+	Qwen35QualificationTrace(context,PIONEER_PCIE_TRACE_AFTER_RESET);
+#endif
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	// Keep the completion record until the same ticket is revalidated. A
 	// transient validation failure must not cause another reset write.
@@ -11486,6 +11540,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	PioneerPostResetPciResult pci{};
 	if (!PioneerPostResetPciRestore(context->io,pci)) { r.detail=pci.stage;return fail(B_DEV_NOT_READY); }
 	if (!PioneerPciePayloadRestore(context->io,payload)) return fail(B_DEV_NOT_READY);
+#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+	Qwen35QualificationTrace(context,PIONEER_PCIE_TRACE_AFTER_PCI);
+#endif
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	} // A resumed mapping attempt retains PCI decoding and the reset ticket.
 #endif
@@ -11501,6 +11558,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 #endif
 		return fail(B_DEV_NOT_READY);
 	}
+#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+	Qwen35QualificationTrace(context,PIONEER_PCIE_TRACE_AFTER_MAPPING);
+#endif
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	context->recoveryMappingPending=false;context->recoveryMappingTicket=0;
 	} // A resumed firmware poll keeps the existing mapping and reset ticket.
@@ -11520,6 +11580,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 #endif
 		return fail(B_DEV_NOT_READY);
 	}
+#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+	Qwen35QualificationTrace(context,PIONEER_PCIE_TRACE_AFTER_FIRMWARE);
+#endif
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	context->recoveryFirmwarePending=false;context->recoveryFirmwareTicket=0;
 	if (!context->recoveryMapping->RestoreInternalDbi(context->recoveryDbi,payload.control)) {
@@ -11625,6 +11688,9 @@ Qwen35RecoveryRequest(PioneerProbeCookie* cookie,void* data,size_t length,bool f
 			else
 #endif
 			{
+#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+				if (qualification) context->qualificationTraceActive=true;
+#endif
 				if (!context->dispatchOwnerRetained) {
 					tt_resident_session_result retained={};
 					RetainQ38DispatchOwner(*context,retained);
@@ -11647,6 +11713,7 @@ Qwen35RecoveryRequest(PioneerProbeCookie* cookie,void* data,size_t length,bool f
 	// writing or acknowledging status, before the caller releases its fd.
 	if (qualification && r.operation_status!=B_OK && sColdRecoveryRequired
 		&& sRuntimeOwner && sRuntimeOwner->context) {
+		Qwen35QualificationTrace(sRuntimeOwner->context,PIONEER_PCIE_TRACE_ON_FAILURE);
 		r.new_generation=((uint64)qualificationAerBefore<<32)|UINT32_MAX;
 		uint32 uncorrectable=0,source=0;
 		if (PioneerPcieRootAerSnapshot(sRuntimeOwner->context->io,uncorrectable,source))
@@ -11674,6 +11741,28 @@ static status_t
 Qwen35RecoveryQualify(PioneerProbeCookie* cookie,void* data,size_t length)
 {
 	return Qwen35RecoveryRequest(cookie,data,length,true,true);
+}
+
+static status_t
+Qwen35RecoveryPcieEvidence(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!cookie || !data || length!=sizeof(tt_pioneer_pcie_evidence)) return B_BAD_VALUE;
+	thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	tt_pioneer_pcie_evidence r={};status=user_memcpy(&r,data,sizeof(r));
+	if (status!=B_OK || !PioneerPcieEvidenceRequest(r)) return status!=B_OK?status:B_BAD_VALUE;
+	status=acquire_sem(sLock);if (status!=B_OK) return status;
+	if (r.expected_tag!=PIONEER_DRIVER_BUILD_TAG || r.expected_generation!=sReloadGeneration)
+		status=B_BAD_VALUE;
+	else if (sOpenCookies!=1 || sRuntimeOwner!=cookie || sQwen35ExclusiveCookie!=cookie || !sColdRecoveryRequired
+		|| !cookie->context || !cookie->context->qualificationTraceActive)
+		status=B_NOT_ALLOWED;
+	else {
+		memcpy(r.samples,cookie->context->qualificationTrace,sizeof(r.samples));
+		status=user_memcpy(data,&r,sizeof(r));
+	}
+	release_sem(sLock);return status;
 }
 #endif
 #endif
@@ -11705,6 +11794,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return Qwen35RecoveryForce(instance,data,length);
 	if (operation==TT_PCI_PROBE_RECOVERY_QUALIFY)
 		return Qwen35RecoveryQualify(instance,data,length);
+	if (operation==TT_PCI_PROBE_RECOVERY_PCIE_EVIDENCE)
+		return Qwen35RecoveryPcieEvidence(instance,data,length);
 	return B_NOT_ALLOWED;
 #endif
 // PIONEER_QWEN35_RECOVERY_QUALIFY_ROUTING_END

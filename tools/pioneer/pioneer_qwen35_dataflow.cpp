@@ -748,9 +748,24 @@ static bool QualifyRecovery()
 			tt_pioneer_driver_reload current{};current.version=1;
 			if (Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&current,sizeof(current))
 				&& current.build_tag==status.build_tag && current.generation==status.generation
-				&& !current.cold && !current.quiesced && current.active_owner) {
-				tt_q38_bank_session end{};end.version=TT_Q38_BANK_PROTOCOL;
-				(void)Call(fd,TT_PCI_PROBE_Q38_BANK_END,&end,sizeof(end));
+				&& !current.quiesced && current.active_owner) {
+				if (current.cold) {
+					tt_pioneer_pcie_evidence evidence{};evidence.version=1;
+					evidence.expected_tag=status.build_tag;evidence.expected_generation=status.generation;
+					if (Call(fd,TT_PCI_PROBE_RECOVERY_PCIE_EVIDENCE,&evidence,sizeof(evidence))) {
+						for (unsigned i=0;i<PIONEER_PCIE_TRACE_SAMPLES;i++) {
+							const auto& s=evidence.samples[i];
+							fprintf(stderr,"P100A_Q35_PCIE_TRACE sample=%u valid=%u dev=0x%04x link=0x%04x "
+								"uncor=0x%08x mask=0x%08x severity=0x%08x root=0x%08x source=0x%08x "
+								"header=%08x,%08x,%08x,%08x\n",i,s.valid,s.device_status,s.link_status,
+								s.uncorrectable,s.uncorrectable_mask,s.severity,s.root_status,s.source,
+								s.header[0],s.header[1],s.header[2],s.header[3]);
+						}
+					} else fprintf(stderr,"P100A_Q35_PCIE_TRACE unavailable\n");
+				} else {
+					tt_q38_bank_session end{};end.version=TT_Q38_BANK_PROTOCOL;
+					(void)Call(fd,TT_PCI_PROBE_Q38_BANK_END,&end,sizeof(end));
+				}
 			}
 		}
 	} else {

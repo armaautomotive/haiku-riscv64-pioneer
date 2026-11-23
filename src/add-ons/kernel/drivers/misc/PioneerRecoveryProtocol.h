@@ -10,6 +10,44 @@
 #define TT_PCI_PROBE_RECOVERY_FORCE (B_DEVICE_OP_CODES_END+0x61e4)
 // Present only in the restricted idle-session qualification build.
 #define TT_PCI_PROBE_RECOVERY_QUALIFY (B_DEVICE_OP_CODES_END+0x61e5)
+// Fixed, read-only evidence from a restricted qualification session.
+#define TT_PCI_PROBE_RECOVERY_PCIE_EVIDENCE (B_DEVICE_OP_CODES_END+0x61e6)
+
+enum : uint32_t {
+	PIONEER_PCIE_TRACE_BEFORE_RESET=0,
+	PIONEER_PCIE_TRACE_AFTER_RESET=1,
+	PIONEER_PCIE_TRACE_AFTER_PCI=2,
+	PIONEER_PCIE_TRACE_AFTER_MAPPING=3,
+	PIONEER_PCIE_TRACE_AFTER_FIRMWARE=4,
+	PIONEER_PCIE_TRACE_ON_FAILURE=5,
+	PIONEER_PCIE_TRACE_AFTER_TRIGGER=6,
+	PIONEER_PCIE_TRACE_BEFORE_FIRST_POLL=7,
+	PIONEER_PCIE_TRACE_AFTER_FIRST_VENDOR=8,
+	PIONEER_PCIE_TRACE_AFTER_FIRST_MARKER=9,
+	PIONEER_PCIE_TRACE_SAMPLES=10
+};
+struct tt_pioneer_pcie_trace_sample {
+	uint32_t valid,device_status,link_status,uncorrectable,uncorrectable_mask,
+		severity,root_status,source,header[4];
+};
+struct tt_pioneer_pcie_evidence {
+	uint32_t version,reserved[3];
+	uint64_t expected_tag,expected_generation;
+	tt_pioneer_pcie_trace_sample samples[PIONEER_PCIE_TRACE_SAMPLES];
+};
+static_assert(sizeof(tt_pioneer_pcie_trace_sample)==48,"fixed trace sample ABI");
+static_assert(sizeof(tt_pioneer_pcie_evidence)==512,"fixed trace evidence ABI");
+static inline bool PioneerPcieEvidenceRequest(const tt_pioneer_pcie_evidence& r)
+{
+	if (r.version!=1 || r.reserved[0] || r.reserved[1] || r.reserved[2]
+		|| !r.expected_tag || !r.expected_generation) return false;
+	for (const auto& s:r.samples) {
+		if (s.valid || s.device_status || s.link_status || s.uncorrectable
+			|| s.uncorrectable_mask || s.severity || s.root_status || s.source) return false;
+		for (auto word:s.header) if (word) return false;
+	}
+	return true;
+}
 
 // Read-only owner-lifetime status. This operation never authorizes or issues
 // a reset, and accepts no user-provided hardware addresses or recovery proof.

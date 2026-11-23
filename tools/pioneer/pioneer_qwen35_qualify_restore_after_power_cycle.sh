@@ -64,6 +64,8 @@ case "$stage" in
 		candidateSHA=698b972450841061a27d33d4d7853a708092ede1539315788fff5afa9d4700f9 ;;
 	/boot/home/pioneer-q35-recovery-qualify-20261123-h)
 		candidateSHA=e685a5aa888a6b0ddaeb61245c0455a4dc6181b30cc5d005e87c15d05ab698bb ;;
+	/boot/home/pioneer-q35-recovery-qualify-20261123-i)
+		candidateSHA=034d147f06c2192371e00c447e5e340844ccd92683a054c370eb3a716aa03c27 ;;
 	*) exit 2;;
 esac
 test -d "$stage" && test ! -L "$stage" && [ "$(stat -c '%u:%a' "$stage")" = 0:700 ] || fail stage

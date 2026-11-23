@@ -28,7 +28,8 @@ def verify_kernel_stack_budget(driver_directory, qualification=False):
 
     if qualification:
         markers = ('Recovery', 'PostReset', 'AsicReset', 'BlackholeArc',
-                   'Q38ArcQueue', 'Q38BankControl', 'BeginResidentSession', 'ProbeControl')
+                   'Q38ArcQueue', 'Q38BankControl', 'BeginResidentSession', 'ProbeControl',
+                   'PcieRoot', 'QualificationTrace')
         selected = [(name, frame, kind) for name, frame, kind in entries
                     if any(marker in name for marker in markers)]
         for required in ('Qwen35RecoveryRequest(', 'Qwen35RecoveryRunLocked(',
