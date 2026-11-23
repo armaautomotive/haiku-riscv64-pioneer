@@ -34,6 +34,9 @@ struct PioneerStoreContext;
 static void SelectRoleTestWindows(unsigned previous,unsigned next);
 #ifdef TEST_ROLE_STAGE_QUALIFY
 static bool FailSelectAfterStageWrite();
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+static void SimulatePrestackCopies();
+#endif
 #endif
 #endif
 #ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
@@ -163,6 +166,20 @@ struct PioneerSessionIO {
         return int(resetReads++)==resetChangeAt ? 0x6000 : reset;
     }
     bool SharedRoleHoldReset() { ++holdWrites; if (!dropHoldWrite) reset=0x47800; return true; }
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+    bool simulatePrestack=true,dropPrestackRelease=false;
+    bool SharedRolePrestackReleaseReset() {
+        ++sharedResetWrites;
+        if (dropPrestackRelease) return true;
+        reset=0x7000;
+        if (simulatePrestack) {
+            SimulatePrestackCopies();
+            roleHandoffs[runtimeCore].readerReady=DataflowRoleSnapshotReaderReady;
+            roleHandoffs[runtimeCore].writerReady=DataflowRoleSnapshotWriterReady;
+        }
+        return true;
+    }
+#endif
     uint32_t RuntimePcRead() const { return computePc; }
     bool SharedRoleReleaseReset() {
         ++sharedResetWrites;
@@ -215,6 +232,23 @@ struct PioneerSessionIO {
         return true;
     }
     void Q38PanelWrite(unsigned address,uint32_t value) {
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+        if (address>=DataflowRoleSnapshotHandoffAddress && address<DataflowRoleSnapshotHandoffAddress+12) {
+            auto& handoff=roleHandoffs[runtimeCore];
+            if (address==DataflowRoleSnapshotHandoffAddress) handoff.readerReady=value;
+            else if (address==DataflowRoleSnapshotHandoffAddress+4) handoff.writerReady=value;
+            else {
+                ++stackCancelWrites;handoff.release=value;
+                if (reset==0x7000 && simulatePrestack && value==DataflowRoleSnapshotCancel) {
+                    handoff.readerReady=DataflowRoleSnapshotReaderCancelled;
+                    handoff.writerReady=DataflowRoleSnapshotWriterCancelled;
+                    rolePc[DataflowRoleReader]=DataflowSharedReaderParkAddress;
+                    rolePc[DataflowRoleWriter]=DataflowSharedWriterParkAddress;
+                }
+            }
+            return;
+        }
+#endif
         if (address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest)) {
             ++roleStopWrites;
             if (!dropRoleStopWrite) {
@@ -245,6 +279,10 @@ struct PioneerSessionIO {
         }
     }
     uint32_t Q38PanelRead(unsigned address) {
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+        if (address==DataflowRoleSnapshotHandoffAddress) return roleHandoffs[runtimeCore].readerReady;
+        if (address==DataflowRoleSnapshotHandoffAddress+4) return roleHandoffs[runtimeCore].writerReady;
+#endif
         if (address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest))
             return roleBoxes[runtimeCore].stopRequest;
         if (address==DataflowRoleSnapshotHandoffAddress+offsetof(DataflowRoleSnapshotHandoff,release))
@@ -326,6 +364,18 @@ static thread_id gThread=5;
 static team_id gTeam=11;
 static std::vector<std::vector<uint32_t>> gMemory;
 static std::vector<bool> gMapped;
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+static bool gPrestackCorruptCopy=false;
+static void SimulatePrestackCopies() {
+    const unsigned reader=(DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address)/4;
+    const unsigned writer=(DataflowRoleWriterRamCopy-DataflowRoleExtraL1Address)/4;
+    std::copy(gMemory[DataflowRolePhysicalBriscRam].begin(),gMemory[DataflowRolePhysicalBriscRam].end(),
+        gMemory[DataflowRolePhysicalExtraCode].begin()+reader);
+    std::copy(gMemory[DataflowRolePhysicalNcriscRam].begin(),gMemory[DataflowRolePhysicalNcriscRam].end(),
+        gMemory[DataflowRolePhysicalExtraCode].begin()+writer);
+    if (gPrestackCorruptCopy) gMemory[DataflowRolePhysicalExtraCode][reader]^=1;
+}
+#endif
 #if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
 // The mapped BAR address remains fixed while TLB selection changes its tile.
 // Copy each selected tile into the fixed mock view to model that aliasing.

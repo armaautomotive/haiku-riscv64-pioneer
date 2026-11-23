@@ -7,9 +7,9 @@
 #define PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS 1
 #include "PioneerQwen35ExclusiveRoleImages.h"
 #include "PioneerQwen35DataflowServiceImage.h"
+#include "PioneerQwen35SharedRoleImages.h"
 #include "pioneer_qwen35_fleet_inspection_control_test.cpp"
 #include <new>
-#include "PioneerQwen35SharedRoleImages.h"
 constexpr status_t B_NO_MEMORY=-5;
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35RoleStageControl.inc"
 
@@ -21,6 +21,7 @@ static tt_q35_role_stage_qualification Request() {
     tt_q35_role_stage_qualification r{};r.version=1;
     r.expected_tag=PIONEER_DRIVER_BUILD_TAG;r.expected_generation=42;return r;
 }
+#ifndef TEST_ROLE_PRESTACK_CONTROL
 int main()
 {
     (void)&Qwen35DataflowGenerate;
@@ -128,3 +129,4 @@ int main()
     }
     std::puts("PASS held-role stage, full image restoration and retained mapping failure; SIMULATED ONLY");
 }
+#endif

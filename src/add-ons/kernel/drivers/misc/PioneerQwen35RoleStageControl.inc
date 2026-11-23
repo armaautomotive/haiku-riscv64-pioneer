@@ -7,12 +7,18 @@
 #endif
 #include "PioneerQwen35RoleStageProtocol.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleFleetImagesOwner.h"
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+#include "PioneerQwen35RolePrestackProbe.h"
+#endif
 
 class PioneerQ35RoleStageQualification {
 public:
     PioneerQwen35RoleHaikuMap platform;
     PioneerQwen35::DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap> views;
     PioneerQwen35::DataflowRoleFleetImagesOwner images;
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+    PioneerQwen35RolePrestackState prestack;
+#endif
     uint32_t* snapshot;
     PioneerQ35RoleStageQualification():views(platform),snapshot(
         static_cast<uint32_t*>(malloc(sizeof(uint32_t)*PioneerQwen35::DataflowRoleFleetImagesOwner::RequiredWords()))) {}
@@ -25,6 +31,9 @@ static void
 PioneerQ35RoleStageProgress(unsigned phase)
 {
 #ifdef _KERNEL_MODE
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+    if (phase==9) { dprintf("P100A_Q35_ROLE_STAGE_PROGRESS phase=9;PRESTACK_QUALIFICATION\n"); return; }
+#endif
     dprintf("P100A_Q35_ROLE_STAGE_PROGRESS phase=%u;HELD_CORES_NO_RELEASE\n",phase);
 #else
     (void)phase;
@@ -74,6 +83,11 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         && owner->views.Open(c->io.profile.bar0_host_start,c->io.profile.bar0_host_end,route);
                     PioneerQwen35RoleFleetPciIO<PioneerSessionIO,PioneerQ35FleetInspectionScope,
                         DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>> adapter(c->io,scope,owner->views);
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+                    PioneerQwen35RolePrestackProbe<PioneerSessionIO,PioneerQ35FleetInspectionScope,
+                        DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>,decltype(adapter)>
+                        prestack(c->io,scope,owner->views,adapter,owner->prestack);
+#endif
                     if (okay) {
                         r.stage=4;PioneerQ35RoleStageProgress(r.stage);
                         okay=owner->images.CaptureAll(owner->snapshot,
@@ -90,10 +104,19 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                                 DataflowSharedWriterShimWords,sizeof(DataflowSharedWriterShimWords)/sizeof(uint32_t),adapter);
                         r.staged=okay;
                     }
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+                    if (okay && r.version==2) {
+                        r.stage=9;PioneerQ35RoleStageProgress(r.stage);
+                        okay=prestack.Run(DataflowSharedReaderParkAddress,DataflowSharedWriterParkAddress,65536);
+                    }
+#endif
                     if (okay) {
                         r.stage=6;PioneerQ35RoleStageProgress(r.stage);
                         okay=owner->images.RestoreAll(adapter);r.restored=okay;
                     }
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+                    if (okay && r.version==2) okay=prestack.VerifyAfterImages();
+#endif
                     if (okay) {
                         r.stage=7;PioneerQ35RoleStageProgress(r.stage);
                         okay=owner->views.Close() && !owner->views.HasMappings();r.mappings_closed=okay;
@@ -105,6 +128,9 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                     // the complete fleet-wide original-image audit; a second
                     // failure retains the owner exactly as before.
                     if (!okay && r.captured && !r.mappings_closed
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+                        && r.version==1
+#endif
                         && owner->views.Opened() && owner->views.ImageWritesConfirmed() && !c->Unsafe()
                         && scope.ProveRoleDedicatedObservedStage(c->io)) {
                         const bool restored=owner->images.RestorationRequired()
@@ -125,7 +151,12 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                     }
                     if (okay) {
                         delete owner;c->qwen35RoleStageQualification=NULL;
-                        r.stage=TT_Q35_ROLE_STAGE_COMPLETE;PioneerQ35RoleStageProgress(r.stage);r.operation_status=B_OK;
+                        r.stage=
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+                            r.version==2?TT_Q35_ROLE_PRESTACK_COMPLETE:
+#endif
+                            TT_Q35_ROLE_STAGE_COMPLETE;
+                        PioneerQ35RoleStageProgress(r.stage);r.operation_status=B_OK;
                     } else if (owner) {
                         tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);
                         r.operation_status=B_DEV_NOT_READY;

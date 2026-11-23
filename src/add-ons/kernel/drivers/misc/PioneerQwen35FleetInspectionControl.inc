@@ -18,6 +18,9 @@ class PioneerQ35FleetInspectionScope {
     uint64 fGeneration;
 #ifdef PIONEER_QWEN35_ROLE_STAGE_QUALIFY
     bool fStageObserved=false,fStageWritable=false;
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+    bool fPrestackObserved=false,fPrestackHeldAfterCancel=false;
+#endif
 #endif
 public:
     PioneerQ35FleetInspectionScope(PioneerProbeCookie* cookie,PioneerStoreContext* context)
@@ -61,7 +64,12 @@ public:
     }
     bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleMemoryReadSafe(PioneerSessionIO& io,unsigned core,unsigned which) const {
-        return which<=PioneerQwen35::DataflowRolePhysicalExtraCode
+        return (which<=PioneerQwen35::DataflowRolePhysicalExtraCode
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+                || (fPrestackHeldAfterCancel && core==0
+                    && which<=PioneerQwen35::DataflowRolePhysicalNcriscRam)
+#endif
+            )
             && core<PioneerQwen35::DataflowBarrierWorkers && io.runtimeCore==core
             && ProveRoleDedicatedObservedStage(io) && io.DataflowPanelMappingStable()
             && PioneerQwen35WithSelectedClock(io,core,[&]() {
@@ -73,7 +81,30 @@ public:
         return fStageWritable && PioneerQwen35::DataflowRolePhysicalWriteRange(which,offset,bytes)
             && ProveRoleMemoryReadSafe(io,core,which);
     }
-    bool ProveRoleControlWriteSafe(PioneerSessionIO&,unsigned,uint32_t,uint32_t) const { return false; }
+    bool ProveRoleControlWriteSafe(PioneerSessionIO& io,unsigned core,uint32_t expected,uint32_t desired) const {
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+        return fPrestackObserved && fStageWritable && core==0
+            && !((expected^desired)&~uint32_t(PioneerQwen35::DataflowRolePreserveResetMask))
+            && ProveRoleMemoryReadSafe(io,core,PioneerQwen35::DataflowRolePhysicalExtraCode);
+#else
+        (void)io;(void)core;(void)expected;(void)desired;return false;
+#endif
+    }
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+    // This is a restricted observation-based qualification, not proof of
+    // firmware exclusion. Its owner retains all snapshots on any uncertainty.
+    bool BeginPrestack(PioneerSessionIO& io) {
+        if (fPrestackObserved || !fStageWritable || !ProveRoleDedicatedObservedStage(io)) return false;
+        fPrestackObserved=true;return true;
+    }
+    bool PrestackAdmission(PioneerSessionIO& io) const {
+        return fPrestackObserved && ProveRoleDedicatedObservedStage(io);
+    }
+    bool MarkPrestackHeldAfterCancel(PioneerSessionIO& io) {
+        if (fPrestackHeldAfterCancel || !PrestackAdmission(io)) return false;
+        fPrestackHeldAfterCancel=true;return true;
+    }
+#endif
     bool ProveRoleImageInspectionAllowed(PioneerSessionIO& io,unsigned core) const {
         return core<PioneerQwen35::DataflowBarrierWorkers && io.runtimeCore==core
             && io.DataflowPanelMappingStable() && ProveRoleDedicatedObservedStage(io);

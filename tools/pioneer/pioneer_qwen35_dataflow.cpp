@@ -792,14 +792,16 @@ static bool QualifyRecovery()
 // PIONEER_QWEN35_QUALIFY_CLIENT_END
 
 // PIONEER_QWEN35_FLEET_INSPECTION_CLIENT_BEGIN
-static bool QualifyHeldFleet(bool stageRoles=false)
+static bool QualifyHeldFleet(bool stageRoles=false,bool prestack=false)
 {
+	if (prestack && !stageRoles) return false;
 	const int fd=OpenExclusiveDataflowDriver();
 	if (fd<0) return false;
 	tt_pioneer_driver_reload initial{};initial.version=1;
 	bool okay=Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&initial,sizeof(initial))
 		&& initial.driver==TT_QWEN35_DATAFLOW_DRIVER
-		&& initial.build_tag==(stageRoles?UINT64_C(0x2026112300030005):UINT64_C(0x2026112300030004)) && initial.generation
+		&& initial.build_tag==(prestack?UINT64_C(0x2026112300030006)
+			:stageRoles?UINT64_C(0x2026112300030005):UINT64_C(0x2026112300030004)) && initial.generation
 		&& !initial.cold && !initial.quiesced && !initial.active_owner
 		&& initial.open_count==1 && initial.guard_version==1;
 	if (okay) {
@@ -821,7 +823,7 @@ static bool QualifyHeldFleet(bool stageRoles=false)
 				&& result.l2cpu_reset!=UINT32_MAX && !(result.l2cpu_reset&0xf0U)
 				&& !result.restore_failed && result.prepared==120;
 			if (okay && stageRoles) {
-				tt_q35_role_stage_qualification role{};role.version=1;
+				tt_q35_role_stage_qualification role{};role.version=prestack?2:1;
 				role.expected_tag=initial.build_tag;role.expected_generation=initial.generation;
 				const bool stageReply=Call(fd,TT_PCI_PROBE_Q35_ROLE_STAGE_QUALIFY,&role,sizeof(role));
 				fprintf(stderr,"P100A_Q35_ROLE_STAGE replied=%u status=%ld stage=%u captured=%u "
@@ -830,7 +832,7 @@ static bool QualifyHeldFleet(bool stageRoles=false)
 					role.restored,role.mappings_closed);
 				okay=stageReply && role.operation_status==B_OK
 					&& role.build_tag==initial.build_tag && role.generation==initial.generation
-					&& role.stage==TT_Q35_ROLE_STAGE_COMPLETE && role.captured==1
+					&& role.stage==(prestack?TT_Q35_ROLE_PRESTACK_COMPLETE:TT_Q35_ROLE_STAGE_COMPLETE) && role.captured==1
 					&& role.staged==1 && role.restored==1 && role.mappings_closed==1;
 			}
 		}
@@ -862,6 +864,8 @@ int main(int argc,char** argv)
 		return QualifyHeldFleet()?0:1;
 	if (argc==2 && strcmp(argv[1],"--qualify-held-role-stage")==0)
 		return QualifyHeldFleet(true)?0:1;
+	if (argc==2 && strcmp(argv[1],"--qualify-role-prestack")==0)
+		return QualifyHeldFleet(true,true)?0:1;
 	if (argc==2 && strcmp(argv[1],"--qualify-recovery")==0)
 		return QualifyRecovery()?0:1;
 	const bool oneRunDiagnostic=argc==7

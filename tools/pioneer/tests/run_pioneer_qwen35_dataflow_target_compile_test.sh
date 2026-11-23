@@ -730,6 +730,10 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
     -I"$directory/role_haiku_stubs" -I"$temporary/shared-role-images" -I"$temporary/shared-graph-service" -I"$temporary" \
     "$directory/pioneer_qwen35_role_stage_control_test.cpp" -o "$temporary/role-stage-control-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-stage-control-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -I"$directory/role_haiku_stubs" -I"$temporary/shared-role-images" -I"$temporary/shared-graph-service" -I"$temporary" \
+    "$directory/pioneer_qwen35_role_prestack_control_test.cpp" -o "$temporary/role-prestack-control-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-prestack-control-test"
 PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL=1 \
 	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/graph-trial-service"
 for section in boot text dispatch; do

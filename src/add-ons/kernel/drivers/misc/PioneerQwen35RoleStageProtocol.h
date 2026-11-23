@@ -6,7 +6,7 @@
 // Restricted fixed-image, held-core qualification only. No user address,
 // executable payload, reset/release request, model data or inference input.
 #define TT_PCI_PROBE_Q35_ROLE_STAGE_QUALIFY (B_DEVICE_OP_CODES_END+0x61e8)
-enum : uint32_t { TT_Q35_ROLE_STAGE_COMPLETE=8 };
+enum : uint32_t { TT_Q35_ROLE_STAGE_COMPLETE=8, TT_Q35_ROLE_PRESTACK_COMPLETE=9 };
 struct tt_q35_role_stage_qualification {
     uint32_t version,reserved[3];
     uint64_t expected_tag,expected_generation;
@@ -17,7 +17,11 @@ struct tt_q35_role_stage_qualification {
 static_assert(sizeof(tt_q35_role_stage_qualification)==72,"fixed role stage qualification ABI");
 static inline bool PioneerQ35RoleStageQualificationRequest(const tt_q35_role_stage_qualification& r)
 {
-    return r.version==1 && !r.reserved[0] && !r.reserved[1] && !r.reserved[2]
+    return (r.version==1
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+            || r.version==2
+#endif
+        ) && !r.reserved[0] && !r.reserved[1] && !r.reserved[2]
         && r.expected_tag && r.expected_generation && !r.operation_status && !r.stage
         && !r.captured && !r.staged && !r.restored && !r.mappings_closed
         && !r.build_tag && !r.generation;
