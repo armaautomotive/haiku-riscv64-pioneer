@@ -17,6 +17,10 @@ struct FleetPciTestScope {
     unsigned stackDrainFailAt=UINT32_MAX;
     bool imageInspection=false;
     bool faultAudit=false,faultAck=false;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    bool dedicatedRelease=false;
+    bool ProveRoleDedicatedReleaseSafe(PioneerSessionIO&,unsigned) const { return dedicatedRelease; }
+#endif
     bool ProveExclusiveRewrite(PioneerSessionIO&) const { return gLocked && exclusive; }
     bool ProveRoleMemoryReadSafe(PioneerSessionIO&,unsigned,unsigned) const { return held && stable && read; }
     bool ProveRoleMemoryWriteSafe(PioneerSessionIO&,unsigned,unsigned,unsigned,unsigned) const
@@ -563,6 +567,24 @@ int main()
     context.io.queueBoxes[11][0].consumed=3;
     faultSnapshot.commandSequence++;
     assert(!io.FaultSettled(11,faultSnapshot,0x1000,0x100));
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    {
+        context.io.reset=0x47800;scope.release=true;scope.exclusive=true;
+        gMemory[DataflowRolePhysicalControl][0x224/4]&=~uint32_t(DataflowRolePreserveResetMask);
+        const unsigned prior=context.io.sharedResetWrites;
+        bool dedicatedAttempted=false;
+        assert(!io.ReleaseDedicatedCore(4,dedicatedAttempted) && !dedicatedAttempted
+            && context.io.sharedResetWrites==prior);
+        scope.dedicatedRelease=true;
+        assert(io.ReleaseDedicatedCore(4,dedicatedAttempted) && dedicatedAttempted
+            && context.io.sharedResetWrites==prior+1 && context.io.reset==0x6000);
+        assert(!io.ReleaseDedicatedCore(4,dedicatedAttempted));
+        context.io.reset=0x47800;context.io.dropSharedResetWrite=true;dedicatedAttempted=false;
+        assert(!io.ReleaseDedicatedCore(5,dedicatedAttempted) && dedicatedAttempted);
+        assert(!io.ReleaseDedicatedCore(5,dedicatedAttempted));
+        context.io.dropSharedResetWrite=false;
+    }
+#endif
     assert(views.Close()); gAllowWrite=false;
     assert(release_sem(sLock)==B_OK && !gLocked);
     std::puts("PASS role fleet PCI range translation and guarded MMIO on 120 simulated routes; NO HARDWARE");

@@ -10,9 +10,10 @@ namespace PioneerQwen35 {
 // guarantee. A potentially partial write requires a verified device reset
 // and reinitialization before the containing owner can be retired.
 class DataflowExclusiveRoleFleet {
-    enum Phase { Empty, Faulted, Staged, Retired };
+    enum Phase { Empty, Faulted, Staged, Armed, Releasing, Running, Retired };
     Phase fPhase=Empty;
     bool fTouched=false;
+    unsigned fNextCore=0;
     DataflowRoleProgramImage fImage{}; // trusted immutable generated images
     static constexpr unsigned ChunkWords=64;
     template<class IO> static bool Held(IO& io,unsigned core) {
@@ -114,6 +115,20 @@ public:
         if (fPhase!=Staged || !fImage.Valid()) return false;
         if (!Verify(fImage,io)) { fPhase=Faulted;return false; }
         return true;
+    }
+    // Arm only the software ledger. The binding must separately prove that
+    // the complete compute/role fleet can be safely stopped or reset.
+    template<class IO> bool Arm(IO& io) {
+        if (!VerifyStaged(io)) return false;
+        fPhase=Armed;return true;
+    }
+    bool BeginRelease(unsigned core) {
+        if (fPhase!=Armed || core!=fNextCore || core>=DataflowBarrierWorkers) return false;
+        fPhase=Releasing;return true; // an uncertain attempt cannot be retried
+    }
+    bool ConfirmRelease(unsigned core) {
+        if (fPhase!=Releasing || core!=fNextCore) return false;
+        ++fNextCore;fPhase=fNextCore==DataflowBarrierWorkers?Running:Armed;return true;
     }
     // Only a caller that has validated the driver's reset/firmware ticket
     // and retired the associated mappings may invoke this transition.

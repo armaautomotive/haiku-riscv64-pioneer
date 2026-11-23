@@ -101,7 +101,7 @@ static inline bool DataflowPciRunningWriteRange(unsigned address,unsigned bytes)
 		|| (address==command && bytes==sizeof(uint32_t))
 		|| (address==acknowledgement && bytes==sizeof(uint32_t))
 		|| (address==shutdown && bytes==sizeof(uint32_t))
-#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+#if defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
 		|| (address==PioneerQwen35::DataflowRoleSnapshotHandoffAddress
 			+offsetof(PioneerQwen35::DataflowRoleSnapshotHandoff,release)
 			&& bytes==sizeof(uint32_t))

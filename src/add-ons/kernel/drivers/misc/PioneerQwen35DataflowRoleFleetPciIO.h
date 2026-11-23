@@ -159,6 +159,28 @@ public:
         return fScope.ProveExclusiveRewrite(fIO) && fGuard.ProveSelectedRoute(core)
             && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
     }
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    // The dedicated shim initializes its own private state and must not use
+    // the snapshot path's preserve-RAM requirement. The separate scope gate
+    // is still denied until partial-launch stop/reset recovery is implemented.
+    bool ReleaseDedicatedCore(unsigned core,bool& attempted) {
+        using namespace PioneerQwen35;
+        if (attempted || core>=DataflowBarrierWorkers || !fViews.Opened()
+            || !fScope.ProveExclusiveRewrite(fIO) || !fScope.ProveRoleReleaseSafe(fIO,core)
+            || !fScope.ProveRoleDedicatedReleaseSafe(fIO,core)
+            || !fIO.SelectRuntimeCore(core) || !fIO.MapQ38Panel()
+            || !fIO.DataflowPanelMappingStable() || !fGuard.ProveSelectedRoute(core)
+            || !PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; })
+            || fIO.ResetRead()!=0x47800 || fIO.ResetRead()!=0x47800
+            || !fScope.ProveRoleDedicatedReleaseSafe(fIO,core)
+            || !fGuard.ProveSelectedRoute(core)) return false;
+        attempted=true;
+        if (!fIO.SharedRoleReleaseReset()) return false;
+        fIO.Pause();
+        return fScope.ProveExclusiveRewrite(fIO) && fGuard.ProveSelectedRoute(core)
+            && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+    }
+#endif
     // Only an unconfirmed release may be classified as never released. The
     // independent proof must fence the attempted write: two held reads alone
     // cannot exclude a posted write arriving after the reads.

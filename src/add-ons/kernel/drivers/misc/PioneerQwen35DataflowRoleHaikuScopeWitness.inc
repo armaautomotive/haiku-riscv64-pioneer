@@ -184,6 +184,11 @@ public:
     // Must additionally establish partial-fleet cleanup and a role-aware
     // stop/hold path before permitting any physical reset release.
     bool ProveRoleReleaseSafe(PioneerSessionIO&,unsigned) const { return false; }
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    // Dedicated images discard old private RAM and therefore need a proven
+    // stop/reset/reinitialization route for every partial fleet launch.
+    bool ProveRoleDedicatedReleaseSafe(PioneerSessionIO&,unsigned) const { return false; }
+#endif
     // A reset read alone cannot rule out a delayed posted release write. This
     // must prove that the particular attempted write has drained, and that no
     // other agent can release the tile for the remainder of recovery.

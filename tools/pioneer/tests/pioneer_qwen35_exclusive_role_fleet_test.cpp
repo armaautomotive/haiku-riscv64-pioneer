@@ -89,5 +89,22 @@ int main() {
         FakeFleet io;io.corruptAt=719;DataflowExclusiveRoleFleet owner;
         assert(!owner.Stage(SmallImage(),io) && owner.ResetRequired() && io.writes==720);
     }
-    std::puts("PASS dedicated 120-core role staging, real images, partial writes and late misroute; SIMULATED ONLY");
+    {
+        FakeFleet io;DataflowExclusiveRoleFleet owner;
+        assert(!owner.BeginRelease(0) && owner.Stage(SmallImage(),io) && owner.Arm(io));
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            assert(!owner.BeginRelease(core+1));
+            assert(owner.BeginRelease(core) && !owner.BeginRelease(core));
+            assert(!owner.ConfirmRelease(core+1) && owner.ConfirmRelease(core));
+            assert(!owner.ConfirmRelease(core));
+        }
+        assert(!owner.BeginRelease(0) && !owner.Arm(io) && owner.ResetRequired());
+    }
+    {
+        FakeFleet io;DataflowExclusiveRoleFleet owner;
+        assert(owner.Stage(SmallImage(),io) && owner.Arm(io) && owner.BeginRelease(0));
+        // An uncertain write cannot be retried or skipped by the ledger.
+        assert(!owner.BeginRelease(0) && !owner.BeginRelease(1) && owner.ResetRequired());
+    }
+    std::puts("PASS dedicated 120-core role staging, release ordering, partial writes and late misroute; SIMULATED ONLY");
 }

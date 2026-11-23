@@ -37,6 +37,7 @@ class PioneerQwen35SharedRoleBinding {
     bool fStackReleaseSubmitted[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStackReleaseWriting[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStackReleaseConfirmed[PioneerQwen35::DataflowBarrierWorkers]{};
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     bool fStackReleaseDrainedAbsent[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStackCancelAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fReleaseHeld[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -44,6 +45,7 @@ class PioneerQwen35SharedRoleBinding {
     uint32_t fStopToken[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fComputeStopAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fHoldAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
+#endif
     PioneerQwen35RoleBorrowedScopeWitness* Scope() {
         auto* scope=fContext.io.qwen35BorrowedRoleScope;
         return scope && scope->ProveExclusiveRewrite(fContext.io)?scope:NULL;
@@ -160,7 +162,11 @@ public:
     }
     __attribute__((noinline)) bool ArmAndBeginRelease() {
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
-        return false; // dedicated release, stop and reset retirement are not wired yet
+        auto* scope=Scope();
+        if (!scope || !fViews.Opened() || !scope->ProveRoleDedicatedReleaseSafe(fContext.io,0)) return false;
+        Adapter io(fContext.io,*scope,fViews);
+        if (!fTakeover.Arm(io)) return false;
+        fReleaseAuthorized=true; return true;
 #else
         auto* scope=Scope();
         if (!scope || !fViews.Opened()) return false;
@@ -179,13 +185,22 @@ public:
         return true;
     }
     __attribute__((noinline)) bool StartCore(unsigned core) {
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        if (!fTakeover.BeginRelease(core)) return false;
+#else
         if (!fStartOrder.BeginRelease(core)) return false;
+#endif
         auto* scope=Scope();
         if (!scope || !fReleaseAuthorized || core>=PioneerQwen35::DataflowBarrierWorkers
             || fReleaseAttempted[core] || !fViews.Opened()) return false;
         Adapter io(fContext.io,*scope,fViews);
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        fReleaseConfirmed[core]=io.ReleaseDedicatedCore(core,fReleaseAttempted[core]);
+        return fReleaseConfirmed[core] && fReleaseAttempted[core] && fTakeover.ConfirmRelease(core);
+#else
         fReleaseConfirmed[core]=io.ReleaseCore(core,fReleaseAttempted[core]);
         return fReleaseConfirmed[core] && fReleaseAttempted[core] && fStartOrder.ConfirmRelease(core);
+#endif
     }
     __attribute__((noinline)) bool PrepareRoleStacks(unsigned core) {
         using namespace PioneerQwen35;
@@ -217,14 +232,19 @@ public:
     __attribute__((noinline)) bool CoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot) {
         auto* scope=Scope();
         if (!scope || core>=PioneerQwen35::DataflowBarrierWorkers || !fReleaseConfirmed[core]
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
             || !fStackReleaseConfirmed[core]
+#endif
             || !fReleaseAuthorized || !fViews.Opened()) return false;
         Adapter io(fContext.io,*scope,fViews);
         if (!fRunningImagesObserved[core]) {
             if (!io.InspectRunningRoleImages(core,RoleImage())
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
                 || !io.InspectRunningRoleRamCopies(core,
                     fOwner.OriginalRamWords(core,PioneerQwen35::DataflowRoleReader),
-                    fOwner.OriginalRamWords(core,PioneerQwen35::DataflowRoleWriter))) return false;
+                    fOwner.OriginalRamWords(core,PioneerQwen35::DataflowRoleWriter))
+#endif
+                ) return false;
         }
         if (!io.RunningReady(core,snapshot,
             sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
@@ -236,7 +256,9 @@ public:
     __attribute__((noinline)) bool RuntimeStable(unsigned core) {
         auto* scope=Scope();
         if (!scope || core>=PioneerQwen35::DataflowBarrierWorkers || !fReleaseConfirmed[core]
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
             || !fStackReleaseConfirmed[core]
+#endif
             || !fReleaseAuthorized || !fViews.Opened()) return false;
         Adapter io(fContext.io,*scope,fViews);
         const unsigned textWords=sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t);
@@ -248,7 +270,9 @@ public:
     __attribute__((noinline)) bool FaultCoreSettled(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot) {
         auto* scope=Scope();
         if (!scope || core>=PioneerQwen35::DataflowBarrierWorkers || !fReleaseConfirmed[core]
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
             || !fStackReleaseConfirmed[core]
+#endif
             || !fReleaseAuthorized || !fViews.Opened() || !scope->RetainedFaultAuditActive(fContext.io)) return false;
         Adapter io(fContext.io,*scope,fViews);
         return io.FaultSettled(core,snapshot,sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
@@ -261,12 +285,14 @@ public:
         if (!scope || core>=DataflowBarrierWorkers || !fReleaseConfirmed[core]
             || !fReleaseAuthorized || !fViews.Opened() || !DataflowPciRunningWriteRange(address,bytes)) return false;
         Adapter io(fContext.io,*scope,fViews);
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         const unsigned stackRelease=DataflowRoleSnapshotHandoffAddress
             +offsetof(DataflowRoleSnapshotHandoff,release);
         if (address==stackRelease && bytes==sizeof(uint32_t))
             return fStackReleaseSubmitted[core] && !fStackReleaseAttempted[core] && fStackReleaseWriting[core]
                 && io.StartupHandoffWriteAllowed(core);
         if (!fStackReleaseConfirmed[core]) return false;
+#endif
         const unsigned acknowledgement=DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,acknowledgedSequence);
         if (scope->RetainedFaultAuditActive(fContext.io))
             return address==acknowledgement && bytes==sizeof(uint32_t)
@@ -282,6 +308,11 @@ public:
     }
     bool StopAndHoldAll(unsigned& stage,unsigned& core) {
         fStartOrder.Close();
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++)
+            if (fReleaseAttempted[i]) { stage=17;core=i;return false; }
+        return fContext.io.StopAndAuditAll(stage,core);
+#else
         // The old stop path understands T0 alone. For released tiles publish
         // or observe one role stop request first; the real scope still denies
         // this until it can prove compute/queues settled. Never release saved
@@ -375,6 +406,7 @@ public:
             stage=0;core=PioneerQwen35::DataflowBarrierWorkers;return true;
         }
         return fContext.io.StopAndAuditAll(stage,core);
+#endif
     }
     __attribute__((noinline)) bool RestoreRolesHeld() {
         fStartOrder.Close();

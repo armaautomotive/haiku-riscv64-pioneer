@@ -503,7 +503,7 @@ public:
 				fPhase=PhaseFaulted;
 				return DataflowServiceStartFailed;
 			}
-#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+#if defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
 			// Retain this tile's private RAM before releasing another tile.
 			// A partial launch can then leave at most the current tile
 			// released without a completed stackless snapshot. The shims

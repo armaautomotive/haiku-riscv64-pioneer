@@ -253,6 +253,9 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 	-I"$temporary/shared-role-images" "$directory/pioneer_qwen35_exclusive_role_fleet_test.cpp" \
 	-o "$temporary/exclusive-role-fleet-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exclusive-role-fleet-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	"$directory/pioneer_qwen35_exclusive_service_start_test.cpp" -o "$temporary/exclusive-service-start-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exclusive-service-start-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_boot_test.cpp" \
 	-o "$temporary/role-boot-test"
@@ -478,6 +481,10 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 	-I"$directory/role_haiku_stubs" "$directory/pioneer_qwen35_dataflow_role_fleet_pci_io_test.cpp" \
 	-o "$temporary/role-fleet-pci-io-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-fleet-pci-io-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-DPIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS -I"$directory/role_haiku_stubs" \
+	"$directory/pioneer_qwen35_dataflow_role_fleet_pci_io_test.cpp" -o "$temporary/exclusive-role-pci-io-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exclusive-role-pci-io-test"
 if python3 "$root/tools/pioneer/build_qwen35_dataflow.py" --compile-role-write-prototype \
 	"$build" "$temporary/invalid-role-write-driver" >"$temporary/invalid-role-write-driver.log" 2>&1; then
 	echo 'role write driver accepted an unguarded build' >&2
