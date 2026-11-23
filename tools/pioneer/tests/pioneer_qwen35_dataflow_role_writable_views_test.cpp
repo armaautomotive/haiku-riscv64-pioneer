@@ -101,7 +101,7 @@ int main()
         memory[DataflowRolePhysicalExtraCode][0]=memory[DataflowRolePhysicalExtraCode][1]=0;
         const unsigned before=platform.writes;
         assert(!views.WriteWords(3,DataflowRolePhysicalBriscBoot,0,words,8,guard));
-        assert(!views.WriteWords(3,DataflowRolePhysicalShim,0xfc,words,8,guard));
+        assert(!views.WriteWords(3,DataflowRolePhysicalShim,DataflowRoleShimWords*4-4,words,8,guard));
         assert(!views.WriteWords(3,DataflowRolePhysicalExtraCode,extraTail+4,words,8,guard));
         assert(!views.WriteWords(3,DataflowRolePhysicalControl,0x1b0,words,4,guard));
         assert(!views.WriteWords(3,DataflowRolePhysicalControl,0x224,words,4,guard));

@@ -19,8 +19,8 @@ flags='-std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-
 "$cross-g++" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
 	-I"$directory" "$directory/blackhole_qwen35_shared_role_start.S" -o "$output/shared-start.o"
 for role in reader writer; do
-	if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70080; start=0xb0000; limit=0xb5000
-	else shim=0x70080; shim_limit=0x70100; start=0xb5000; limit=0xb8000; fi
+	if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70100; start=0xb0000; limit=0xb5000
+	else shim=0x70100; shim_limit=0x70200; start=0xb5000; limit=0xb8000; fi
 	"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
 		--defsym ROLE_SHIM_ADDRESS=$shim --defsym ROLE_SHIM_LIMIT=$shim_limit \
 		--defsym ROLE_ADDRESS=$start --defsym ROLE_LIMIT=$limit \
@@ -49,8 +49,8 @@ out=Path(sys.argv[1])
 arrays=[]
 parks={}
 for role,shim_start,shim_limit,code_start,code_limit in (
-        ('reader',0x70000,0x70080,0xb0000,0xb5000),
-        ('writer',0x70080,0x70100,0xb5000,0xb8000)):
+        ('reader',0x70000,0x70100,0xb0000,0xb5000),
+        ('writer',0x70100,0x70200,0xb5000,0xb8000)):
     symbols={}
     for line in (out/f'{role}.symbols').read_text().splitlines():
         parts=line.split()
@@ -66,8 +66,8 @@ for role,shim_start,shim_limit,code_start,code_limit in (
     if park_offset%4 or park_offset+4>len(shim) or int.from_bytes(shim[park_offset:park_offset+4],'little')!=0x0000006f:
         raise SystemExit(f'{role} park is not an aligned self-loop')
     parks[role]=park
-for role,kind,limit in (('reader','shim',0x80),('reader','code',0x5000),
-                        ('writer','shim',0x80),('writer','code',0x3000)):
+for role,kind,limit in (('reader','shim',0x100),('reader','code',0x5000),
+                        ('writer','shim',0x100),('writer','code',0x3000)):
     data=(out/f'{role}-{kind}.bin').read_bytes()
     if not data or len(data)>limit or len(data)%4:
         raise SystemExit(f'invalid {role} {kind} image size')

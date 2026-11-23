@@ -10,7 +10,7 @@ struct ImagesIO {
     bool held=true,defaultRoute=true,corruptCodeOnBoot=false,corruptBootOnCode=false;
     unsigned writes=0;
     ImagesIO():code(DataflowRoleFleetImagesOwner::RequiredWords()),
-        boots(DataflowBarrierWorkers*2),shims(DataflowBarrierWorkers*64) {
+        boots(DataflowBarrierWorkers*2),shims(DataflowBarrierWorkers*DataflowRoleShimWords) {
         for (unsigned i=0;i<code.size();i++) code[i]=i^0x1234abcdU;
         for (unsigned i=0;i<boots.size();i++) boots[i]=i^0x5678abcdU;
         for (unsigned i=0;i<shims.size();i++) shims[i]=i^0x9abc1234U;
@@ -46,7 +46,7 @@ struct ImagesIO {
         assert(AllRolesHeld(core) && DefaultBootRouting(core) && out && !(bytes&3));
         if (address<DataflowRoleReaderShimAddress || address>DataflowRoleWriterShimLimit
             || bytes>DataflowRoleWriterShimLimit-address) return false;
-        const unsigned at=core*64+(address-DataflowRoleReaderShimAddress)/4;
+        const unsigned at=core*DataflowRoleShimWords+(address-DataflowRoleReaderShimAddress)/4;
         for (unsigned i=0;i<bytes/4;i++) out[i]=shims[at+i];
         return true;
     }
@@ -54,7 +54,7 @@ struct ImagesIO {
         assert(AllRolesHeld(core) && DefaultBootRouting(core) && in && !(bytes&3));
         if (address<DataflowRoleReaderShimAddress || address>DataflowRoleWriterShimLimit
             || bytes>DataflowRoleWriterShimLimit-address) return false;
-        const unsigned at=core*64+(address-DataflowRoleReaderShimAddress)/4;
+        const unsigned at=core*DataflowRoleShimWords+(address-DataflowRoleReaderShimAddress)/4;
         ++writes;
         for (unsigned i=0;i<bytes/4;i++) shims[at+i]=in[i];
         return true;
@@ -72,7 +72,7 @@ int main()
         assert(!owner.StageAll(codeA,3,codeB,2,shimA,2,shimB,2,io));
         assert(owner.RestorationRequired() && !owner.RestoreAll(io) && io.writes==0);
         io.defaultRoute=true;
-        io.shims[119*64]^=1; // mismatch must be detected and then repaired
+        io.shims[119*DataflowRoleShimWords]^=1; // mismatch must be detected and then repaired
         assert(!owner.RestoreAll(io) && owner.RestorationRequired());
         assert(owner.RestoreAll(io) && owner.ImagesRestored());
         assert(io.code==code && io.boots==boots && io.shims==shims);

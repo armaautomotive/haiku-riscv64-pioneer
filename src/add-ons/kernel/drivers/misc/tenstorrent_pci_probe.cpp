@@ -3378,6 +3378,7 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool SharedArmAndBeginRelease();
 	bool SharedFleetHeldAndQuiescent();
 	bool SharedStartCore(unsigned core);
+	bool SharedPrepareRoleStacks(unsigned core);
 	bool SharedCoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot);
 	bool SharedRuntimeStable(unsigned core);
 	bool SharedFaultCoreSettled(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot);

@@ -7,7 +7,7 @@ struct BootOwnerProbeIO {
     bool ReadBoot(unsigned,unsigned,uint32_t& value) { value=0; return true; }
     bool WriteBoot(unsigned,unsigned,uint32_t) { return true; }
     bool ReadShim(unsigned,unsigned,uint32_t* out,unsigned bytes) {
-        for (unsigned i=0;i<bytes/4;i++) out[i]=0;
+        for (unsigned i=0;i<bytes/4;i++) static_cast<volatile uint32_t*>(out)[i]=0;
         return true;
     }
     bool WriteShim(unsigned,unsigned,const uint32_t*,unsigned) { return true; }

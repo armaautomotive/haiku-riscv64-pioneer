@@ -363,6 +363,18 @@ public:
         return fScope.ProveRoleImageInspectionAllowed(fIO,core) && SelectForStop(core)
             && fScope.ProveRoleImageInspectionAllowed(fIO,core);
     }
+    bool StartupHandoffWriteAllowed(unsigned core) {
+        using namespace PioneerQwen35;
+        if (!fScope.ProveRoleStartupHandoffSafe(fIO,core) || !SelectForStop(core)) return false;
+        DataflowRoleSnapshotHandoff first{},second{};
+        if (!fIO.ReadCoreMemory(core,DataflowRoleSnapshotHandoffAddress,&first,sizeof(first))) return false;
+        fIO.Pause();
+        return fIO.ReadCoreMemory(core,DataflowRoleSnapshotHandoffAddress,&second,sizeof(second))
+            && !memcmp(&first,&second,sizeof(first))
+            && second.readerReady==DataflowRoleSnapshotReaderReady
+            && second.writerReady==DataflowRoleSnapshotWriterReady && !second.release
+            && fScope.ProveRoleStartupHandoffSafe(fIO,core) && SelectForStop(core);
+    }
     bool CompletedForAcknowledgement(unsigned core,unsigned textWords,unsigned dispatchWords) {
         using namespace PioneerQwen35;
         if (!RuntimeStable(core,textWords,dispatchWords)) return false;

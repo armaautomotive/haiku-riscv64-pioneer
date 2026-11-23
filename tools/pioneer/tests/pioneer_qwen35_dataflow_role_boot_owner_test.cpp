@@ -5,7 +5,7 @@
 #include <cstdio>
 using namespace PioneerQwen35;
 struct BootIO {
-    std::array<uint32_t,64> shim{};
+    std::array<uint32_t,DataflowRoleShimWords> shim{};
     uint32_t boot[2]{0x12345678U,0xabcdef12U};
     bool held=true,defaultRoute=true,corruptReaderOnWriter=false;
     int failWrite=-1;

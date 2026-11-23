@@ -10,7 +10,7 @@ struct FleetBootIO {
     int failCore=-1,corruptFrom=-1,corruptTarget=-1;
     unsigned writes=0;
     mutable bool failHeldOnStagedCore=false;
-    FleetBootIO():boots(DataflowBarrierWorkers*2),shims(DataflowBarrierWorkers*64) {
+    FleetBootIO():boots(DataflowBarrierWorkers*2),shims(DataflowBarrierWorkers*DataflowRoleShimWords) {
         for (unsigned i=0;i<boots.size();i++) boots[i]=i^0x23456789U;
         for (unsigned i=0;i<shims.size();i++) shims[i]=i^0x8a9bcdefU;
     }
@@ -37,7 +37,7 @@ struct FleetBootIO {
         assert(AllRolesHeld(core) && DefaultBootRouting(core) && output && !(bytes&3));
         if (address<DataflowRoleReaderShimAddress || address>DataflowRoleWriterShimLimit
             || bytes>DataflowRoleWriterShimLimit-address) return false;
-        const unsigned offset=core*64+(address-DataflowRoleReaderShimAddress)/4;
+        const unsigned offset=core*DataflowRoleShimWords+(address-DataflowRoleReaderShimAddress)/4;
         for (unsigned i=0;i<bytes/4;i++) output[i]=shims[offset+i];
         return true;
     }
@@ -45,7 +45,7 @@ struct FleetBootIO {
         assert(AllRolesHeld(core) && DefaultBootRouting(core) && input && !(bytes&3));
         if (address<DataflowRoleReaderShimAddress || address>DataflowRoleWriterShimLimit
             || bytes>DataflowRoleWriterShimLimit-address) return false;
-        const unsigned offset=core*64+(address-DataflowRoleReaderShimAddress)/4;
+        const unsigned offset=core*DataflowRoleShimWords+(address-DataflowRoleReaderShimAddress)/4;
         ++writes;
         if (int(core)==failCore) { shims[offset]=input[0]; failCore=-1; return false; }
         for (unsigned i=0;i<bytes/4;i++) shims[offset+i]=input[i];
@@ -53,7 +53,7 @@ struct FleetBootIO {
     }
     void MaybeCorrupt(unsigned core) {
         if (corruptEnabled && int(core)==corruptFrom) {
-            shims[unsigned(corruptTarget)*64]^=1; corruptEnabled=false;
+            shims[unsigned(corruptTarget)*DataflowRoleShimWords]^=1; corruptEnabled=false;
         }
     }
 };
@@ -75,7 +75,7 @@ int main()
         assert(fleet.CaptureAll(io)); io.defaultRoute=false;
         assert(!fleet.StageAll(reader,4,writer,3,io));
         assert(fleet.RestorationRequired() && !fleet.RestoreAll(io) && io.writes==0);
-        io.defaultRoute=true; io.shims[119*64]^=1;
+        io.defaultRoute=true; io.shims[119*DataflowRoleShimWords]^=1;
         assert(!fleet.RestoreAll(io) && fleet.RestorationRequired());
         assert(fleet.RestoreAll(io) && fleet.RestoredOriginal());
         assert(io.boots==boots && io.shims==shims);
@@ -97,7 +97,7 @@ int main()
         DataflowRoleFleetBootOwner fleet;
         assert(fleet.CaptureAll(io)); io.failCore=3;
         assert(!fleet.StageAll(reader,4,writer,3,io) && fleet.RestorationRequired());
-        io.shims[119*64]^=1;
+        io.shims[119*DataflowRoleShimWords]^=1;
         assert(!fleet.RestoreAll(io) && fleet.RestorationRequired());
         assert(fleet.RestoreAll(io) && fleet.RestoredOriginal());
         assert(io.boots==boots && io.shims==shims);

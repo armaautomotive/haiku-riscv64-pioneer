@@ -246,6 +246,7 @@ class DataflowServiceOwner {
 			DataflowQueueControl queues[DataflowCircularBufferCount]{};
 			DataflowWorkerMailbox mailbox{};
 			DataflowRoleMailbox role{};
+			DataflowRoleSnapshotHandoff handoff{};
 			mailbox.magic=DataflowWorkerMailboxMagic; mailbox.version=DataflowWorkerMailboxVersion;
 			mailbox.state=DataflowWorkerReady; mailbox.logicalCore=core;
 			role.magic=DataflowRoleMailboxMagic; role.version=DataflowRoleMailboxVersion;
@@ -259,7 +260,9 @@ class DataflowServiceOwner {
 				|| !io.ReadCoreMemory(core,DataflowWorkerMailboxAddress,readback,sizeof(mailbox))
 				|| memcmp(&mailbox,readback,sizeof(mailbox))
 				|| !io.ReadCoreMemory(core,DataflowRoleMailboxAddress,readback,sizeof(role))
-				|| memcmp(&role,readback,sizeof(role))) return false;
+				|| memcmp(&role,readback,sizeof(role))
+				|| !io.ReadCoreMemory(core,DataflowRoleSnapshotHandoffAddress,readback,sizeof(handoff))
+				|| memcmp(&handoff,readback,sizeof(handoff))) return false;
 			auto zeroPacket=[&](unsigned address) {
 				if (!io.ReadCoreMemory(core,address,readback,DataflowBarrierPacketBytes)) return false;
 				for (unsigned i=0;i<DataflowBarrierPacketBytes/sizeof(uint32_t);i++)
@@ -449,6 +452,14 @@ public:
 				fPhase=PhaseFaulted;
 				return DataflowServiceStartupReadbackFailed;
 			}
+			DataflowRoleSnapshotHandoff handoff{},handoffReadback{};
+			if (!io.WriteCoreMemory(core,DataflowRoleSnapshotHandoffAddress,&handoff,sizeof(handoff))) {
+				fPhase=PhaseFaulted; return DataflowServiceStartupWriteFailed;
+			}
+			if (!io.ReadCoreMemory(core,DataflowRoleSnapshotHandoffAddress,&handoffReadback,sizeof(handoffReadback))
+				|| memcmp(&handoff,&handoffReadback,sizeof(handoff))) {
+				fPhase=PhaseFaulted; return DataflowServiceStartupReadbackFailed;
+			}
 #endif
 			DataflowQueueControl queueReadback[DataflowCircularBufferCount];
 			DataflowWorkerMailbox mailboxReadback{};
@@ -493,6 +504,17 @@ public:
 				return DataflowServiceStartFailed;
 			}
 		}
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		// Both role shims stay stackless until the host has verified their
+		// copies against retained RAM snapshots. Consume each handoff once.
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			if (!io.SharedPrepareRoleStacks(core)) {
+				DataflowWorkerSnapshot snapshot{};
+				SetDiagnostic(DataflowServiceDiagnosticWorkerProof,core,snapshot);
+				fPhase=PhaseFaulted; return DataflowServiceStartFailed;
+			}
+		}
+#endif
 		// Drain startup state from the whole fleet before returning a failure.
 		// A core can publish an early startup fault while later cores are still
 		// entering the service image. Stopping the owner scan at the first fault

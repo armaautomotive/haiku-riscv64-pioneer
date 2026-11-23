@@ -15,7 +15,7 @@ struct RecoveryIO {
     mutable unsigned heldChecks=0,failHeldCheck=0;
     RecoveryIO():code(DataflowRoleFleetRecoveryOwner::CodeWords()),
         ram(DataflowRoleFleetRecoveryOwner::RamWords()),boots(DataflowBarrierWorkers*2),
-        shims(DataflowBarrierWorkers*64),resetDisable(DataflowBarrierWorkers) {
+        shims(DataflowBarrierWorkers*DataflowRoleShimWords),resetDisable(DataflowBarrierWorkers) {
         for (unsigned i=0;i<code.size();i++) code[i]=i^0x1234abcdU;
         for (unsigned i=0;i<ram.size();i++) ram[i]=i^0x6543abcdU;
         for (unsigned i=0;i<boots.size();i++) boots[i]=i^0x5678abcdU;
@@ -69,7 +69,7 @@ struct RecoveryIO {
         assert(AllRolesHeld(core) && DefaultBootRouting(core) && out && !(bytes&3));
         if (address<DataflowRoleReaderShimAddress || address>DataflowRoleWriterShimLimit
             || bytes>DataflowRoleWriterShimLimit-address) return false;
-        const unsigned at=core*64+(address-DataflowRoleReaderShimAddress)/4;
+        const unsigned at=core*DataflowRoleShimWords+(address-DataflowRoleReaderShimAddress)/4;
         for (unsigned i=0;i<bytes/4;i++) out[i]=shims[at+i];
         return true;
     }
@@ -77,7 +77,7 @@ struct RecoveryIO {
         assert(AllRolesHeld(core) && DefaultBootRouting(core) && in && !(bytes&3));
         if (address<DataflowRoleReaderShimAddress || address>DataflowRoleWriterShimLimit
             || bytes>DataflowRoleWriterShimLimit-address) return false;
-        const unsigned at=core*64+(address-DataflowRoleReaderShimAddress)/4;
+        const unsigned at=core*DataflowRoleShimWords+(address-DataflowRoleReaderShimAddress)/4;
         ++writes; for (unsigned i=0;i<bytes/4;i++) shims[at+i]=in[i];
         return true;
     }

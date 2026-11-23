@@ -21,6 +21,7 @@ struct FleetPciTestScope {
     bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO&,unsigned) const { return held; }
     bool ProveRoleBootRoutingInspectionAllowed(PioneerSessionIO&,unsigned) const { return held && routing; }
     bool ProveRoleLocalRamStable(PioneerSessionIO&,unsigned) const { return held && stable; }
+    bool ProveRoleStartupHandoffSafe(PioneerSessionIO&,unsigned) const { return runtime; }
     bool ProveRoleReleaseSafe(PioneerSessionIO&,unsigned) const { return release; }
     bool ProveRoleReleaseWriteDrained(PioneerSessionIO&,unsigned) const { return releaseDrained; }
     bool ProveRoleStopSafe(PioneerSessionIO&,unsigned,bool) const { return stop; }
@@ -289,6 +290,20 @@ int main()
     assert(!io.RunningReady(11,readySnapshot,0x1000,0x100));
     scope.runtime=true;
     assert(io.RunningReady(11,readySnapshot,0x1000,0x100));
+    auto& handoff=context.io.roleHandoffs[11];
+    assert(!io.StartupHandoffWriteAllowed(11));
+    handoff.readerReady=DataflowRoleSnapshotReaderReady;
+    assert(!io.StartupHandoffWriteAllowed(11));
+    handoff.writerReady=DataflowRoleSnapshotWriterReady;
+    assert(io.StartupHandoffWriteAllowed(11));
+    context.io.handoffReads=0; context.io.handoffChangeAt=1;
+    assert(!io.StartupHandoffWriteAllowed(11));
+    context.io.handoffChangeAt=UINT32_MAX;
+    handoff.release=DataflowRoleSnapshotRelease;
+    assert(!io.StartupHandoffWriteAllowed(11));
+    handoff.release=0; scope.runtime=false;
+    assert(!io.StartupHandoffWriteAllowed(11));
+    scope.runtime=true;
     {
         const uint32_t readerShim[]={1,2,3,4},writerShim[]={5,6,7,8};
         const uint32_t readerCode[]={9,10,11},writerCode[]={12,13,14};
@@ -302,7 +317,7 @@ int main()
         gMemory[DataflowRolePhysicalNcriscBoot][0]=writerBoot;
         for (unsigned i=0;i<4;i++) {
             gMemory[DataflowRolePhysicalShim][i]=readerShim[i];
-            gMemory[DataflowRolePhysicalShim][32+i]=writerShim[i];
+            gMemory[DataflowRolePhysicalShim][(DataflowRoleWriterShimAddress-DataflowRoleReaderShimAddress)/4+i]=writerShim[i];
         }
         const unsigned writerOffset=(DataflowRoleWriterCodeAddress-DataflowRoleExtraL1Address)/4;
         for (unsigned i=0;i<3;i++) {

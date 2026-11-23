@@ -90,6 +90,16 @@ int main()
     {
         auto io=std::make_unique<MockDataflowIO>();
         auto owner=std::make_unique<DataflowServiceOwner>();
+        io->failStackHandoffCore=47;
+        assert(owner->Install(image,*io)==DataflowServiceStartFailed && owner->Faulted());
+        assert(io->roleStarts==DataflowCoreCount && !io->resumeCount);
+        for (unsigned core=0;core<DataflowCoreCount;core++)
+            assert(io->roleHandoff[core].release==(core<47?DataflowRoleSnapshotRelease:0));
+        assert(owner->Close(*io)==DataflowServiceClosed); // simulated recovery only
+    }
+    {
+        auto io=std::make_unique<MockDataflowIO>();
+        auto owner=std::make_unique<DataflowServiceOwner>();
         io->failStartCore=37;
         assert(owner->Install(image,*io)==DataflowServiceStartFailed && owner->Faulted());
         assert(io->roleArms==1 && io->roleStarts==37 && !io->resumeCount);

@@ -62,6 +62,8 @@ struct PioneerSessionIO {
     int resetChangeAt=-1;
     unsigned sharedResetWrites=0; bool dropSharedResetWrite=false;
     DataflowRoleMailbox roleBoxes[DataflowBarrierWorkers]{};
+    DataflowRoleSnapshotHandoff roleHandoffs[DataflowBarrierWorkers]{};
+    unsigned handoffReads=0,handoffChangeAt=UINT32_MAX;
     DataflowWorkerMailbox workerBoxes[DataflowBarrierWorkers]{};
     DataflowQueueControl queueBoxes[DataflowBarrierWorkers][DataflowCircularBufferCount]{};
     unsigned roleStopWrites=0; bool dropRoleStopWrite=false;
@@ -81,6 +83,7 @@ struct PioneerSessionIO {
     bool SharedArmAndBeginRelease();
     bool SharedFleetHeldAndQuiescent();
     bool SharedStartCore(unsigned);
+    bool SharedPrepareRoleStacks(unsigned);
     bool SharedCoreReady(unsigned,const DataflowWorkerSnapshot&);
     bool SharedRuntimeStable(unsigned);
     bool SharedFaultCoreSettled(unsigned,const DataflowWorkerSnapshot&);
@@ -124,12 +127,22 @@ struct PioneerSessionIO {
         runtimeCore=core;
         if (address==DataflowRoleMailboxAddress && bytes==sizeof(DataflowRoleMailbox))
             memcpy(output,&roleBoxes[core],bytes);
+        else if (address==DataflowRoleSnapshotHandoffAddress && bytes==sizeof(DataflowRoleSnapshotHandoff)) {
+            memcpy(output,&roleHandoffs[core],bytes);
+            if (handoffReads++==handoffChangeAt)
+                static_cast<DataflowRoleSnapshotHandoff*>(output)->writerReady^=1;
+        }
         else if (address==DataflowWorkerMailboxAddress && bytes==sizeof(DataflowWorkerMailbox))
             memcpy(output,&workerBoxes[core],bytes);
         else if (address==DataflowQueueStateAddress && bytes==sizeof(queueBoxes[core]))
             memcpy(output,queueBoxes[core],bytes);
         else return false;
         return true;
+    }
+    bool WriteCoreMemory(unsigned core,unsigned address,const void* input,unsigned bytes) {
+        if (core>=DataflowBarrierWorkers || !input || bytes!=sizeof(uint32_t)
+            || address!=DataflowRoleSnapshotHandoffAddress+offsetof(DataflowRoleSnapshotHandoff,release)) return false;
+        memcpy(&roleHandoffs[core].release,input,bytes); return true;
     }
     bool ReadWorkerSnapshot(unsigned core,DataflowWorkerSnapshot& snapshot) {
         if (core>=DataflowBarrierWorkers) return false;

@@ -48,9 +48,12 @@ struct CombinedSharedIO : MockDataflowIO {
     }
     bool SharedStartCore(unsigned core) {
         if (!MockDataflowIO::SharedStartCore(core)) return false;
-        // Model role stack activity after the first release. The fleet ledger
-        // was consumed before this method was called for any core.
         roles.held=false;
+        return true;
+    }
+    bool SharedPrepareRoleStacks(unsigned core) {
+        if (!MockDataflowIO::SharedPrepareRoleStacks(core)) return false;
+        // The private stack is touched only after the copy handoff.
         roles.ram[core*RecoveryIO::RamPerCore]^=0x11;
         return true;
     }
@@ -103,9 +106,9 @@ int main()
             assert(!memcmp(io->roles.code.data()+start+writerOffset,DataflowSharedWriterCodeWords,
                 sizeof(DataflowSharedWriterCodeWords)));
             assert(io->roles.boots[core*2]==readerBoot && io->roles.boots[core*2+1]==writerBoot);
-            assert(!memcmp(io->roles.shims.data()+core*64,DataflowSharedReaderShimWords,
+            assert(!memcmp(io->roles.shims.data()+core*DataflowRoleShimWords,DataflowSharedReaderShimWords,
                 sizeof(DataflowSharedReaderShimWords)));
-            assert(!memcmp(io->roles.shims.data()+core*64+32,DataflowSharedWriterShimWords,
+            assert(!memcmp(io->roles.shims.data()+core*DataflowRoleShimWords+(DataflowRoleWriterShimAddress-DataflowRoleReaderShimAddress)/4,DataflowSharedWriterShimWords,
                 sizeof(DataflowSharedWriterShimWords)));
         }
 #endif

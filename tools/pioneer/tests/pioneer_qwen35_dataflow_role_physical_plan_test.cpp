@@ -25,8 +25,8 @@ int main()
     }
     assert(DataflowRolePhysicalReadAllowed(DataflowRolePhysicalBriscBoot,0));
     assert(!DataflowRolePhysicalReadAllowed(DataflowRolePhysicalBriscBoot,4));
-    assert(DataflowRolePhysicalReadAllowed(DataflowRolePhysicalShim,0xfc));
-    assert(!DataflowRolePhysicalReadAllowed(DataflowRolePhysicalShim,0x100));
+    assert(DataflowRolePhysicalReadAllowed(DataflowRolePhysicalShim,DataflowRoleShimWords*4-4));
+    assert(!DataflowRolePhysicalReadAllowed(DataflowRolePhysicalShim,DataflowRoleShimWords*4));
     assert(DataflowRolePhysicalReadAllowed(DataflowRolePhysicalControl,0x1b0));
     assert(!DataflowRolePhysicalReadAllowed(DataflowRolePhysicalControl,0));
     assert(DataflowRolePhysicalReadAllowed(DataflowRolePhysicalPc,0x148));

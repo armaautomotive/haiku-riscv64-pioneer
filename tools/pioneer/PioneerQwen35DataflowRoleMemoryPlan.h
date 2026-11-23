@@ -18,9 +18,10 @@ enum : unsigned {
     // its source windows. The existing snapshot covers them, but its PCI
     // write gate does not currently admit them.
     DataflowRoleReaderShimAddress=0x70000,
-    DataflowRoleReaderShimLimit=0x70080,
-    DataflowRoleWriterShimAddress=0x70080,
-    DataflowRoleWriterShimLimit=0x70100,
+    DataflowRoleReaderShimLimit=0x70100,
+    DataflowRoleWriterShimAddress=0x70100,
+    DataflowRoleWriterShimLimit=0x70200,
+    DataflowRoleShimWords=(DataflowRoleWriterShimLimit-DataflowRoleReaderShimAddress)/4,
     DataflowRoleReaderCodeAddress=0xb0000,
     DataflowRoleReaderCodeLimit=0xb5000,
     DataflowRoleWriterCodeAddress=0xb5000,

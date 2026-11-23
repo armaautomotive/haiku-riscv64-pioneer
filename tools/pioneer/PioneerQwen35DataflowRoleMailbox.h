@@ -34,6 +34,22 @@ struct alignas(32) DataflowRoleMailbox {
     volatile uint32_t started[DataflowRoleCount];
     uint32_t reserved[3];
 };
+// Dedicated pre-stack handshake. Each role writes only its own receipt; the
+// host writes release only after checking both copies against its retained
+// snapshots. This does not establish physical ownership or write exclusion.
+struct DataflowRoleSnapshotHandoff {
+    uint32_t readerReady,writerReady,release;
+};
+enum : unsigned {
+    DataflowRoleSnapshotHandoffAddress=PIONEER_Q35_ROLE_SNAPSHOT_HANDOFF,
+    DataflowRoleSnapshotReaderReady=PIONEER_Q35_ROLE_SNAPSHOT_READER_READY,
+    DataflowRoleSnapshotWriterReady=PIONEER_Q35_ROLE_SNAPSHOT_WRITER_READY,
+    DataflowRoleSnapshotRelease=PIONEER_Q35_ROLE_SNAPSHOT_RELEASE
+};
+static_assert(sizeof(DataflowRoleSnapshotHandoff)==12
+    && DataflowRoleSnapshotHandoffAddress>=DataflowRoleMailboxAddress+sizeof(DataflowRoleMailbox)
+    && DataflowRoleSnapshotHandoffAddress+sizeof(DataflowRoleSnapshotHandoff)<=DataflowBarrierArrivalBase,
+    "pre-stack handoff must be in saved L1 outside the role mailbox and barriers");
 static_assert(sizeof(DataflowRoleMailbox)==64,"two aligned role handoff records");
 static_assert(DataflowRoleMailboxAddress>=DataflowGraphTraceAddress
         +DataflowGraphTraceSlots*sizeof(DataflowGraphTraceRecord)

@@ -184,8 +184,8 @@ PYSTACK
 	-I"$root/tools/pioneer" "$root/tools/pioneer/blackhole_qwen35_shared_role_start.S" \
 	-o "$temporary/shared-start.o"
 for role in reader writer; do
-	if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70080; start=0xb0000; limit=0xb5000
-	else shim=0x70080; shim_limit=0x70100; start=0xb5000; limit=0xb8000; fi
+	if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70100; start=0xb0000; limit=0xb5000
+	else shim=0x70100; shim_limit=0x70200; start=0xb5000; limit=0xb8000; fi
 	"$ld" -m elf32lriscv --no-relax --gc-sections \
 		--defsym ROLE_SHIM_ADDRESS=$shim --defsym ROLE_SHIM_LIMIT=$shim_limit \
 		--defsym ROLE_ADDRESS=$start --defsym ROLE_LIMIT=$limit \

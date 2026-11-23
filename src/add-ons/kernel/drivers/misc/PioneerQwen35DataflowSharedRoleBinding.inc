@@ -21,6 +21,9 @@ class PioneerQwen35SharedRoleBinding {
     bool fReleaseAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fReleaseConfirmed[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fRunningImagesObserved[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fStackReleaseAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fStackReleaseWriting[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fStackReleaseConfirmed[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fReleaseHeld[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStopAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     uint32_t fStopToken[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -111,9 +114,35 @@ public:
         fReleaseConfirmed[core]=io.ReleaseCore(core,fReleaseAttempted[core]);
         return fReleaseConfirmed[core];
     }
+    __attribute__((noinline)) bool PrepareRoleStacks(unsigned core) {
+        using namespace PioneerQwen35;
+        auto* scope=Scope();
+        if (!scope || core>=DataflowBarrierWorkers || !fReleaseAuthorized
+            || !fReleaseConfirmed[core] || fStackReleaseAttempted[core] || !fViews.Opened()
+            || !scope->ProveRoleStartupHandoffSafe(fContext.io,core)) return false;
+        Adapter io(fContext.io,*scope,fViews);
+        bool ready=false;
+        for (unsigned poll=0;poll<65536;poll++) {
+            if (io.StartupHandoffWriteAllowed(core)) { ready=true; break; }
+            fContext.io.Pause();
+        }
+        if (!ready || !io.InspectRunningRoleImages(core,RoleImage())
+            || !io.InspectRunningRoleRamCopies(core,fOwner.OriginalRamWords(core,DataflowRoleReader),
+                fOwner.OriginalRamWords(core,DataflowRoleWriter))
+            || !io.StartupHandoffWriteAllowed(core)) return false;
+        // A failed posted write may still arrive: never retry or forget it.
+        fStackReleaseAttempted[core]=true; fStackReleaseWriting[core]=true;
+        const uint32_t release=DataflowRoleSnapshotRelease;
+        const bool okay=fContext.io.WriteCoreMemory(core,DataflowRoleSnapshotHandoffAddress
+            +offsetof(DataflowRoleSnapshotHandoff,release),&release,sizeof(release));
+        fStackReleaseWriting[core]=false;
+        fStackReleaseConfirmed[core]=okay;
+        return okay;
+    }
     __attribute__((noinline)) bool CoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot) {
         auto* scope=Scope();
         if (!scope || core>=PioneerQwen35::DataflowBarrierWorkers || !fReleaseConfirmed[core]
+            || !fStackReleaseConfirmed[core]
             || !fReleaseAuthorized || !fViews.Opened()) return false;
         Adapter io(fContext.io,*scope,fViews);
         if (!fRunningImagesObserved[core]) {
@@ -132,6 +161,7 @@ public:
     __attribute__((noinline)) bool RuntimeStable(unsigned core) {
         auto* scope=Scope();
         if (!scope || core>=PioneerQwen35::DataflowBarrierWorkers || !fReleaseConfirmed[core]
+            || !fStackReleaseConfirmed[core]
             || !fReleaseAuthorized || !fViews.Opened()) return false;
         Adapter io(fContext.io,*scope,fViews);
         const unsigned textWords=sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t);
@@ -143,6 +173,7 @@ public:
     __attribute__((noinline)) bool FaultCoreSettled(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot) {
         auto* scope=Scope();
         if (!scope || core>=PioneerQwen35::DataflowBarrierWorkers || !fReleaseConfirmed[core]
+            || !fStackReleaseConfirmed[core]
             || !fReleaseAuthorized || !fViews.Opened() || !scope->RetainedFaultAuditActive(fContext.io)) return false;
         Adapter io(fContext.io,*scope,fViews);
         return io.FaultSettled(core,snapshot,sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
@@ -155,6 +186,12 @@ public:
         if (!scope || core>=DataflowBarrierWorkers || !fReleaseConfirmed[core]
             || !fReleaseAuthorized || !fViews.Opened() || !DataflowPciRunningWriteRange(address,bytes)) return false;
         Adapter io(fContext.io,*scope,fViews);
+        const unsigned stackRelease=DataflowRoleSnapshotHandoffAddress
+            +offsetof(DataflowRoleSnapshotHandoff,release);
+        if (address==stackRelease && bytes==sizeof(uint32_t))
+            return fStackReleaseAttempted[core] && fStackReleaseWriting[core]
+                && io.StartupHandoffWriteAllowed(core);
+        if (!fStackReleaseConfirmed[core]) return false;
         const unsigned acknowledgement=DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,acknowledgedSequence);
         if (scope->RetainedFaultAuditActive(fContext.io))
             return address==acknowledgement && bytes==sizeof(uint32_t)
@@ -289,6 +326,10 @@ bool PioneerSessionIO::SharedFleetHeldAndQuiescent() {
 bool PioneerSessionIO::SharedStartCore(unsigned core) {
     return qwen35DataflowContext && qwen35DataflowContext->qwen35SharedRoleBinding
         && qwen35DataflowContext->qwen35SharedRoleBinding->StartCore(core);
+}
+bool PioneerSessionIO::SharedPrepareRoleStacks(unsigned core) {
+    return qwen35DataflowContext && qwen35DataflowContext->qwen35SharedRoleBinding
+        && qwen35DataflowContext->qwen35SharedRoleBinding->PrepareRoleStacks(core);
 }
 bool PioneerSessionIO::SharedCoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot) {
     return qwen35DataflowContext && qwen35DataflowContext->qwen35SharedRoleBinding

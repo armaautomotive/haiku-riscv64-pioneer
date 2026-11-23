@@ -27,7 +27,7 @@ class DataflowRoleBootOwner {
         return Held(io) && io.ReadBoot(fCore,address,value);
     }
     template<class IO> bool CompareOriginal(IO& io) const {
-        uint32_t value=0,shim[ShimWords]{};
+        uint32_t value=0,shim[ShimWords];
         for (unsigned role=0;role<DataflowRoleCount;role++)
             if (!ReadBoot(io,role,value) || value!=fBoot[role]) return false;
         if (!Held(io) || !io.ReadShim(fCore,DataflowRoleReaderShimAddress,shim,sizeof(shim))) return false;
@@ -36,7 +36,7 @@ class DataflowRoleBootOwner {
     }
     template<class IO> bool VerifyImages(IO& io) const {
         if (!fReader || !fReaderWords || !fWriter || !fWriterWords) return false;
-        uint32_t value=0,shim[ShimWords]{};
+        uint32_t value=0,shim[ShimWords];
         for (unsigned role=0;role<DataflowRoleCount;role++)
             if (!ReadBoot(io,role,value) || value!=fJump[role]) return false;
         if (!Held(io) || !io.ReadShim(fCore,DataflowRoleReaderShimAddress,shim,sizeof(shim))) return false;
@@ -59,7 +59,7 @@ public:
         if (fPhase!=Empty || core>=DataflowBarrierWorkers) return false;
         fCore=core;
         if (!Held(io)) return false;
-        uint32_t repeat[ShimWords]{};
+        uint32_t repeat[ShimWords];
         for (unsigned role=0;role<DataflowRoleCount;role++) {
             uint32_t second=0;
             if (!ReadBoot(io,role,fBoot[role]) || !ReadBoot(io,role,second)
@@ -93,7 +93,7 @@ public:
             return false;
         // Before changing either boot word, verify both shims and every
         // untouched shim byte with the original boot words still present.
-        uint32_t shim[ShimWords]{};
+        uint32_t shim[ShimWords];
         if (!Held(io) || !io.ReadShim(fCore,DataflowRoleReaderShimAddress,shim,sizeof(shim))) return false;
         const unsigned writerStart=(DataflowRoleWriterShimAddress-DataflowRoleReaderShimAddress)/4;
         for (unsigned i=0;i<ShimWords;i++) {

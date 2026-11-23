@@ -64,6 +64,9 @@ static inline bool DataflowPciL1Range(unsigned address,unsigned bytes)
 		|| (address>=PioneerQwen35::DataflowRoleMailboxAddress
 			&& end<=PioneerQwen35::DataflowRoleMailboxAddress
 				+sizeof(PioneerQwen35::DataflowRoleMailbox))
+		|| (address>=PioneerQwen35::DataflowRoleSnapshotHandoffAddress
+			&& end<=PioneerQwen35::DataflowRoleSnapshotHandoffAddress
+				+sizeof(PioneerQwen35::DataflowRoleSnapshotHandoff))
 #endif
 		|| (address>=PioneerQwen35::DataflowBarrierOutbox
 			&& end<=PioneerQwen35::DataflowBarrierReleaseCommit
@@ -97,7 +100,13 @@ static inline bool DataflowPciRunningWriteRange(unsigned address,unsigned bytes)
 #endif
 		|| (address==command && bytes==sizeof(uint32_t))
 		|| (address==acknowledgement && bytes==sizeof(uint32_t))
-		|| (address==shutdown && bytes==sizeof(uint32_t));
+		|| (address==shutdown && bytes==sizeof(uint32_t))
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+		|| (address==PioneerQwen35::DataflowRoleSnapshotHandoffAddress
+			+offsetof(PioneerQwen35::DataflowRoleSnapshotHandoff,release)
+			&& bytes==sizeof(uint32_t))
+#endif
+		;
 }
 
 static inline bool DataflowPciMailboxReadyForStop(
