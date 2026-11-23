@@ -58,9 +58,13 @@ public:
     template<class IO> bool VerifyOriginalAll(IO& io) {
         if (fPhase!=Captured && fPhase!=Restored) return false;
         if (!AllStable(io)) { fPhase=Dirty; return false; }
-        for (unsigned core=0;core<DataflowBarrierWorkers;core++)
-            if (!fCore[core].VerifyOriginal(io)) { fPhase=Dirty; return false; }
-        if (!AllStable(io)) { fPhase=Dirty; return false; }
+        bool matches=true;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            const auto audit=fCore[core].AuditOriginal(io);
+            if (audit==DataflowRoleLocalRamOwner::OriginalUnreadable) { fPhase=Dirty; return false; }
+            if (audit==DataflowRoleLocalRamOwner::OriginalMismatch) matches=false;
+        }
+        if (!matches || !AllStable(io)) { fPhase=Dirty; return false; }
         return true;
     }
     template<class IO> bool RestoreAll(IO& io) {
@@ -70,8 +74,13 @@ public:
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)
             if (fCore[core].RestorationRequired() && !fCore[core].Restore(io)) return false;
         // Verify every snapshot after all writes to catch cross-core misroutes.
-        for (unsigned core=0;core<DataflowBarrierWorkers;core++)
-            if (!fCore[core].VerifyOriginal(io)) return false;
+        bool matches=true;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            const auto audit=fCore[core].AuditOriginal(io);
+            if (audit==DataflowRoleLocalRamOwner::OriginalUnreadable) return false;
+            if (audit==DataflowRoleLocalRamOwner::OriginalMismatch) matches=false;
+        }
+        if (!matches) return false;
         if (!AllStable(io)) return false;
         fPhase=Restored; return true;
     }

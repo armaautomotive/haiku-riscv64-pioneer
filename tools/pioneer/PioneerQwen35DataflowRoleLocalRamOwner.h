@@ -33,19 +33,23 @@ class DataflowRoleLocalRamOwner {
     template<class IO> bool Stable(IO& io) const {
         return io.AllRolesHeld(fCore) && io.LocalRamStable(fCore);
     }
-    template<class IO> bool Verify(IO& io) const {
+public:
+    enum OriginalAudit { OriginalMatches, OriginalMismatch, OriginalUnreadable };
+private:
+    template<class IO> OriginalAudit CompareOriginal(IO& io) const {
         uint32_t readback[ChunkWords];
         for (unsigned role=0;role<DataflowRoleCount;role++) {
             const uint32_t base=role==DataflowRoleReader?DataflowRoleBriscLocalRam:DataflowRoleNcriscLocalRam;
             for (unsigned offset=0;offset<DataflowRoleLocalRamWords;offset+=ChunkWords) {
                 const unsigned count=DataflowRoleLocalRamWords-offset<ChunkWords
                     ?DataflowRoleLocalRamWords-offset:ChunkWords;
-                if (!Stable(io) || !io.ReadRam(fCore,role,base+offset*4,readback,count*4)) return false;
+                if (!Stable(io) || !io.ReadRam(fCore,role,base+offset*4,readback,count*4)) return OriginalUnreadable;
                 for (unsigned i=0;i<count;i++)
-                    if (readback[i]!=fSnapshot[role*DataflowRoleLocalRamWords+offset+i]) return false;
+                    if (readback[i]!=fSnapshot[role*DataflowRoleLocalRamWords+offset+i])
+                        return Stable(io)?OriginalMismatch:OriginalUnreadable;
             }
         }
-        return Stable(io);
+        return Stable(io)?OriginalMatches:OriginalUnreadable;
     }
 public:
     DataflowRoleLocalRamOwner()=default;
@@ -87,10 +91,14 @@ public:
         if (fPhase!=Captured || !fSnapshot) return false;
         fPhase=Dirty; return true;
     }
+    template<class IO> OriginalAudit AuditOriginal(IO& io) {
+        if ((fPhase!=Captured && fPhase!=Restored) || !fSnapshot) return OriginalUnreadable;
+        const OriginalAudit result=CompareOriginal(io);
+        if (result!=OriginalMatches) fPhase=Dirty;
+        return result;
+    }
     template<class IO> bool VerifyOriginal(IO& io) {
-        if ((fPhase!=Captured && fPhase!=Restored) || !fSnapshot) return false;
-        if (!Verify(io)) { fPhase=Dirty; return false; }
-        return true;
+        return AuditOriginal(io)==OriginalMatches;
     }
     template<class IO> bool Restore(IO& io) {
         if (fPhase!=Dirty || !fSnapshot || !Stable(io)) return false;
@@ -103,7 +111,7 @@ public:
                 if (!Stable(io) || !io.WriteRam(fCore,role,base+offset*4,source,count*4)) return false;
             }
         }
-        if (!Verify(io)) return false; // full post-write audit; retain on mismatch
+        if (CompareOriginal(io)!=OriginalMatches) return false; // retain on mismatch or unreadable state
         fPhase=Restored; return true;
     }
 };
