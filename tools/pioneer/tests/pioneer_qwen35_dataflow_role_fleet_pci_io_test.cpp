@@ -19,6 +19,7 @@ struct FleetPciTestScope {
     bool heldCopyProof=false,heldCopyCaptured=false,heldCopyDrift=false;
     bool coreRestoreProof=false;
     bool restoreHeld=false,restoreCompletion=false,restoreCompletedHeld=false,restoreRetry=false,restoreRelease=false;
+    bool restorePhysicalRelease=false,restorePhysicalHold=false,restoreHeldAfter=false;
     bool retirementProof=false,retirementRetry=false;
     const uint32_t* heldReader=nullptr;const uint32_t* heldWriter=nullptr;
     mutable unsigned heldCopyChecks=0;
@@ -76,6 +77,9 @@ struct FleetPciTestScope {
     bool ProveRoleRestoreReleaseReady(PioneerSessionIO&,unsigned,const uint32_t* reader,const uint32_t* writer) const {
         return restoreRelease && reader==heldReader && writer==heldWriter;
     }
+    bool ProveRoleRestorePhysicalReleaseSafe(PioneerSessionIO&,unsigned) const { return restorePhysicalRelease; }
+    bool ProveRoleRestorePhysicalHoldSafe(PioneerSessionIO&,unsigned) const { return restorePhysicalHold; }
+    bool ProveRoleRestoreHeldAfterAttempt(PioneerSessionIO&,unsigned) const { return restoreHeldAfter; }
     bool ProveRoleRetirementRamSources(PioneerSessionIO&,unsigned,const uint32_t*& reader,
         const uint32_t*& writer,bool& captured) const {
         if (!retirementProof) return false;
@@ -222,6 +226,9 @@ int main()
             && io.WriteRestoreHandoffWord(7,2,0) && !io.WriteRestoreHandoffWord(7,3,0));
         assert(!io.RestoreHandoffRetrySafe(7) && !io.RestoreCompletedAndHeld(7));
         scope.restoreRetry=scope.restoreCompletedHeld=scope.restoreRelease=true;
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+        scope.restorePhysicalRelease=true;
+#endif
         assert(io.RestoreHandoffRetrySafe(7) && io.RestoreCompletedAndHeld(7)
             && io.StacklessCoreRestoreReleaseReady(7,readerWords,writerWords));
         context.io.roleHandoffs[7].readerReady=1;
@@ -236,6 +243,7 @@ int main()
             && restoreHandoff.readerReady==PIONEER_Q35_ROLE_RESTORE_READER_DONE);
         context.io.reset=0x47800;scope.restoreHeld=scope.restoreCompletion=scope.restoreCompletedHeld=false;
         scope.restoreRetry=scope.restoreRelease=false;
+        scope.restorePhysicalRelease=false;
         context.io.stackCancelWrites=initialStackCancelWrites;
         assert(!io.StacklessCoreRestoreProven(7,readerWords,writerWords));
         scope.coreRestoreProof=true;
@@ -248,6 +256,45 @@ int main()
         scope.heldCopyProof=false;scope.heldCopyCaptured=false;scope.heldCopyDrift=false;
         scope.heldReader=scope.heldWriter=nullptr;
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    {
+        // Physical release/hold writes are one-shot; an uncertain hold can
+        // only be observed later, never reissued.
+        const unsigned priorRelease=context.io.sharedResetWrites,priorHold=context.io.holdWrites;
+        const uint32_t priorDisable=gMemory[DataflowRolePhysicalControl][0x224/4];
+        gMemory[DataflowRolePhysicalControl][0x224/4]|=DataflowRolePreserveResetMask;
+        context.io.roleHandoffs[7]={0,0,0};scope.restoreHeld=true;
+        bool releaseAttempted=false;
+        assert(!io.ReleaseCoreLocalRestore(7,releaseAttempted) && !releaseAttempted);
+        scope.restorePhysicalRelease=true;
+        gMemory[DataflowRolePhysicalControl][0x224/4]&=~uint32_t(DataflowRolePreserveResetMask);
+        assert(!io.ReleaseCoreLocalRestore(7,releaseAttempted) && !releaseAttempted);
+        gMemory[DataflowRolePhysicalControl][0x224/4]|=DataflowRolePreserveResetMask;
+        context.io.roleHandoffs[7].readerReady=PIONEER_Q35_ROLE_RESTORE_READER_DONE;
+        assert(!io.ReleaseCoreLocalRestore(7,releaseAttempted) && !releaseAttempted);
+        context.io.roleHandoffs[7].readerReady=0;
+        assert(io.ReleaseCoreLocalRestore(7,releaseAttempted) && releaseAttempted
+            && context.io.reset==0x7000 && context.io.sharedResetWrites==priorRelease+1);
+        assert(!io.ReleaseCoreLocalRestore(7,releaseAttempted) && context.io.sharedResetWrites==priorRelease+1);
+        scope.restoreCompletion=true;scope.restorePhysicalHold=true;
+        context.io.roleHandoffs[7]={PIONEER_Q35_ROLE_RESTORE_READER_DONE,PIONEER_Q35_ROLE_RESTORE_WRITER_DONE,0};
+        bool holdAttempted=false;context.io.dropHoldWrite=true;
+        assert(!io.HoldCoreLocalRestore(7,holdAttempted) && holdAttempted && context.io.holdWrites==priorHold+1);
+        assert(!io.HoldCoreLocalRestore(7,holdAttempted) && context.io.holdWrites==priorHold+1);
+        scope.restoreHeldAfter=true;
+        assert(!io.RestoreCoreHoldObserved(7));
+        context.io.reset=0x47800;context.io.dropHoldWrite=false;
+        assert(io.RestoreCoreHoldObserved(7));
+        context.io.roleHandoffs[7]={0,0,0};context.io.dropPrestackRelease=true;releaseAttempted=false;
+        assert(!io.ReleaseCoreLocalRestore(7,releaseAttempted) && releaseAttempted
+            && !io.ReleaseCoreLocalRestore(7,releaseAttempted));
+        context.io.dropPrestackRelease=false;
+        context.io.sharedResetWrites=priorRelease;context.io.holdWrites=priorHold;
+        gMemory[DataflowRolePhysicalControl][0x224/4]=priorDisable;
+        scope.restoreHeld=scope.restorePhysicalRelease=scope.restoreCompletion=false;
+        scope.restorePhysicalHold=scope.restoreHeldAfter=false;
+    }
+#endif
     {
         // Exercise held shim replacement through the real PCI adapter and
         // mapped views, then verify the original boot words and bytes.

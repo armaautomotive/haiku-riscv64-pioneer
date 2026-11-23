@@ -240,6 +240,9 @@ public:
     bool ProveRoleRestoreCompletedAndHeld(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleRestoreHandoffRetrySafe(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleRestoreReleaseReady(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
+    bool ProveRoleRestorePhysicalReleaseSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleRestorePhysicalHoldSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleRestoreHeldAfterAttempt(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleRetirementRamSources(PioneerSessionIO&,unsigned,const uint32_t*& reader,
         const uint32_t*& writer,bool& captured) const {
         reader=writer=nullptr;captured=false;return false;

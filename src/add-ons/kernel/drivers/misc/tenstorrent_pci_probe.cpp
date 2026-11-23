@@ -3736,8 +3736,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		if (!runtimeMapped || !runtimeControl) return false;
 		PioneerWrite32(runtimeControl+0x1b0/4,0x6000); return true;
 	}
-#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
-	// Qualification only: release B/NC while T0, T1 and T2 remain held.
+#if defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+	// Qualification or non-loadable recovery witness only: release B/NC
+	// while T0, T1 and T2 remain held. The adapter owns admission and replay.
 	bool SharedRolePrestackReleaseReset() {
 		if (!runtimeMapped || !runtimeControl) return false;
 		PioneerWrite32(runtimeControl+0x1b0/4,0x7000); return true;

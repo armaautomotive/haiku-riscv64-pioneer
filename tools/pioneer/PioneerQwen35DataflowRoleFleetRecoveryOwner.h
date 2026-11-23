@@ -266,6 +266,9 @@ public:
         return fCoreLocalRestoreMode && fPhase==Faulted && core<DataflowBarrierWorkers
             && fCoreRestoreReleaseAttempted[core] && fCoreRestoreHandoff[core].ConfirmCompletion(io);
     }
+    bool CoreLocalRestoreHandoffCompleted(unsigned core) const {
+        return core<DataflowBarrierWorkers && fCoreRestoreHandoff[core].CompletionConfirmed();
+    }
     // The real scope must prove the exact retained source, fresh restore
     // receipt, held routes and writer exclusion. This records RAM proof only;
     // image retirement, reset restoration and safe resume remain separate.

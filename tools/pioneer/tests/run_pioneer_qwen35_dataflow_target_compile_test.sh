@@ -561,6 +561,10 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 	-o "$temporary/role-fleet-pci-io-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-fleet-pci-io-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-DPIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS -I"$directory/role_haiku_stubs" \
+	"$directory/pioneer_qwen35_dataflow_role_fleet_pci_io_test.cpp" -o "$temporary/core-restore-pci-io-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/core-restore-pci-io-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	-DPIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS -DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS -I"$directory/role_haiku_stubs" \
 	"$directory/pioneer_qwen35_dataflow_role_fleet_pci_io_test.cpp" -o "$temporary/exclusive-role-pci-io-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exclusive-role-pci-io-test"

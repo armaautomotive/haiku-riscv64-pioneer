@@ -674,11 +674,60 @@ public:
         PioneerQwen35::DataflowRoleSnapshotHandoff handoff{};
         return StacklessHeldCopySourceSafe(core,reader,writer) && RestoreHandoffHeldSafe(core)
             && fScope.ProveRoleRestoreReleaseReady(fIO,core,reader,writer)
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+            && fScope.ProveRoleRestorePhysicalReleaseSafe(fIO,core)
+#endif
             && ReadStableStackHandoff(core,handoff)
             && !handoff.readerReady && !handoff.writerReady && !handoff.release
             && fScope.ProveRoleRestoreReleaseReady(fIO,core,reader,writer)
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+            && fScope.ProveRoleRestorePhysicalReleaseSafe(fIO,core)
+#endif
             && StacklessHeldCopySourceSafe(core,reader,writer) && RestoreHandoffHeldSafe(core);
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    // The caller consumes its fleet and handoff ledgers before this one-shot
+    // write. Scope must independently bind the exact shims, fresh receipt,
+    // release ownership and the recoverability of an uncertain write.
+    bool ReleaseCoreLocalRestore(unsigned core,bool& attempted) {
+        using namespace PioneerQwen35;
+        if (attempted || core>=DataflowBarrierWorkers || !fViews.Opened()
+            || !fScope.ProveRoleRestorePhysicalReleaseSafe(fIO,core)
+            || !RestoreHandoffHeldSafe(core)) return false;
+        uint32_t first=0,second=0;DataflowRoleSnapshotHandoff handoff{};
+        if (!fViews.Read(core,DataflowRolePhysicalControl,0x224,first,fGuard)
+            || !fViews.Read(core,DataflowRolePhysicalControl,0x224,second,fGuard)
+            || first!=second || (first&DataflowRolePreserveResetMask)!=DataflowRolePreserveResetMask
+            || !ReadStableStackHandoff(core,handoff) || handoff.readerReady || handoff.writerReady || handoff.release
+            || !fScope.ProveRoleRestorePhysicalReleaseSafe(fIO,core) || !RestoreHandoffHeldSafe(core)) return false;
+        attempted=true;
+        if (!fIO.SharedRolePrestackReleaseReset()) return false;
+        fIO.Pause();
+        return fScope.ProveExclusiveRewrite(fIO) && fGuard.ProveSelectedRoute(core)
+            && fIO.ResetRead()==0x7000 && fIO.ResetRead()==0x7000;
+    }
+    // Scope must prove the exact restore images and fresh, parked completion;
+    // the two status words and PC samples alone are not ownership proof.
+    bool HoldCoreLocalRestore(unsigned core,bool& attempted) {
+        using namespace PioneerQwen35;
+        if (attempted || core>=DataflowBarrierWorkers || !fScope.ProveRoleRestorePhysicalHoldSafe(fIO,core)
+            || !RestoreCompletionSafe(core)) return false;
+        DataflowRoleSnapshotHandoff handoff{};
+        if (!ReadStableStackHandoff(core,handoff)
+            || handoff.readerReady!=PIONEER_Q35_ROLE_RESTORE_READER_DONE
+            || handoff.writerReady!=PIONEER_Q35_ROLE_RESTORE_WRITER_DONE || handoff.release
+            || !fScope.ProveRoleRestorePhysicalHoldSafe(fIO,core) || !RestoreCompletionSafe(core)) return false;
+        attempted=true;
+        if (!fIO.SharedRoleHoldReset()) return false;
+        fIO.Pause();
+        return fGuard.ProveSelectedRoute(core) && fIO.ResetRead()==0x47800 && fIO.ResetRead()==0x47800;
+    }
+    bool RestoreCoreHoldObserved(unsigned core) {
+        return core<PioneerQwen35::DataflowBarrierWorkers
+            && fScope.ProveRoleRestoreHeldAfterAttempt(fIO,core) && RestoreHandoffHeldSafe(core)
+            && fScope.ProveRoleRestoreHeldAfterAttempt(fIO,core);
+    }
+#endif
     // A matching L1 copy alone does not prove the core restored private RAM.
     // Scope must additionally prove the exact one-shot restore, fresh result,
     // stopped roles, preserved source and writer exclusion. It currently

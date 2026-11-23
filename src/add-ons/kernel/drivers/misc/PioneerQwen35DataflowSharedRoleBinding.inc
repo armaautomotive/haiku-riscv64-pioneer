@@ -33,6 +33,10 @@ class PioneerQwen35SharedRoleBinding {
     uint32_t* fRamSnapshot=NULL;
     bool fCaptureAttempted=false;
     bool fReleaseAuthorized=false;
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    bool fCoreRestoreReleaseWrites[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fCoreRestoreHoldWrites[PioneerQwen35::DataflowBarrierWorkers]{};
+#endif
     bool fReleaseAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fReleaseConfirmed[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fRunningImagesObserved[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -131,9 +135,11 @@ public:
     }
     __attribute__((noinline)) bool BeginCoreLocalRestoreRelease(unsigned core) {
         auto* scope=Scope();
-        if (!scope || !fViews.Opened() || !fOwner.CoreLocalRestoreMode()) return false;
+        if (!scope || !fViews.Opened() || !fOwner.CoreLocalRestoreMode()
+            || core>=PioneerQwen35::DataflowBarrierWorkers || fCoreRestoreReleaseWrites[core]) return false;
         Adapter io(fContext.io,*scope,fViews);
-        return fOwner.BeginCoreLocalRestoreRelease(core,io);
+        return fOwner.BeginCoreLocalRestoreRelease(core,io)
+            && io.ReleaseCoreLocalRestore(core,fCoreRestoreReleaseWrites[core]);
     }
     __attribute__((noinline)) bool PrepareCoreLocalRestoreHandoff(unsigned core) {
         auto* scope=Scope();
@@ -143,15 +149,27 @@ public:
     }
     __attribute__((noinline)) bool ConfirmCoreLocalRestoreHandoff(unsigned core) {
         auto* scope=Scope();
-        if (!scope || !fViews.Opened() || !fOwner.CoreLocalRestoreMode()) return false;
+        if (!scope || !fViews.Opened() || !fOwner.CoreLocalRestoreMode()
+            || core>=PioneerQwen35::DataflowBarrierWorkers || !fCoreRestoreReleaseWrites[core]) return false;
         Adapter io(fContext.io,*scope,fViews);
         return fOwner.ConfirmCoreLocalRestoreHandoff(core,io);
     }
     __attribute__((noinline)) bool MarkCoreLocalRestoreComplete(unsigned core) {
         auto* scope=Scope();
-        if (!scope || !fViews.Opened() || !fOwner.CoreLocalRestoreMode()) return false;
+        if (!scope || !fViews.Opened() || !fOwner.CoreLocalRestoreMode()
+            || core>=PioneerQwen35::DataflowBarrierWorkers || !fCoreRestoreHoldWrites[core]) return false;
         Adapter io(fContext.io,*scope,fViews);
-        return fOwner.MarkCoreRestoredByCore(core,io);
+        return io.RestoreCoreHoldObserved(core) && fOwner.MarkCoreRestoredByCore(core,io);
+    }
+    __attribute__((noinline)) bool HoldCoreLocalRestore(unsigned core) {
+        auto* scope=Scope();
+        if (!scope || !fViews.Opened() || !fOwner.CoreLocalRestoreMode()
+            || core>=PioneerQwen35::DataflowBarrierWorkers || !fCoreRestoreReleaseWrites[core]) return false;
+        Adapter io(fContext.io,*scope,fViews);
+        if (!fOwner.CoreLocalRestoreHandoffCompleted(core)
+            && !fOwner.ConfirmCoreLocalRestoreHandoff(core,io)) return false;
+        if (fCoreRestoreHoldWrites[core]) return io.RestoreCoreHoldObserved(core);
+        return io.HoldCoreLocalRestore(core,fCoreRestoreHoldWrites[core]);
     }
     __attribute__((noinline)) bool RestoreCoreLocalHandoff(unsigned core) {
         auto* scope=Scope();
@@ -529,6 +547,7 @@ PioneerQ35CoreLocalBindingCompileWitness(PioneerQwen35SharedRoleBinding* binding
         case 4: return binding->PrepareCoreLocalRestoreHandoff(core);
         case 5: return binding->ConfirmCoreLocalRestoreHandoff(core);
         case 6: return binding->RestoreCoreLocalHandoff(core);
+        case 7: return binding->HoldCoreLocalRestore(core);
         default: return false;
     }
 }

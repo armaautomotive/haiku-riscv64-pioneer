@@ -175,17 +175,19 @@ struct PioneerSessionIO {
         if (!dropHoldWrite) reset=0x47800;
         return true;
     }
-#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+#if defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
     bool simulatePrestack=true,dropPrestackRelease=false;
     bool SharedRolePrestackReleaseReset() {
         ++sharedResetWrites;
         if (dropPrestackRelease) return true;
         reset=0x7000;
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
         if (simulatePrestack) {
             SimulatePrestackCopies();
             roleHandoffs[runtimeCore].readerReady=DataflowRoleSnapshotReaderReady;
             roleHandoffs[runtimeCore].writerReady=DataflowRoleSnapshotWriterReady;
         }
+#endif
         return true;
     }
 #endif
@@ -577,6 +579,9 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
                 && !scope.ProveRoleRestoreCompletedAndHeld(context->io,0)
                 && !scope.ProveRoleRestoreHandoffRetrySafe(context->io,0)
                 && !scope.ProveRoleRestoreReleaseReady(context->io,0,nullptr,nullptr));
+            assert(!scope.ProveRoleRestorePhysicalReleaseSafe(context->io,0)
+                && !scope.ProveRoleRestorePhysicalHoldSafe(context->io,0)
+                && !scope.ProveRoleRestoreHeldAfterAttempt(context->io,0));
             heldReader=heldWriter=reinterpret_cast<const uint32_t*>(1);heldCaptured=true;
             assert(!scope.ProveRoleRetirementRamSources(context->io,0,heldReader,heldWriter,heldCaptured)
                 && !heldReader && !heldWriter && !heldCaptured
