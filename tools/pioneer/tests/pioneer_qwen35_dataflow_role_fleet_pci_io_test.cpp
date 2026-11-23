@@ -26,8 +26,11 @@ struct FleetPciTestScope {
     bool ProveRoleDedicatedObservedStage(PioneerSessionIO&) const { return dedicatedObservedStage; }
     mutable unsigned dedicatedChecks=0;
     unsigned dedicatedFailAt=UINT32_MAX;
-    bool ProveRoleDedicatedReleaseSafe(PioneerSessionIO&,unsigned) const {
-        return dedicatedRelease && dedicatedChecks++!=dedicatedFailAt;
+    unsigned dedicatedDisableClockAt=UINT32_MAX;
+    bool ProveRoleDedicatedReleaseSafe(PioneerSessionIO& io,unsigned) const {
+        const unsigned check=dedicatedChecks++;
+        if (check==dedicatedDisableClockAt) io.nocConfig[0]|=1U<<12;
+        return dedicatedRelease && check!=dedicatedFailAt;
     }
 #endif
     bool ProveExclusiveRewrite(PioneerSessionIO&) const { return gLocked && exclusive; }
@@ -604,8 +607,23 @@ int main()
         assert(!io.ReleaseDedicatedCore(4,dedicatedAttempted) && !dedicatedAttempted
             && context.io.sharedResetWrites==prior); // proof lost just before release
         scope.dedicatedFailAt=UINT32_MAX;
+        // If the clock is gated while revalidating authorization, do not
+        // touch reset or consume the release attempt.
+        scope.dedicatedChecks=0;scope.dedicatedDisableClockAt=1;
+        context.io.resetReadsClockDisabled=0;
+        assert(!io.ReleaseDedicatedCore(4,dedicatedAttempted) && !dedicatedAttempted
+            && context.io.sharedResetWrites==prior && !context.io.resetReadsClockDisabled);
+        scope.dedicatedDisableClockAt=UINT32_MAX;context.io.nocConfig[0]=0;
+        // If the clock changes after the write, retain the uncertain attempt
+        // without reading an inaccessible reset register or retrying it.
+        context.io.disableClockAfterRelease=true;
+        assert(!io.ReleaseDedicatedCore(4,dedicatedAttempted) && dedicatedAttempted
+            && context.io.sharedResetWrites==prior+1 && !context.io.resetReadsClockDisabled);
+        assert(!io.ReleaseDedicatedCore(4,dedicatedAttempted));
+        context.io.disableClockAfterRelease=false;context.io.nocConfig[0]=0;
+        context.io.reset=0x47800;dedicatedAttempted=false;
         assert(io.ReleaseDedicatedCore(4,dedicatedAttempted) && dedicatedAttempted
-            && context.io.sharedResetWrites==prior+1 && context.io.reset==0x6000);
+            && context.io.sharedResetWrites==prior+2 && context.io.reset==0x6000);
         assert(!io.ReleaseDedicatedCore(4,dedicatedAttempted));
         context.io.reset=0x47800;context.io.dropSharedResetWrite=true;dedicatedAttempted=false;
         assert(!io.ReleaseDedicatedCore(5,dedicatedAttempted) && dedicatedAttempted);

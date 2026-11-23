@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 // Compiles the actual Haiku binding with simulated kernel/session facilities.
-// All physical proofs remain denied and no mapping or card access is made.
+// Physical release remains denied; all mappings and card access are mocked.
 #define PIONEER_QWEN35_DEVICE_DISPATCH 1
 #define PIONEER_QWEN35_RECOVERY_COMPILE_ONLY 1
 #define PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY 1
@@ -175,10 +175,35 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
     // The dedicated compile witness can stage under observed checks; the
     // hardware release and recovery contracts remain separately denied.
 #if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
-    gAllowWrite=true;
+    gAllowWrite=true;gPerCoreRoleWindows=true;gRoleWindowCore=gRoleSelectedCore=io.runtimeCore;
     assert(io.SharedCaptureAndStageHeld());
     assert(io.tlbWrites==12 && io.hdmaReads==12 && gMapCalls>0);
     assert(context->qwen35SharedRoleBinding->TakeoverResetRequired());
+    // Flush the last selected mock view and check every distinct tile, rather
+    // than letting one shared backing buffer stand in for the whole fleet.
+    assert(io.SelectRuntimeCore((io.runtimeCore+1)%DataflowBarrierWorkers));
+    uint32_t readerBoot=0,writerBoot=0;
+    assert(DataflowRoleBootWord(DataflowRoleReader,DataflowRoleReaderShimAddress,readerBoot)
+        && DataflowRoleBootWord(DataflowRoleWriter,DataflowRoleWriterShimAddress,writerBoot));
+    for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+        const auto& windows=gRoleTileWindows[core];
+        assert(windows[DataflowRolePhysicalBriscBoot][0]==readerBoot
+            && windows[DataflowRolePhysicalNcriscBoot][0]==writerBoot);
+        const auto& shim=windows[DataflowRolePhysicalShim];
+        const auto& code=windows[DataflowRolePhysicalExtraCode];
+        assert(std::equal(std::begin(DataflowExclusiveReaderShimWords),std::end(DataflowExclusiveReaderShimWords),
+            shim.begin()+(DataflowRoleReaderShimAddress-DataflowRoleReaderShimAddress)/4));
+        assert(std::equal(std::begin(DataflowExclusiveWriterShimWords),std::end(DataflowExclusiveWriterShimWords),
+            shim.begin()+(DataflowRoleWriterShimAddress-DataflowRoleReaderShimAddress)/4));
+        assert(std::equal(std::begin(DataflowSharedReaderCodeWords),std::end(DataflowSharedReaderCodeWords),
+            code.begin()+(DataflowRoleReaderCodeAddress-DataflowRoleExtraL1Address)/4));
+        assert(std::equal(std::begin(DataflowSharedWriterCodeWords),std::end(DataflowSharedWriterCodeWords),
+            code.begin()+(DataflowRoleWriterCodeAddress-DataflowRoleExtraL1Address)/4));
+        assert(code.back()==RoleWindowInitial(core,DataflowRolePhysicalExtraCode)
+            && shim.back()==RoleWindowInitial(core,DataflowRolePhysicalShim));
+    }
+    gPerCoreRoleWindows=false;
+    for (auto& windows:gRoleTileWindows) windows.clear();
     assert(scope->ProveRoleDedicatedObservedStage(io));
     const unsigned selected=io.runtimeCore;
     assert(scope->ProveRoleMemoryReadSafe(io,selected,DataflowRolePhysicalExtraCode)
@@ -257,6 +282,41 @@ static void ExerciseObservedStageResetDrift(PioneerSessionIO& io)
     io.postResetDisposeComplete=false;io.simulateArc=io.simulateHdma=io.firmwareMatches=false;
     gAllowWrite=false;
 }
+
+static void ExerciseObservedStageMisroute(PioneerSessionIO& io)
+{
+    auto* context=io.qwen35DataflowContext;
+    context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
+    assert(context->qwen35SharedRoleBinding && io.qwen35BorrowedRoleScope);
+    io.runtimeCore=7;io.simulateArc=io.simulateHdma=io.firmwareMatches=true;
+    io.hdmaSourceStable=true;io.reset=0x47800;io.resetReads=0;
+    gAllowWrite=true;gPerCoreRoleWindows=true;gRoleWindowCore=gRoleSelectedCore=io.runtimeCore;
+    // Two selects during the held-fleet check and two before the first code
+    // chunk precede its write. Corrupt that write's BAR translation only.
+    gRoleMisrouteCountdown=4;gRoleMisrouteInjected=false;
+    assert(!io.SharedCaptureAndStageHeld() && gRoleMisrouteInjected
+        && context->qwen35SharedRoleBinding->TakeoverResetRequired());
+    assert(io.SelectRuntimeCore((io.runtimeCore+1)%DataflowBarrierWorkers));
+    assert(gRoleTileWindows[0][DataflowRolePhysicalExtraCode][0]
+        ==RoleWindowInitial(0,DataflowRolePhysicalExtraCode));
+    for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+        assert(gRoleTileWindows[core][DataflowRolePhysicalBriscBoot][0]
+            ==RoleWindowInitial(core,DataflowRolePhysicalBriscBoot));
+        assert(gRoleTileWindows[core][DataflowRolePhysicalNcriscBoot][0]
+            ==RoleWindowInitial(core,DataflowRolePhysicalNcriscBoot));
+    }
+    assert(!io.SharedArmAndBeginRelease() && !io.SharedStartCore(0)
+        && !io.sharedResetWrites && !io.holdWrites);
+    gPerCoreRoleWindows=false;gRoleMisrouteCountdown=-1;
+    for (auto& windows:gRoleTileWindows) windows.clear();
+    PioneerDriverRecoveryProof proof{};
+    proof.flags=PIONEER_RECOVERY_PROOF_REQUIRED & ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;
+    proof.core_count=DataflowBarrierWorkers;proof.retained_owners=1;
+    proof.reset_generation=proof.firmware_generation=9;io.postResetDisposeComplete=true;
+    assert(PioneerQ35ReleaseSharedRoleAfterReset(context->qwen35SharedRoleBinding,proof,9));
+    io.postResetDisposeComplete=false;io.simulateArc=io.simulateHdma=io.firmwareMatches=false;
+    gAllowWrite=false;
+}
 #endif
 
 int main()
@@ -285,6 +345,8 @@ int main()
 #if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
     ResetMaps();gBorrowedScopeHook=ExerciseObservedStageResetDrift;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+    ResetMaps();gBorrowedScopeHook=ExerciseObservedStageMisroute;
+    assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
 #endif
 #ifdef TEST_SHARED_POST_RESET
     gBorrowedScopeHook=ExerciseResetRetirement;
@@ -293,8 +355,8 @@ int main()
     service.capturePending=false;
     assert(!gLocked && !context.qwen35SharedRoleBinding && !context.io.qwen35BorrowedRoleScope);
     gBorrowedScopeHook=nullptr;
-#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
-    std::puts("PASS dedicated observed staging and denied release using actual role binding; SIMULATED ONLY");
+#if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
+    std::puts("PASS dedicated per-tile staging, misroute rejection and denied release using actual role binding; SIMULATED ONLY");
 #else
     std::puts("PASS actual shared role binding denies mapping, reset and release without fleet proof; SIMULATED ONLY");
 #endif

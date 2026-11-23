@@ -177,15 +177,25 @@ public:
             || !fScope.ProveExclusiveRewrite(fIO) || !fScope.ProveRoleDedicatedReleaseSafe(fIO,core)
             || !fIO.SelectRuntimeCore(core) || !fIO.MapQ38Panel()
             || !fIO.DataflowPanelMappingStable() || !fGuard.ProveSelectedRoute(core)
-            || !PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; })
-            || fIO.ResetRead()!=0x47800 || fIO.ResetRead()!=0x47800
+            || !PioneerQwen35WithSelectedClock(fIO,core,[&]() {
+                return fIO.ResetRead()==0x47800 && fIO.ResetRead()==0x47800;
+            })
             || !fScope.ProveRoleDedicatedReleaseSafe(fIO,core)
             || !fGuard.ProveSelectedRoute(core)) return false;
-        attempted=true;
-        if (!fIO.SharedRoleReleaseReset()) return false;
-        fIO.Pause();
-        return fScope.ProveExclusiveRewrite(fIO) && fGuard.ProveSelectedRoute(core)
-            && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+        // The authorization check can take time. Re-sample the clock before
+        // touching reset, and again before readback after the attempted write.
+        // These checks do not exclude a concurrent external clock change.
+        return PioneerQwen35WithSelectedClock(fIO,core,[&]() {
+            if (fIO.ResetRead()!=0x47800 || fIO.ResetRead()!=0x47800
+                || !fGuard.ProveSelectedRoute(core)) return false;
+            attempted=true;
+            if (!fIO.SharedRoleReleaseReset()) return false;
+            fIO.Pause();
+            return fScope.ProveExclusiveRewrite(fIO) && fGuard.ProveSelectedRoute(core)
+                && PioneerQwen35WithSelectedClock(fIO,core,[&]() {
+                    return fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+                });
+        });
     }
 #endif
     // Only an unconfirmed release may be classified as never released. The

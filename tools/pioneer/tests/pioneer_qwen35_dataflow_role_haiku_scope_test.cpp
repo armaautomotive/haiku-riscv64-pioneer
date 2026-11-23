@@ -30,6 +30,9 @@ static tt_pioneer_profile GoodProfile()
     return p;
 }
 struct PioneerStoreContext;
+#if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+static void SelectRoleTestWindows(unsigned previous,unsigned next);
+#endif
 #ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
 class PioneerQwen35RoleBorrowedScopeWitness;
 #endif
@@ -62,9 +65,9 @@ struct PioneerSessionIO {
     uint32_t slot0[3]{},slot1[3]{},hdmaWords[4]{};
     uint32_t reset=0x47800,nocDoorbell[2][4]{},nocOutstanding[2][32]{};
     uint32_t nocConfig[2]{},nocAvailable[2]{},nocOverflow[2]{};
-    mutable unsigned resetReads=0;
+    mutable unsigned resetReads=0,resetReadsClockDisabled=0;
     int resetChangeAt=-1;
-    unsigned sharedResetWrites=0; bool dropSharedResetWrite=false;
+    unsigned sharedResetWrites=0; bool dropSharedResetWrite=false,disableClockAfterRelease=false;
     DataflowRoleMailbox roleBoxes[DataflowBarrierWorkers]{};
     DataflowRoleSnapshotHandoff roleHandoffs[DataflowBarrierWorkers]{};
     unsigned handoffReads=0,handoffChangeAt=UINT32_MAX;
@@ -79,6 +82,9 @@ struct PioneerSessionIO {
     uint32_t computePc=0;
     bool SelectRuntimeCore(unsigned core) {
         if (core>=DataflowBarrierWorkers) return false;
+#if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+        SelectRoleTestWindows(runtimeCore,core);
+#endif
         ++selectCalls; runtimeCore=core; tlbOverride=false; tlb0Override=false; return true;
     }
     bool MapQ38Panel() const { return mapping; }
@@ -136,11 +142,16 @@ struct PioneerSessionIO {
     uint32_t SharedArcL2CpuResetRead() { assert(simulateArc && tlbOverride); return 0x0f; }
     uint32_t ScratchRead(unsigned word) { assert(simulateArc && tlbOverride && word==2); return 5; }
     uint32_t ResetRead() const {
+        if ((nocConfig[0] | nocConfig[1]) & (1U<<12)) ++resetReadsClockDisabled;
         return int(resetReads++)==resetChangeAt ? 0x6000 : reset;
     }
     bool SharedRoleHoldReset() { ++holdWrites; if (!dropHoldWrite) reset=0x47800; return true; }
     uint32_t RuntimePcRead() const { return computePc; }
-    bool SharedRoleReleaseReset() { ++sharedResetWrites; if (!dropSharedResetWrite) reset=0x6000; return true; }
+    bool SharedRoleReleaseReset() {
+        ++sharedResetWrites; if (!dropSharedResetWrite) reset=0x6000;
+        if (disableClockAfterRelease) nocConfig[0]|=1U<<12;
+        return true;
+    }
     uint32_t SharedRolePcRead(unsigned role) {
         if (role>=2) return UINT32_MAX;
         const unsigned count=rolePcReads[role]++;
@@ -251,6 +262,42 @@ static thread_id gThread=5;
 static team_id gTeam=11;
 static std::vector<std::vector<uint32_t>> gMemory;
 static std::vector<bool> gMapped;
+#if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+// The mapped BAR address remains fixed while TLB selection changes its tile.
+// Copy each selected tile into the fixed mock view to model that aliasing.
+static bool gPerCoreRoleWindows=false;
+static unsigned gRoleWindowCore=0;
+static unsigned gRoleSelectedCore=0;
+static int gRoleMisrouteCountdown=-1;
+static bool gRoleMisrouteInjected=false;
+static std::vector<std::vector<uint32_t>> gRoleTileWindows[DataflowBarrierWorkers];
+static uint32_t RoleWindowInitial(unsigned core,unsigned window) {
+    return (0x76540000U+window) ^ (core*0x10001U);
+}
+static void SelectRoleTestWindows(unsigned previous,unsigned next) {
+    if (!gPerCoreRoleWindows) return;
+    assert(previous==gRoleSelectedCore && next<DataflowBarrierWorkers);
+    unsigned actual=next;
+    // Simulate a BAR translation fault while the separate route/status
+    // registers still report the requested tile. The next select restores it.
+    if (gRoleMisrouteCountdown>=0 && next==0 && gMapped[DataflowRolePhysicalExtraCode]) {
+        if (gRoleMisrouteCountdown--==0) {
+            actual=1;gRoleMisrouteInjected=true;
+        }
+    }
+    if (gRoleWindowCore!=actual) {
+        for (unsigned window=0;window<=DataflowRolePhysicalExtraCode;window++) {
+            if (!gMapped[window]) continue;
+            auto& oldTile=gRoleTileWindows[gRoleWindowCore][window];
+            const auto& newTile=gRoleTileWindows[actual][window];
+            assert(oldTile.size()==gMemory[window].size() && newTile.size()==oldTile.size());
+            std::copy(gMemory[window].begin(),gMemory[window].end(),oldTile.begin());
+            std::copy(newTile.begin(),newTile.end(),gMemory[window].begin());
+        }
+    }
+    gRoleWindowCore=actual;gRoleSelectedCore=next;
+}
+#endif
 static status_t AcquireProbeLock(PioneerProbeCookie* cookie,bool bank) {
     if (!bank || gLocked || sColdRecoveryRequired || sReloadQuiesced || sRuntimeOwner!=cookie) return -1;
     gLocked=true; return B_OK;
@@ -274,6 +321,17 @@ area_id map_physical_memory(const char*,phys_addr_t physical,size_t bytes,uint32
     assert(physical==0x4900000000ULL+plan.offset && bytes==plan.bytes);
     if (int(index)==gFailMap) return -1;
     gMemory[index].assign(bytes/4,0x76540000U+index); gMapped[index]=true;
+#if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+    if (gPerCoreRoleWindows && index<=DataflowRolePhysicalExtraCode) {
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            if (gRoleTileWindows[core].empty())
+                gRoleTileWindows[core].resize(DataflowRolePhysicalExtraCode+1);
+            gRoleTileWindows[core][index].assign(bytes/4,RoleWindowInitial(core,index));
+        }
+        const auto& selected=gRoleTileWindows[gRoleWindowCore][index];
+        std::copy(selected.begin(),selected.end(),gMemory[index].begin());
+    }
+#endif
     *output=gMemory[index].data(); return int32_t(index);
 }
 status_t delete_area(area_id area) {
