@@ -2236,9 +2236,12 @@ loaded tag0120 guard. A safe port must also account for Haiku's retained Qwen35
 owner, host pages, mapped PCI windows, and persistent cold latch. It must not
 merely clear the latch or retry the stuck NoC request.
 
-The running board is reachable over Haiku SSH and the failed client has exited;
-tag0120 remains cold-latched at generation3 with one owner and the recovery
-lock retained. Both model files are intact. The stable55 driver is not loaded
-or idle. No board-side reset or accelerator command has followed the failure.
-The next permitted boot/recovery route is Fedora on the existing NVMe followed
-by kexec to Haiku. No SD cards are used.
+The tag0120 incident above was subsequently recovered. See the latest entry in
+`QWEN35_4B_NEXT_SESSION.md` for the newer qualification failure and restoration.
+On 2026-11-23 a restricted empty-session reset qualification failed without
+recording its failure stage; it retained a cold owner. A full power cycle and
+verified NVMe-to-Haiku boot restored stable55, which reports generation 2,
+`cold0 active_owner0`, and no exclusive lock. The new recovery guard is loaded;
+the old guard is backed up. This is not a successful no-reboot recovery and
+does not establish model correctness or performance. Model-file metadata was
+checked, not a fresh full-content hash. No SD cards were used.

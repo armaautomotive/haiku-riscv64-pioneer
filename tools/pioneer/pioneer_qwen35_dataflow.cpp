@@ -399,11 +399,12 @@ static bool RecoverRewrite(int fd,bool installAttempted)
 }
 
 // PIONEER_QWEN35_LIVE_RESET_CLIENT_BEGIN
-static bool ResetStoppedRewrite(int fd,bool force)
+static bool ResetStoppedRewrite(int fd,bool force,bool qualification=false)
 {
 	tt_pioneer_driver_reload before{};before.version=1;
 	if (!Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&before,sizeof(before))
 		|| before.driver!=TT_QWEN35_DATAFLOW_DRIVER || !before.build_tag || !before.generation
+		|| (qualification && before.build_tag!=UINT64_C(0x2026112300030001))
 		|| (!force && !before.cold) || before.quiesced || !before.active_owner || before.open_count!=1) return false;
 	auto verifyIdle=[&](uint64_t expectedGeneration,bool exact) {
 		tt_pioneer_driver_reload after{};after.version=1;
@@ -418,8 +419,17 @@ static bool ResetStoppedRewrite(int fd,bool force)
 		reset.expected_tag=before.build_tag;reset.expected_generation=before.generation;
 		// A lost ioctl reply may follow successful reset completion. Recheck
 		// the guard state; never issue a second request on an unknown reply.
-		const uint32_t operation=force && !attempt?TT_PCI_PROBE_RECOVERY_FORCE:TT_PCI_PROBE_RECOVERY_RUN;
-		if (!Call(fd,operation,&reset,sizeof(reset))) return verifyIdle(0,false);
+		const uint32_t operation=qualification && !attempt?TT_PCI_PROBE_RECOVERY_QUALIFY
+			:force && !attempt?TT_PCI_PROBE_RECOVERY_FORCE:TT_PCI_PROBE_RECOVERY_RUN;
+		if (!Call(fd,operation,&reset,sizeof(reset))) {
+			fprintf(stderr,"P100A_Q35_RECOVERY ioctl_failed attempt=%u operation=0x%08x\n",
+				attempt+1,operation);
+			return verifyIdle(0,false);
+		}
+		fprintf(stderr,"P100A_Q35_RECOVERY attempt=%u stage=%u detail=0x%08x "
+			"status=%ld generation=%llu\n",attempt+1,reset.stage,reset.detail,
+			static_cast<long>(reset.operation_status),
+			static_cast<unsigned long long>(reset.new_generation));
 		if (reset.operation_status==B_OK)
 			return reset.stage==PIONEER_RECOVERY_STAGE_COMPLETE && reset.build_tag==before.build_tag
 				&& reset.new_generation && verifyIdle(reset.new_generation,true);
@@ -712,9 +722,49 @@ static int OpenExclusiveDataflowDriver()
 }
 // PIONEER_QWEN35_EXCLUSIVE_CLIENT_END
 
+// PIONEER_QWEN35_QUALIFY_CLIENT_BEGIN
+// Deliberately uses the restricted qualification driver and an empty bank
+// session. No GGUF, model upload, worker startup or inference is performed.
+static bool QualifyRecovery()
+{
+	const int fd=OpenExclusiveDataflowDriver();
+	if (fd<0) return false;
+	tt_pioneer_driver_reload status{};status.version=1;
+	bool okay=Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&status,sizeof(status))
+		&& status.driver==TT_QWEN35_DATAFLOW_DRIVER
+		&& status.build_tag==UINT64_C(0x2026112300030001) && status.generation
+		&& !status.cold && !status.quiesced && !status.active_owner
+		&& status.open_count==1 && status.guard_version==1;
+	tt_q38_bank_session session{};session.version=TT_Q38_BANK_PROTOCOL;
+	if (okay) okay=Call(fd,TT_PCI_PROBE_Q38_BANK_BEGIN,&session,sizeof(session))
+		&& session.result.state==TT_RESIDENT_SESSION_READY && session.result.active
+		&& session.result.host_ready && !session.result.cold && !session.result.uploaded_pages;
+	if (okay) {
+		okay=ResetStoppedRewrite(fd,true,true);
+		fprintf(stderr,"P100A_Q35_RECOVERY_QUALIFY reset_completed=%u\n",unsigned(okay));
+	} else {
+		// A failed or lost begin reply may still have created an owner. Inspect
+		// CPU metadata before choosing normal end or guarded fault recovery.
+		tt_pioneer_driver_reload current{};current.version=1;
+		if (Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&current,sizeof(current))
+			&& current.build_tag==UINT64_C(0x2026112300030001) && current.active_owner) {
+			if (current.cold) (void)ResetStoppedRewrite(fd,true);
+			else {
+				tt_q38_bank_session end{};end.version=TT_Q38_BANK_PROTOCOL;
+				(void)Call(fd,TT_PCI_PROBE_Q38_BANK_END,&end,sizeof(end));
+			}
+		}
+	}
+	const bool closed=close(fd)==0;
+	return okay && closed;
+}
+// PIONEER_QWEN35_QUALIFY_CLIENT_END
+
 int main(int argc,char** argv)
 {
 	setvbuf(stdout,nullptr,_IOLBF,0);
+	if (argc==2 && strcmp(argv[1],"--qualify-recovery")==0)
+		return QualifyRecovery()?0:1;
 	const bool oneRunDiagnostic=argc==7
 		&& strcmp(argv[6],"--diagnostic-one-run")==0;
 	if (argc<5 || argc>7 || (argc==7 && !oneRunDiagnostic)) {

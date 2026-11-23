@@ -7,6 +7,12 @@
 #endif
 #define PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS 1
 #endif
+#ifdef TEST_RECOVERY_QUALIFY
+#ifndef TEST_LIVE_TAKEOVER
+#error Recovery qualification test requires the live takeover owner
+#endif
+#define PIONEER_QWEN35_RECOVERY_QUALIFY 1
+#endif
 #ifdef TEST_GRAPH_RECOVERY
 #define PIONEER_QWEN35_DEVICE_DISPATCH 1
 #define PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS 1
@@ -182,6 +188,10 @@ struct PioneerStoreContext {
 	bool bankStorageOnly=true,qwen35LiveFaultRecoveryRequested=false;
 	FakeDataflowService service;FakeDataflowService* qwen35DataflowService=&service;
 #endif
+#ifdef TEST_RECOVERY_QUALIFY
+	void* qwen35DataflowMemory=nullptr;bool unsafe=false;
+	bool Unsafe() { return unsafe; }
+#endif
 	struct {bool config_attempted=true,map_attempted=true;} transaction;
 	FakeProfile profile;FakePciResult pci;PioneerSessionIO io;
 	FakePciResult& Pci(){return pci;}
@@ -200,6 +210,7 @@ static bool PioneerQ35ReleaseSharedRoleAfterReset(FakeSharedRoleOwner*& owner,
 }
 static bool PioneerQ35GraphOwnerReleaseAfterReset(FakeGraphOwner* owner,
 	const PioneerDriverRecoveryProof& proof,uint64 ticket) {
+	if (!owner) return true;
 	if (graphReleased) return true;
 	assert(owner && proof.ReadyToRetireOneOwner() && proof.reset_generation==ticket
 		&& proof.firmware_generation==ticket && ticket==9);
@@ -471,6 +482,32 @@ int main(){
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_BAD_VALUE && trace.empty());
 	Cleanup();
 #ifdef TEST_LIVE_TAKEOVER
+	#ifdef TEST_RECOVERY_QUALIFY
+	for (unsigned invalid=0;invalid<6;invalid++) {
+		Setup();auto* candidate=sRuntimeOwner;candidate->finalFreeRetained=false;sQwen35ExclusiveCookie=candidate;
+		auto* c=candidate->context;c->qwen35DataflowService=nullptr;c->qwen35GraphOwner=nullptr;
+		c->qwen35SharedRoleBinding=nullptr;c->dispatchOwnerRetained=false;sColdRecoveryRequired=false;
+		if (invalid==0) c->qwen35DataflowMemory=reinterpret_cast<void*>(1);
+		if (invalid==1) c->qwen35DataflowService=&c->service;
+		if (invalid==2) c->qwen35GraphOwner=&c->graphOwner;
+		if (invalid==3) c->qwen35SharedRoleBinding=&c->sharedRoleOwner;
+		if (invalid==4) c->unsafe=true;
+		if (invalid==5) c->recoveryDbi.valid=false;
+		r=Request();assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK
+			&& r.operation_status==B_BUSY && trace.empty() && !retainCalls && !sColdRecoveryRequired);
+		sQwen35ExclusiveCookie=nullptr;Cleanup();
+	}
+	Setup();auto* candidate=sRuntimeOwner;candidate->finalFreeRetained=false;sQwen35ExclusiveCookie=candidate;
+	candidate->context->qwen35DataflowService=nullptr;candidate->context->qwen35GraphOwner=nullptr;
+	candidate->context->qwen35SharedRoleBinding=nullptr;candidate->context->dispatchOwnerRetained=false;
+	sColdRecoveryRequired=false;r=Request();
+	assert(Qwen35RecoveryForce(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_BUSY && trace.empty());
+	r=Request();assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& r.stage==PIONEER_RECOVERY_STAGE_COMPLETE && !sRuntimeOwner && !candidate->context
+		&& !sColdRecoveryRequired && retainCalls==1 && completeCount==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
+	sQwen35ExclusiveCookie=nullptr;delete candidate;
+	#endif
 	Setup();auto* fault=sRuntimeOwner;fault->finalFreeRetained=false;sQwen35ExclusiveCookie=fault;
 	fault->context->service.ready=false;fault->context->dispatchOwnerRetained=false;
 	sColdRecoveryRequired=false;r=Request();r.expected_generation=2;

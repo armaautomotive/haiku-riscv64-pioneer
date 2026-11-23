@@ -10,9 +10,10 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 TAG = '2026112100010168'
 GRAPH_TRIAL_TAG = '2026112100020168'
+RECOVERY_QUALIFICATION_TAG = '2026112300030001'
 
 
-def verify_kernel_stack_budget(driver_directory):
+def verify_kernel_stack_budget(driver_directory, qualification=False):
     usage_file = driver_directory / 'tenstorrent_pci_probe.su'
     entries = []
     for line in usage_file.read_text().splitlines():
@@ -24,6 +25,25 @@ def verify_kernel_stack_budget(driver_directory):
         except ValueError:
             continue
         entries.append((fields[0], frame, fields[-1]))
+
+    if qualification:
+        markers = ('Recovery', 'PostReset', 'AsicReset', 'BlackholeArc',
+                   'Q38ArcQueue', 'Q38BankControl', 'BeginResidentSession', 'ProbeControl')
+        selected = [(name, frame, kind) for name, frame, kind in entries
+                    if any(marker in name for marker in markers)]
+        for required in ('Qwen35RecoveryRequest(', 'Qwen35RecoveryRunLocked(',
+                         'Qwen35RecoveryFinishLocked(', 'BlackholeAsicReset(',
+                         'Q38BankControl(', 'ProbeControl('):
+            if not any(required in name for name, _, _ in selected):
+                raise RuntimeError('missing recovery qualification stack frame: ' + required)
+        if any(kind != 'static' for _, _, kind in selected):
+            raise RuntimeError('unbounded recovery qualification stack frame')
+        bound = sum(frame for _, frame, _ in selected) + 4096
+        if bound > 18432:
+            raise RuntimeError(f'recovery qualification stack envelope is {bound} bytes')
+        print(f'qwen35_recovery_qualification_stack_envelope_bytes={bound}/18432 '
+              '(sum of selected frames plus 4096-byte allowance; not a whole-program proof)')
+        return
 
     dataflow = [(name, frame, kind) for name, frame, kind in entries
                 if 'Dataflow' in name or 'Qwen35Dataflow' in name
@@ -271,7 +291,19 @@ def main():
                         help='compile dedicated role staging with release disabled')
     parser.add_argument('--build-device-dispatch-trial', action='store_true',
                         help='build the dedicated graph qualification driver without ASIC reset')
+    parser.add_argument('--build-recovery-qualification', action='store_true',
+                        help='build the restricted idle-session ASIC recovery qualification driver')
     args = parser.parse_args()
+    if args.build_recovery_qualification:
+        if (args.build_device_dispatch_trial or args.compile_recovery_prototype
+                or args.compile_device_dispatch_prototype or args.compile_role_write_prototype
+                or args.compile_shared_role_owner_prototype or args.compile_exclusive_takeover_prototype):
+            parser.error('recovery qualification selects its own restricted build flags')
+        args.compile_recovery_prototype = True
+        args.compile_device_dispatch_prototype = True
+        args.compile_role_write_prototype = True
+        args.compile_shared_role_owner_prototype = True
+        args.compile_exclusive_takeover_prototype = True
     if args.build_device_dispatch_trial and (args.compile_recovery_prototype or args.compile_device_dispatch_prototype):
         parser.error('graph qualification cannot enable a recovery compile witness')
     if args.compile_role_write_prototype and not args.compile_device_dispatch_prototype:
@@ -290,7 +322,8 @@ def main():
     driver = output / 'driver'
     driver_env = dict(env, PIONEER_Q38_PANEL_DRIVER='15',
                       PIONEER_DRIVER_RELOAD='1',
-                      PIONEER_DRIVER_BUILD_TAG=GRAPH_TRIAL_TAG if args.build_device_dispatch_trial else TAG,
+                      PIONEER_DRIVER_BUILD_TAG=(RECOVERY_QUALIFICATION_TAG if args.build_recovery_qualification
+                                               else GRAPH_TRIAL_TAG if args.build_device_dispatch_trial else TAG),
                       PIONEER_Q38_SPAN_PRELOAD='1',
                       PIONEER_Q38_SPAN_FAST='1')
     if args.compile_recovery_prototype or args.compile_device_dispatch_prototype:
@@ -304,11 +337,13 @@ def main():
         driver_env['PIONEER_QWEN35_SHARED_ROLE_GRAPH_COMPILE_ONLY'] = '1'
     if args.compile_exclusive_takeover_prototype:
         driver_env['PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_COMPILE_ONLY'] = '1'
+    if args.build_recovery_qualification:
+        driver_env['PIONEER_QWEN35_RECOVERY_QUALIFY'] = '1'
     if args.build_device_dispatch_trial:
         driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL'] = '1'
     subprocess.run(['sh', HERE / 'build_qwen38_banks_driver.sh', build, driver],
                    check=True, env=driver_env)
-    verify_kernel_stack_budget(driver)
+    verify_kernel_stack_budget(driver, args.build_recovery_qualification)
 
     cxx = build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-g++'
     objects = build / 'objects/haiku/riscv64'
