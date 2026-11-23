@@ -9,6 +9,9 @@
 #include "PioneerQwen35DataflowHeldFleetSample.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleStartOrder.h"
 class PioneerQwen35SharedRoleBinding {
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_TEST
+    friend struct PioneerQ35SharedRoleBindingTestAccess;
+#endif
     using Views=PioneerQwen35::DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>;
     using Adapter=PioneerQwen35RoleFleetPciIO<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness,Views>;
     PioneerStoreContext& fContext;
@@ -72,6 +75,18 @@ public:
             && fOwner.StacklessCopiesCaptured(core);
     }
     bool CanDestroy() const { return !fViews.HasMappings() && !fOwner.RestorationRequired(); }
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+    // A verified ASIC reset invalidates the old tile images and RAM. Retire
+    // the host BAR views without restoring those stale snapshots. The reset
+    // and firmware evidence must match this in-kernel recovery ticket, and
+    // the ordinary session areas must already have been disposed.
+    bool RetireAfterVerifiedReset(const PioneerDriverRecoveryProof& proof,uint64_t ticket) {
+        if (!PioneerQ35GraphRecoveryProofMatches(proof,ticket,
+                fContext.recoveryMapping==NULL,fContext.io.postResetDisposeComplete)) return false;
+        fStartOrder.Close();
+        return fViews.Close() && !fViews.HasMappings();
+    }
+#endif
     __attribute__((noinline)) bool CaptureAndStageHeld() {
         using namespace PioneerQwen35;
         if (fCaptureAttempted || !Valid()) return false;
@@ -353,6 +368,16 @@ PioneerQ35DestroySharedRoleBinding(PioneerQwen35SharedRoleBinding* binding)
     if (!binding->CanDestroy()) return false;
     delete binding; return true;
 }
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+static bool
+PioneerQ35ReleaseSharedRoleAfterReset(PioneerQwen35SharedRoleBinding*& binding,
+    const PioneerDriverRecoveryProof& proof,uint64_t ticket)
+{
+    if (!binding) return true;
+    if (!binding->RetireAfterVerifiedReset(proof,ticket)) return false;
+    delete binding;binding=NULL;return true;
+}
+#endif
 bool PioneerSessionIO::SharedCaptureAndStageHeld() {
     return qwen35DataflowContext && qwen35DataflowContext->qwen35SharedRoleBinding
         && qwen35DataflowContext->qwen35SharedRoleBinding->CaptureAndStageHeld();

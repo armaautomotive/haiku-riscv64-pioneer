@@ -48,6 +48,9 @@ struct FakeGraph { bool retained=false; const void* run=nullptr; bool closePermi
 struct PioneerSessionIO {
     tt_pioneer_profile profile=GoodProfile();
     PioneerStoreContext* qwen35DataflowContext=nullptr;
+#ifdef TEST_SHARED_POST_RESET
+    bool postResetDisposeComplete=false;
+#endif
 #ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
     PioneerQwen35RoleBorrowedScopeWitness* qwen35BorrowedRoleScope=nullptr;
 #endif
@@ -194,6 +197,9 @@ struct PioneerSessionIO {
 struct PioneerResidentBanks { static constexpr uint64 Total=123456; };
 struct PioneerStoreContext {
     PioneerSessionIO io; bool bankStorageOnly=true; uint64 bytes=PioneerResidentBanks::Total;
+#ifdef TEST_SHARED_POST_RESET
+    void* recoveryMapping=nullptr;
+#endif
     FakeService* qwen35DataflowService=nullptr; FakeGraph* qwen35GraphOwner=nullptr;
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
     PioneerQwen35SharedRoleBinding* qwen35SharedRoleBinding=nullptr;

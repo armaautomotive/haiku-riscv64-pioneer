@@ -11103,6 +11103,12 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	r.stage=PIONEER_RECOVERY_STAGE_OWNER_RELEASE;
 	status=context->io.DisposeAfterVerifiedReset(proof);
 	if (status!=B_OK) return fail(status);
+#if defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE)
+	// A reset invalidates the old role snapshots. Their distinct BAR areas
+	// must be unmapped and their owner retired before the context or guard.
+	if (!PioneerQ35ReleaseSharedRoleAfterReset(context->qwen35SharedRoleBinding,proof,ticket))
+		return fail(B_DEV_NOT_READY);
+#endif
 #if defined(PIONEER_QWEN35_DEVICE_DISPATCH) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE)
 	// Only the completed reset/fleet/host-DMA proof and successful disposal of
 	// the old mappings permit the graph's retained heap objects to be freed.

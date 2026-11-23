@@ -5,6 +5,11 @@
 #define PIONEER_QWEN35_RECOVERY_COMPILE_ONLY 1
 #define PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY 1
 #define PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS 1
+#ifdef TEST_SHARED_POST_RESET
+#define PIONEER_QWEN35_RECOVERY_RUN_ENABLE 1
+#define PIONEER_QWEN35_SHARED_ROLE_OWNER_TEST 1
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ35GraphRecoveryProof.h"
+#endif
 #include <cstdlib>
 #include <new>
 #include "../PioneerQwen35DataflowOwner.h"
@@ -14,6 +19,45 @@
 #include "pioneer_qwen35_dataflow_role_haiku_scope_test.cpp"
 #undef main
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35DataflowSharedRoleBinding.inc"
+
+#ifdef TEST_SHARED_POST_RESET
+struct PioneerQ35SharedRoleBindingTestAccess {
+    struct Guard { bool ProvePinnedBar(uint64_t,uint64_t) { return true; } };
+    static bool OpenViews(PioneerQwen35SharedRoleBinding& binding) {
+        Guard guard;
+        return binding.fViews.Open(binding.fContext.io.profile.bar0_host_start,
+            binding.fContext.io.profile.bar0_host_end,guard);
+    }
+};
+static void ExerciseResetRetirement(PioneerSessionIO& io)
+{
+    auto* context=io.qwen35DataflowContext;
+    context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
+    auto*& binding=context->qwen35SharedRoleBinding;
+    assert(binding && gLocked);
+    ResetMaps();gAllowWrite=true;
+    assert(PioneerQ35SharedRoleBindingTestAccess::OpenViews(*binding));
+    assert(!binding->CanDestroy());
+    PioneerDriverRecoveryProof proof{};
+    proof.flags=PIONEER_RECOVERY_PROOF_REQUIRED & ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;
+    proof.core_count=DataflowBarrierWorkers;proof.retained_owners=1;
+    proof.reset_generation=proof.firmware_generation=9;
+    assert(!PioneerQ35ReleaseSharedRoleAfterReset(binding,proof,9) && binding && !gUnmapCalls);
+    io.postResetDisposeComplete=true;
+    context->recoveryMapping=reinterpret_cast<void*>(1);
+    assert(!PioneerQ35ReleaseSharedRoleAfterReset(binding,proof,9) && binding && !gUnmapCalls);
+    context->recoveryMapping=nullptr;
+    assert(!PioneerQ35ReleaseSharedRoleAfterReset(binding,proof,8) && binding && !gUnmapCalls);
+    auto bad=proof;bad.flags=0;
+    assert(!PioneerQ35ReleaseSharedRoleAfterReset(binding,bad,9) && binding && !gUnmapCalls);
+    gFailUnmap=2;
+    assert(!PioneerQ35ReleaseSharedRoleAfterReset(binding,proof,9) && binding && gMapped[2]);
+    assert(!binding->CanDestroy() && !io.SharedStartCore(0));
+    assert(PioneerQ35ReleaseSharedRoleAfterReset(binding,proof,9) && !binding);
+    for (bool mapped:gMapped) assert(!mapped);
+    io.postResetDisposeComplete=false;gAllowWrite=false;
+}
+#endif
 
 static void ExerciseBinding(PioneerSessionIO& io)
 {
@@ -125,6 +169,10 @@ int main()
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
     gBorrowedScopeHook=ExerciseStatusSampling;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+#ifdef TEST_SHARED_POST_RESET
+    gBorrowedScopeHook=ExerciseResetRetirement;
+    assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+#endif
     service.capturePending=false;
     assert(!gLocked && !context.qwen35SharedRoleBinding && !context.io.qwen35BorrowedRoleScope);
     gBorrowedScopeHook=nullptr;

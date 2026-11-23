@@ -3,6 +3,7 @@
 #define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026112100010121)
 #ifdef TEST_GRAPH_RECOVERY
 #define PIONEER_QWEN35_DEVICE_DISPATCH 1
+#define PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS 1
 #endif
 #ifndef TEST_RECOVERY_DISABLED
 #define PIONEER_QWEN35_RECOVERY_RUN_ENABLE 1
@@ -21,8 +22,10 @@ static unsigned failStage=0,abortCount=0,completeCount=0,contextDeleted=0,cookie
 static bool failPayloadRead=false,failPayloadRestore=false,failFirmwareQueue=false,failDbi=false;
 #ifdef TEST_GRAPH_RECOVERY
 static bool failGraphRelease=false;
-static unsigned graphReleases=0;
+static bool failSharedRoleRelease=false;
+static unsigned graphReleases=0,sharedRoleReleases=0;
 struct FakeGraphOwner {};
+struct FakeSharedRoleOwner {};
 #endif
 static std::vector<unsigned> trace;
 static bool Step(unsigned stage) { trace.push_back(stage);return failStage!=stage; }
@@ -56,10 +59,13 @@ struct PioneerRecoveryDbiSnapshot {uint32 mps=0x20;bool valid=true;};
 struct BlackholeAsicResetResult {uint32 stage=0;};
 struct FakeProfile {};
 struct PioneerSessionIO {
+	bool postResetDisposeComplete=false;
 	uint32 CardRead(uint16,uint8){return 0;} uint32 RootRead(uint16,uint8){return 0;}
 	void CardWrite(uint16,uint8,uint32){}
 	status_t DisposeAfterVerifiedReset(const PioneerDriverRecoveryProof& p) {
-		assert(p.ReadyToRetireOneOwner());return Step(PIONEER_RECOVERY_STAGE_OWNER_RELEASE)?B_OK:B_DEV_NOT_READY;
+		assert(p.ReadyToRetireOneOwner());
+		if (!Step(PIONEER_RECOVERY_STAGE_OWNER_RELEASE)) return B_DEV_NOT_READY;
+		postResetDisposeComplete=true;return B_OK;
 	}
 };
 static bool PioneerPreResetDisableMaster(PioneerSessionIO&) { return Step(PIONEER_RECOVERY_STAGE_DISABLE_MASTER); }
@@ -91,6 +97,7 @@ struct PioneerStoreContext {
 	PioneerPostResetMapping* recoveryMapping=nullptr;bool recoveryAttempted=false,dispatchOwnerRetained=true;
 #ifdef TEST_GRAPH_RECOVERY
 	FakeGraphOwner graphOwner;FakeGraphOwner* qwen35GraphOwner=&graphOwner;
+	FakeSharedRoleOwner sharedRoleOwner;FakeSharedRoleOwner* qwen35SharedRoleBinding=&sharedRoleOwner;
 #endif
 	PioneerRecoveryDbiSnapshot recoveryDbi;
 	struct {bool config_attempted=true,map_attempted=true;} transaction;
@@ -99,6 +106,15 @@ struct PioneerStoreContext {
 	~PioneerStoreContext(){contextDeleted++;delete recoveryMapping;}
 };
 #ifdef TEST_GRAPH_RECOVERY
+static bool PioneerQ35ReleaseSharedRoleAfterReset(FakeSharedRoleOwner*& owner,
+	const PioneerDriverRecoveryProof& proof,uint64 ticket) {
+	assert(owner && proof.ReadyToRetireOneOwner() && proof.reset_generation==ticket
+		&& proof.firmware_generation==ticket && ticket==9);
+	assert(!trace.empty() && trace.back()==PIONEER_RECOVERY_STAGE_OWNER_RELEASE);
+	sharedRoleReleases++;
+	if (failSharedRoleRelease) return false;
+	owner=nullptr;return true;
+}
 static bool PioneerQ35GraphOwnerReleaseAfterReset(FakeGraphOwner* owner,
 	const PioneerDriverRecoveryProof& proof,uint64 ticket) {
 	assert(owner && proof.ReadyToRetireOneOwner() && proof.reset_generation==ticket
@@ -125,7 +141,7 @@ static void Setup() {
 	failStage=abortCount=completeCount=contextDeleted=cookieDeleted=0;trace.clear();
 	failPayloadRead=failPayloadRestore=failFirmwareQueue=failDbi=false;
 #ifdef TEST_GRAPH_RECOVERY
-	failGraphRelease=false;graphReleases=0;
+	failGraphRelease=failSharedRoleRelease=false;graphReleases=sharedRoleReleases=0;
 #endif
 	sColdRecoveryRequired.value=true;sReloadQuiesced=false;sBankStorageOnly=true;sReloadGeneration=3;sOpenCookies=1;
 	sRuntimeOwner=new PioneerProbeCookie;sRuntimeOwner->context=new PioneerStoreContext;sRuntimeOwner->finalFreeRetained=true;
@@ -143,10 +159,16 @@ int main(){
 		&& r.operation_status==B_OK && r.stage==PIONEER_RECOVERY_STAGE_COMPLETE && r.new_generation==4
 		&& !sColdRecoveryRequired && !sRuntimeOwner && contextDeleted==1 && cookieDeleted==1 && !abortCount && completeCount==1);
 #ifdef TEST_GRAPH_RECOVERY
-	assert(graphReleases==1);
+	assert(graphReleases==1 && sharedRoleReleases==1);
+	Setup();failSharedRoleRelease=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.stage==PIONEER_RECOVERY_STAGE_OWNER_RELEASE && sharedRoleReleases==1 && !graphReleases
+		&& sRuntimeOwner && sRuntimeOwner->context->qwen35SharedRoleBinding
+		&& sColdRecoveryRequired && abortCount==1 && !completeCount);
+	Cleanup();
 	Setup();failGraphRelease=true;r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
-		&& r.stage==PIONEER_RECOVERY_STAGE_OWNER_RELEASE && graphReleases==1
+		&& r.stage==PIONEER_RECOVERY_STAGE_OWNER_RELEASE && graphReleases==1 && sharedRoleReleases==1
 		&& sRuntimeOwner && sColdRecoveryRequired && abortCount==1 && !completeCount);
 	Cleanup();
 #endif
