@@ -667,11 +667,17 @@ static bool End(int fd,bool bankOpen,bool spanOpen,bool authorityBound,
 	okay=closeOkay && okay;
 	tt_q38_bank_session session{};
 	session.version=TT_Q38_BANK_PROTOCOL;
-	const bool bankEnded=!bankOpen || (okay && resetCompleted) || (okay
+	bool bankEnded=!bankOpen || (okay && resetCompleted) || (okay
 		&& Call(fd,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session))
 		&& session.result.state==TT_RESIDENT_SESSION_CLOSED
 		&& !session.result.active && session.result.pci_restored
 		&& session.result.host_released && !session.result.cold);
+	if (bankOpen && !bankEnded && !resetCompleted && !installAttempted) {
+		// A failed pre-service fleet preparation can make BANK_END retain
+		// a cold owner even though no dataflow service was installed.
+		resetCompleted=ResetStoppedRewrite(fd,true);
+		bankEnded=resetCompleted;
+	}
 	if (bankOpen && resetCompleted) printf("P100A_Q35_DATAFLOW unload_clean=%u reset_completed=1 service_closed=%u\n",
 		unsigned(bankEnded),unsigned(serviceClosed));
 	else if (bankOpen) printf("P100A_Q35_DATAFLOW unload_clean=%u state=%u active=%u "

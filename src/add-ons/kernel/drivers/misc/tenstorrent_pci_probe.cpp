@@ -447,6 +447,9 @@
 #include "PioneerQ38MixedLiveFinalReleaseRole.h"
 #endif
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#include "PioneerQwen35DedicatedFleet.h"
+#endif
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE
 #include "PioneerQ38RecurrentPrefixFinalReleaseRole.h"
 #include "PioneerQ38RecurrentPrefixFinalPciState.h"
@@ -3004,9 +3007,11 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool MapQ38Panel() {
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 		if (runtimeCore>=120 || (runtimeCore && !fleetEnabled) || !MapRuntime()) return false;
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 		uint32*& saved=runtimeCore?q38CohortSaved[runtimeCore]:q38PanelSaved;
 		if (!saved) saved=(uint32*)malloc((TT_Q38_PANEL_VIEW_WORDS+1)*4);
 		if (!saved) return false;
+#endif
 #else
 		if (runtimeCore || !MapRuntime()) return false;
 #endif
@@ -3028,7 +3033,11 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		q38PanelView=(volatile uint32*)view; return true;
 	}
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+	#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+	bool Q38PanelMappingStable() { return runtimeCore<120 && (!runtimeCore || fleetEnabled) && q38PanelArea>=B_OK && q38PanelView; }
+	#else
 	bool Q38PanelMappingStable() { return runtimeCore<120 && (!runtimeCore || fleetEnabled) && q38PanelArea>=B_OK && q38PanelView && Q38PanelSavedWords(); }
+	#endif
 	uint32* Q38PanelSavedWords() { return runtimeCore<120?(runtimeCore?q38CohortSaved[runtimeCore]:q38PanelSaved):NULL; }
 	uint64 Q38CohortNow() { return uint64(system_time()); }
 #ifdef TT_PIONEER_Q38_DISPATCH_PROFILE
@@ -4048,6 +4057,9 @@ struct PioneerStoreContext {
 #endif
 #endif
 	bool q38DispatchRoutes=false,dispatchOwnerRetained=false;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+	bool qwen35DedicatedFleet=false;
+#endif
 	unsigned q38EndPhase=0;
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
@@ -4833,7 +4845,15 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 	// A caller-only failure may be invisible to transport completion metadata.
 	if (c.q38Span && !c.q38Span->closed) clean=false;
 #endif
-	if (clean && c.q38Dispatch) clean=PioneerQ38DispatchClose(c.io,c.baseline.baseline.baseline.baseline.dram,c.banks,*c.q38Dispatch,true);
+	if (clean && c.q38Dispatch) {
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+		if (c.qwen35DedicatedFleet)
+			clean=!c.qwen35DataflowService && PioneerQwen35DedicatedFleetClose(c.io,
+				c.baseline.baseline.baseline.baseline.dram,c.banks,*c.q38Dispatch);
+		else
+#endif
+			clean=PioneerQ38DispatchClose(c.io,c.baseline.baseline.baseline.baseline.dram,c.banks,*c.q38Dispatch,true);
+	}
 	if (clean) return true;
 	RetainQ38DispatchOwner(c,result); return false;
 }
@@ -8229,8 +8249,15 @@ PrepareQ38Dispatch(PioneerStoreContext& c)
 	c.io.q38SpanAllowed=false; // one-way ownership handoff, even if prepare fails
 #endif
 	auto& dram=c.baseline.baseline.baseline.baseline.dram; auto& noc=c.baseline.baseline.baseline.noc;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+	if (c.q38Dispatch)
+		return c.qwen35DedicatedFleet && c.q38DispatchRoutes && c.q38Dispatch->prepared==120
+			&& !c.q38Dispatch->bootAttempted && !c.q38Dispatch->booted
+			&& !PioneerQ38DispatchUnsafe(*c.q38Dispatch) && !c.q38Dispatch->closed;
+#else
 	if (c.q38Dispatch && c.q38Dispatch->booted) return !PioneerQ38DispatchUnsafe(*c.q38Dispatch) && !c.q38Dispatch->closed;
 	if (c.q38Dispatch) return false; // no second prepare/retry after any attempt
+#endif
 	if (!c.io.SelectRuntimeCore(0)) return false;
 	bool ready=c.lease.ready;
 	if (!ready && !c.lease.saved) ready=PioneerResidentLeaseBegin(c.io,noc,c.lease);
@@ -8242,9 +8269,16 @@ PrepareQ38Dispatch(PioneerStoreContext& c)
 	if (!PioneerQ38OutputDmaOwner(c.io,c.host,c.bulkHost,c.wideHost,false)) return false;
 #endif
 	auto& lease=*c.q38Dispatch; c.io.fleetEnabled=true; lease.worker[0].master=&c.lease; lease.worker[0].noc=noc;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+	c.qwen35DedicatedFleet=true;
+#endif
 	ready=BlackholeDramAllCoresHeld(c.io,dram);
 	for (unsigned w=1;w<120 && ready;w++) ready=PioneerWorkerNocProbe(c.io,dram,w,lease.worker[w].noc);
 	c.q38DispatchRoutes=ready;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+	if (!ready) return PioneerQ38DispatchQuarantine(lease,c.banks);
+	return PioneerQwen35DedicatedFleetPrepare(c.io,dram,c.banks,lease);
+#else
 	for (unsigned w=0;w<120 && ready;w++) {
 		auto& node=lease.worker[w];
 		ready=c.io.SelectRuntimeCore(w) && c.io.MapQ38Panel();
@@ -8358,6 +8392,7 @@ PrepareQ38Dispatch(PioneerStoreContext& c)
 #else
 	return PioneerQ38DispatchBootstrap(c.io,dram,c.banks,lease);
 #endif
+#endif // dedicated takeover does not install or bootstrap Q38 firmware
 }
 // PIONEER_Q38_DISPATCH_PREPARE_END
 // PIONEER_Q38_DISPATCH_CONTROL_BEGIN

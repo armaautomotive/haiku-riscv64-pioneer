@@ -5,6 +5,9 @@
 #define main qwen35_haiku_scope_test_main
 #include "pioneer_qwen35_dataflow_role_haiku_scope_test.cpp"
 #undef main
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+static bool PioneerQ35SharedRoleCopiesCaptured(const PioneerQwen35SharedRoleBinding*,unsigned) { return false; }
+#endif
 
 struct FleetPciTestScope {
     bool exclusive=true,held=true,routing=true,stable=true,read=true,write=true,control=true,release=false,stop=false,park=false;
@@ -94,6 +97,9 @@ struct ChangingRamCopyViews {
 };
 int main()
 {
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+    (void)&Qwen35DataflowGenerate;
+#endif
     PioneerStoreContext context; FakeService service; FakeGraph graph;
     context.qwen35DataflowService=&service; context.qwen35GraphOwner=&graph;
     PioneerProbeCookie cookie; cookie.context=&context; sRuntimeOwner=&cookie;

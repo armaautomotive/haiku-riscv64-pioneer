@@ -257,6 +257,14 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 	"$directory/pioneer_qwen35_exclusive_service_start_test.cpp" -o "$temporary/exclusive-service-start-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exclusive-service-start-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	"$directory/pioneer_qwen35_dedicated_fleet_test.cpp" -o "$temporary/dedicated-fleet-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/dedicated-fleet-test"
+sed -n '/PIONEER_Q38_DISPATCH_PREPARE_BEGIN/,/PIONEER_Q38_DISPATCH_PREPARE_END/p' \
+	"$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_dedicated_prepare.inc"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-I"$temporary" "$directory/pioneer_qwen35_dedicated_prepare_binding_test.cpp" -o "$temporary/dedicated-prepare-binding-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/dedicated-prepare-binding-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	"$directory/pioneer_qwen35_exclusive_role_stop_test.cpp" -o "$temporary/exclusive-role-stop-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exclusive-role-stop-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
@@ -485,7 +493,7 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 	-o "$temporary/role-fleet-pci-io-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-fleet-pci-io-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
-	-DPIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS -I"$directory/role_haiku_stubs" \
+	-DPIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS -DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS -I"$directory/role_haiku_stubs" \
 	"$directory/pioneer_qwen35_dataflow_role_fleet_pci_io_test.cpp" -o "$temporary/exclusive-role-pci-io-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exclusive-role-pci-io-test"
 if python3 "$root/tools/pioneer/build_qwen35_dataflow.py" --compile-role-write-prototype \

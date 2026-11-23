@@ -303,6 +303,15 @@ PioneerSessionIO::DataflowCoreIdleForHold(unsigned core,unsigned& diagnosticDeta
 		return reject(PioneerDataflowIdleDetailStore);
 	if (!PioneerQwen35DataflowCaptureLocalRoute(*this,core))
 		return reject(PioneerDataflowIdleDetailLocalRoute);
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+	if (context->qwen35DedicatedFleet && reset==0x47800) {
+		if (lease.bootAttempted || lease.booted || lease.rootRunning
+			|| node.image.saved || node.image.ready || node.image.running
+			|| !PioneerQ38DispatchSources(*this,dram,context->banks,node,0x47800))
+			return reject(PioneerDataflowIdleDetailDispatchSources);
+		return true;
+	}
+#endif
 	if (PioneerSessionIODataflowServiceImageTrusted(*this,core)) {
 		PioneerQwen35::DataflowWorkerMailbox mailbox{};
 		if (!PioneerQwen35DataflowReadStableMailbox(*this,core,mailbox))
@@ -433,7 +442,12 @@ PioneerSessionIO::SessionIdle()
 		&& context->baseline.audit.tlb_restored==1
 		&& !context->baseline.audit.recovery_required
 		&& context->q38Dispatch && context->q38DispatchRoutes
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+		&& context->qwen35DedicatedFleet && !context->q38Dispatch->bootAttempted
+		&& !context->q38Dispatch->booted && !context->q38Dispatch->closed
+#else
 		&& context->q38Dispatch->booted && !context->q38Dispatch->closed
+#endif
 		&& !PioneerQ38DispatchUnsafe(*context->q38Dispatch)
 		&& context->q38Dispatch->prepared==PioneerQwen35::DataflowCoreCount
 		&& (!context->qwen35DataflowService
@@ -452,7 +466,13 @@ PioneerSessionIO::ProveFleetRoutes(uint32_t& failedStage,uint32_t& failedCore)
 	auto& lease=*context->q38Dispatch;
 	auto& dram=context->baseline.baseline.baseline.baseline.dram;
 	failedStage=2;
-	if (!lease.booted || lease.closed || lease.unsafe || lease.rootRunning
+	if (
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+		!context->qwen35DedicatedFleet || lease.booted || lease.bootAttempted
+#else
+		!lease.booted
+#endif
+		|| lease.closed || lease.unsafe || lease.rootRunning
 		|| lease.prepared!=PioneerQwen35::DataflowCoreCount) return false;
 	unsigned auditedRoutes[2][PioneerQwen35::Banks]={};
 	for (unsigned bank=0;bank<PioneerQwen35::Banks;bank++) {
@@ -469,7 +489,12 @@ PioneerSessionIO::ProveFleetRoutes(uint32_t& failedStage,uint32_t& failedCore)
 	failedCore=0xff;
 	if (!PioneerQwen35::DataflowBankRoutesValid(auditedRoutes)) return false;
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
-		const unsigned reset=core?0x46800:0x47800;
+		const unsigned reset=
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+			0x47800;
+#else
+			core?0x46800:0x47800;
+#endif
 		auto& node=lease.worker[core];
 		failedCore=core;
 		failedStage=5;
@@ -502,6 +527,10 @@ PioneerSessionIO::ProveFleetRoutes(uint32_t& failedStage,uint32_t& failedCore)
 		} noC1{*this};
 		if (!PioneerQwen35DataflowNoC1Audit(noC1,dram,core)) return false;
 		failedStage=11;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+		if (node.image.saved || node.image.ready || node.image.running || node.image.unsafe)
+			return false;
+#else
 		if (!PioneerQ38DispatchCodeMatches(*this,core,&lease)) return false;
 		if (!core) {
 			failedStage=12;
@@ -515,6 +544,7 @@ PioneerSessionIO::ProveFleetRoutes(uint32_t& failedStage,uint32_t& failedCore)
 			if (!PioneerQ38DispatchPeerStatus(*this,lease.peerNonce[core-1],false,
 				&lease)) return false;
 		}
+#endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 		return true;
 		})) return false;
