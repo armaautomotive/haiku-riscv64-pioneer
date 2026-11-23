@@ -63,6 +63,45 @@ inline DataflowBarrierReadResult DataflowBarrierReadCommitted(
 	return DataflowBarrierCommitMatches(marker,epoch,step)?DataflowBarrierReady:DataflowBarrierInvalid;
 }
 
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+// A success needs no payload: the marker already identifies this barrier.
+// Errors retain the ordered payload-then-marker protocol. The high step bit
+// distinguishes an error marker; real graph steps are far below that bit.
+enum : unsigned { DataflowBarrierFailureBit=0x80000000U };
+template<class Send> inline bool DataflowBarrierSendShared(
+	const DataflowBarrierPacket& payload,const DataflowBarrierPacket& commit,Send send)
+{
+	const unsigned epoch=payload.word[2],step=payload.word[3],worker=payload.word[4];
+	if (!epoch || !step || (step&DataflowBarrierFailureBit)
+		|| worker>=DataflowBarrierWorkers || !DataflowBarrierPayloadValid(payload,epoch,step,worker)) return false;
+	const auto expected=DataflowBarrierCommit(epoch,step);
+	for (unsigned i=0;i<16;i++) if (commit.word[i]!=expected.word[i]) return false;
+	if (payload.word[5]) {
+		const auto failed=DataflowBarrierCommit(epoch,step|DataflowBarrierFailureBit);
+		return send(false,payload) && send(true,failed);
+	}
+	return send(true,commit);
+}
+
+inline DataflowBarrierReadResult DataflowBarrierReadShared(
+	const volatile uint32_t* source,const volatile uint32_t* marker,
+	unsigned epoch,unsigned step,unsigned worker,DataflowBarrierPacket& payload)
+{
+	if (!epoch || !step || (step&DataflowBarrierFailureBit) || worker>=DataflowBarrierWorkers)
+		return DataflowBarrierInvalid;
+	if (DataflowBarrierCommitMatches(marker,epoch,step)) {
+		payload=DataflowBarrierPayload(epoch,step,worker,0,0);
+		return DataflowBarrierCommitMatches(marker,epoch,step)?DataflowBarrierReady:DataflowBarrierInvalid;
+	}
+	const unsigned failedStep=step|DataflowBarrierFailureBit;
+	if (!DataflowBarrierCommitMatches(marker,epoch,failedStep)) return DataflowBarrierWaiting;
+	for (unsigned i=0;i<16;i++) payload.word[i]=DataflowLoadAcquire(source[i]);
+	if (!DataflowBarrierCommitMatches(marker,epoch,failedStep) || !payload.word[5])
+		return DataflowBarrierInvalid;
+	return DataflowBarrierReady;
+}
+#endif
+
 // A single worker owns an instance. The coordinator is worker 0 and runs the
 // same compute as the other workers. Subtree receipts are aggregated upward;
 // the coordinator decides only after every worker has published a receipt.
@@ -99,6 +138,9 @@ public:
 	{
 		if (active || unsafe || done || worker>=DataflowBarrierWorkers
 			|| !epochValue || !stepValue || (!status && detail)) return false;
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+		if (stepValue&DataflowBarrierFailureBit) return false;
+#endif
 		core=worker;epoch=epochValue;step=stepValue;active=true;
 		if (status) { firstFailureCore=core;firstFailure=status; }
 		return true;
@@ -169,19 +211,24 @@ public:
 	}
 };
 
-// Concrete NoC1 transport. Payload and commit use distinct slots and two
-// ordered nonposted writes. Repeating epoch/step across the commit packet
-// keeps a torn marker from being accepted as complete. L1 must be initialized
-// before start and the host must provide a fresh nonzero epoch per session.
+// Concrete NoC1 transport. The shared-role build sends only a marker for a
+// successful barrier, and an ordered payload then failure marker for errors.
+// Repeating epoch/step keeps a torn marker from being accepted as complete.
+// L1 must be initialized before start and each graph needs a fresh epoch.
 class DataflowBlackholeBarrierIO {
 	unsigned core;
 	DataflowBlackholeNoc<1> noc;
 	static DataflowBarrierReadResult Read(unsigned payloadAddress,unsigned commitAddress,
-		unsigned epoch,unsigned step,DataflowBarrierPacket& payload)
+		unsigned epoch,unsigned step,unsigned worker,DataflowBarrierPacket& payload)
 	{
 		const auto* marker=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(commitAddress));
 		const auto* source=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(payloadAddress));
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+		return DataflowBarrierReadShared(source,marker,epoch,step,worker,payload);
+#else
+		(void)worker;
 		return DataflowBarrierReadCommitted(source,marker,epoch,step,payload);
+#endif
 	}
 	bool Send(unsigned destination,unsigned address,const DataflowBarrierPacket& packet)
 	{
@@ -196,26 +243,40 @@ public:
 	bool SendArrival(unsigned worker,const DataflowBarrierPacket& payload,const DataflowBarrierPacket& commit)
 	{
 		const unsigned parent=DataflowBarrierReleaseParent(worker);
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+		return worker==core && parent<DataflowBarrierWorkers
+			&& DataflowBarrierSendShared(payload,commit,[&](bool marker,const DataflowBarrierPacket& p) {
+				return Send(parent,DataflowBarrierArrivalAddress(worker,marker),p);
+			});
+#else
 		return worker==core && parent<DataflowBarrierWorkers
 			&& Send(parent,DataflowBarrierArrivalAddress(worker,false),payload)
 			&& Send(parent,DataflowBarrierArrivalAddress(worker,true),commit);
+#endif
 	}
 	bool SendRelease(unsigned worker,const DataflowBarrierPacket& payload,const DataflowBarrierPacket& commit)
 	{
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+		return DataflowBarrierReleaseEdge(core,worker)
+			&& DataflowBarrierSendShared(payload,commit,[&](bool marker,const DataflowBarrierPacket& p) {
+				return Send(worker,marker?DataflowBarrierReleaseCommit:DataflowBarrierReleasePayload,p);
+			});
+#else
 		return DataflowBarrierReleaseEdge(core,worker)
 			&& Send(worker,DataflowBarrierReleasePayload,payload)
 			&& Send(worker,DataflowBarrierReleaseCommit,commit);
+#endif
 	}
 	DataflowBarrierReadResult ReadArrival(unsigned worker,unsigned epoch,unsigned step,DataflowBarrierPacket& packet)
 	{
 		return DataflowBarrierReleaseEdge(core,worker)
-			?Read(DataflowBarrierArrivalAddress(worker,false),DataflowBarrierArrivalAddress(worker,true),epoch,step,packet)
+			?Read(DataflowBarrierArrivalAddress(worker,false),DataflowBarrierArrivalAddress(worker,true),epoch,step,worker,packet)
 			:DataflowBarrierInvalid;
 	}
 	DataflowBarrierReadResult ReadRelease(unsigned worker,unsigned epoch,unsigned step,DataflowBarrierPacket& packet)
 	{
 		return core==worker && core && core<DataflowBarrierWorkers
-			?Read(DataflowBarrierReleasePayload,DataflowBarrierReleaseCommit,epoch,step,packet)
+			?Read(DataflowBarrierReleasePayload,DataflowBarrierReleaseCommit,epoch,step,worker,packet)
 			:DataflowBarrierInvalid;
 	}
 };

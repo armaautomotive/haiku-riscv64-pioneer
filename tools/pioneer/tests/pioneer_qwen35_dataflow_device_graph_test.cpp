@@ -12,21 +12,39 @@ struct Fabric { Slot arrival[DataflowBarrierWorkers],release[DataflowBarrierWork
 	int failArrival=-1,failRelease=-1;unsigned sends[DataflowBarrierWorkers]{}; };
 struct Transport {
 	Fabric& f;unsigned core;
+	bool Send(Slot& slot,const DataflowBarrierPacket& p,const DataflowBarrierPacket& c) {
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+		return DataflowBarrierSendShared(p,c,[&](bool marker,const DataflowBarrierPacket& packet) {
+			if (marker) slot.commit=packet;else slot.payload=packet;return true;
+		});
+#else
+		slot={p,c};return true;
+#endif
+	}
 	bool SendArrival(unsigned worker,const DataflowBarrierPacket& p,const DataflowBarrierPacket& c) {
 		assert(core==worker && core);if (int(core)==f.failArrival) return false;
-		f.arrival[core]={p,c};return true;
+		return Send(f.arrival[core],p,c);
 	}
 	bool SendRelease(unsigned worker,const DataflowBarrierPacket& p,const DataflowBarrierPacket& c) {
 		assert(DataflowBarrierReleaseEdge(core,worker));f.sends[core]++;
 		if (int(worker)==f.failRelease) return false;
-		f.release[worker]={p,c};return true;
+		return Send(f.release[worker],p,c);
 	}
 	DataflowBarrierReadResult ReadArrival(unsigned worker,unsigned epoch,unsigned step,DataflowBarrierPacket& out) {
 		assert(DataflowBarrierReleaseEdge(core,worker));
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+		return DataflowBarrierReadShared(f.arrival[worker].payload.word,f.arrival[worker].commit.word,epoch,step,worker,out);
+#else
 		return DataflowBarrierReadCommitted(f.arrival[worker].payload.word,f.arrival[worker].commit.word,epoch,step,out);
+#endif
 	}
 	DataflowBarrierReadResult ReadRelease(unsigned worker,unsigned epoch,unsigned step,DataflowBarrierPacket& out) {
-		assert(worker==core);return DataflowBarrierReadCommitted(f.release[core].payload.word,f.release[core].commit.word,epoch,step,out);
+		assert(worker==core);
+#ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
+		return DataflowBarrierReadShared(f.release[core].payload.word,f.release[core].commit.word,epoch,step,worker,out);
+#else
+		return DataflowBarrierReadCommitted(f.release[core].payload.word,f.release[core].commit.word,epoch,step,out);
+#endif
 	}
 };
 struct Execution {
