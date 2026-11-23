@@ -83,6 +83,9 @@ case "$stage" in
 	/boot/home/pioneer-q35-prestack-20261123-o)
 		candidateTag=2026112300030006
 		candidateSHA=e5f5a55347fe9438381626bf26b284827c9e6e524d8c30b32d7f19824d935818 ;;
+	/boot/home/pioneer-q35-prestack-20261123-p)
+		candidateTag=2026112300030007
+		candidateSHA=29721ab1e68fb6cc247319ae7fe07a160e008b746db5574af05dfbb5e74457f5 ;;
 	*) exit 2;;
 esac
 test -d "$stage" && test ! -L "$stage" && [ "$(stat -c '%u:%a' "$stage")" = 0:700 ] || fail stage

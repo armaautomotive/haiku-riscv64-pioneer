@@ -39,6 +39,15 @@ class PioneerQwen35RolePrestackProbe {
         (void)phase;
 #endif
     }
+    static void RamFailure(unsigned role,unsigned offset,unsigned kind) {
+#ifdef _KERNEL_MODE
+        // The addresses and reason suffice for diagnosis; never print saved
+        // private-RAM contents from another device session.
+        dprintf("P100A_Q35_PRESTACK_RAM_FAILURE role=%u offset=%u kind=%u\n",role,offset,kind);
+#else
+        (void)role;(void)offset;(void)kind;
+#endif
+    }
 
     bool Select(uint32_t reset) {
         return fScope.PrestackAdmission(fIO) && fIO.SelectRuntimeCore(Core)
@@ -80,12 +89,17 @@ class PioneerQwen35RolePrestackProbe {
             const unsigned copied=role==DataflowRoleReader?DataflowRoleReaderRamCopy:DataflowRoleWriterRamCopy;
             const uint32_t base=role==DataflowRoleReader?DataflowRoleBriscLocalRam:DataflowRoleNcriscLocalRam;
             for (unsigned offset=0;offset<DataflowRoleLocalRamBytes;offset+=sizeof(copy)) {
-                if (!fAdapter.Read(Core,copied+offset,copy,sizeof(copy))
-                    || !fAdapter.ReadRam(Core,role,base+offset,ram,sizeof(ram))
-                    || memcmp(copy,ram,sizeof(copy))) return false;
+                if (!fAdapter.Read(Core,copied+offset,copy,sizeof(copy))) {
+                    RamFailure(role,offset,1);return false;
+                }
+                if (!fAdapter.ReadRam(Core,role,base+offset,ram,sizeof(ram))) {
+                    RamFailure(role,offset,2);return false;
+                }
+                if (memcmp(copy,ram,sizeof(copy))) { RamFailure(role,offset,3);return false; }
             }
         }
-        return fAdapter.AllRolesHeld(Core);
+        if (!fAdapter.AllRolesHeld(Core)) { RamFailure(DataflowRoleCount,0,4);return false; }
+        return true;
     }
 public:
     PioneerQwen35RolePrestackProbe(IO& io,Scope& scope,Views& views,Adapter& adapter,
@@ -147,9 +161,15 @@ public:
         if (!parked || !Select(Running)) return false;
         Progress(4);
         fState.holdAttempted=true;
-        if (!fIO.SharedRoleHoldReset() || !Select(Held)
-            || !fScope.MarkPrestackHeldAfterCancel(fIO) || !ResetDisable(preserved)
-            || !ComparePrivateRam()) return false;
+        if (!fIO.SharedRoleHoldReset()) return false;
+        Progress(41);
+        if (!Select(Held)) return false;
+        Progress(42);
+        if (!fScope.MarkPrestackHeldAfterCancel(fIO)) return false;
+        Progress(43);
+        if (!ResetDisable(preserved)) return false;
+        Progress(44);
+        if (!ComparePrivateRam()) return false;
         fState.copiesVerified=true;Progress(5);
         for (unsigned i=0;i<3;i++) {
             fState.handoffRestoreAttempts|=1U<<i;
