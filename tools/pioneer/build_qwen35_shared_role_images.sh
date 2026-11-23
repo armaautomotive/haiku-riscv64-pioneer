@@ -89,6 +89,63 @@ if not entries or total>8192:
     raise SystemExit(f'invalid shared role frame-sum witness {total}/8192')
 print(f'shared_role_frame_sum_bytes={total}/8192 (not a whole-program proof)')
 PY
+# Build distinct entry images for the dedicated-device takeover lifecycle.
+# They share role code, but cannot be substituted into the snapshot owner:
+# no original private RAM is captured, and there is no snapshot handoff.
+"$cross-g++" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$directory" "$directory/blackhole_qwen35_exclusive_role_start.S" -o "$output/exclusive-start.o"
+for role in reader writer; do
+	if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70100; start=0xb0000; limit=0xb5000
+	else shim=0x70100; shim_limit=0x70200; start=0xb5000; limit=0xb8000; fi
+	"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
+		--defsym ROLE_SHIM_ADDRESS=$shim --defsym ROLE_SHIM_LIMIT=$shim_limit \
+		--defsym ROLE_ADDRESS=$start --defsym ROLE_LIMIT=$limit \
+		-e "qwen35_shared_${role}_start" -T "$directory/blackhole_qwen35_shared_role_witness.ld" \
+		"$output/exclusive-start.o" "$output/shared-roles.o" -o "$output/exclusive-$role.elf"
+	"$cross-nm" -u "$output/exclusive-$role.elf" > "$output/exclusive-$role.imports"
+	test ! -s "$output/exclusive-$role.imports"
+	"$cross-nm" -n "$output/exclusive-$role.elf" > "$output/exclusive-$role.symbols"
+	"$cross-objcopy" -O binary -j .shim "$output/exclusive-$role.elf" "$output/exclusive-$role-shim.bin"
+	"$cross-objcopy" -O binary -j .text "$output/exclusive-$role.elf" "$output/exclusive-$role-code.bin"
+	cmp "$output/exclusive-$role-code.bin" "$output/$role-code.bin"
+done
+python3 - "$output" <<'PYEXCLUSIVE'
+from pathlib import Path
+from struct import iter_unpack
+import sys
+
+out=Path(sys.argv[1])
+parts=['#pragma once\nnamespace PioneerQwen35 {\n']
+for role,base,limit,code_start,code_limit in (
+        ('reader',0x70000,0x70100,0xb0000,0xb5000),
+        ('writer',0x70100,0x70200,0xb5000,0xb8000)):
+    symbols={}
+    for line in (out/f'exclusive-{role}.symbols').read_text().splitlines():
+        fields=line.split()
+        if len(fields)==3 and fields[1] in ('T','t'):
+            symbols[fields[2]]=int(fields[0],16)
+    entry=symbols.get(f'qwen35_shared_{role}_start')
+    park=symbols.get(f'qwen35_shared_{role}_start_park',-1)
+    tick=symbols.get(f'qwen35_shared_{role}_tick',-1)
+    shim=(out/f'exclusive-{role}-shim.bin').read_bytes()
+    if entry!=base or not base<=park<limit or not code_start<=tick<code_limit \
+            or not shim or len(shim)>limit-base or len(shim)%4:
+        raise SystemExit(f'invalid exclusive {role} entry, park, tick or shim length')
+    offset=park-base
+    if offset%4 or offset+4>len(shim) or int.from_bytes(shim[offset:offset+4],'little')!=0x6f:
+        raise SystemExit(f'invalid exclusive {role} park loop')
+    if shim==(out/f'{role}-shim.bin').read_bytes():
+        raise SystemExit(f'exclusive {role} unexpectedly uses snapshot entry')
+    cap=role.capitalize()
+    parts.append(f'inline constexpr unsigned DataflowExclusive{cap}ParkAddress=0x{park:08x}U;\n')
+    parts.append(f'inline constexpr unsigned DataflowExclusive{cap}ShimWords[]={{\n')
+    parts.extend(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I',shim))
+    parts.append('};\n')
+parts.append('}\n')
+(out/'PioneerQwen35ExclusiveRoleImages.h').write_text(''.join(parts),encoding='ascii')
+PYEXCLUSIVE
 shasum -a 256 "$output/reader-shim.bin" "$output/reader-code.bin" \
-	"$output/writer-shim.bin" "$output/writer-code.bin" "$output/PioneerQwen35SharedRoleImages.h"
+	"$output/writer-shim.bin" "$output/writer-code.bin" "$output/PioneerQwen35SharedRoleImages.h" \
+	"$output/exclusive-reader-shim.bin" "$output/exclusive-writer-shim.bin" \
+	"$output/PioneerQwen35ExclusiveRoleImages.h"
 echo 'shared role images are offline witnesses; do not install or run them'

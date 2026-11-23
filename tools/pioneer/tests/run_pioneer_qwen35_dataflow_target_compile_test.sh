@@ -224,6 +224,31 @@ for role in reader writer; do
 		"$temporary/shared-role-images/${role}-shim.bin" "$role"
 done
 echo 'PASS reproducible shared reader/writer image export; OFFLINE ONLY'
+# Dedicated takeover entry has no private-RAM preservation or snapshot
+# handoff. Keep it separately linked and unavailable to the existing owner.
+"$cxx" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$root/tools/pioneer" "$root/tools/pioneer/blackhole_qwen35_exclusive_role_start.S" \
+	-o "$temporary/exclusive-role-start.o"
+for role in reader writer; do
+	if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70100; start=0xb0000; limit=0xb5000
+	else shim=0x70100; shim_limit=0x70200; start=0xb5000; limit=0xb8000; fi
+	"$ld" -m elf32lriscv --no-relax --gc-sections \
+		--defsym ROLE_SHIM_ADDRESS=$shim --defsym ROLE_SHIM_LIMIT=$shim_limit \
+		--defsym ROLE_ADDRESS=$start --defsym ROLE_LIMIT=$limit \
+		-e "qwen35_shared_${role}_start" -T "$root/tools/pioneer/blackhole_qwen35_shared_role_witness.ld" \
+		"$temporary/exclusive-role-start.o" "$temporary/shared-roles.o" -o "$temporary/exclusive-$role.elf"
+	if [ -n "$("$nm" -u "$temporary/exclusive-$role.elf")" ]; then
+		echo "exclusive $role image has unresolved imports" >&2; exit 1
+	fi
+	"$objcopy" -O binary -j .shim "$temporary/exclusive-$role.elf" "$temporary/exclusive-$role-shim.bin"
+	cmp "$temporary/exclusive-$role-shim.bin" "$temporary/shared-role-images/exclusive-$role-shim.bin"
+	if cmp -s "$temporary/exclusive-$role-shim.bin" "$temporary/shared-role-images/$role-shim.bin"; then
+		echo "exclusive $role shim unexpectedly matches snapshot shim" >&2; exit 1
+	fi
+	tick=$("$nm" -n "$temporary/exclusive-$role.elf" | awk -v symbol="qwen35_shared_${role}_tick" '$3==symbol {print $1}')
+	test -n "$tick"
+	python3 "$directory/pioneer_qwen35_exclusive_role_start_test.py" "$temporary/exclusive-$role-shim.bin" "$role" "$tick"
+done
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_boot_test.cpp" \
 	-o "$temporary/role-boot-test"
