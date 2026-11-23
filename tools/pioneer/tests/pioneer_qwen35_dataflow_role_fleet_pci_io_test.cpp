@@ -19,8 +19,17 @@ struct FleetPciTestScope {
     bool heldCopyProof=false,heldCopyCaptured=false,heldCopyDrift=false;
     bool coreRestoreProof=false;
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
-    bool autoRestoreCompletion=false;
+    bool autoRestoreCompletion=false,autoCancelHeld=false,autoRetirement=false;
+    bool expectAutoCancelAttempt=false,expectAutoRetirementCancelled=false;
     bool ProveRoleAutoRestoreCompletionSafe(PioneerSessionIO&,unsigned) const { return autoRestoreCompletion; }
+    bool ProveRoleAutoCancelHeldSafe(PioneerSessionIO&,unsigned,const uint32_t* reader,
+        const uint32_t* writer,bool attempted) const {
+        return autoCancelHeld && reader==heldReader && writer==heldWriter && attempted==expectAutoCancelAttempt;
+    }
+    bool ProveRoleAutoRestoreRetirementSafe(PioneerSessionIO&,unsigned,const uint32_t* reader,
+        const uint32_t* writer,bool cancelled) const {
+        return autoRetirement && reader==heldReader && writer==heldWriter && cancelled==expectAutoRetirementCancelled;
+    }
 #endif
     bool restoreHeld=false,restoreCompletion=false,restoreCompletedHeld=false,restoreRetry=false,restoreRelease=false;
     bool restorePhysicalRelease=false,restorePhysicalHold=false,restoreHeldAfter=false;
@@ -211,6 +220,21 @@ int main()
             && !io.CoreRamImageRetirementRetrySafe(7,readerWords,writerWords));
         scope.retirementRetry=true;
         assert(io.CoreRamImageRetirementRetrySafe(7,readerWords,writerWords));
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+        assert(!io.AutoRestoreCancelHeldSafe(7,readerWords,writerWords,false));
+        scope.autoCancelHeld=true;
+        assert(io.AutoRestoreCancelHeldSafe(7,readerWords,writerWords,false)
+            && !io.AutoRestoreCancelHeldSafe(7,readerWords,writerWords,true)
+            && !io.AutoRestoreCancelHeldSafe(7,writerWords,readerWords,false));
+        scope.expectAutoCancelAttempt=true;
+        assert(io.AutoRestoreCancelHeldSafe(7,readerWords,writerWords,true));
+        assert(!io.AutoRestoreRetirementSafe(7,readerWords,writerWords,true));
+        scope.autoRetirement=true;scope.expectAutoRetirementCancelled=true;
+        assert(io.AutoRestoreRetirementSafe(7,readerWords,writerWords,true)
+            && !io.AutoRestoreRetirementSafe(7,readerWords,writerWords,false)
+            && !io.AutoRestoreRetirementSafe(7,writerWords,readerWords,true));
+        scope.autoCancelHeld=scope.autoRetirement=false;
+#endif
         scope.retirementProof=scope.retirementRetry=false;
         assert(!io.StacklessCoreRestoreReleaseReady(7,readerWords,writerWords));
         DataflowRoleSnapshotHandoff restoreHandoff{9,9,9};

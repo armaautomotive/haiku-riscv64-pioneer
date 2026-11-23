@@ -13,7 +13,8 @@ struct RecoveryIO {
     bool stacklessPreparation=true,stacklessSafe=true,uncapturedProtected=true;
     bool coreRestoreProof=false,restoreReleaseReady=false,staleRestoreReceipt=false;
     bool restoreCompletion=false,restoreCompletedHeld=false;
-    bool autoArmProof=false,autoHeldProof=false,autoRetirementProof=false;
+    bool autoArmProof=false,autoHeldProof=false,autoCancelProof=false,autoRetirementProof=false;
+    bool expectCancelledRetirement[DataflowBarrierWorkers]{};
     DataflowRoleSnapshotHandoff restoreHandoff[DataflowBarrierWorkers]{};
     unsigned releaseReadyCalls=0,failReleaseReadyCall=0;
     bool copyProof=true,copyCaptured[DataflowBarrierWorkers]{};
@@ -96,8 +97,12 @@ struct RecoveryIO {
     bool AutoRestoreHeldSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
         return autoHeldProof && StacklessHeldCopySourceSafe(core,reader,writer);
     }
-    bool AutoRestoreRetirementSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
-        return autoRetirementProof && StacklessHeldCopySourceSafe(core,reader,writer);
+    bool AutoRestoreCancelHeldSafe(unsigned core,const uint32_t* reader,const uint32_t* writer,bool) {
+        return autoCancelProof && StacklessHeldCopySourceSafe(core,reader,writer);
+    }
+    bool AutoRestoreRetirementSafe(unsigned core,const uint32_t* reader,const uint32_t* writer,bool cancelled) {
+        return autoRetirementProof && core<DataflowBarrierWorkers && cancelled==expectCancelledRetirement[core]
+            && StacklessHeldCopySourceSafe(core,reader,writer);
     }
     bool RestoreHandoffHeldSafe(unsigned core) const { return held && core<DataflowBarrierWorkers; }
     bool RestoreCompletionSafe(unsigned core) const { return !held && restoreCompletion && core<DataflowBarrierWorkers; }
@@ -261,9 +266,9 @@ int main()
         io.autoRetirementProof=false;
         assert(!owner.VerifyAfterAutoResidentRestore(io) && owner.RestorationRequired());
     }
-    {
-        // A partial fleet cannot retire until every captured core has an
-        // independently proved restore, even when another core is complete.
+    for (unsigned cancelCase=0;cancelCase<3;cancelCase++) {
+        // A partial fleet cannot retire until every captured core is proved
+        // either restored or cancelled before its stack could be released.
         RecoveryIO io; DataflowRoleFleetRecoveryOwner owner;
         assert(owner.SelectAutoRestoreMode()
             && owner.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
@@ -271,20 +276,32 @@ int main()
             && owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io)
             && owner.PreparePossibleRelease(io) && owner.BeginReleaseAttempt(io));
         io.retainedRam=ramSnapshot.data();io.held=false;io.autoArmProof=true;
-        for (unsigned core=0;core<2;core++)
-            assert(owner.CaptureStacklessCore(core,io) && owner.MarkStacklessMayRun(core,io)
-                && owner.ArmAutoRestoreCore(core,io));
+        assert(owner.CaptureStacklessCore(0,io) && owner.MarkStacklessMayRun(0,io)
+            && owner.ArmAutoRestoreCore(0,io) && owner.CaptureStacklessCore(1,io));
+        if (cancelCase) assert(owner.MarkStacklessMayRun(1,io) && owner.ArmAutoRestoreCore(1,io));
         io.held=true;io.InstallHeldCopies(0);io.InstallHeldCopies(1);
         io.autoHeldProof=true;io.coreRestoreProof=true;
         assert(owner.MarkAutoRestoredCore(0,io));
-        io.retirementProof=true;io.autoRetirementProof=true;
+        io.retirementProof=true;io.autoRetirementProof=true;io.expectCancelledRetirement[1]=true;
         const unsigned writes=io.writes;
         assert(!owner.RestoreAfterAutoRestoreFleetProof(io) && io.writes==writes);
-        io.autoHeldProof=false;
-        assert(!owner.MarkAutoRestoredCore(1,io));
-        io.autoHeldProof=true;
-        assert(owner.MarkAutoRestoredCore(1,io)
-            && owner.RestoreAfterAutoRestoreFleetProof(io)
+        assert(!owner.MarkAutoCancelledCore(1,true,false,io) // a posted write may still arrive
+            && !owner.MarkAutoCancelledCore(1,false,true,io));
+        assert(!owner.MarkAutoCancelledCore(1,cancelCase==2,cancelCase==2,io)); // no scope proof
+        io.autoCancelProof=true;io.wrongCopyPointer=true;
+        assert(!owner.MarkAutoCancelledCore(1,cancelCase==2,cancelCase==2,io));
+        io.wrongCopyPointer=false;
+        if (!cancelCase) assert(!owner.MarkAutoCancelledCore(1,true,true,io)); // no release ledger was armed
+        io.ram[RecoveryIO::RamPerCore]^=1; // cancellation cannot establish intact RAM
+        assert(!owner.MarkAutoCancelledCore(1,cancelCase==2,cancelCase==2,io));
+        io.ram[RecoveryIO::RamPerCore]^=1;
+        assert(owner.MarkAutoCancelledCore(1,cancelCase==2,cancelCase==2,io)
+            && !owner.MarkAutoCancelledCore(1,cancelCase==2,cancelCase==2,io)
+            && !owner.MarkAutoRestoredCore(1,io));
+        io.expectCancelledRetirement[1]=false;
+        assert(!owner.RestoreAfterAutoRestoreFleetProof(io) && io.writes==writes);
+        io.expectCancelledRetirement[1]=true;
+        assert(owner.RestoreAfterAutoRestoreFleetProof(io)
             && owner.VerifyAfterAutoResidentRestore(io));
     }
     for (bool autoMode:{false,true}) {

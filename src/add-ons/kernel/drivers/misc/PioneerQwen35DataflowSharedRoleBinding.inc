@@ -37,6 +37,7 @@ class PioneerQwen35SharedRoleBinding {
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
     bool fAutoRestoreOnStop=false;
     bool fAutoRestoreParked[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fAutoCancelParked[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fAutoRestoreRecorded[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fCoreRestoreReleaseWrites[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fCoreRestoreHoldWrites[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -491,6 +492,10 @@ public:
                         stopped=fStackReleaseConfirmed[i]
                             ?io.RolesStoppedAndParked(i,fStopToken[i],bounds.park[0],bounds.park[1])
                             :fStackCancelAttempted[i] && io.StackCancelledAndParked(i,bounds.park[0],bounds.park[1]);
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+                        if (fAutoRestoreOnStop && !fStackReleaseConfirmed[i] && stopped)
+                            fAutoCancelParked[i]=true;
+#endif
                     }
                     if (stopped) { parked=true;break; }
                     fContext.io.Pause();
@@ -532,8 +537,12 @@ public:
             if (fAutoRestoreOnStop) {
                 for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
                     if (!fOwner.StacklessCopiesCaptured(i) || fAutoRestoreRecorded[i]) continue;
-                    if (!fStackReleaseConfirmed[i] || !fAutoRestoreParked[i]
-                        || !fOwner.MarkAutoRestoredCore(i,io)) { stage=17;core=i;return false; }
+                    const bool okay=fStackReleaseConfirmed[i]
+                        ?fAutoRestoreParked[i] && fOwner.MarkAutoRestoredCore(i,io)
+                        :fAutoCancelParked[i] && fStackCancelAttempted[i]
+                            && fOwner.MarkAutoCancelledCore(i,fStackReleaseAttempted[i],
+                                fStackReleaseDrainedAbsent[i],io);
+                    if (!okay) { stage=17;core=i;return false; }
                     fAutoRestoreRecorded[i]=true;
                 }
             }

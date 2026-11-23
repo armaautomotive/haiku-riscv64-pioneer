@@ -300,7 +300,8 @@ public:
     bool ProveRoleAutoRestoreCompletionSafe(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleAutoRestoreArmSafe(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
     bool ProveRoleAutoRestoreHeldSafe(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
-    bool ProveRoleAutoRestoreRetirementSafe(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
+    bool ProveRoleAutoCancelHeldSafe(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*,bool) const { return false; }
+    bool ProveRoleAutoRestoreRetirementSafe(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*,bool) const { return false; }
 #endif
     bool ProveComputeStopSafe(PioneerSessionIO& io,unsigned core) const {
         return CanObserveDedicatedCleanStop(io,core);

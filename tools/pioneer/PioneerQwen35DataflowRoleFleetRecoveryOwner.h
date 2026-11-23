@@ -34,6 +34,7 @@ class DataflowRoleFleetRecoveryOwner {
     bool fAutoRestoreMayRun[DataflowBarrierWorkers]{};
     bool fAutoRestoreArmed[DataflowBarrierWorkers]{};
     bool fAutoRestoreCompleted[DataflowBarrierWorkers]{};
+    bool fAutoRestoreCancelled[DataflowBarrierWorkers]{};
     DataflowRoleRestoreHandoffOwner fCoreRestoreHandoff[DataflowBarrierWorkers];
     template<class IO> static bool AllSafe(IO& io) {
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)
@@ -94,11 +95,12 @@ class DataflowRoleFleetRecoveryOwner {
             if (captured) {
                 if (!reader || !writer || reader!=fRam.OriginalWords(core,DataflowRoleReader)
                     || writer!=fRam.OriginalWords(core,DataflowRoleWriter)
-                    || !fAutoRestoreArmed[core] || !fAutoRestoreCompleted[core]
+                    || (!fAutoRestoreArmed[core] && !fAutoRestoreCancelled[core])
+                    || !fAutoRestoreCompleted[core]
                     || !fCoreRestoreHandoff[core].Untouched()
-                    || !io.AutoRestoreRetirementSafe(core,reader,writer)) return false;
+                    || !io.AutoRestoreRetirementSafe(core,reader,writer,fAutoRestoreCancelled[core])) return false;
             } else if (reader || writer || fAutoRestoreArmed[core] || fAutoRestoreCompleted[core]
-                || !fCoreRestoreHandoff[core].Untouched()) return false;
+                || fAutoRestoreCancelled[core] || !fCoreRestoreHandoff[core].Untouched()) return false;
         }
         return true;
     }
@@ -257,6 +259,25 @@ public:
             || !fRam.MarkCoreRestoredByCore(core,io)
             || !io.AutoRestoreHeldSafe(core,reader,writer)) return false;
         fAutoRestoreCompleted[core]=true;return true;
+    }
+    // A pre-stack shim that cancelled and parked has not used private RAM.
+    // A posted stack-release write must first be proved drained and absent.
+    // IO also proves that cancellation, saved sources and writer exclusion
+    // remain valid while the fleet is held and through later retirement.
+    template<class IO> bool MarkAutoCancelledCore(unsigned core,bool releaseAttempted,
+        bool releaseDrainedAbsent,IO& io) {
+        if (!fAutoRestoreMode || !fCoreLocalReleaseLedger || !fStackless
+            || (fPhase!=ReleaseAttempted && fPhase!=Faulted) || core>=DataflowBarrierWorkers
+            || !fRam.StacklessCopiesCaptured(core) || fAutoRestoreCompleted[core]
+            || releaseAttempted!=releaseDrainedAbsent
+            || (releaseAttempted && !fAutoRestoreArmed[core])) return false;
+        fPhase=Faulted;
+        const uint32_t* reader=fRam.OriginalWords(core,DataflowRoleReader);
+        const uint32_t* writer=fRam.OriginalWords(core,DataflowRoleWriter);
+        if (!reader || !writer || !io.AutoRestoreCancelHeldSafe(core,reader,writer,releaseAttempted)
+            || !fRam.MarkCoreRestoredByCore(core,io)
+            || !io.AutoRestoreCancelHeldSafe(core,reader,writer,releaseAttempted)) return false;
+        fAutoRestoreCancelled[core]=true;fAutoRestoreCompleted[core]=true;return true;
     }
     // Replace a held core's startup shims with its local restore shims. The
     // fleet's own RAM ledger and the IO scope must identify the same retained

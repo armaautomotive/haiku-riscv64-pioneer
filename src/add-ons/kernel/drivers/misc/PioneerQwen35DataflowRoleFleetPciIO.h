@@ -609,13 +609,19 @@ public:
             && AllRolesHeld(core) && DefaultBootRouting(core)
             && fScope.ProveRoleAutoRestoreHeldSafe(fIO,core,reader,writer);
     }
-    bool AutoRestoreRetirementSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+    bool AutoRestoreCancelHeldSafe(unsigned core,const uint32_t* reader,const uint32_t* writer,bool releaseAttempted) {
+        return StacklessHeldCopySourceSafe(core,reader,writer)
+            && fScope.ProveRoleAutoCancelHeldSafe(fIO,core,reader,writer,releaseAttempted)
+            && AllRolesHeld(core) && DefaultBootRouting(core)
+            && fScope.ProveRoleAutoCancelHeldSafe(fIO,core,reader,writer,releaseAttempted);
+    }
+    bool AutoRestoreRetirementSafe(unsigned core,const uint32_t* reader,const uint32_t* writer,bool cancelled) {
         const uint32_t* r=nullptr;const uint32_t* w=nullptr;bool captured=false;
         return reader && writer && RetirementRamSnapshotSources(core,r,w,captured)
             && captured && r==reader && w==writer
-            && fScope.ProveRoleAutoRestoreRetirementSafe(fIO,core,reader,writer)
+            && fScope.ProveRoleAutoRestoreRetirementSafe(fIO,core,reader,writer,cancelled)
             && fGuard.ProveSelectedRoute(core)
-            && fScope.ProveRoleAutoRestoreRetirementSafe(fIO,core,reader,writer);
+            && fScope.ProveRoleAutoRestoreRetirementSafe(fIO,core,reader,writer,cancelled);
     }
 #endif
     bool StacklessFleetPreparationSafe(unsigned core) {
@@ -786,9 +792,10 @@ public:
     }
 #endif
     // A matching L1 copy alone does not prove the core restored private RAM.
-    // Scope must additionally prove the exact one-shot restore, fresh result,
-    // stopped roles, preserved source and writer exclusion. It currently
-    // rejects this proof in the real Haiku witness.
+    // Scope must additionally prove either the exact one-shot restore and
+    // fresh result, or that stackless cancellation preserved the original
+    // RAM, plus held roles, preserved sources and writer exclusion. It
+    // currently rejects both proofs in the real Haiku witness.
     bool StacklessCoreRestoreProven(unsigned core,const uint32_t* reader,const uint32_t* writer) {
         return StacklessHeldCopySourceSafe(core,reader,writer)
             && fScope.ProveRoleCoreRestore(fIO,core,reader,writer)
