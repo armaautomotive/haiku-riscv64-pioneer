@@ -24,6 +24,11 @@ static inline bool BlackholeResidentReadRegister(uint32_t offset)
 	// TLB. The mapping is read-only; no NoC1 control writes are exposed.
 	if (offset>=0x10000 && offset<0x12000)
 		return BlackholeResidentReadRegister(offset-0x10000);
+#ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
+	// The shared-role held-fleet audit samples FIFO availability and sticky
+	// overflow on each NoC. These are read-only NIU status registers.
+	if (offset==0x64 || offset==0x68) return true;
+#endif
 #endif
 	return BlackholeComputeNocReadOffset(offset) || (offset<=0x24 && (offset&3)==0)
 		|| (offset>=0x208 && offset<=0x214 && (offset&3)==0)

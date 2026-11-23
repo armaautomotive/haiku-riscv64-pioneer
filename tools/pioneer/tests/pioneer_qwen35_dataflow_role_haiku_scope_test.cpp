@@ -1,11 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 #define PIONEER_QWEN35_RECOVERY_COMPILE_ONLY 1
 #define PIONEER_QWEN35_DEVICE_DISPATCH 1
+#define PIONEER_QWEN35_DATAFLOW_REWRITE 1
 #include <KernelExport.h>
 #include "../PioneerQwen35DataflowRolePhysicalPlan.h"
 #include "../PioneerQwen35DataflowOwner.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerPciProfile.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeDramSamplesProbe.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeResidentReadProbe.h"
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
@@ -145,6 +147,9 @@ struct PioneerSessionIO {
         return workerBoxes[runtimeCore].shutdownSequence;
     }
     uint32_t ResidentNocRead(unsigned offset) {
+        // Match the actual PioneerSessionIO wrapper rather than returning
+        // values for registers that its read-only filter would reject.
+        if (!BlackholeResidentReadRegister(offset)) return UINT32_MAX;
         const unsigned noc=offset>=0x10000?1:0,at=offset-(noc?0x10000:0);
         if (at==0x100) return nocConfig[noc];
         if (at==0x64) return nocAvailable[noc];

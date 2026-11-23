@@ -44,6 +44,14 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
     context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
     assert(context->qwen35SharedRoleBinding);
     io.runtimeCore=7; io.simulateArc=true; io.firmwareMatches=true; io.selectCalls=io.tlbWrites=0;
+    for (unsigned noc=0;noc<2;noc++) {
+        io.nocConfig[noc]=1U<<16; io.nocAvailable[noc]=0x10101010U;
+        assert(BlackholeResidentReadRegister(noc*0x10000+0x64));
+        assert(BlackholeResidentReadRegister(noc*0x10000+0x68));
+        assert(!BlackholeResidentReadRegister(noc*0x10000+0x60));
+        assert(!BlackholeResidentWriteRegister(noc*0x10000+0x64));
+        assert(!BlackholeResidentWriteRegister(noc*0x10000+0x68));
+    }
     // ARC inspection and both 120-core sweeps can finish, but they cannot
     // authorize the independent fleet ownership proof or role mapping.
     assert(!io.SharedCaptureAndStageHeld());
@@ -52,6 +60,7 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
     assert(!io.SharedArmAndBeginRelease() && !io.SharedStartCore(0));
     assert(PioneerQ35DestroySharedRoleBinding(context->qwen35SharedRoleBinding));
     context->qwen35SharedRoleBinding=nullptr;
+    io.nocConfig[0]=io.nocConfig[1]=io.nocAvailable[0]=io.nocAvailable[1]=0;
     io.simulateArc=false; io.firmwareMatches=false;
 }
 
