@@ -4059,6 +4059,9 @@ static bool PioneerQ35DestroySharedRoleBinding(PioneerQwen35SharedRoleBinding* b
 #ifdef PIONEER_QWEN35_ROLE_STAGE_QUALIFY
 class PioneerQ35RoleStageQualification;
 #endif
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowProjectionQualification.h"
+#endif
 struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
 	bool qualificationTraceActive=false;
@@ -4543,12 +4546,12 @@ struct PioneerStoreContext {
 #endif
 	}
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
-	PioneerQwen35::DataflowServiceResult InstallDataflowRewrite() {
+private:
+	PioneerQwen35::DataflowServiceResult InstallDataflowServiceResources() {
 		if (qwen35DataflowMemory || qwen35DataflowService
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 			|| qwen35SharedRoleBinding
 #endif
-			|| !qwen35DataflowAuthority || !qwen35DataflowProgramScratch
 			|| !qwen35DataflowRoutesAudited)
 			return PioneerQwen35::DataflowServiceInvalidState;
 		qwen35DataflowMemory=new(std::nothrow) PioneerQwen35DataflowPciMemory<PioneerSessionIO>(io);
@@ -4590,6 +4593,36 @@ struct PioneerStoreContext {
 		qwen35DataflowLastResult=result;
 		return result;
 	}
+public:
+	PioneerQwen35::DataflowServiceResult InstallDataflowRewrite() {
+		if (!qwen35DataflowAuthority || !qwen35DataflowProgramScratch)
+			return PioneerQwen35::DataflowServiceInvalidState;
+		return InstallDataflowServiceResources();
+	}
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
+	// Separate non-loadable diagnostic witness. The scope must establish the
+	// locked session, scratch ownership and held fleet before any actual use.
+	template<class Scratch,class Scope>
+	bool PrepareDataflowQualificationRoutes(Scratch& scratch,Scope& scope,uint32_t& stage,uint32_t& core) {
+		stage=0;core=0xff;
+		auto& dram=baseline.baseline.baseline.baseline.dram;
+		return !qwen35DataflowAuthority && !qwen35DataflowProgramScratch && !qwen35GraphOwner
+			&& !qwen35DataflowMemory && !qwen35DataflowService && scratch.IsStaged()
+			&& banks.Q35StreamOwnerMatches(dram,&scratch,PioneerQwen35::DataflowCoreCount)
+			&& scope.QualificationPrepareRoutesAllowed(scratch,*this)
+			&& io.SessionIdle() && io.ProveFleetRoutes(stage,core);
+	}
+	template<class Scratch,class Scope>
+	PioneerQwen35::DataflowServiceResult InstallDataflowQualification(Scratch& scratch,Scope& scope) {
+		auto& dram=baseline.baseline.baseline.baseline.dram;
+		if (qwen35DataflowAuthority || qwen35DataflowProgramScratch || qwen35GraphOwner
+			|| !scratch.IsStaged() || !qwen35DataflowRoutesAudited
+			|| !banks.Q35StreamOwnerMatches(dram,&scratch,PioneerQwen35::DataflowCoreCount)
+			|| !scope.QualificationInstallationAllowed(scratch,*this))
+			return PioneerQwen35::DataflowServiceInvalidState;
+		return InstallDataflowServiceResources();
+	}
+#endif
 	PioneerQwen35::DataflowServiceResult CloseDataflowRewrite() {
 		if (!qwen35DataflowService) return PioneerQwen35::DataflowServiceInvalidState;
 		if (qwen35DataflowService->Closed()) return PioneerQwen35::DataflowServiceClosed;

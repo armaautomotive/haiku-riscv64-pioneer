@@ -20,6 +20,17 @@ public:
     bool ScratchOutputAllowed(const void*) const { return permitted; }
     bool ScratchRestoreAllowed(const void*) const { return permitted; }
     void RetainScratch(const void*) { permitted=false; }
+    bool QualificationPrepareRoutesAllowed(const PioneerQ35ProjectionScratch& scratch,
+        const PioneerStoreContext& requested) const {
+        using Fixture=PioneerQwen35::DataflowProjectionQualification;
+        return permitted && context==&requested
+            && scratch.MatchesStagedLease(0,Fixture::ScratchAddress,Fixture::ScratchBytes)
+            && scratch.MatchesBankClaim(context->banks,context->baseline.baseline.baseline.baseline.dram);
+    }
+    bool QualificationInstallationAllowed(const PioneerQ35ProjectionScratch& scratch,
+        const PioneerStoreContext& requested) const {
+        return QualificationPrepareRoutesAllowed(scratch,requested) && context->qwen35DataflowRoutesAudited;
+    }
     bool QualificationLeaseMatches(const PioneerQ35ProjectionScratch& scratch,unsigned bank,
         unsigned address,unsigned bytes,const unsigned (&routes)[2][PioneerQwen35::Banks]) const {
         return permitted && context && scratch.MatchesStagedLease(bank,address,bytes)
@@ -61,5 +72,11 @@ PioneerQ35ProjectionScratchCompileWitness(PioneerStoreContext& context,
     if (action==7) return context.qwen35DataflowService
         && qualification.Run(*context.qwen35DataflowService,context.io,scratch,scope)
             ==PioneerQwen35::DataflowServiceComplete;
+    if (action==8) {
+        uint32_t stage=0,core=0;
+        return context.PrepareDataflowQualificationRoutes(scratch,scope,stage,core);
+    }
+    if (action==9) return context.InstallDataflowQualification(scratch,scope)
+        ==PioneerQwen35::DataflowServiceComplete;
     return false;
 }
