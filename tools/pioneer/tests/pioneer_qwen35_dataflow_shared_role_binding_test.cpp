@@ -90,7 +90,8 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
     assert(context && io.qwen35BorrowedRoleScope);
     context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
     assert(context->qwen35SharedRoleBinding);
-    io.runtimeCore=7; io.simulateArc=true; io.firmwareMatches=true; io.selectCalls=io.tlbWrites=0;
+    io.runtimeCore=7; io.simulateArc=true; io.simulateHdma=true; io.firmwareMatches=true;
+    io.selectCalls=io.tlbWrites=io.hdmaReads=0;
     auto* scope=io.qwen35BorrowedRoleScope;
     assert(scope->ProveRoleImageInspectionAllowed(io,7));
     assert(!scope->ProveRoleImageInspectionAllowed(io,8));
@@ -120,16 +121,39 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
         assert(!BlackholeResidentWriteRegister(noc*0x10000+0x64));
         assert(!BlackholeResidentWriteRegister(noc*0x10000+0x68));
     }
-    // ARC inspection and both 120-core sweeps can finish, but they cannot
+    PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness> route(io,*scope);
+    bool restoreFailed=false;
+    io.simulateHdma=false;
+    assert(!PioneerQwen35SampleHostDma(io,*scope,route,restoreFailed) && !restoreFailed);
+    assert(!io.selectCalls && !io.tlbWrites);
+    io.simulateHdma=true; io.hdmaSourceStable=false;
+    assert(!PioneerQwen35SampleHostDma(io,*scope,route,restoreFailed) && !restoreFailed);
+    assert(io.runtimeCore==7 && !io.tlbWrites && !io.hdmaReads);
+    io.hdmaSourceStable=true;
+    for (unsigned word=0;word<4;word++) {
+        io.hdmaWords[word]=1;
+        assert(!PioneerQwen35SampleHostDma(io,*scope,route,restoreFailed) && !restoreFailed);
+        assert(io.runtimeCore==7 && route.ProveSelectedRoute(7));
+        io.hdmaWords[word]=0;
+    }
+    io.hdmaReads=0; io.hdmaChangeAt=4;
+    assert(!PioneerQwen35SampleHostDma(io,*scope,route,restoreFailed) && !restoreFailed);
+    assert(io.runtimeCore==7 && route.ProveSelectedRoute(7));
+    io.hdmaChangeAt=UINT32_MAX; io.hdmaReads=0; io.dropHdmaRestore=true;
+    assert(!PioneerQwen35SampleHostDma(io,*scope,route,restoreFailed) && restoreFailed);
+    io.dropHdmaRestore=false;
+    assert(io.SelectRuntimeCore(7) && route.ProveSelectedRoute(7));
+    io.selectCalls=io.tlbWrites=io.hdmaReads=0;
+    // ARC, DMA inspection and both 120-core sweeps can finish, but they cannot
     // authorize the independent fleet ownership proof or role mapping.
     assert(!io.SharedCaptureAndStageHeld());
-    assert(io.tlbWrites==6 && io.selectCalls==241 && io.runtimeCore==7);
+    assert(io.tlbWrites==12 && io.selectCalls==243 && io.hdmaReads==12 && io.runtimeCore==7);
     assert(!gMapCalls && !io.sharedResetWrites && !io.holdWrites);
     assert(!io.SharedArmAndBeginRelease() && !io.SharedStartCore(0));
     assert(PioneerQ35DestroySharedRoleBinding(context->qwen35SharedRoleBinding));
     context->qwen35SharedRoleBinding=nullptr;
     io.nocConfig[0]=io.nocConfig[1]=io.nocAvailable[0]=io.nocAvailable[1]=0;
-    io.simulateArc=false; io.firmwareMatches=false;
+    io.simulateArc=false; io.simulateHdma=false; io.firmwareMatches=false;
 }
 
 static void ExerciseUnexpectedFirmware(PioneerSessionIO& io)

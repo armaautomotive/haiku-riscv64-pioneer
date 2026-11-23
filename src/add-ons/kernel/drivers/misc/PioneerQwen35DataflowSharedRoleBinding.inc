@@ -7,6 +7,7 @@
 #endif
 #include "PioneerQwen35DataflowL2CpuResetProbe.h"
 #include "PioneerQwen35DataflowHeldFleetSample.h"
+#include "PioneerQwen35DataflowHostDmaSample.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleStartOrder.h"
 class PioneerQwen35SharedRoleBinding {
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_TEST
@@ -102,6 +103,9 @@ public:
         const bool heldSample=PioneerQwen35SampleHeldFleet(fContext.io,*scope,route,failedCore,restoreFailed);
         if (restoreFailed) sColdRecoveryRequired=true;
         if (!heldSample) return false;
+        const bool dmaSample=PioneerQwen35SampleHostDma(fContext.io,*scope,route,restoreFailed);
+        if (restoreFailed) sColdRecoveryRequired=true;
+        if (!dmaSample) return false;
         // These status samples do not establish the independent global
         // incoming-NoC/ownership proof, which remains false in this build.
         // No role mappings or role memory writes occur without that proof.

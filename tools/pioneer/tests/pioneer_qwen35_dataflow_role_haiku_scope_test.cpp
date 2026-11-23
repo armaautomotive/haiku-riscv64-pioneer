@@ -55,10 +55,11 @@ struct PioneerSessionIO {
     PioneerQwen35RoleBorrowedScopeWitness* qwen35BorrowedRoleScope=nullptr;
 #endif
     unsigned runtimeCore=0; bool fleetEnabled=true,mapping=true;
-    bool simulateArc=false,tlbOverride=false;
+    bool simulateArc=false,tlbOverride=false,simulateHdma=false,tlb0Override=false;
+    bool hdmaSourceStable=true,dropHdmaRestore=false;
     bool firmwareMatches=false;
-    unsigned selectCalls=0,tlbWrites=0;
-    uint32_t slot1[3]{};
+    unsigned selectCalls=0,tlbWrites=0,hdmaReads=0,hdmaChangeAt=UINT32_MAX;
+    uint32_t slot0[3]{},slot1[3]{},hdmaWords[4]{};
     uint32_t reset=0x47800,nocDoorbell[2][4]{},nocOutstanding[2][32]{};
     uint32_t nocConfig[2]{},nocAvailable[2]{},nocOverflow[2]{};
     mutable unsigned resetReads=0;
@@ -78,7 +79,7 @@ struct PioneerSessionIO {
     uint32_t computePc=0;
     bool SelectRuntimeCore(unsigned core) {
         if (core>=DataflowBarrierWorkers) return false;
-        ++selectCalls; runtimeCore=core; tlbOverride=false; return true;
+        ++selectCalls; runtimeCore=core; tlbOverride=false; tlb0Override=false; return true;
     }
     bool MapQ38Panel() const { return mapping; }
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
@@ -99,13 +100,29 @@ struct PioneerSessionIO {
 #endif
     bool DataflowPanelMappingStable() const { return mapping; }
     bool SharedRoleFirmwareMatches() const { return firmwareMatches; }
+    bool SharedHostDmaMapped() const { return simulateHdma; }
+    bool SharedHostDmaPciSourceStable() { return simulateHdma && hdmaSourceStable && mapping && runtimeCore==0; }
+    uint32_t HostHdmaRead(unsigned word) {
+        assert(simulateHdma && tlb0Override && runtimeCore==0 && word<4);
+        return hdmaReads++==hdmaChangeAt ? 1 : hdmaWords[word];
+    }
     uint32_t DramTlbRead(unsigned slot,unsigned word) {
+        if (slot==0 && tlb0Override) return slot0[word];
         if (slot==1 && tlbOverride) return slot1[word];
         const uint32_t route=DataflowBarrierWorkerRoute(runtimeCore);
         return BlackholeDramFixedTlbWord(slot?0xffa00000U:0U,route&63,(route>>6)&63,false,word);
     }
     void DramTlbWrite(unsigned slot,unsigned word,uint32_t value) {
-        assert(simulateArc && slot==1 && word<3);
+        assert(word<3 && ((simulateArc && slot==1) || (simulateHdma && slot==0)));
+        if (slot==0) {
+            if (!tlb0Override) {
+                for (unsigned i=0;i<3;i++) slot0[i]=DramTlbRead(0,i);
+                tlb0Override=true;
+            }
+            ++tlbWrites;
+            if (!(dropHdmaRestore && hdmaReads && word==0)) slot0[word]=value;
+            return;
+        }
         if (!tlbOverride) {
             for (unsigned i=0;i<3;i++) slot1[i]=DramTlbRead(1,i);
             tlbOverride=true;

@@ -3615,6 +3615,11 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	}
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 	bool SharedRoleFirmwareMatches() const;
+	bool SharedHostDmaMapped() const {
+		return hdmaArea>=B_OK && hdma && PioneerMmioIO::area>=B_OK && nodeID
+			&& tlbArea>=B_OK && tlb;
+	}
+	bool SharedHostDmaPciSourceStable();
 	bool SharedArcResetMapped() const {
 		return PioneerArcIO::scratchArea>=B_OK && PioneerArcIO::scratch;
 	}
@@ -4432,6 +4437,35 @@ struct PioneerStoreContext {
 #include "PioneerQwen35DataflowRoleHaikuScopeWitness.inc"
 #endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+// The shared-role DMA observation is read-only apart from the separately
+// guarded temporary TLB200 selection. These checks sample the current PCIe
+// route and NIU translation; they do not exclude a later firmware command.
+bool
+PioneerSessionIO::SharedHostDmaPciSourceStable()
+{
+	if (!SharedHostDmaMapped() || !qwen35DataflowContext
+		|| &qwen35DataflowContext->io!=this || runtimeCore!=0
+		|| dram.version!=1 || dram.state!=TT_DRAM_SAMPLE_ROUTES_OK || dram.routes_verified!=7
+		|| !dram.data_restored || !dram.tlb_restored || dram.recovery_required
+		|| noc.version!=1 || noc.state!=TT_COMPUTE_NOC_PASSED || !noc.tlb_restored || noc.recovery_required
+		|| !PioneerMinimumBarLayoutMatches(profile) || !Quiet() || !BlackholeCardControlsQuiet(*this)
+		|| CardRead(0,4)!=0xb1401e52 || CardRead(0x2c,4)!=0x00431e52
+		|| RootRead(0,4)!=0x20421e30 || (RootRead(8,4)>>8)!=0x060400
+		|| RootRead(0x18,4)!=0x003f0100 || RootRead(0x20,4)!=0x0000fff0
+		|| (ReadNodeId()&0xfff)!=2 || !BlackholeHostSourceRoute(noc.source[0])
+		|| !BlackholeDramSourceStable(*this,dram)) return false;
+	PioneerBlackholeBarPlan plan;
+	if (!PioneerPlanBlackholeBars(profile.ranges,TT_PIONEER_RANGE_COUNT,plan)
+		|| plan.hostStart[0]!=profile.bar0_host_start || plan.hostEnd[0]!=profile.bar0_host_end
+		|| plan.hostStart[1]!=profile.bar2_host_start || plan.hostEnd[1]!=profile.bar2_host_end) return false;
+	for (unsigned i=0;i<6;i++) if (CardRead(0x10+i*4,4)!=plan.bars[i]) return false;
+	for (unsigned i=0;i<3;i++) if (RootRead(0x24+i*4,4)!=plan.bridge[i]) return false;
+	for (unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++)
+		if (ResidentNocRead(BlackholeDramSourceOffset(i))!=noc.source[0][i]) return false;
+	uint32 status=0;
+	return HostPciRead(0,4,2)==0x402 && HostPciRead(1,4,2)==0x402
+		&& BlackholeHostPcieStatus(*this,0,status) && BlackholeHostPcieStatus(*this,1,status);
+}
 #include "PioneerQwen35DataflowSharedRoleBinding.inc"
 static bool
 PioneerQ35BeginRetainedFaultScope(PioneerStoreContext& context,const PioneerQ35GraphOwner* owner,const void* run)
