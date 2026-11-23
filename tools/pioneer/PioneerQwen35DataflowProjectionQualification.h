@@ -16,6 +16,9 @@ public:
         Q4BlockBytes=144, TileBytes=Q4BlockBytes*16,
         WeightBytes=Rows*Blocks*Q4BlockBytes, InputBytes=Inputs*4,
         OutputBytes=Rows*4, PageBytes=4096,
+        // The real fleet route audit resolves page zero in every bank.
+        // Keep the fixed diagnostic claim outside that page.
+        ScratchOffset=PageBytes, ScratchAddress=unsigned(BankBase)+ScratchOffset,
         WeightPages=(WeightBytes+PageBytes-1)/PageBytes,
         InputPages=(InputBytes+PageBytes-1)/PageBytes,
         OutputPages=(OutputBytes+PageBytes-1)/PageBytes,

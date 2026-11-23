@@ -48,13 +48,15 @@ PioneerQ35ProjectionScratchCompileWitness(PioneerStoreContext& context,
     auto& dram=context.baseline.baseline.baseline.baseline.dram;
     auto& noc=context.baseline.baseline.baseline.noc;
     if (action==0) return scratch.Capture(context.io,scope,dram,noc,context.host,context.lease,
-        context.banks,0,0,context.initialized,PioneerResidentBanks::Pages,saved,words);
+        context.banks,0,PioneerQwen35::DataflowProjectionQualification::ScratchOffset,
+        context.initialized,PioneerResidentBanks::Pages,saved,words);
     if (action==1) return scratch.Stage(context.io,scope,dram,noc,context.host,context.lease,context.banks);
     if (action==2) return scratch.MarkRunning(scope);
     if (action==3) return scratch.MarkStopped(scope);
     if (action==4) return scratch.VerifyOutput(context.io,scope,dram,noc,context.host,context.lease,context.banks);
     if (action==5) return scratch.Restore(context.io,scope,dram,noc,context.host,context.lease,context.banks);
-    if (action==6) return qualification.Bind(scratch,scope,0,PioneerResidentBanks::Base,
+    if (action==6) return qualification.Bind(scratch,scope,0,
+        PioneerQwen35::DataflowProjectionQualification::ScratchAddress,
         context.qwen35DataflowRoutes);
     if (action==7) return context.qwen35DataflowService
         && qualification.Run(*context.qwen35DataflowService,context.io,scratch,scope)

@@ -43,22 +43,23 @@ int main()
     auto scratch=std::make_unique<PioneerQ35ProjectionScratch>();
     auto device=std::make_unique<ScratchDevice<>>();
     auto io=std::make_unique<ProjectionServiceIO>();
+    io->memory.base=Fixture::ScratchAddress;
     auto service=std::make_unique<DataflowServiceOwner>();
     auto qualification=std::make_unique<DataflowProjectionQualificationService>();
     CombinedScope scope(*device);
     assert(scratch->Capture(device->io,scope,device->dram,device->noc,device->host,device->lease,
-        device->banks,0,0,device->initialized.data(),device->initialized.size(),
+        device->banks,0,Fixture::ScratchOffset,device->initialized.data(),device->initialized.size(),
         device->snapshot.data(),device->snapshot.size()));
     assert(scratch->Stage(device->io,scope,device->dram,device->noc,device->host,device->lease,device->banks));
-    assert(qualification->Bind(*scratch,scope,0,BankBase,TestRoutes));
+    assert(qualification->Bind(*scratch,scope,0,Fixture::ScratchAddress,TestRoutes));
     // Copy the staged bank into the test-only device model; actual hardware
     // performs these reads through NoC, never through a CPU fallback.
     for (unsigned n=0;n<Fixture::WeightPages;n++) {
-        const auto& p=device->io.memory.at(device->io.Key(18|(12<<6),PioneerResidentBanks::Base+n*4096));
+        const auto& p=device->io.memory.at(device->io.Key(18|(12<<6),Fixture::ScratchAddress+n*4096));
         std::memcpy(io->memory.weights.data()+n*4096,p.data(),4096);
     }
     for (unsigned n=0;n<Fixture::InputPages;n++) {
-        const auto& p=device->io.memory.at(device->io.Key(18|(12<<6),PioneerResidentBanks::Base+(Fixture::WeightPages+n)*4096));
+        const auto& p=device->io.memory.at(device->io.Key(18|(12<<6),Fixture::ScratchAddress+(Fixture::WeightPages+n)*4096));
         const unsigned offset=n*4096,remaining=Fixture::InputBytes-offset;
         std::memcpy(io->memory.input.data()+offset,p.data(),remaining<4096?remaining:4096);
     }
@@ -72,7 +73,7 @@ int main()
     assert(!scratch->Restore(device->io,scope,device->dram,device->noc,device->host,device->lease,device->banks));
     // Model the device writer placing its results in the claimed bank.
     for (unsigned n=0;n<Fixture::OutputPages;n++) {
-        auto& p=device->io.memory[device->io.Key(18|(12<<6),PioneerResidentBanks::Base
+        auto& p=device->io.memory[device->io.Key(18|(12<<6),Fixture::ScratchAddress
             +(Fixture::WeightPages+Fixture::InputPages+n)*4096)];
         const unsigned offset=n*4096,remaining=Fixture::OutputBytes-offset;
         std::memcpy(p.data(),io->memory.output.data()+offset,remaining<4096?remaining:4096);
@@ -84,7 +85,7 @@ int main()
     assert(scratch->Restore(device->io,scope,device->dram,device->noc,device->host,device->lease,device->banks)
         && scratch->IsRestored() && !scope.retained);
     for (unsigned n=0;n<Fixture::ScratchPages;n++) {
-        const auto& p=device->io.memory.at(device->io.Key(18|(12<<6),PioneerResidentBanks::Base+n*4096));
+        const auto& p=device->io.memory.at(device->io.Key(18|(12<<6),Fixture::ScratchAddress+n*4096));
         for (unsigned i=0;i<1024;i++) assert(p[i]==device->original[n*1024+i]);
     }
     std::puts("PASS claimed scratch, 120-worker resident projection, result and full restoration; SIMULATED ONLY");

@@ -5,6 +5,7 @@
 #define PIONEER_BANKS_MOCK_ONLY
 #include "pioneer_resident_banks_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35ProjectionScratch.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35DataflowBankRouteAudit.h"
 #include <memory>
 #include <vector>
 
@@ -14,11 +15,12 @@ struct ScratchScope {
     const void* owner=nullptr;
     bool allowed=true,stopped=false,retained=false;
     bool ScratchReserveAllowed(const void* p,unsigned bank,unsigned offset,unsigned bytes) {
-        if (!allowed || owner || bank!=0 || offset!=0 || bytes!=Fixture::ScratchBytes) return false;
+        if (!allowed || owner || bank!=0 || offset!=Fixture::ScratchOffset || bytes!=Fixture::ScratchBytes) return false;
         owner=p;return true;
     }
     bool ScratchTransferAllowed(const void* p,unsigned bank,unsigned offset,bool) const {
-        return allowed && p==owner && bank==0 && offset<Fixture::ScratchBytes && !(offset&4095);
+        return allowed && p==owner && bank==0 && offset>=Fixture::ScratchOffset
+            && offset<Fixture::ScratchOffset+Fixture::ScratchBytes && !(offset&4095);
     }
     bool ScratchStageAllowed(const void* p) const { return allowed && p==owner; }
     bool ScratchRunAllowed(const void* p) const { return allowed && p==owner; }
@@ -33,8 +35,8 @@ struct CrossCorruptBanksMock : BanksMock {
     void ResidentNocWrite(uint32_t offset,uint32_t value) {
         BanksMock::ResidentNocWrite(offset,value);
         if (corruptDuringRestore && offset==0x40 && value==1 && command[7]==0x212
-            && command[3]==PioneerResidentBanks::Base+(Fixture::ScratchPages-1)*4096) {
-            memory[Key(18|(12<<6),PioneerResidentBanks::Base)][0]^=1;
+            && command[3]==Fixture::ScratchAddress+(Fixture::ScratchPages-1)*4096) {
+            memory[Key(18|(12<<6),Fixture::ScratchAddress)][0]^=1;
             corruptDuringRestore=false;
         }
     }
@@ -50,12 +52,12 @@ template<class Raw=BanksMock> struct ScratchDevice {
     ScratchDevice() {
         assert(banks.Bind(dram) && Prepared(io,host,lease));
         for (unsigned n=0;n<Fixture::ScratchPages;n++) {
-            auto& data=io.memory[io.Key(18|(12<<6),PioneerResidentBanks::Base+n*4096)];
+            auto& data=io.memory[io.Key(18|(12<<6),Fixture::ScratchAddress+n*4096)];
             for (unsigned i=0;i<1024;i++) data[i]=original[n*1024+i]=0xa5500000U^(n*104729U+i*17U);
         }
     }
     bool Capture(PioneerQ35ProjectionScratch& owner) {
-        return owner.Capture(io,scope,dram,noc,host,lease,banks,0,0,initialized.data(),
+        return owner.Capture(io,scope,dram,noc,host,lease,banks,0,Fixture::ScratchOffset,initialized.data(),
             initialized.size(),snapshot.data(),snapshot.size());
     }
     bool Stage(PioneerQ35ProjectionScratch& owner) { return owner.Stage(io,scope,dram,noc,host,lease,banks); }
@@ -64,7 +66,7 @@ template<class Raw=BanksMock> struct ScratchDevice {
     void SetOutput() {
         const unsigned first=Fixture::WeightPages+Fixture::InputPages;
         for (unsigned row=0;row<Fixture::Rows;row++) {
-            auto& data=io.memory[io.Key(18|(12<<6),PioneerResidentBanks::Base+(first+row/1024)*4096)];
+            auto& data=io.memory[io.Key(18|(12<<6),Fixture::ScratchAddress+(first+row/1024)*4096)];
             data[row%1024]=Fixture::ExpectedBits(row);
         }
     }
@@ -80,22 +82,30 @@ int main()
         assert(!owner->Stage(device->io,device->scope,device->dram,device->noc,
             device->host,device->lease,device->banks));
         assert(device->Capture(*owner) && owner->IsCaptured() && device->snapshot==device->original);
-        assert(!device->banks.Range(device->dram,0,0)); // claimed pages are private
+        uint32_t routeAddress=0,route=0,index=0;
+        // Prove the exact page-zero lookup used by ProveFleetRoutes remains
+        // available while the diagnostic's own pages are protected.
+        assert(device->banks.Page(device->dram,0,0,routeAddress,route,index)
+            && routeAddress==PioneerResidentBanks::Base && !index
+            && !device->banks.Range(device->dram,0,Fixture::ScratchOffset));
+        unsigned auditedRoutes[2][PioneerQwen35::Banks]{};uint32_t failedBank=99;
+        assert(PioneerQwen35DataflowAuditBankRoutes(device->banks,device->dram,auditedRoutes,failedBank)
+            && PioneerQwen35::DataflowBankRoutesValid(auditedRoutes));
         assert(device->Stage(*owner) && owner->IsStaged());
-        assert(owner->MatchesStagedLease(0,PioneerResidentBanks::Base,Fixture::ScratchBytes)
-            && !owner->MatchesStagedLease(1,PioneerResidentBanks::Base,Fixture::ScratchBytes)
-            && !owner->MatchesStagedLease(0,PioneerResidentBanks::Base+4096,Fixture::ScratchBytes)
-            && !owner->MatchesStagedLease(0,PioneerResidentBanks::Base,Fixture::ScratchBytes-1));
+        assert(owner->MatchesStagedLease(0,Fixture::ScratchAddress,Fixture::ScratchBytes)
+            && !owner->MatchesStagedLease(1,Fixture::ScratchAddress,Fixture::ScratchBytes)
+            && !owner->MatchesStagedLease(0,PioneerResidentBanks::Base,Fixture::ScratchBytes)
+            && !owner->MatchesStagedLease(0,Fixture::ScratchAddress,Fixture::ScratchBytes-1));
         PioneerResidentBanks otherBanks;
         assert(owner->MatchesBankClaim(device->banks,device->dram)
             && owner->MatchesBankClaimOwner(device->banks,device->dram)
             && !owner->MatchesBankClaim(otherBanks,device->dram));
         assert(owner->MarkRunning(device->scope));
-        assert(!owner->MatchesStagedLease(0,PioneerResidentBanks::Base,Fixture::ScratchBytes));
+        assert(!owner->MatchesStagedLease(0,Fixture::ScratchAddress,Fixture::ScratchBytes));
         assert(!device->Verify(*owner) && !device->Restore(*owner) && !owner->MarkStopped(device->scope));
         device->SetOutput();device->scope.stopped=true;
         assert(owner->MarkStopped(device->scope));
-        auto& firstOutput=device->io.memory[device->io.Key(18|(12<<6),PioneerResidentBanks::Base
+        auto& firstOutput=device->io.memory[device->io.Key(18|(12<<6),Fixture::ScratchAddress
             +(Fixture::WeightPages+Fixture::InputPages)*4096)];
         firstOutput[0]^=1;
         assert(!device->Verify(*owner) && !owner->OutputVerified());
@@ -103,18 +113,30 @@ int main()
         assert(device->Verify(*owner) && owner->OutputVerified());
         assert(device->Restore(*owner) && owner->IsRestored() && !device->scope.retained);
         for (unsigned n=0;n<Fixture::ScratchPages;n++) {
-            const auto& data=device->io.memory.at(device->io.Key(18|(12<<6),PioneerResidentBanks::Base+n*4096));
+            const auto& data=device->io.memory.at(device->io.Key(18|(12<<6),Fixture::ScratchAddress+n*4096));
             for (unsigned i=0;i<1024;i++) assert(data[i]==device->original[n*1024+i]);
         }
         // Claim remains sticky even after verified restore; the session owner
         // must keep the scratch object alive until bank-context destruction.
-        assert(device->banks.Q35StreamClaimed() && !device->banks.Range(device->dram,0,0));
+        assert(device->banks.Q35StreamClaimed() && device->banks.Range(device->dram,0,0)
+            && !device->banks.Range(device->dram,0,Fixture::ScratchOffset));
     }
     {
         auto owner=std::make_unique<PioneerQ35ProjectionScratch>();
         auto device=std::make_unique<ScratchDevice<>>();
         device->initialized[20]=1;
         assert(!device->Capture(*owner) && !device->banks.Q35StreamClaimed());
+    }
+    {
+        int owner=0;
+        auto device=std::make_unique<ScratchDevice<>>();
+        PioneerQ35StreamBankRange wrong[PioneerQwen35::DataflowCoreCount]{};
+        for (unsigned n=0;n<PioneerQwen35::DataflowCoreCount;n++) wrong[n]={0,n*4096,4096};
+        assert(device->banks.ReserveQ35Stream(device->dram,&owner,wrong,
+            PioneerQwen35::DataflowCoreCount,device->initialized.data(),device->initialized.size()));
+        unsigned routes[2][PioneerQwen35::Banks]{};uint32_t failedBank=99;
+        assert(!PioneerQwen35DataflowAuditBankRoutes(device->banks,device->dram,routes,failedBank)
+            && failedBank==0);
     }
     {
         auto owner=std::make_unique<PioneerQ35ProjectionScratch>();

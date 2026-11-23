@@ -3,6 +3,7 @@
 
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRuntimeRecovery.h"
 #include "PioneerQwen35DataflowNoC1Audit.h"
+#include "PioneerQwen35DataflowBankRouteAudit.h"
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 #include "PioneerQwen35DataflowFirmwareIdentity.h"
 #include "PioneerQwen35DataflowNocSafetySample.h"
@@ -475,16 +476,8 @@ PioneerSessionIO::ProveFleetRoutes(uint32_t& failedStage,uint32_t& failedCore)
 		|| lease.closed || lease.unsafe || lease.rootRunning
 		|| lease.prepared!=PioneerQwen35::DataflowCoreCount) return false;
 	unsigned auditedRoutes[2][PioneerQwen35::Banks]={};
-	for (unsigned bank=0;bank<PioneerQwen35::Banks;bank++) {
-		failedStage=3;
-		failedCore=bank;
-		uint32_t address=0,route=0,index=0;
-		if (!context->banks.Page(dram,bank,0,address,route,index)
-			|| route!=(dram.translated[bank][0]|(dram.translated[bank][1]<<6)))
-			return false;
-		auditedRoutes[0][bank]=route;
-		auditedRoutes[1][bank]=route;
-	}
+	failedStage=3;
+	if (!PioneerQwen35DataflowAuditBankRoutes(context->banks,dram,auditedRoutes,failedCore)) return false;
 	failedStage=4;
 	failedCore=0xff;
 	if (!PioneerQwen35::DataflowBankRoutesValid(auditedRoutes)) return false;
