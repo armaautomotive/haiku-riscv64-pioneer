@@ -55,6 +55,12 @@ struct PioneerQ35SharedRoleBindingTestAccess {
         return io.AllRolesHeldForStop(core);
     }
 #endif
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    static DataflowRoleProgramImage Image(const PioneerQwen35SharedRoleBinding& binding) {
+        return binding.RoleImage();
+    }
+    static bool CloseViews(PioneerQwen35SharedRoleBinding& binding) { return binding.fViews.Close(); }
+#endif
     static bool OpenViews(PioneerQwen35SharedRoleBinding& binding) {
         Guard guard;
         return binding.fViews.Open(binding.fContext.io.profile.bar0_host_start,
@@ -97,6 +103,33 @@ static void ExerciseResetRetirement(PioneerSessionIO& io)
 #endif
 
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
+static void ExerciseAutoRestoreImageBinding(PioneerSessionIO& io)
+{
+    auto* context=io.qwen35DataflowContext;
+    context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
+    auto*& binding=context->qwen35SharedRoleBinding;
+    assert(binding && gLocked);
+    const auto ordinary=PioneerQ35SharedRoleBindingTestAccess::Image(*binding);
+    assert(ordinary.Valid() && ordinary.code[DataflowRoleReader]==DataflowSharedReaderCodeWords);
+    assert(binding->SelectAutoRestoreOnStop() && !binding->SelectAutoRestoreOnStop()
+        && !binding->SelectCoreLocalRestore());
+    const auto image=PioneerQ35SharedRoleBindingTestAccess::Image(*binding);
+    assert(image.Valid() && image.code[DataflowRoleReader]==DataflowServiceProbeReaderCodeWords
+        && image.code[DataflowRoleWriter]==DataflowServiceProbeWriterCodeWords
+        && image.shim[DataflowRoleReader]==DataflowServiceProbeReaderShimWords
+        && image.shim[DataflowRoleWriter]==DataflowServiceProbeWriterShimWords);
+    assert(image.bounds.ContainsRunning(DataflowRoleReader,DataflowRoleReaderCodeAddress
+        +(DataflowServiceProbeReaderRuntimeCodeWords-1)*4));
+    assert(!image.bounds.ContainsRunning(DataflowRoleReader,DataflowServiceProbeReaderRestoreAddress)
+        && !image.bounds.ContainsRunning(DataflowRoleWriter,DataflowServiceProbeWriterRestoreAddress)
+        && !image.bounds.ContainsRunning(DataflowRoleReader,DataflowServiceProbeReaderShimParkAddress));
+    ResetMaps();gAllowWrite=true;
+    assert(PioneerQ35SharedRoleBindingTestAccess::OpenViews(*binding));
+    const unsigned resetWrites=io.sharedResetWrites;
+    assert(!binding->ArmAndBeginRelease() && !binding->StartCore(0) && io.sharedResetWrites==resetWrites);
+    assert(PioneerQ35SharedRoleBindingTestAccess::CloseViews(*binding));
+    assert(PioneerQ35DestroySharedRoleBinding(binding));binding=nullptr;gAllowWrite=false;
+}
 static void ExerciseCoreLocalBinding(PioneerSessionIO& io)
 {
     auto* context=io.qwen35DataflowContext;
@@ -584,6 +617,8 @@ int main()
 #endif
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
     gBorrowedScopeHook=ExerciseCoreLocalBinding;
+    assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+    gBorrowedScopeHook=ExerciseAutoRestoreImageBinding;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
 #endif
     service.capturePending=false;

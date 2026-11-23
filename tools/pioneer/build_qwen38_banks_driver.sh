@@ -816,6 +816,9 @@ if [ "$variant" = 60 ]; then
 			local_restore_image="$output/qwen35-local-restore-images"
 			sh "$project/tools/pioneer/build_qwen35_local_restore_images.sh" "$build" "$local_restore_image"
 			set -- "$@" -I"$local_restore_image"
+			service_restore_image="$output/qwen35-snapshot-service-restore-images"
+			PIONEER_QWEN35_ROLE_SERVICE_PROBE_BUILD=1 sh "$project/tools/pioneer/build_qwen35_role_service_probe_images.sh" "$build" "$service_restore_image"
+			set -- "$@" -I"$service_restore_image"
 		fi
 	fi
 fi

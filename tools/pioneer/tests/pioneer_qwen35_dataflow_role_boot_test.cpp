@@ -41,6 +41,16 @@ int main()
         assert(!bounds.ContainsRunning(role,shim+1));
         assert(!bounds.ContainsRunning(role,UINT32_MAX));
     }
+    // A composite service image may append a restore program after the
+    // running role text. Neither its entry nor park may count as live work.
+    auto composite=bounds;
+    composite.runtimeCodeWords[0]=40;composite.runtimeCodeWords[1]=48;
+    assert(composite.Valid());
+    assert(composite.ContainsRunning(DataflowRoleReader,DataflowRoleReaderCodeAddress+39*4));
+    assert(!composite.ContainsRunning(DataflowRoleReader,DataflowRoleReaderCodeAddress+40*4));
+    assert(composite.ContainsRunning(DataflowRoleWriter,DataflowRoleWriterCodeAddress+47*4));
+    assert(!composite.ContainsRunning(DataflowRoleWriter,DataflowRoleWriterCodeAddress+48*4));
+    composite.runtimeCodeWords[1]=65;assert(!composite.Valid());
     assert(!bounds.ContainsRunning(DataflowRoleReader,DataflowRoleWriterCodeAddress));
     assert(!bounds.ContainsRunning(DataflowRoleCount,DataflowRoleReaderCodeAddress));
     auto invalid=bounds; invalid.codeWords[0]=0;

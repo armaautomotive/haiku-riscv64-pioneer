@@ -294,6 +294,11 @@ public:
     bool ProveRolePostStopSafe(PioneerSessionIO& io,unsigned core) const {
         return CanObserveDedicatedCleanStop(io,core);
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    // A parked receipt is an observation, not lifetime exclusion of a later
+    // reset, writer or misroute. The real scope still denies this proof.
+    bool ProveRoleAutoRestoreCompletionSafe(PioneerSessionIO&,unsigned) const { return false; }
+#endif
     bool ProveComputeStopSafe(PioneerSessionIO& io,unsigned core) const {
         return CanObserveDedicatedCleanStop(io,core);
     }

@@ -51,6 +51,16 @@ for role,shim,shim_end,start,restore,limit in (
             or not service or len(service)%4 or start+len(service)>restore
             or not local_restore or len(local_restore)%4 or restore+len(local_restore)>limit):
         raise SystemExit(f'invalid {role} service/restore placement')
+    shim_symbols={}
+    for line in (out/f'{role}.symbols').read_text().splitlines():
+        fields=line.split()
+        if len(fields)==3 and fields[1] in ('T','t'):
+            shim_symbols[fields[2]]=int(fields[0],16)
+    start_name=f'qwen35_shared_{role}_start'
+    shim_park=shim_symbols.get(start_name+'_park',-1)
+    if (shim_symbols.get(start_name)!=shim or shim_park<shim or shim_park+4>shim+len(startup)
+            or int.from_bytes(startup[shim_park-shim:shim_park-shim+4],'little')!=0x0000006f):
+        raise SystemExit(f'invalid {role} service shim entry or park')
     symbols={}
     for line in (out/'local-probe'/'local-restore'/f'{role}.symbols').read_text().splitlines():
         fields=line.split()
@@ -62,6 +72,8 @@ for role,shim,shim_end,start,restore,limit in (
         raise SystemExit(f'invalid {role} restore park symbol')
     code=service+bytes(restore-start-len(service))+local_restore
     cap=role.capitalize()
+    parts.append(f'inline constexpr unsigned DataflowServiceProbe{cap}ShimParkAddress=0x{shim_park:08x}U;\n')
+    parts.append(f'inline constexpr unsigned DataflowServiceProbe{cap}RuntimeCodeWords={len(service)//4}U;\n')
     parts.append(f'inline constexpr unsigned DataflowServiceProbe{cap}RestoreAddress=0x{restore:08x}U;\n')
     parts.append(f'inline constexpr unsigned DataflowServiceProbe{cap}ParkAddress=0x{restore+original_park-shim:08x}U;\n')
     for kind,data in (('Shim',startup),('Code',code)):

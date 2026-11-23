@@ -18,6 +18,10 @@ struct FleetPciTestScope {
     bool stacklessSnapshot=false;
     bool heldCopyProof=false,heldCopyCaptured=false,heldCopyDrift=false;
     bool coreRestoreProof=false;
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    bool autoRestoreCompletion=false;
+    bool ProveRoleAutoRestoreCompletionSafe(PioneerSessionIO&,unsigned) const { return autoRestoreCompletion; }
+#endif
     bool restoreHeld=false,restoreCompletion=false,restoreCompletedHeld=false,restoreRetry=false,restoreRelease=false;
     bool restorePhysicalRelease=false,restorePhysicalHold=false,restoreHeldAfter=false;
     bool retirementProof=false,retirementRetry=false;
@@ -543,6 +547,28 @@ int main()
     assert(io.RolesStoppedAndParked(8,stopToken,context.io.rolePc[0],context.io.rolePc[1]));
     assert(!io.RolesStoppedAndParked(8,stopToken,context.io.rolePc[0]+4,context.io.rolePc[1]));
     assert(!io.RolesStoppedAndParked(8,stopToken,context.io.rolePc[0],DataflowRoleWriterShimLimit));
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    constexpr uint32_t readerRestorePark=DataflowRoleReaderCodeAddress+0x4e80;
+    constexpr uint32_t writerRestorePark=DataflowRoleWriterCodeAddress+0x2e80;
+    context.io.rolePc[DataflowRoleReader]=readerRestorePark;
+    context.io.rolePc[DataflowRoleWriter]=writerRestorePark;
+    auto& autoHandoff=context.io.roleHandoffs[8];
+    autoHandoff={PIONEER_Q35_ROLE_RESTORE_READER_DONE,PIONEER_Q35_ROLE_RESTORE_WRITER_DONE,
+        DataflowRoleSnapshotRelease};
+    assert(!io.RolesAutoRestoredAndParked(8,stopToken,readerRestorePark,writerRestorePark));
+    scope.autoRestoreCompletion=true;
+    assert(io.RolesAutoRestoredAndParked(8,stopToken,readerRestorePark,writerRestorePark));
+    autoHandoff.readerReady=PIONEER_Q35_ROLE_RESTORE_READER_FAILED;
+    assert(!io.RolesAutoRestoredAndParked(8,stopToken,readerRestorePark,writerRestorePark));
+    autoHandoff.readerReady=PIONEER_Q35_ROLE_RESTORE_READER_DONE;
+    autoHandoff.release=0;
+    assert(!io.RolesAutoRestoredAndParked(8,stopToken,readerRestorePark,writerRestorePark));
+    autoHandoff.release=DataflowRoleSnapshotRelease;
+    assert(!io.RolesAutoRestoredAndParked(8,stopToken,readerRestorePark+4,writerRestorePark));
+    scope.autoRestoreCompletion=false;
+    context.io.rolePc[DataflowRoleReader]=DataflowRoleReaderShimAddress+0x30;
+    context.io.rolePc[DataflowRoleWriter]=DataflowRoleWriterShimAddress+0x30;
+#endif
     initRoleBox(9); stopAttempted=false; stopToken=0; context.io.dropRoleStopWrite=true;
     assert(!io.RequestStop(9,false,stopAttempted,stopToken) && stopAttempted && stopToken==1);
     assert(!io.StopRequestObserved(9,stopToken) && context.io.roleStopWrites==2);

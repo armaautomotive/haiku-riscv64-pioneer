@@ -395,6 +395,38 @@ public:
             && fScope.ProveRolePostStopSafe(fIO,core) && fGuard.ProveSelectedRoute(core)
             && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    // The stop-to-restore image parks in its code tail, not in the startup
+    // shim. Both fresh restore receipts and both role stop receipts must be
+    // stable around two matching parked-PC observations. The scope must
+    // independently protect the source, images, reset and all writers.
+    bool RolesAutoRestoredAndParked(unsigned core,uint32_t token,uint32_t readerPark,uint32_t writerPark) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || !token || (readerPark&3) || (writerPark&3)
+            || readerPark<DataflowRoleReaderCodeAddress || readerPark>=DataflowRoleReaderCodeLimit
+            || writerPark<DataflowRoleWriterCodeAddress || writerPark>=DataflowRoleWriterCodeLimit
+            || !fScope.ProveRolePostStopSafe(fIO,core)
+            || !fScope.ProveRoleAutoRestoreCompletionSafe(fIO,core) || !SelectForStop(core)) return false;
+        DataflowRoleMailbox first{},second{};
+        DataflowRoleSnapshotHandoff handoff{},after{};
+        if (!ReadStableRoleMailbox(core,first) || !DataflowRoleMailboxAllStarted(first)
+            || DataflowLoadAcquire(first.stopRequest)!=token || !DataflowRoleMailboxStopReceipts(first)
+            || !ReadStableStackHandoff(core,handoff)
+            || handoff.readerReady!=PIONEER_Q35_ROLE_RESTORE_READER_DONE
+            || handoff.writerReady!=PIONEER_Q35_ROLE_RESTORE_WRITER_DONE
+            || handoff.release!=DataflowRoleSnapshotRelease) return false;
+        const uint32_t reader1=fIO.SharedRolePcRead(DataflowRoleReader);
+        const uint32_t writer1=fIO.SharedRolePcRead(DataflowRoleWriter);
+        fIO.Pause();
+        const uint32_t reader2=fIO.SharedRolePcRead(DataflowRoleReader);
+        const uint32_t writer2=fIO.SharedRolePcRead(DataflowRoleWriter);
+        return reader1==readerPark && reader2==readerPark && writer1==writerPark && writer2==writerPark
+            && ReadStableRoleMailbox(core,second) && !memcmp(&first,&second,sizeof(first))
+            && ReadStableStackHandoff(core,after) && !memcmp(&handoff,&after,sizeof(handoff))
+            && fScope.ProveRolePostStopSafe(fIO,core)
+            && fScope.ProveRoleAutoRestoreCompletionSafe(fIO,core) && fGuard.ProveSelectedRoute(core) && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+    }
+#endif
     bool RequestComputeStop(unsigned core,bool& attempted) {
         using namespace PioneerQwen35;
         if (core>=DataflowBarrierWorkers || attempted || !fScope.ProveExclusiveRewrite(fIO)

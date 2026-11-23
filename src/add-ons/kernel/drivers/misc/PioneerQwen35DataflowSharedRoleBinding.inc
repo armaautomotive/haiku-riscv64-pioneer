@@ -9,6 +9,7 @@
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleStartOrder.h"
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 #include "PioneerQwen35LocalRestoreImages.h"
+#include "PioneerQwen35RoleServiceProbeImages.h"
 #endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 #include "../../../../../tools/pioneer/PioneerQwen35ExclusiveRoleFleet.h"
@@ -34,6 +35,8 @@ class PioneerQwen35SharedRoleBinding {
     bool fCaptureAttempted=false;
     bool fReleaseAuthorized=false;
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    bool fAutoRestoreOnStop=false;
+    bool fAutoRestoreParked[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fCoreRestoreReleaseWrites[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fCoreRestoreHoldWrites[PioneerQwen35::DataflowBarrierWorkers]{};
 #endif
@@ -63,9 +66,21 @@ class PioneerQwen35SharedRoleBinding {
         if (fViews.HasMappings()) return fViews.ReopenForRecovery(guard);
         return fViews.Open(fContext.io.profile.bar0_host_start,fContext.io.profile.bar0_host_end,guard);
     }
-    static PioneerQwen35::DataflowRoleProgramBounds RoleBounds() {
+    PioneerQwen35::DataflowRoleProgramBounds RoleBounds() const {
         using namespace PioneerQwen35;
-#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+        if (fAutoRestoreOnStop) return {{sizeof(DataflowServiceProbeReaderShimWords)/sizeof(uint32_t),
+                 sizeof(DataflowServiceProbeWriterShimWords)/sizeof(uint32_t)},
+                {sizeof(DataflowServiceProbeReaderCodeWords)/sizeof(uint32_t),
+                 sizeof(DataflowServiceProbeWriterCodeWords)/sizeof(uint32_t)},
+                {DataflowServiceProbeReaderShimParkAddress,DataflowServiceProbeWriterShimParkAddress},
+                {DataflowServiceProbeReaderRuntimeCodeWords,DataflowServiceProbeWriterRuntimeCodeWords}};
+        return {{sizeof(DataflowSharedReaderShimWords)/sizeof(uint32_t),
+                 sizeof(DataflowSharedWriterShimWords)/sizeof(uint32_t)},
+                {sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),
+                 sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t)},
+                {DataflowSharedReaderParkAddress,DataflowSharedWriterParkAddress}};
+#elif defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
         return {{sizeof(DataflowExclusiveReaderShimWords)/sizeof(uint32_t),
                  sizeof(DataflowExclusiveWriterShimWords)/sizeof(uint32_t)},
                 {sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),
@@ -79,9 +94,15 @@ class PioneerQwen35SharedRoleBinding {
                 {DataflowSharedReaderParkAddress,DataflowSharedWriterParkAddress}};
 #endif
     }
-    static PioneerQwen35::DataflowRoleProgramImage RoleImage() {
+    PioneerQwen35::DataflowRoleProgramImage RoleImage() const {
         using namespace PioneerQwen35;
-#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+        if (fAutoRestoreOnStop)
+            return {RoleBounds(),{DataflowServiceProbeReaderShimWords,DataflowServiceProbeWriterShimWords},
+                {DataflowServiceProbeReaderCodeWords,DataflowServiceProbeWriterCodeWords}};
+        return {RoleBounds(),{DataflowSharedReaderShimWords,DataflowSharedWriterShimWords},
+            {DataflowSharedReaderCodeWords,DataflowSharedWriterCodeWords}};
+#elif defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
         return {RoleBounds(),{DataflowExclusiveReaderShimWords,DataflowExclusiveWriterShimWords},
             {DataflowSharedReaderCodeWords,DataflowSharedWriterCodeWords}};
 #else
@@ -122,6 +143,13 @@ public:
     // not authorize a physical restore or a fallback to host private RAM.
     bool SelectCoreLocalRestore() {
         return !fCaptureAttempted && fOwner.SelectCoreLocalRestoreMode();
+    }
+    // The qualified stop-to-restore images may be selected only before any
+    // capture. Release remains denied until the auto-restore ledger and stop
+    // path are connected; this opt-in stages no device bytes by itself.
+    bool SelectAutoRestoreOnStop() {
+        if (fCaptureAttempted || fAutoRestoreOnStop || !fOwner.SelectCoreLocalRestoreMode()) return false;
+        fAutoRestoreOnStop=true;return true;
     }
     __attribute__((noinline)) bool StageCoreLocalRestore(unsigned core) {
         auto* scope=Scope();
@@ -221,11 +249,12 @@ public:
 #else
         if (!fOwner.CaptureAllStackless(fCodeSnapshot,DataflowRoleFleetRecoveryOwner::CodeWords(),
                 fRamSnapshot,DataflowRoleFleetRecoveryOwner::RamWords(),io)) return false;
-        return fOwner.StageImages(DataflowSharedReaderCodeWords,
-            sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),DataflowSharedWriterCodeWords,
-            sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t),DataflowSharedReaderShimWords,
-            sizeof(DataflowSharedReaderShimWords)/sizeof(uint32_t),DataflowSharedWriterShimWords,
-            sizeof(DataflowSharedWriterShimWords)/sizeof(uint32_t),io);
+        const auto image=RoleImage();
+        return image.Valid() && fOwner.StageImages(image.code[DataflowRoleReader],
+            image.bounds.codeWords[DataflowRoleReader],image.code[DataflowRoleWriter],
+            image.bounds.codeWords[DataflowRoleWriter],image.shim[DataflowRoleReader],
+            image.bounds.shimWords[DataflowRoleReader],image.shim[DataflowRoleWriter],
+            image.bounds.shimWords[DataflowRoleWriter],io);
 #endif
     }
     __attribute__((noinline)) bool ArmAndBeginRelease() {
@@ -238,6 +267,10 @@ public:
 #else
         auto* scope=Scope();
         if (!scope || !fViews.Opened()) return false;
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+        // The auto-restore stop ledger is not yet wired to this release path.
+        if (fAutoRestoreOnStop) return false;
+#endif
         Adapter io(fContext.io,*scope,fViews);
         if (!fOwner.PreparePossibleRelease(io) || !fOwner.BeginReleaseAttempt(io)
             || !fStartOrder.Arm()) return false;
@@ -440,13 +473,21 @@ public:
                 if (fHoldAttempted[i]) { if (!io.HoldObserved(i)) { stage=11;core=i;return false; } continue; }
                 bool parked=false;
                 for (unsigned poll=0;poll<65536;poll++) {
-                    const bool stopped=fStackReleaseConfirmed[i]
-                        ?io.RolesStoppedAndParked(i,fStopToken[i],
-                            PioneerQwen35::DataflowSharedReaderParkAddress,
-                            PioneerQwen35::DataflowSharedWriterParkAddress)
-                        :fStackCancelAttempted[i] && io.StackCancelledAndParked(i,
-                            PioneerQwen35::DataflowSharedReaderParkAddress,
-                            PioneerQwen35::DataflowSharedWriterParkAddress);
+                    bool stopped=false;
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+                    if (fAutoRestoreOnStop && fStackReleaseConfirmed[i]) {
+                        stopped=io.RolesAutoRestoredAndParked(i,fStopToken[i],
+                            PioneerQwen35::DataflowServiceProbeReaderParkAddress,
+                            PioneerQwen35::DataflowServiceProbeWriterParkAddress);
+                        if (stopped) fAutoRestoreParked[i]=true;
+                    } else
+#endif
+                    {
+                        const auto bounds=RoleBounds();
+                        stopped=fStackReleaseConfirmed[i]
+                            ?io.RolesStoppedAndParked(i,fStopToken[i],bounds.park[0],bounds.park[1])
+                            :fStackCancelAttempted[i] && io.StackCancelledAndParked(i,bounds.park[0],bounds.park[1]);
+                    }
                     if (stopped) { parked=true;break; }
                     fContext.io.Pause();
                 }
@@ -548,6 +589,7 @@ PioneerQ35CoreLocalBindingCompileWitness(PioneerQwen35SharedRoleBinding* binding
         case 5: return binding->ConfirmCoreLocalRestoreHandoff(core);
         case 6: return binding->RestoreCoreLocalHandoff(core);
         case 7: return binding->HoldCoreLocalRestore(core);
+        case 8: return binding->SelectAutoRestoreOnStop();
         default: return false;
     }
 }

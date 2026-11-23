@@ -12,8 +12,13 @@ struct DataflowRoleProgramBounds {
     unsigned shimWords[DataflowRoleCount];
     unsigned codeWords[DataflowRoleCount];
     unsigned park[DataflowRoleCount];
+    // Optional prefix of codeWords that contains the running service. A
+    // zero entry preserves the legacy whole-code range. Snapshot startup can
+    // append a restore-only tail that must never count as a live role PC.
+    unsigned runtimeCodeWords[DataflowRoleCount]{};
     bool Valid() const {
         for (unsigned role=0;role<DataflowRoleCount;role++) {
+            if (runtimeCodeWords[role]>codeWords[role]) return false;
             const unsigned shim=role==DataflowRoleReader?DataflowRoleReaderShimAddress:DataflowRoleWriterShimAddress;
             const unsigned shimLimit=role==DataflowRoleReader?DataflowRoleReaderShimLimit:DataflowRoleWriterShimLimit;
             const unsigned code=role==DataflowRoleReader?DataflowRoleReaderCodeAddress:DataflowRoleWriterCodeAddress;
@@ -28,8 +33,9 @@ struct DataflowRoleProgramBounds {
         if (role>=DataflowRoleCount || !Valid() || (pc&3) || pc==park[role]) return false;
         const unsigned shim=role==DataflowRoleReader?DataflowRoleReaderShimAddress:DataflowRoleWriterShimAddress;
         const unsigned code=role==DataflowRoleReader?DataflowRoleReaderCodeAddress:DataflowRoleWriterCodeAddress;
+        const unsigned runtime=runtimeCodeWords[role]?runtimeCodeWords[role]:codeWords[role];
         return (pc>=shim && pc-shim<shimWords[role]*4)
-            || (pc>=code && pc-code<codeWords[role]*4);
+            || (pc>=code && pc-code<runtime*4);
     }
 };
 struct DataflowRoleProgramImage {
