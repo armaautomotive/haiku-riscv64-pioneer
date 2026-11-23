@@ -65,9 +65,9 @@ struct tt_pioneer_recovery_run {
 	// as root:16 | card:16. Unknown is 0xffff. Must be zero on input.
 	uint32_t output_reserved;
 	uint64_t build_tag;
-	// On a failed qualification only, this packs root AER Error Source ID
-	// (upper 32) and Uncorrectable Error Status (lower 32), or UINT64_MAX if
-	// unavailable. A pre-reset admission refusal leaves this at zero.
+	// On a failed qualification only, this packs the pre-reset (upper 32) and
+	// post-reset (lower 32) root AER Uncorrectable Error Status. Either half is
+	// UINT32_MAX if unavailable. PCI Device Status admission refusal is zero.
 	// On success it is the new generation, as in the ordinary recovery ABI.
 	uint64_t new_generation;
 };

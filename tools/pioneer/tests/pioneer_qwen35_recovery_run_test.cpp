@@ -43,7 +43,9 @@ static bool resetTimeout=false,resumeResetTimeout=false;
 static unsigned resetResumeWaits=0;
 #ifdef TEST_RECOVERY_QUALIFY
 static uint32 fakeCardPciStatus=0,fakeRootPciStatus=0;
-static bool fakeAerAvailable=false;
+static bool fakeAerAvailable=true,fakeAerFailAfterPre=false;
+static uint32 fakeAerPre=0,fakeAerPost=0x20;
+static unsigned fakeAerReads=0;
 template<class IO> static bool BlackholeHostPcieStatus(IO&,unsigned peer,uint32& status) {
 	status=peer?fakeRootPciStatus:fakeCardPciStatus;return status==0;
 }
@@ -120,10 +122,10 @@ struct PioneerSessionIO {
 	uint32 CardRead(uint16,uint8){return 0;}
 	uint32 RootRead(uint16 offset,uint8){
 #ifdef TEST_RECOVERY_QUALIFY
-		if (fakeAerAvailable) {
+		if (fakeAerAvailable && !(fakeAerFailAfterPre && fakeAerReads)) {
 			if (offset==0) return 0x20421e30;
 			if (offset==0x100) return 0x00010001;
-			if (offset==0x104) return 0x20;
+			if (offset==0x104) return fakeAerReads++?fakeAerPost:fakeAerPre;
 			if (offset==0x134) return 0x01000000;
 		}
 #endif
@@ -267,7 +269,8 @@ static tt_pioneer_recovery_run Request(){tt_pioneer_recovery_run r={};r.version=
 static void Setup() {
 	failStage=abortCount=completeCount=contextDeleted=cookieDeleted=0;trace.clear();
 #ifdef TEST_RECOVERY_QUALIFY
-	fakeCardPciStatus=fakeRootPciStatus=0;fakeAerAvailable=false;
+	fakeCardPciStatus=fakeRootPciStatus=0;fakeAerAvailable=true;fakeAerFailAfterPre=false;
+	fakeAerPre=0;fakeAerPost=0x20;fakeAerReads=0;
 #endif
 	failPayloadRead=failPayloadRestore=failFirmwareQueue=failDbi=false;
 	payloadReads=payloadDriftAt=0;
@@ -532,10 +535,16 @@ int main(){
 	fakeRootPciStatus=0;fakeCardPciStatus=0xffff;r=Request();
 	assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
 		&& r.output_reserved==0x0000ffff && trace.empty() && !retainCalls && !sColdRecoveryRequired);
-	fakeCardPciStatus=0;
+	fakeCardPciStatus=0;fakeAerAvailable=false;r=Request();
+	assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.new_generation==UINT64_MAX && trace.empty() && !retainCalls && !sColdRecoveryRequired);
+	fakeAerAvailable=true;fakeAerPre=1;fakeAerReads=0;r=Request();
+	assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.new_generation==UINT64_C(0x00000001ffffffff) && trace.empty() && !retainCalls && !sColdRecoveryRequired);
+	fakeAerPre=0;fakeAerReads=0;fakeAerFailAfterPre=true;
 	failDbi=true;r=Request();
 	assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
-		&& r.stage==PIONEER_RECOVERY_STAGE_FIRMWARE && r.new_generation==UINT64_MAX
+		&& r.stage==PIONEER_RECOVERY_STAGE_FIRMWARE && r.new_generation==UINT64_C(0x00000000ffffffff)
 		&& sColdRecoveryRequired && retainCalls==1);
 	sQwen35ExclusiveCookie=nullptr;Cleanup();
 	Setup();candidate=sRuntimeOwner;candidate->finalFreeRetained=false;sQwen35ExclusiveCookie=candidate;
@@ -543,7 +552,7 @@ int main(){
 	candidate->context->qwen35SharedRoleBinding=nullptr;candidate->context->dispatchOwnerRetained=false;
 	sColdRecoveryRequired=false;fakeAerAvailable=true;failDbi=true;r=Request();
 	assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
-		&& r.new_generation==UINT64_C(0x0100000000000020) && sColdRecoveryRequired);
+		&& r.new_generation==UINT64_C(0x0000000000000020) && sColdRecoveryRequired);
 	sQwen35ExclusiveCookie=nullptr;Cleanup();
 	Setup();candidate=sRuntimeOwner;candidate->finalFreeRetained=false;sQwen35ExclusiveCookie=candidate;
 	candidate->context->qwen35DataflowService=nullptr;candidate->context->qwen35GraphOwner=nullptr;

@@ -11576,6 +11576,9 @@ Qwen35RecoveryRequest(PioneerProbeCookie* cookie,void* data,size_t length,bool f
 	tt_pioneer_recovery_run r={};status=user_memcpy(&r,data,sizeof(r));
 	if (status!=B_OK || !PioneerRecoveryRunRequest(r)) return status!=B_OK?status:B_BAD_VALUE;
 	status=acquire_sem(sLock);if (status!=B_OK) return status;
+#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+	uint32 qualificationAerBefore=UINT32_MAX;
+#endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 	if (force) {
 		PioneerStoreContext* context=cookie->context;
@@ -11612,7 +11615,11 @@ Qwen35RecoveryRequest(PioneerProbeCookie* cookie,void* data,size_t length,bool f
 				const bool cardClean=BlackholeHostPcieStatus(statusIo,0,cardStatus);
 				const bool rootClean=BlackholeHostPcieStatus(statusIo,1,rootStatus);
 				r.output_reserved=((rootStatus&0xffff)<<16)|(cardStatus&0xffff);
-				qualificationPciClean=cardClean && rootClean;
+				uint32 source=0;
+				const bool aerKnown=PioneerPcieRootAerSnapshot(context->io,qualificationAerBefore,source);
+				qualificationPciClean=cardClean && rootClean && aerKnown && !qualificationAerBefore;
+				if (!qualificationPciClean && (!aerKnown || qualificationAerBefore))
+					r.new_generation=((uint64)qualificationAerBefore<<32)|UINT32_MAX;
 			}
 			if (!qualificationPciClean) r.operation_status=B_DEV_NOT_READY;
 			else
@@ -11640,10 +11647,10 @@ Qwen35RecoveryRequest(PioneerProbeCookie* cookie,void* data,size_t length,bool f
 	// writing or acknowledging status, before the caller releases its fd.
 	if (qualification && r.operation_status!=B_OK && sColdRecoveryRequired
 		&& sRuntimeOwner && sRuntimeOwner->context) {
-		r.new_generation=UINT64_MAX; // unavailable is distinct from a clear AER register
+		r.new_generation=((uint64)qualificationAerBefore<<32)|UINT32_MAX;
 		uint32 uncorrectable=0,source=0;
 		if (PioneerPcieRootAerSnapshot(sRuntimeOwner->context->io,uncorrectable,source))
-			r.new_generation=((uint64)source<<32)|uncorrectable;
+			r.new_generation=((uint64)qualificationAerBefore<<32)|uncorrectable;
 	}
 #endif
 	r.build_tag=PIONEER_DRIVER_BUILD_TAG;
