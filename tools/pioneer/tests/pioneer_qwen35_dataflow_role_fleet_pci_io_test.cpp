@@ -570,6 +570,15 @@ int main()
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     {
         context.io.reset=0x47800;scope.release=true;scope.exclusive=true;
+        scope.releaseDrained=false;
+        assert(!io.UnconfirmedReleaseRunning(4));
+        scope.releaseDrained=true;
+        assert(!io.UnconfirmedReleaseRunning(4)); // a held worker is not running
+        context.io.reset=0x6000;
+        assert(io.UnconfirmedReleaseRunning(4));
+        scope.releaseDrained=false;
+        assert(!io.UnconfirmedReleaseRunning(4));
+        context.io.reset=0x47800;
         gMemory[DataflowRolePhysicalControl][0x224/4]&=~uint32_t(DataflowRolePreserveResetMask);
         const unsigned prior=context.io.sharedResetWrites;
         bool dedicatedAttempted=false;

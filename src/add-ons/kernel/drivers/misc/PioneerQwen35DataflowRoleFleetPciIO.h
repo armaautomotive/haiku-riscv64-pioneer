@@ -195,6 +195,14 @@ public:
         return fIO.ResetRead()==0x47800 && fGuard.ProveSelectedRoute(core)
             && fScope.ProveRoleReleaseWriteDrained(fIO,core);
     }
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    bool UnconfirmedReleaseRunning(unsigned core) {
+        return core<PioneerQwen35::DataflowBarrierWorkers && fScope.ProveExclusiveRewrite(fIO)
+            && fScope.ProveRoleReleaseWriteDrained(fIO,core) && SelectForStop(core)
+            && fScope.ProveRoleReleaseWriteDrained(fIO,core) && fGuard.ProveSelectedRoute(core);
+    }
+    void Pause() { fIO.Pause(); }
+#endif
     enum StackReleaseObservation { StackReleaseNotObserved, StackReleaseObserved };
     // This is evidence for recovery only, not authorization to issue a
     // release. Two reads do not themselves drain an earlier posted write.

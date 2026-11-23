@@ -256,6 +256,9 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exc
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	"$directory/pioneer_qwen35_exclusive_service_start_test.cpp" -o "$temporary/exclusive-service-start-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exclusive-service-start-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	"$directory/pioneer_qwen35_exclusive_role_stop_test.cpp" -o "$temporary/exclusive-role-stop-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exclusive-role-stop-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_boot_test.cpp" \
 	-o "$temporary/role-boot-test"

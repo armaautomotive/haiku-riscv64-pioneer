@@ -11,6 +11,7 @@
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleStartOrder.h"
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 #include "../../../../../tools/pioneer/PioneerQwen35ExclusiveRoleFleet.h"
+#include "../../../../../tools/pioneer/PioneerQwen35ExclusiveRoleStop.h"
 #endif
 class PioneerQwen35SharedRoleBinding {
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_TEST
@@ -24,6 +25,7 @@ class PioneerQwen35SharedRoleBinding {
     PioneerQwen35::DataflowRoleFleetRecoveryOwner fOwner;
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     PioneerQwen35::DataflowExclusiveRoleFleet fTakeover;
+    PioneerQwen35::DataflowExclusiveRoleStop fTakeoverStop;
 #endif
     PioneerQwen35::DataflowRoleStartOrder fStartOrder;
     uint32_t* fCodeSnapshot=NULL;
@@ -309,9 +311,16 @@ public:
     bool StopAndHoldAll(unsigned& stage,unsigned& core) {
         fStartOrder.Close();
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
-        for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++)
-            if (fReleaseAttempted[i]) { stage=17;core=i;return false; }
-        return fContext.io.StopAndAuditAll(stage,core);
+        bool any=false;
+        for (bool attempted:fReleaseAttempted) any|=attempted;
+        if (!any) return fContext.io.StopAndAuditAll(stage,core);
+        auto* scope=Scope();
+        if (!scope || !fViews.Opened()) { stage=8;core=PioneerQwen35::DataflowBarrierWorkers;return false; }
+        Adapter io(fContext.io,*scope,fViews);
+        return fTakeoverStop.StopAndHold(fReleaseAttempted,fReleaseConfirmed,
+            PioneerQwen35::DataflowExclusiveReaderParkAddress,
+            PioneerQwen35::DataflowExclusiveWriterParkAddress,
+            PioneerQwen35::DataflowServiceStoppedParkAddress,65536,io,stage,core);
 #else
         // The old stop path understands T0 alone. For released tiles publish
         // or observe one role stop request first; the real scope still denies
