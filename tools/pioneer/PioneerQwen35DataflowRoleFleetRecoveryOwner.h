@@ -26,6 +26,8 @@ class DataflowRoleFleetRecoveryOwner {
     bool fStackless=false;
     bool fCoreLocalRestoreMode=false;
     bool fCoreLocalReleaseLedger=false;
+    bool fCoreRestoreStaged[DataflowBarrierWorkers]{};
+    bool fCoreRestoreReleaseAttempted[DataflowBarrierWorkers]{};
     template<class IO> static bool AllSafe(IO& io) {
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)
             if (!io.AllRolesHeld(core) || !io.DefaultBootRouting(core)
@@ -189,7 +191,8 @@ public:
         unsigned readerWords,const uint32_t* writer,unsigned writerWords,IO& io) {
         if (!fCoreLocalRestoreMode || !fCoreLocalReleaseLedger || !fStackless
             || (fPhase!=ReleaseAttempted && fPhase!=Faulted)
-            || !fRam.StacklessCopiesCaptured(core)) return false;
+            || !fRam.StacklessCopiesCaptured(core) || fCoreRestoreStaged[core]
+            || fCoreRestoreReleaseAttempted[core]) return false;
         fPhase=Faulted;
         const uint32_t* expectedReader=fRam.OriginalWords(core,DataflowRoleReader);
         const uint32_t* expectedWriter=fRam.OriginalWords(core,DataflowRoleWriter);
@@ -203,17 +206,37 @@ public:
             || !fImages.RestageOneWithCopies(core,reader,readerWords,writer,writerWords,io))
             return false;
         observedReader=observedWriter=nullptr;captured=false;
-        return io.StacklessHeldCopySources(core,observedReader,observedWriter,captured)
+        if (!(io.StacklessHeldCopySources(core,observedReader,observedWriter,captured)
             && captured && observedReader==expectedReader && observedWriter==expectedWriter
             && io.StacklessHeldCopySourceSafe(core,expectedReader,expectedWriter)
-            && VerifyHeldCopyLedger(io) && VerifyResetDisable(io,true) && AllHeldAndRouted(io);
+            && VerifyHeldCopyLedger(io) && VerifyResetDisable(io,true) && AllHeldAndRouted(io))) return false;
+        fCoreRestoreStaged[core]=true;return true;
+    }
+    // Consume a distinct one-shot ledger immediately before a restore-shim
+    // release attempt, including one that may be uncertain. IO must also
+    // establish fresh cleared receipts, verified shim/reset state and lifetime
+    // exclusion of conflicting releases/writers. This does not release a core.
+    template<class IO> bool BeginCoreLocalRestoreRelease(unsigned core,IO& io) {
+        if (!fCoreLocalRestoreMode || !fCoreLocalReleaseLedger || !fStackless
+            || fPhase!=Faulted || core>=DataflowBarrierWorkers || !fCoreRestoreStaged[core]
+            || fCoreRestoreReleaseAttempted[core] || !fRam.StacklessCopiesCaptured(core)) return false;
+        const uint32_t* reader=fRam.OriginalWords(core,DataflowRoleReader);
+        const uint32_t* writer=fRam.OriginalWords(core,DataflowRoleWriter);
+        if (!reader || !writer || !AllHeldAndRouted(io) || !VerifyHeldCopyLedger(io)
+            || !VerifyResetDisable(io,true) || !fImages.VerifyStagedAllWithCopies(io)
+            || !io.StacklessCoreRestoreReleaseReady(core,reader,writer)
+            || !VerifyHeldCopyLedger(io) || !VerifyResetDisable(io,true)
+            || !AllHeldAndRouted(io)
+            || !io.StacklessCoreRestoreReleaseReady(core,reader,writer)) return false;
+        fCoreRestoreReleaseAttempted[core]=true;return true;
     }
     // The real scope must prove the exact retained source, fresh restore
     // receipt, held routes and writer exclusion. This records RAM proof only;
     // image retirement, reset restoration and safe resume remain separate.
     template<class IO> bool MarkCoreRestoredByCore(unsigned core,IO& io) {
         if (!fCoreLocalRestoreMode || !fStackless
-            || (fPhase!=ReleaseAttempted && fPhase!=Faulted)) return false;
+            || (fPhase!=ReleaseAttempted && fPhase!=Faulted)
+            || core>=DataflowBarrierWorkers || !fCoreRestoreReleaseAttempted[core]) return false;
         fPhase=Faulted;
         return fRam.MarkCoreRestoredByCore(core,io);
     }

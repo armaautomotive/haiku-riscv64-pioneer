@@ -11,7 +11,8 @@ struct RecoveryIO {
     bool held=true,defaultRoute=true,stable=true,corruptRamOnBoot=false,corruptBootOnRam=false;
     bool corruptPriorDisableOnWrite=false;
     bool stacklessPreparation=true,stacklessSafe=true,uncapturedProtected=true;
-    bool coreRestoreProof=false;
+    bool coreRestoreProof=false,restoreReleaseReady=false,staleRestoreReceipt=false;
+    unsigned releaseReadyCalls=0,failReleaseReadyCall=0;
     bool copyProof=true,copyCaptured[DataflowBarrierWorkers]{};
     bool wrongCopyPointer=false,corruptCopyOnShimWrite=false;
     const uint32_t* retainedRam=nullptr;
@@ -66,6 +67,10 @@ struct RecoveryIO {
         const uint32_t* expectedReader=nullptr;const uint32_t* expectedWriter=nullptr;bool captured=false;
         return StacklessHeldCopySources(core,expectedReader,expectedWriter,captured) && captured
             && reader==expectedReader && writer==expectedWriter;
+    }
+    bool StacklessCoreRestoreReleaseReady(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        return ++releaseReadyCalls!=failReleaseReadyCall && restoreReleaseReady && !staleRestoreReceipt
+            && StacklessHeldCopySourceSafe(core,reader,writer);
     }
     bool StacklessCoreRestoreProven(unsigned core,const uint32_t* reader,const uint32_t* writer) const {
         if (!coreRestoreProof || !AllRolesHeld(core) || !retainedRam) return false;
@@ -201,6 +206,18 @@ int main()
         io.copyCaptured[1]=true;
         assert(owner.StageCoreLocalRestore(0,shimB,2,shimA,2,io));
         assert(owner.StageCoreLocalRestore(1,shimB,2,shimA,2,io));
+        assert(!owner.StageCoreLocalRestore(0,shimB,2,shimA,2,io));
+        assert(!owner.BeginCoreLocalRestoreRelease(0,io)); // scope denies release
+        io.restoreReleaseReady=true;io.staleRestoreReceipt=true;
+        assert(!owner.BeginCoreLocalRestoreRelease(0,io));
+        io.staleRestoreReceipt=false;
+        io.failReleaseReadyCall=io.releaseReadyCalls+2;
+        assert(!owner.BeginCoreLocalRestoreRelease(0,io)); // proof lost during audit
+        io.failReleaseReadyCall=0;
+        assert(owner.BeginCoreLocalRestoreRelease(0,io)
+            && !owner.BeginCoreLocalRestoreRelease(0,io)
+            && !owner.StageCoreLocalRestore(0,shimB,2,shimA,2,io));
+        assert(owner.BeginCoreLocalRestoreRelease(1,io));
         assert(io.privateRamReads==reads && owner.RestorationRequired()
             && !owner.CoveredStateRestored() && !owner.RestoreAll(io));
     }
@@ -233,7 +250,13 @@ int main()
         assert(owner.CaptureStacklessCore(0,io) && owner.MarkStacklessMayRun(0,io)
             && owner.CaptureStacklessCore(1,io) && owner.MarkStacklessMayRun(1,io));
         io.ram[0]^=1;io.ram[RecoveryIO::RamPerCore]^=1;io.held=true;
-        io.retainedRam=ramSnapshot.data();const unsigned writes=io.writes,reads=io.privateRamReads;
+        io.retainedRam=ramSnapshot.data();io.InstallHeldCopies(0);io.InstallHeldCopies(1);
+        assert(!owner.MarkCoreRestoredByCore(0,io)); // no restore release ledger
+        assert(owner.StageCoreLocalRestore(0,shimB,2,shimA,2,io)
+            && owner.StageCoreLocalRestore(1,shimB,2,shimA,2,io));
+        io.restoreReleaseReady=true;
+        assert(owner.BeginCoreLocalRestoreRelease(0,io) && owner.BeginCoreLocalRestoreRelease(1,io));
+        const unsigned writes=io.writes,reads=io.privateRamReads;
         assert(!owner.RestoreAll(io) && owner.RestorationRequired()
             && io.writes==writes && io.privateRamReads==reads);
         assert(!owner.MarkCoreRestoredByCore(0,io));

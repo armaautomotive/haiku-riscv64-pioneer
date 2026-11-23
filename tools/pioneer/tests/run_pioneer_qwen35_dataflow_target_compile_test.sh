@@ -266,7 +266,7 @@ from pathlib import Path
 import sys
 for filename,markers in ((sys.argv[1],('PioneerQ35CopyAwareCompileWitness','PioneerQ35CoreLocalFleetCompileWitness')),
                          (sys.argv[2],('PioneerQ35CoreLocalReleaseCompileWitness',)),
-                         (sys.argv[3],('PioneerQ35CoreRestoreStageCompileWitness',))):
+                         (sys.argv[3],('PioneerQ35CoreRestoreStageCompileWitness','PioneerQ35CoreRestoreReleaseCompileWitness'))):
     rows=[line.rsplit('\t',2) for line in Path(filename).read_text().splitlines()]
     if not rows or any(len(row)!=3 or not row[1].isdigit() or row[2]!='static' for row in rows):
         raise SystemExit('copy-aware compile witness has missing or non-static stack frames')

@@ -170,6 +170,7 @@ int main()
             && captured && reader==readerWords && writer==writerWords);
         assert(io.StacklessHeldCopySourceSafe(7,readerWords,writerWords));
         assert(!io.StacklessHeldCopySourceSafe(7,writerWords,readerWords));
+        assert(!io.StacklessCoreRestoreReleaseReady(7,readerWords,writerWords));
         assert(!io.StacklessCoreRestoreProven(7,readerWords,writerWords));
         scope.coreRestoreProof=true;
         assert(io.StacklessCoreRestoreProven(7,readerWords,writerWords)

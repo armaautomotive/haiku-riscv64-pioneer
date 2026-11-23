@@ -592,6 +592,12 @@ public:
         return reader && writer && StacklessHeldCopySources(core,r,w,captured)
             && captured && reader==r && writer==w;
     }
+    // No live implementation yet proves fresh cleared restore receipts,
+    // the exact shim and continuous exclusion through a one-shot release.
+    // Keep the concrete adapter denied even if ordinary copy proof succeeds.
+    bool StacklessCoreRestoreReleaseReady(unsigned,const uint32_t*,const uint32_t*) {
+        return false;
+    }
     // A matching L1 copy alone does not prove the core restored private RAM.
     // Scope must additionally prove the exact one-shot restore, fresh result,
     // stopped roles, preserved source and writer exclusion. It currently

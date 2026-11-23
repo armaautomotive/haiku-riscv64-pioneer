@@ -8,3 +8,10 @@ PioneerQ35CoreRestoreStageCompileWitness(PioneerQwen35::DataflowRoleFleetRecover
 {
     return owner && io && owner->StageCoreLocalRestore(core,reader,words,writer,words,*io);
 }
+
+extern "C" __attribute__((noinline)) bool
+PioneerQ35CoreRestoreReleaseCompileWitness(PioneerQwen35::DataflowRoleFleetRecoveryOwner* owner,
+    CopyAwareCompileIO* io,unsigned core)
+{
+    return owner && io && owner->BeginCoreLocalRestoreRelease(core,*io);
+}

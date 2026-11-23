@@ -16,6 +16,7 @@ struct CopyAwareCompileIO {
     bool StacklessHeldCopySources(unsigned,const uint32_t*&,const uint32_t*&,bool&);
     bool StacklessHeldCopySourceSafe(unsigned,const uint32_t*,const uint32_t*);
     bool StacklessCoreRestoreProven(unsigned,const uint32_t*,const uint32_t*);
+    bool StacklessCoreRestoreReleaseReady(unsigned,const uint32_t*,const uint32_t*);
     bool StacklessUncapturedRamProtected(unsigned);
     bool StacklessFleetPreparationSafe(unsigned);
     bool LocalRamStable(unsigned);
