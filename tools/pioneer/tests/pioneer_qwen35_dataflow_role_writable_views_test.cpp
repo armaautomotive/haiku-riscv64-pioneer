@@ -49,7 +49,7 @@ struct Guard {
 struct Platform {
     PioneerQwen35RoleHaikuMap actual;
     Guard* guard=nullptr;
-    unsigned writes=0,driftAfter=0,reads=0,driftAfterReads=0;
+    unsigned writes=0,driftAfter=0,reads=0,driftAfterReads=0,denyAfterReads=0;
     bool corruptReadback=false;
     bool MapReadWrite(uint64_t p,unsigned n,int32_t& a,volatile uint32_t*& v)
         { return actual.MapReadWrite(p,n,a,v); }
@@ -58,6 +58,7 @@ struct Platform {
         const uint32_t value=actual.ReadWord(p);
         ++reads;
         if (driftAfterReads && reads==driftAfterReads) guard->route=false;
+        if (denyAfterReads && reads==denyAfterReads) guard->read=false;
         return corruptReadback?value^1U:value;
     }
     void WriteWord(volatile uint32_t* p,uint32_t value) {
@@ -82,6 +83,27 @@ int main()
         uint32_t value=99,words[]={0x11223344,0xaabbccdd};
         const unsigned extraTail=DataflowRoleExtraL1Limit-DataflowRoleExtraL1Address-8;
         assert(views.Read(3,DataflowRolePhysicalBriscBoot,0,value,guard) && !value);
+        // The diagnostic must distinguish a rejected pre-read guard from a
+        // route/authority failure after a device read, and never publish a
+        // value from a failed read.
+        unsigned failure=99; value=99;
+        assert(!views.Read(3,DataflowRolePhysicalBriscRam,DataflowRoleLocalRamBytes,value,guard,&failure)
+            && failure==ReadBounds && value==99);
+        guard.route=false;
+        assert(!views.Read(3,DataflowRolePhysicalBriscRam,0,value,guard,&failure)
+            && failure==ReadPreRoute && value==99);
+        guard.route=true; guard.read=false;
+        assert(!views.Read(3,DataflowRolePhysicalBriscRam,0,value,guard,&failure)
+            && failure==ReadPreAuthority && value==99);
+        guard.read=true; platform.driftAfterReads=platform.reads+1;
+        assert(!views.Read(3,DataflowRolePhysicalBriscRam,0,value,guard,&failure)
+            && failure==ReadPostRoute && value==99);
+        guard.route=true; platform.driftAfterReads=0; platform.denyAfterReads=platform.reads+1;
+        assert(!views.Read(3,DataflowRolePhysicalBriscRam,0,value,guard,&failure)
+            && failure==ReadPostAuthority && value==99);
+        guard.read=true; platform.denyAfterReads=0;
+        assert(views.Read(3,DataflowRolePhysicalBriscRam,0,value,guard,&failure)
+            && failure==ReadOkay && value==0);
         assert(views.WriteWords(3,DataflowRolePhysicalBriscBoot,0,words,4,guard));
         assert(views.WriteWords(3,DataflowRolePhysicalNcriscBoot,0,words+1,4,guard));
         assert(views.WriteWords(3,DataflowRolePhysicalShim,0xf8,words,8,guard));

@@ -3,6 +3,13 @@
 #define PIONEER_QWEN35_DATAFLOW_ROLE_WRITABLE_VIEWS_H
 #include "PioneerQwen35DataflowRolePhysicalPlan.h"
 namespace PioneerQwen35 {
+// Diagnostic stages describe checks performed by Read; they grant no access.
+// Values at or above ReadPostAuthority mean a device read was issued, but its
+// returned word is not published unless all post-read checks pass.
+enum DataflowRoleReadFailure : unsigned {
+    ReadOkay=0, ReadBounds, ReadPreRoute, ReadPreAuthority, ReadPreRouteAgain,
+    ReadPostAuthority, ReadPostRoute
+};
 // Fixed writable mappings for a future role owner. Guard must prove the
 // exclusive session, selected TLB route, all relevant cores held and quiet,
 // RAM stability, and a retained snapshot before every memory/control write.
@@ -75,13 +82,21 @@ public:
         if (!guard.ProvePinnedBar(fBarStart,fBarEnd)) return false;
         fOpen=true; return true;
     }
-    template<class Guard> bool Read(unsigned core,unsigned which,unsigned offset,uint32_t& output,Guard& guard) {
+    template<class Guard> bool Read(unsigned core,unsigned which,unsigned offset,uint32_t& output,Guard& guard,
+        unsigned* failure=nullptr) {
+        if (failure) *failure=ReadOkay;
         if (!fOpen || core>=DataflowBarrierWorkers || which>=Count || fArea[which]<0
             || !fView[which] || (offset&3) || offset>fBytes[which] || 4>fBytes[which]-offset
-            || !DataflowRolePhysicalReadAllowed(which,offset) || !Route(core,guard)
-            || !guard.ProveReadAllowed(core,which,offset) || !Route(core,guard)) return false;
+            || !DataflowRolePhysicalReadAllowed(which,offset)) {
+            if (failure) *failure=ReadBounds;
+            return false;
+        }
+        if (!Route(core,guard)) { if (failure) *failure=ReadPreRoute; return false; }
+        if (!guard.ProveReadAllowed(core,which,offset)) { if (failure) *failure=ReadPreAuthority; return false; }
+        if (!Route(core,guard)) { if (failure) *failure=ReadPreRouteAgain; return false; }
         const uint32_t value=fPlatform.ReadWord(fView[which]+offset/4);
-        if (!guard.ProveReadAllowed(core,which,offset) || !Route(core,guard)) return false;
+        if (!guard.ProveReadAllowed(core,which,offset)) { if (failure) *failure=ReadPostAuthority; return false; }
+        if (!Route(core,guard)) { if (failure) *failure=ReadPostRoute; return false; }
         output=value; return true;
     }
     // Read-only comparison of fixed, contiguous image windows. Route and

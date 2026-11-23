@@ -77,7 +77,12 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
             return fViews.CopyWords(core,which,offset,output,bytes/4,fGuard);
         for (unsigned n=0;n<bytes/4;n++) {
             const unsigned at=offset+n*4;
+#if defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY) && defined(_KERNEL_MODE)
+            unsigned readFailure=ReadOkay;
+            if (!fViews.Read(core,which,at,output[n],fGuard,&readFailure)) {
+#else
             if (!fViews.Read(core,which,at,output[n],fGuard)) {
+#endif
 #if defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY) && defined(_KERNEL_MODE)
                 if (which==DataflowRolePhysicalBriscRam || which==DataflowRolePhysicalNcriscRam) {
                     // These post-failure samples are diagnostic only. They do
@@ -86,8 +91,9 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
                     const bool pinned=fGuard.ProvePinnedBar(fIO.profile.bar0_host_start,fIO.profile.bar0_host_end);
                     const bool route=fGuard.ProveSelectedRoute(core);
                     const bool allowed=fGuard.ProveReadAllowed(core,which,at);
-                    dprintf("P100A_Q35_PRESTACK_READ_FAILURE stage=view core=%u which=%u offset=%u bound=%u pinned=%u route=%u allowed=%u\n",
-                        core,which,at,unsigned(bound),unsigned(pinned),unsigned(route),unsigned(allowed));
+                    dprintf("P100A_Q35_PRESTACK_READ_FAILURE stage=view core=%u which=%u offset=%u step=%u issued=%u bound=%u pinned=%u route=%u allowed=%u\n",
+                        core,which,at,readFailure,unsigned(readFailure>=ReadPostAuthority),
+                        unsigned(bound),unsigned(pinned),unsigned(route),unsigned(allowed));
                 }
 #endif
                 return false;

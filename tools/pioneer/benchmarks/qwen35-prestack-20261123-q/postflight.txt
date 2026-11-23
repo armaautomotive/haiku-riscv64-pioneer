@@ -1,0 +1,28 @@
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+EXCLUSIVE_LOCK_ABSENT
+0:1:600:2740937888 /boot/home/pioneer-qwen35-4b-225/Qwen3.5-4B-Q4_K_M.gguf
+0:1:600:18973870528 /boot/home/models/Qwen3.8-27B-Q4_K_M.gguf
+   Id Team
+    1 kernel_team
+  100 /boot/system/servers/launch_daemon
+  105 /boot/system/servers/registrar
+  106 /boot/system/servers/debug_server
+  108 /boot/system/servers/mount_server
+  109 /boot/system/servers/net_server
+  110 /boot/system/servers/package_daemon
+  112 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho
+  116 /boot/system/servers/launch_daemon baron
+  119 /boot/system/servers/power_daemon
+  121 /boot/system/servers/syslog_daemon
+  149 /boot/system/servers/media_server
+  168 /boot/system/bin/sh /boot/home/config/settings/ssh/start-sshd.s
+  184 /boot/system/servers/app_server
+  194 /boot/system/Tracker
+  196 /boot/system/Deskbar
+  215 /boot/system/servers/input_server
+  241 /boot/system/servers/media_addon_server
+  295 /boot/system/servers/notification_server
+  509 /bin/sleep 30
+  510 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de
+  512 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de
+  513 /boot/system/bin/ps -o Id -o Team

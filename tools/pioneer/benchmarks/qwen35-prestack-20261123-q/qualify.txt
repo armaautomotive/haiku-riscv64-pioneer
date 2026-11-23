@@ -1,0 +1,5 @@
+P100A_Q35_FLEET_INSPECTION replied=1 status=0 stage=4 core=120 l2cpu=0x0000000f restore_failed=0 prepared=120
+P100A_Q35_ROLE_STAGE replied=1 status=-2147442676 stage=9 captured=1 staged=1 restored=0 mappings_closed=0
+P100A_Q35_FLEET_INSPECTION clean_end=0
+Q35_FLEET_INSPECTION_FAILED retained_or_unknown
+P100A_RELOAD driver60 tag2026112300030008 generation3 quiesced0 cold1 active_owner1 open_count1 guard1;CPU_METADATA_ONLY

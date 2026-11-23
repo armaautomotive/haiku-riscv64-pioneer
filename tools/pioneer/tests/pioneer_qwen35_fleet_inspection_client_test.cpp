@@ -19,7 +19,7 @@ static bool Call(int fd,uint32_t op,void* data,size_t) {
         auto& r=*static_cast<tt_pioneer_driver_reload*>(data);
         const bool first=statusCalls++==0;
         r.driver=60;r.build_tag=mode==2?UINT64_C(0x111)
-            :mode>=16?UINT64_C(0x2026112300030008)
+            :mode>=16?UINT64_C(0x2026112300030009)
             :mode>=13?UINT64_C(0x2026112300030005):UINT64_C(0x2026112300030004);
         r.generation=(!first && mode==10)?2:1;r.open_count=1;r.guard_version=1;
         if (!first && mode!=7) r.active_owner=1;
@@ -34,7 +34,7 @@ static bool Call(int fd,uint32_t op,void* data,size_t) {
     if (op==TT_PCI_PROBE_Q35_FLEET_INSPECT) {
         ++inspectCalls;if (mode==9) return false;
         auto& r=*static_cast<tt_q35_fleet_inspection*>(data);
-        assert(r.version==1 && r.expected_tag==(mode>=16?UINT64_C(0x2026112300030008)
+        assert(r.version==1 && r.expected_tag==(mode>=16?UINT64_C(0x2026112300030009)
             :mode>=13?UINT64_C(0x2026112300030005):UINT64_C(0x2026112300030004)) && r.expected_generation==1);
         r.build_tag=r.expected_tag;r.generation=1;r.prepared=120;r.failed_core=120;
         r.l2cpu_reset=15;r.stage=TT_Q35_FLEET_INSPECTION_COMPLETE;
@@ -45,7 +45,7 @@ static bool Call(int fd,uint32_t op,void* data,size_t) {
     if (op==TT_PCI_PROBE_Q35_ROLE_STAGE_QUALIFY) {
         ++stageCalls;
         auto& r=*static_cast<tt_q35_role_stage_qualification*>(data);
-        assert(r.version==(mode>=16?2U:1U) && r.expected_tag==(mode>=16?UINT64_C(0x2026112300030008)
+        assert(r.version==(mode>=16?2U:1U) && r.expected_tag==(mode>=16?UINT64_C(0x2026112300030009)
             :UINT64_C(0x2026112300030005)) && r.expected_generation==1);
         r.build_tag=r.expected_tag;r.generation=1;
         r.stage=mode>=16?TT_Q35_ROLE_PRESTACK_COMPLETE:TT_Q35_ROLE_STAGE_COMPLETE;
