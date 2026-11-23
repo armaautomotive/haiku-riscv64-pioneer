@@ -15,7 +15,7 @@ struct DisableMasterIO:MockIO {
 	}
 	void RootWrite(unsigned offset,unsigned width,uint32_t value) {
 		if (offset==4 && value==0x402 && command[1]==0x406) {
-			assert(width==2 && command[0]==0x402);
+			assert(width==4 && command[0]==0x402);
 			if (++writes!=droppedWrite) command[1]=value;
 			return;
 		}
@@ -50,6 +50,8 @@ int main()
 	assert(PioneerPostResetPciRestore(io,result));
 	assert(result.stage==PioneerPostResetPciReady && io.command[0]==0x402
 		&& io.command[1]==0x402 && io.writes==13);
+	MockIO preserve;preserve.mapped=true;preserve.rootPciStatus=0xf900;
+	assert(PioneerPostResetPciRestore(preserve,result) && preserve.rootPciStatus==0xf900);
 	PioneerBlackholeBarPlan plan{};
 	assert(PioneerPlanBlackholeBars(io.profile.ranges,TT_PIONEER_RANGE_COUNT,plan));
 	assert(memcmp(io.bars,plan.bars,sizeof(io.bars))==0
@@ -78,9 +80,10 @@ int main()
 		&& result.stage==PioneerPostResetPciDisable && disable.writes==2);
 	MockIO active;tt_pioneer_mmio_result saved{};tt_pioneer_mmio_transaction transaction{};
 	assert(BlackholePioneerMmioBegin(active,saved,transaction));
+	active.rootPciStatus=0xf900;
 	unsigned stage=0;assert(PioneerPostResetPciFinish(active,saved,stage));
 	assert(stage==PioneerPostResetPciFinishComplete && active.command[0]==0
-		&& active.command[1]==0 && active.mapped);
+		&& active.command[1]==0 && active.mapped && active.rootPciStatus==0xf900);
 	for (unsigned i=0;i<6;i++) assert(active.bars[i]==saved.bars_before[i]);
 	for (unsigned i=0;i<3;i++) assert(active.bridge[i]==saved.bridge_before[i]);
 	MockIO badSaved;assert(BlackholePioneerMmioBegin(badSaved,saved,transaction));
@@ -99,8 +102,9 @@ int main()
 	}
 	DisableMasterIO before;assert(BlackholePioneerMmioBegin(before,saved,transaction));
 	before.command[0]=before.command[1]=0x406;
+	before.rootPciStatus=0xf900;
 	assert(PioneerPreResetDisableMaster(before) && before.command[0]==0x402
-		&& before.command[1]==0x402);
+		&& before.command[1]==0x402 && before.rootPciStatus==0xf900);
 	DisableMasterIO lost;assert(BlackholePioneerMmioBegin(lost,saved,transaction));
 	lost.command[0]=lost.command[1]=0x406;lost.droppedWrite=lost.writes+1;
 	assert(!PioneerPreResetDisableMaster(lost) && lost.command[0]==0x406

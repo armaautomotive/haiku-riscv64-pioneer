@@ -77,11 +77,15 @@ struct MockIO {
 		assert(width == 4 && offset >= 0x10 && offset <= 0x24 && offset % 4 == 0);
 		bars[(offset - 0x10) / 4] = value;
 	}
+	uint16_t rootPciStatus=0;
 	void RootWrite(unsigned offset, unsigned width, uint32_t value)
 	{
 		if (++writes == droppedWrite) return;
 		if (offset == 4) {
-			assert(width == 2 && (value == 0 || value == 0x402) && (value & 4) == 0);
+			assert((width == 2 || width == 4) && (value == 0 || value == 0x402) && (value & 4) == 0);
+			// SG2042 expands a subword root write using the old dword, so
+			// writing back status ones would acknowledge the modeled W1C bits.
+			rootPciStatus &= ~(width==2?rootPciStatus:uint16_t(value>>16));
 			if (value == 0x402) assert(mapped);
 			if (!(disableRootFails && value == 0 && command[1] != 0)) command[1] = value;
 			return;

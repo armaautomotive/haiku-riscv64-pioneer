@@ -70,6 +70,17 @@ bool PioneerPciePayloadRestore(IO& io,const PioneerPciePayloadSnapshot& saved)
 		&& after.control==wanted;
 }
 
+// SG2042 root config supports only aligned dword writes. A subword write is
+// expanded by the controller into a read-modify-write, which would write back
+// and acknowledge any PCI Status W1C bits in the upper half. Write the full
+// command/status dword with zero status bits instead. This does not clear or
+// otherwise handle PCIe AER or Device Status.
+template<class IO>
+void PioneerRecoveryRootCommandWrite(IO& io,uint16_t command)
+{
+	io.RootWrite(4,4,uint32_t(command));
+}
+
 // Disable bus mastering on the retained session before requesting reset.
 // Do not disable memory decoding here: the reset marker and timer use PCI
 // config space, and the post-reset audit will establish fresh MMIO mappings.
@@ -91,7 +102,7 @@ bool PioneerPreResetDisableMaster(IO& io)
 	for (unsigned i=0;i<3;i++) if (io.RootRead(0x24+4*i,4)!=plan.bridge[i]) return false;
 	if (card==0x406) io.CardWrite(4,2,0x402);
 	if (io.CardRead(4,2)!=0x402) return false;
-	if (root==0x406) io.RootWrite(4,2,0x402);
+	if (root==0x406) PioneerRecoveryRootCommandWrite(io,0x402);
 	return io.CardRead(4,2)==0x402 && io.RootRead(4,2)==0x402;
 }
 
@@ -124,7 +135,7 @@ bool PioneerPostResetPciRestore(IO& io,PioneerPostResetPciResult& result)
 	if ((result.cardCommand!=0 && result.cardCommand!=0x402)
 		|| (result.rootCommand!=0 && result.rootCommand!=0x402)) return false;
 	result.stage=PioneerPostResetPciDisable;
-	io.CardWrite(4,2,0);io.RootWrite(4,2,0);
+	io.CardWrite(4,2,0);PioneerRecoveryRootCommandWrite(io,0);
 	if (io.CardRead(4,2)!=0 || io.RootRead(4,2)!=0) return false;
 	result.stage=PioneerPostResetPciBars;
 	const unsigned order[]={5,4,1,0,3,2};
@@ -135,7 +146,7 @@ bool PioneerPostResetPciRestore(IO& io,PioneerPostResetPciResult& result)
 	for (unsigned i=0;i<6;i++) if (io.CardRead(0x10+4*i,4)!=plan.bars[i]) return false;
 	for (unsigned i=0;i<3;i++) if (io.RootRead(0x24+4*i,4)!=plan.bridge[i]) return false;
 	result.stage=PioneerPostResetPciBridgeDecode;
-	io.RootWrite(4,2,0x402);
+	PioneerRecoveryRootCommandWrite(io,0x402);
 	if (io.RootRead(4,2)!=0x402 || io.CardRead(4,2)!=0) return false;
 	result.stage=PioneerPostResetPciCardDecode;
 	io.CardWrite(4,2,0x402);
@@ -180,7 +191,7 @@ bool PioneerPostResetPciFinish(IO& io,const tt_pioneer_mmio_result& saved,
 	}
 	for (unsigned i=0;i<3;i++) if (io.RootRead(0x24+4*i,4)!=plan.bridge[i]) return false;
 	stage=PioneerPostResetPciFinishDisable;
-	io.CardWrite(4,2,0);io.RootWrite(4,2,0);
+	io.CardWrite(4,2,0);PioneerRecoveryRootCommandWrite(io,0);
 	if (io.CardRead(4,2)!=0 || io.RootRead(4,2)!=0) return false;
 	stage=PioneerPostResetPciFinishRestore;
 	const unsigned order[]={5,4,1,0,3,2};
