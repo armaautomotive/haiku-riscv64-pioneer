@@ -43,6 +43,22 @@ class DataflowRoleFleetRecoveryOwner {
                 || !io.StacklessFleetPreparationSafe(core)) return false;
         return true;
     }
+    // The physical copy scope must cover exactly the fleet ledger, including
+    // cores other than the immediate target. Otherwise a misrouted shim write
+    // could destroy an unreported captured copy.
+    template<class IO> bool VerifyHeldCopyLedger(IO& io) {
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            const uint32_t* reader=nullptr;const uint32_t* writer=nullptr;bool captured=false;
+            if (!io.StacklessHeldCopySources(core,reader,writer,captured)
+                || captured!=fRam.StacklessCopiesCaptured(core)) return false;
+            if (captured) {
+                if (!reader || !writer || reader!=fRam.OriginalWords(core,DataflowRoleReader)
+                    || writer!=fRam.OriginalWords(core,DataflowRoleWriter)
+                    || !io.StacklessHeldCopySourceSafe(core,reader,writer)) return false;
+            } else if (reader || writer) return false;
+        }
+        return true;
+    }
     template<class IO> bool VerifyResetDisable(IO& io,bool preserved) {
         if (!fResetDisableCaptured) return false;
         for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
@@ -163,6 +179,34 @@ public:
         if (!fStackless || fPhase!=ReleaseAttempted) return false;
         if (!fRam.MarkStacklessMayRun(core,io)) { fPhase=Faulted; return false; }
         return true;
+    }
+    // Replace a held core's startup shims with its local restore shims. The
+    // fleet's own RAM ledger and the IO scope must identify the same retained
+    // copies; the image owner then audits all 120 tiles around the writes.
+    // This only stages code. It does not grant a physical release or prove
+    // that the restore program ran. A failed audit retains the fleet.
+    template<class IO> bool StageCoreLocalRestore(unsigned core,const uint32_t* reader,
+        unsigned readerWords,const uint32_t* writer,unsigned writerWords,IO& io) {
+        if (!fCoreLocalRestoreMode || !fCoreLocalReleaseLedger || !fStackless
+            || (fPhase!=ReleaseAttempted && fPhase!=Faulted)
+            || !fRam.StacklessCopiesCaptured(core)) return false;
+        fPhase=Faulted;
+        const uint32_t* expectedReader=fRam.OriginalWords(core,DataflowRoleReader);
+        const uint32_t* expectedWriter=fRam.OriginalWords(core,DataflowRoleWriter);
+        const uint32_t* observedReader=nullptr;const uint32_t* observedWriter=nullptr;
+        bool captured=false;
+        if (!expectedReader || !expectedWriter || !AllHeldAndRouted(io) || !VerifyHeldCopyLedger(io)
+            || !VerifyResetDisable(io,true)
+            || !io.StacklessHeldCopySources(core,observedReader,observedWriter,captured)
+            || !captured || observedReader!=expectedReader || observedWriter!=expectedWriter
+            || !io.StacklessHeldCopySourceSafe(core,expectedReader,expectedWriter)
+            || !fImages.RestageOneWithCopies(core,reader,readerWords,writer,writerWords,io))
+            return false;
+        observedReader=observedWriter=nullptr;captured=false;
+        return io.StacklessHeldCopySources(core,observedReader,observedWriter,captured)
+            && captured && observedReader==expectedReader && observedWriter==expectedWriter
+            && io.StacklessHeldCopySourceSafe(core,expectedReader,expectedWriter)
+            && VerifyHeldCopyLedger(io) && VerifyResetDisable(io,true) && AllHeldAndRouted(io);
     }
     // The real scope must prove the exact retained source, fresh restore
     // receipt, held routes and writer exclusion. This records RAM proof only;

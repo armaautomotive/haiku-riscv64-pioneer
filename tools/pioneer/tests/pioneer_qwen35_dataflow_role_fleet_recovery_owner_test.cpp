@@ -12,6 +12,8 @@ struct RecoveryIO {
     bool corruptPriorDisableOnWrite=false;
     bool stacklessPreparation=true,stacklessSafe=true,uncapturedProtected=true;
     bool coreRestoreProof=false;
+    bool copyProof=true,copyCaptured[DataflowBarrierWorkers]{};
+    bool wrongCopyPointer=false,corruptCopyOnShimWrite=false;
     const uint32_t* retainedRam=nullptr;
     unsigned privateRamReads=0;
     unsigned copyCalls=0,failCopyCall=UINT32_MAX;
@@ -39,6 +41,31 @@ struct RecoveryIO {
     }
     bool StacklessUncapturedRamProtected(unsigned core) const {
         return held && uncapturedProtected && core<DataflowBarrierWorkers;
+    }
+    void InstallHeldCopies(unsigned core) {
+        assert(core<DataflowBarrierWorkers && retainedRam);
+        const unsigned words=DataflowRoleRamCopyBytes/4;
+        const unsigned readerAt=core*CodePerCore+(DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address)/4;
+        const unsigned writerAt=core*CodePerCore+(DataflowRoleWriterRamCopy-DataflowRoleExtraL1Address)/4;
+        for (unsigned i=0;i<words;i++) {
+            code[readerAt+i]=retainedRam[core*RamPerCore+i];
+            code[writerAt+i]=retainedRam[core*RamPerCore+words+i];
+        }
+        copyCaptured[core]=true;
+    }
+    bool StacklessHeldCopySources(unsigned core,const uint32_t*& reader,const uint32_t*& writer,bool& captured) {
+        if (!copyProof || !AllRolesHeld(core) || !retainedRam) return false;
+        captured=copyCaptured[core];reader=writer=nullptr;
+        if (captured) {
+            reader=retainedRam+core*RamPerCore+(wrongCopyPointer?1:0);
+            writer=retainedRam+core*RamPerCore+DataflowRoleLocalRamWords;
+        }
+        return true;
+    }
+    bool StacklessHeldCopySourceSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        const uint32_t* expectedReader=nullptr;const uint32_t* expectedWriter=nullptr;bool captured=false;
+        return StacklessHeldCopySources(core,expectedReader,expectedWriter,captured) && captured
+            && reader==expectedReader && writer==expectedWriter;
     }
     bool StacklessCoreRestoreProven(unsigned core,const uint32_t* reader,const uint32_t* writer) const {
         if (!coreRestoreProof || !AllRolesHeld(core) || !retainedRam) return false;
@@ -110,6 +137,10 @@ struct RecoveryIO {
             || bytes>DataflowRoleWriterShimLimit-address) return false;
         const unsigned at=core*DataflowRoleShimWords+(address-DataflowRoleReaderShimAddress)/4;
         ++writes; for (unsigned i=0;i<bytes/4;i++) shims[at+i]=in[i];
+        if (corruptCopyOnShimWrite) {
+            code[core*CodePerCore+(DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address)/4]^=1;
+            corruptCopyOnShimWrite=false;
+        }
         return true;
     }
     bool ReadRam(unsigned core,unsigned role,uint32_t address,uint32_t* out,unsigned bytes) {
@@ -145,6 +176,48 @@ int main()
             && owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
         assert(owner.RestoreAll(io) && owner.CoveredStateRestored() && !io.privateRamReads);
         assert(io.code==code && io.boots==boots && io.shims==shims && io.resetDisable==disable);
+    }
+    {
+        // Restore shim staging is bound to the fleet ledger's actual retained
+        // snapshot pointers, with complete held-fleet and reset audits.
+        RecoveryIO io; DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.SelectCoreLocalRestoreMode()
+            && owner.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
+                ramSnapshot.data(),ramSnapshot.size(),io)
+            && owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io)
+            && owner.PreparePossibleRelease(io) && owner.BeginReleaseAttempt(io));
+        io.held=false;
+        assert(owner.CaptureStacklessCore(0,io) && owner.MarkStacklessMayRun(0,io)
+            && owner.CaptureStacklessCore(1,io) && owner.MarkStacklessMayRun(1,io));
+        io.held=true;io.retainedRam=ramSnapshot.data();
+        io.InstallHeldCopies(0);io.InstallHeldCopies(1);
+        const unsigned reads=io.privateRamReads,writes=io.writes;
+        assert(!owner.StageCoreLocalRestore(2,shimB,2,shimA,2,io) && io.writes==writes);
+        io.wrongCopyPointer=true;
+        assert(!owner.StageCoreLocalRestore(0,shimB,2,shimA,2,io) && io.writes==writes);
+        io.wrongCopyPointer=false;
+        io.copyCaptured[1]=false;
+        assert(!owner.StageCoreLocalRestore(0,shimB,2,shimA,2,io) && io.writes==writes);
+        io.copyCaptured[1]=true;
+        assert(owner.StageCoreLocalRestore(0,shimB,2,shimA,2,io));
+        assert(owner.StageCoreLocalRestore(1,shimB,2,shimA,2,io));
+        assert(io.privateRamReads==reads && owner.RestorationRequired()
+            && !owner.CoveredStateRestored() && !owner.RestoreAll(io));
+    }
+    {
+        RecoveryIO io; DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.SelectCoreLocalRestoreMode()
+            && owner.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
+                ramSnapshot.data(),ramSnapshot.size(),io)
+            && owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io)
+            && owner.PreparePossibleRelease(io) && owner.BeginReleaseAttempt(io));
+        io.held=false;
+        assert(owner.CaptureStacklessCore(0,io) && owner.MarkStacklessMayRun(0,io));
+        io.held=true;io.retainedRam=ramSnapshot.data();io.InstallHeldCopies(0);
+        io.corruptCopyOnShimWrite=true;
+        assert(!owner.StageCoreLocalRestore(0,shimB,2,shimA,2,io));
+        assert(owner.RestorationRequired() && !owner.CoveredStateRestored()
+            && !owner.RestoreAll(io) && !io.privateRamReads);
     }
     {
         RecoveryIO io; const auto original=io.ram; DataflowRoleFleetRecoveryOwner owner;

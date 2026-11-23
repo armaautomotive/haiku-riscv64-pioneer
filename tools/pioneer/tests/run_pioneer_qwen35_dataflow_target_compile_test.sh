@@ -255,17 +255,18 @@ for role in reader writer; do
         "$temporary/local-restore-images/${role}.bin" "$role"
 done
 python3 "$directory/pioneer_qwen35_role_local_restore_images_test.py" "$temporary/local-restore-images"
-for witness in copy_aware core_release; do
+for witness in copy_aware core_release core_restore_stage; do
     "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -ffreestanding \
         -fno-exceptions -fno-rtti -fno-stack-protector -mcmodel=medany -fpic -D_KERNEL_MODE \
         -fstack-usage -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
         -c "$directory/pioneer_qwen35_${witness}_kernel_compile.cpp" -o "$temporary/${witness}_kernel.o"
 done
-python3 - "$temporary/copy_aware_kernel.su" "$temporary/core_release_kernel.su" <<'PYSTACK'
+python3 - "$temporary/copy_aware_kernel.su" "$temporary/core_release_kernel.su" "$temporary/core_restore_stage_kernel.su" <<'PYSTACK'
 from pathlib import Path
 import sys
 for filename,markers in ((sys.argv[1],('PioneerQ35CopyAwareCompileWitness','PioneerQ35CoreLocalFleetCompileWitness')),
-                         (sys.argv[2],('PioneerQ35CoreLocalReleaseCompileWitness',))):
+                         (sys.argv[2],('PioneerQ35CoreLocalReleaseCompileWitness',)),
+                         (sys.argv[3],('PioneerQ35CoreRestoreStageCompileWitness',))):
     rows=[line.rsplit('\t',2) for line in Path(filename).read_text().splitlines()]
     if not rows or any(len(row)!=3 or not row[1].isdigit() or row[2]!='static' for row in rows):
         raise SystemExit('copy-aware compile witness has missing or non-static stack frames')
