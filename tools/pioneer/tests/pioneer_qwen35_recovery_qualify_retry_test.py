@@ -10,7 +10,7 @@ import tempfile
 import pioneer_qwen35_recovery_qualify_script_test as common
 
 
-def exercise(suffix, script, candidate_hash):
+def exercise(suffix, script, candidate_hash, client_hash='34af989cb81827835f8e1fe762c8018ec5dbbb686443df992a15dea5fee13abc', reject=False):
     with tempfile.TemporaryDirectory() as temp:
         root = Path(temp)
         home, old_stage, installed, guard, _, env = common.fixture(root)
@@ -29,7 +29,7 @@ def exercise(suffix, script, candidate_hash):
                           (common.NEW_GUARD, guard),
                           (common.ADMIN, home/'pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload'),
                           (candidate_hash, stage/'candidate'),
-                          ('34af989cb81827835f8e1fe762c8018ec5dbbb686443df992a15dea5fee13abc', stage/'client')):
+                          (client_hash, stage/'client')):
             source = source.replace(old, hashlib.sha256(path.read_bytes()).hexdigest())
         wrapper = root/'retry.sh'
         common.put(wrapper, source)
@@ -37,6 +37,12 @@ def exercise(suffix, script, candidate_hash):
             return subprocess.run(['bash', str(wrapper), mode, '2'], env=dict(env, **(extra or {})),
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         assert run('--prepare-existing-guard').returncode == 0
+        if reject:
+            result = run('--run', {'MOCK_REJECT': '1'})
+            assert result.returncode != 0 and installed.read_text() == 'stable'
+            assert (stage/'state').read_text().strip() == 'PRE_RESET_PCI_REJECTED_STABLE_RESTORED'
+            assert not (home/'.pioneer-q35-dataflow-exclusive').exists()
+            return
         result = run('--run', {'MOCK_FAIL': '1'})
         assert result.returncode != 0 and installed.read_text() == 'candidate'
         assert (stage/'state').read_text().strip() == 'QUALIFICATION_FAILED_RETAIN_FOR_INSPECTION'
@@ -51,6 +57,7 @@ def exercise(suffix, script, candidate_hash):
                           (common.CANDIDATE, stage/'candidate'),
                           ('cabebd7d42b60106c6d97216353400bbfd76a58b0f982b24389715dbc95f3e70', stage/'candidate'),
                           ('1326f14e7d2f5997b2f2048e2308fc51747b46b949e6cd7417a78a474b61b292', stage/'candidate'),
+                          ('bdbcc8dc0d9823c2e249dba7eb508289be2332d70b78fe5174c3966f8841c265', stage/'candidate'),
                           (candidate_hash, stage/'candidate')):
             restore = restore.replace(old, hashlib.sha256(path.read_bytes()).hexdigest())
         restore_path = root/'restore.sh'
@@ -69,6 +76,12 @@ def main():
              '1326f14e7d2f5997b2f2048e2308fc51747b46b949e6cd7417a78a474b61b292')
     exercise('-e', 'pioneer_qwen35_recovery_qualify_dma.sh',
              'bdbcc8dc0d9823c2e249dba7eb508289be2332d70b78fe5174c3966f8841c265')
+    exercise('-f', 'pioneer_qwen35_recovery_qualify_pci_baseline.sh',
+             '138e21ff9cd5ecc6d3c734dac835189815164532af276df8984b6550d312e60c',
+             '2ac40951a28bd9da2bdbb9aa1f6a713a05b52fbc0aafe78fbcc11bb32b588bbf')
+    exercise('-f', 'pioneer_qwen35_recovery_qualify_pci_baseline.sh',
+             '138e21ff9cd5ecc6d3c734dac835189815164532af276df8984b6550d312e60c',
+             '2ac40951a28bd9da2bdbb9aa1f6a713a05b52fbc0aafe78fbcc11bb32b588bbf', reject=True)
     print('PASS existing-guard qualifications and retained failure; SIMULATED HOST ONLY')
 
 

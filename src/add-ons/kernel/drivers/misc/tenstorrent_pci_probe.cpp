@@ -11122,6 +11122,7 @@ DriverReloadControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_
 
 #ifdef PIONEER_QWEN35_INPLACE_RECOVERY
 #include "PioneerRecoveryProtocol.h"
+#include "PioneerPcieRootAerSnapshot.h"
 // PIONEER_QWEN35_RECOVERY_STATUS_BEGIN
 static status_t
 Qwen35RecoveryStatus(PioneerProbeCookie* cookie,void* data,size_t length)
@@ -11598,15 +11599,35 @@ Qwen35RecoveryRequest(PioneerProbeCookie* cookie,void* data,size_t length,bool f
 			|| (!qualifyIdle && !Qwen35LiveRecoveryFaultPresent(context))
 			|| context->io.qwen35BorrowedRoleScope) r.operation_status=B_BUSY;
 		else {
-			if (!context->dispatchOwnerRetained) {
-				tt_resident_session_result retained={};
-				RetainQ38DispatchOwner(*context,retained);
+#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+			bool qualificationPciClean=true;
+			if (qualification) {
+				struct StatusIO {
+					PioneerSessionIO& io;
+					uint32 HostPciRead(unsigned peer,uint16 offset,uint8 size) {
+						return peer==0?io.CardRead(offset,size):io.RootRead(offset,size);
+					}
+				} statusIo{context->io};
+				uint32 cardStatus=0xffff,rootStatus=0xffff;
+				const bool cardClean=BlackholeHostPcieStatus(statusIo,0,cardStatus);
+				const bool rootClean=BlackholeHostPcieStatus(statusIo,1,rootStatus);
+				r.output_reserved=((rootStatus&0xffff)<<16)|(cardStatus&0xffff);
+				qualificationPciClean=cardClean && rootClean;
 			}
-			if (!context->dispatchOwnerRetained || !sColdRecoveryRequired)
-				r.operation_status=B_NOT_ALLOWED;
-			else {
-				context->qwen35LiveFaultRecoveryRequested=true;
-				r.operation_status=Qwen35RecoveryRunLocked(cookie,r);
+			if (!qualificationPciClean) r.operation_status=B_DEV_NOT_READY;
+			else
+#endif
+			{
+				if (!context->dispatchOwnerRetained) {
+					tt_resident_session_result retained={};
+					RetainQ38DispatchOwner(*context,retained);
+				}
+				if (!context->dispatchOwnerRetained || !sColdRecoveryRequired)
+					r.operation_status=B_NOT_ALLOWED;
+				else {
+					context->qwen35LiveFaultRecoveryRequested=true;
+					r.operation_status=Qwen35RecoveryRunLocked(cookie,r);
+				}
 			}
 		}
 	} else
@@ -11614,6 +11635,17 @@ Qwen35RecoveryRequest(PioneerProbeCookie* cookie,void* data,size_t length,bool f
 	(void)force;
 #endif
 		r.operation_status=Qwen35RecoveryRunLocked(cookie,r);
+#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+	// The failed owner remains quarantined. Preserve root AER evidence without
+	// writing or acknowledging status, before the caller releases its fd.
+	if (qualification && r.operation_status!=B_OK && sColdRecoveryRequired
+		&& sRuntimeOwner && sRuntimeOwner->context) {
+		r.new_generation=UINT64_MAX; // unavailable is distinct from a clear AER register
+		uint32 uncorrectable=0,source=0;
+		if (PioneerPcieRootAerSnapshot(sRuntimeOwner->context->io,uncorrectable,source))
+			r.new_generation=((uint64)source<<32)|uncorrectable;
+	}
+#endif
 	r.build_tag=PIONEER_DRIVER_BUILD_TAG;
 	status=user_memcpy(data,&r,sizeof(r));
 	release_sem(sLock);return status;

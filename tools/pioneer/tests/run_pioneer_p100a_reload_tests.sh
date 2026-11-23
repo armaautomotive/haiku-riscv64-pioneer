@@ -38,6 +38,9 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  "$directory/pioneer_post_reset_mapping_test.cpp" -o "$temporary/post-reset-mapping-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/post-reset-mapping-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_pcie_root_aer_snapshot_test.cpp" -o "$temporary/root-aer-snapshot-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/root-aer-snapshot-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_recovery_arc_queue_test.cpp" -o "$temporary/recovery-arc-queue-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/recovery-arc-queue-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \

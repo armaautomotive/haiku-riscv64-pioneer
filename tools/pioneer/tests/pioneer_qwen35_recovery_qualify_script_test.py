@@ -60,6 +60,9 @@ json.dump(s,open(p,'w'))
 import json, os, sys
 assert sys.argv[1:] == ['--qualify-recovery']
 p=os.environ['MOCK_STATE'];s=json.load(open(p));assert s['driver']==60
+if os.environ.get('MOCK_REJECT')=='1':
+ print('P100A_Q35_RECOVERY attempt=1 stage=0 detail=0x00000000 status=-2147442676 generation=0 pre_pcie=0x00060000',file=sys.stderr)
+ raise SystemExit(1)
 if os.environ.get('MOCK_FAIL')=='1':
  s['cold']=True;s['active']=True;json.dump(s,open(p,'w'));raise SystemExit(1)
 s['generation']+=1;json.dump(s,open(p,'w'))

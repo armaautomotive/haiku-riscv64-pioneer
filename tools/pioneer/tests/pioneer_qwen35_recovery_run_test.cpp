@@ -29,6 +29,7 @@
 #include <algorithm>
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerRecoveryProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadState.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerPcieRootAerSnapshot.h"
 using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uint64_t;using status_t=int;
 constexpr int B_OK=0,B_BAD_VALUE=-1,B_NOT_ALLOWED=-2,B_BUSY=-3,B_DEV_NOT_READY=-4,B_NO_MEMORY=-5;
 static unsigned failStage=0,abortCount=0,completeCount=0,contextDeleted=0,cookieDeleted=0;
@@ -40,6 +41,13 @@ static bool ticketPending=false,invalidTicket=false,guardV2Missing=false;
 static unsigned validateCalls=0,invalidateOnValidate=0;
 static bool resetTimeout=false,resumeResetTimeout=false;
 static unsigned resetResumeWaits=0;
+#ifdef TEST_RECOVERY_QUALIFY
+static uint32 fakeCardPciStatus=0,fakeRootPciStatus=0;
+static bool fakeAerAvailable=false;
+template<class IO> static bool BlackholeHostPcieStatus(IO&,unsigned peer,uint32& status) {
+	status=peer?fakeRootPciStatus:fakeCardPciStatus;return status==0;
+}
+#endif
 #ifdef TEST_GRAPH_RECOVERY
 static bool failGraphRelease=false;
 static bool failSharedRoleRelease=false;
@@ -109,7 +117,18 @@ struct PioneerSessionIO {
 #ifdef TEST_LIVE_TAKEOVER
 	void* qwen35BorrowedRoleScope=nullptr;
 #endif
-	uint32 CardRead(uint16,uint8){return 0;} uint32 RootRead(uint16,uint8){return 0;}
+	uint32 CardRead(uint16,uint8){return 0;}
+	uint32 RootRead(uint16 offset,uint8){
+#ifdef TEST_RECOVERY_QUALIFY
+		if (fakeAerAvailable) {
+			if (offset==0) return 0x20421e30;
+			if (offset==0x100) return 0x00010001;
+			if (offset==0x104) return 0x20;
+			if (offset==0x134) return 0x01000000;
+		}
+#endif
+		(void)offset;return 0;
+	}
 	void CardWrite(uint16,uint8,uint32){}
 	status_t DisposeAfterVerifiedReset(const PioneerDriverRecoveryProof& p) {
 		assert(p.ReadyToRetireOneOwner());
@@ -247,6 +266,9 @@ static status_t user_memcpy(void* dst,const void* src,size_t n){memcpy(dst,src,n
 static tt_pioneer_recovery_run Request(){tt_pioneer_recovery_run r={};r.version=1;r.expected_tag=PIONEER_DRIVER_BUILD_TAG;r.expected_generation=3;return r;}
 static void Setup() {
 	failStage=abortCount=completeCount=contextDeleted=cookieDeleted=0;trace.clear();
+#ifdef TEST_RECOVERY_QUALIFY
+	fakeCardPciStatus=fakeRootPciStatus=0;fakeAerAvailable=false;
+#endif
 	failPayloadRead=failPayloadRestore=failFirmwareQueue=failDbi=false;
 	payloadReads=payloadDriftAt=0;
 	firmwareNotReady=retryableMappingFailure=false;
@@ -504,6 +526,29 @@ int main(){
 	candidate->context->qwen35SharedRoleBinding=nullptr;candidate->context->dispatchOwnerRetained=false;
 	sColdRecoveryRequired=false;r=Request();
 	assert(Qwen35RecoveryForce(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_BUSY && trace.empty());
+	fakeRootPciStatus=6;r=Request();
+	assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.output_reserved==0x00060000 && trace.empty() && !retainCalls && !sColdRecoveryRequired);
+	fakeRootPciStatus=0;fakeCardPciStatus=0xffff;r=Request();
+	assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.output_reserved==0x0000ffff && trace.empty() && !retainCalls && !sColdRecoveryRequired);
+	fakeCardPciStatus=0;
+	failDbi=true;r=Request();
+	assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.stage==PIONEER_RECOVERY_STAGE_FIRMWARE && r.new_generation==UINT64_MAX
+		&& sColdRecoveryRequired && retainCalls==1);
+	sQwen35ExclusiveCookie=nullptr;Cleanup();
+	Setup();candidate=sRuntimeOwner;candidate->finalFreeRetained=false;sQwen35ExclusiveCookie=candidate;
+	candidate->context->qwen35DataflowService=nullptr;candidate->context->qwen35GraphOwner=nullptr;
+	candidate->context->qwen35SharedRoleBinding=nullptr;candidate->context->dispatchOwnerRetained=false;
+	sColdRecoveryRequired=false;fakeAerAvailable=true;failDbi=true;r=Request();
+	assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.new_generation==UINT64_C(0x0100000000000020) && sColdRecoveryRequired);
+	sQwen35ExclusiveCookie=nullptr;Cleanup();
+	Setup();candidate=sRuntimeOwner;candidate->finalFreeRetained=false;sQwen35ExclusiveCookie=candidate;
+	candidate->context->qwen35DataflowService=nullptr;candidate->context->qwen35GraphOwner=nullptr;
+	candidate->context->qwen35SharedRoleBinding=nullptr;candidate->context->dispatchOwnerRetained=false;
+	sColdRecoveryRequired=false;
 	r=Request();assert(Qwen35RecoveryQualify(candidate,&r,sizeof(r))==B_OK && r.operation_status==B_OK
 		&& r.stage==PIONEER_RECOVERY_STAGE_COMPLETE && !sRuntimeOwner && !candidate->context
 		&& !sColdRecoveryRequired && retainCalls==1 && completeCount==1

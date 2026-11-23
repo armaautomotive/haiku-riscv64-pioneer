@@ -427,9 +427,9 @@ static bool ResetStoppedRewrite(int fd,bool force,bool qualification=false)
 			return verifyIdle(0,false);
 		}
 		fprintf(stderr,"P100A_Q35_RECOVERY attempt=%u stage=%u detail=0x%08x "
-			"status=%ld generation=%llu\n",attempt+1,reset.stage,reset.detail,
+			"status=%ld generation_or_aer=0x%016llx pre_pcie=0x%08x\n",attempt+1,reset.stage,reset.detail,
 			static_cast<long>(reset.operation_status),
-			static_cast<unsigned long long>(reset.new_generation));
+			static_cast<unsigned long long>(reset.new_generation),reset.output_reserved);
 		if (reset.operation_status==B_OK)
 			return reset.stage==PIONEER_RECOVERY_STAGE_COMPLETE && reset.build_tag==before.build_tag
 				&& reset.new_generation && verifyIdle(reset.new_generation,true);
@@ -742,6 +742,17 @@ static bool QualifyRecovery()
 	if (okay) {
 		okay=ResetStoppedRewrite(fd,true,true);
 		fprintf(stderr,"P100A_Q35_RECOVERY_QUALIFY reset_completed=%u\n",unsigned(okay));
+		if (!okay) {
+			// Admission can reject pre-existing PCI errors before quarantine.
+			// End only a demonstrably non-cold bank owner; never retry a reset.
+			tt_pioneer_driver_reload current{};current.version=1;
+			if (Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&current,sizeof(current))
+				&& current.build_tag==status.build_tag && current.generation==status.generation
+				&& !current.cold && !current.quiesced && current.active_owner) {
+				tt_q38_bank_session end{};end.version=TT_Q38_BANK_PROTOCOL;
+				(void)Call(fd,TT_PCI_PROBE_Q38_BANK_END,&end,sizeof(end));
+			}
+		}
 	} else {
 		// A failed or lost begin reply may still have created an owner. Inspect
 		// CPU metadata before choosing normal end or guarded fault recovery.
