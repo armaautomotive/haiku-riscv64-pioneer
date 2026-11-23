@@ -23,7 +23,7 @@ def run(code, role, bypass_works, decision):
     pc, cfg = base, 0
     writes, fences, visible, dependent, stack_writes = 0, 0, False, False, 0
     receipt, polls, release, cancel_visible, cancel_dependent = 0, 0, 0, False, False
-    for _ in range(30000):
+    for step in range(30000):
         assert base <= pc <= base + len(code) - 4 and not (pc & 3)
         insn = struct.unpack_from("<I", code, pc - base)[0]
         opcode, rd, funct3 = insn & 127, (insn >> 7) & 31, (insn >> 12) & 7
@@ -78,6 +78,9 @@ def run(code, role, bypass_works, decision):
             elif address == receipt_address:
                 assert writes == count and copied == original and dependent and not stack_writes
                 if not receipt:
+                    # Each of 2048 words passes through a five-instruction
+                    # single-issue loop before either shim publishes ready.
+                    assert step >= count * 5
                     assert regs[rs2] == ready_value
                     receipt = regs[rs2]
                 else:

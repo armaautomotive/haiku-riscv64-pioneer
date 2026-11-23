@@ -16,6 +16,7 @@
 static status_t Qwen35DataflowControl(PioneerProbeCookie*,uint32_t,void*,size_t);
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 static status_t Qwen35DataflowGenerate(PioneerProbeCookie*,void*,size_t);
+static bool PioneerQ35SharedRoleCopiesCaptured(const PioneerQwen35SharedRoleBinding*,unsigned);
 #endif
 // Borrow, never reacquire, the lock already held by Qwen35DataflowControl.
 // The private constructor limits creation to that control path. The caller
@@ -146,7 +147,21 @@ public:
 #endif
             ;
     }
-    bool ProveRoleLocalRamStable(PioneerSessionIO&,unsigned) const { return false; }
+    // A firmware or other agent reset after capture invalidates the timing
+    // observation. Held reset samples do not prove that no such event has
+    // occurred; this continuity proof is deliberately still unavailable.
+    bool ProveRoleResetContinuitySinceCapture(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleLocalRamStable(PioneerSessionIO& io,unsigned core) const {
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+        return core<PioneerQwen35::DataflowBarrierWorkers && io.runtimeCore==core
+            && io.DataflowPanelMappingStable() && ProveExclusiveRewrite(io)
+            && ProveRoleFleetHeldAndQuiet(io,core)
+            && PioneerQ35SharedRoleCopiesCaptured(fContext->qwen35SharedRoleBinding,core)
+            && ProveRoleResetContinuitySinceCapture(io,core);
+#else
+        (void)io; (void)core; return false;
+#endif
+    }
     // Requires stable exclusive ownership of the handoff, RAM copies and
     // live images, plus recovery if the release write may still be posted.
     bool ProveRoleStartupHandoffSafe(PioneerSessionIO&,unsigned) const { return false; }

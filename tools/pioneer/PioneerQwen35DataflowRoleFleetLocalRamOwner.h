@@ -59,6 +59,12 @@ public:
     }
     bool MarkedForPossibleRelease() const { return fPhase==Dirty && fReleaseLedgerReady; }
     bool StacklessCapturePrepared() const { return fPhase==StacklessPrepared && fStacklessStorage; }
+    // Both verified pre-stack shims have completed their local-RAM copies.
+    // This records an observation, not continuity: a subsequent reset could
+    // start initialization again and must be independently excluded.
+    bool StacklessCopiesCaptured(unsigned core) const {
+        return core<DataflowBarrierWorkers && fStacklessCaptured[core];
+    }
     bool RestorationRequired() const {
         return fPhase==Dirty || fPhase==StacklessPrepared || fPhase==StacklessFaulted;
     }

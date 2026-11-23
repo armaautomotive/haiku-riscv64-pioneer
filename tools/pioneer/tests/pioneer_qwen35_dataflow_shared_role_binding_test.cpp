@@ -22,6 +22,8 @@ static void ExerciseBinding(PioneerSessionIO& io)
     context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
     assert(context->qwen35SharedRoleBinding && gLocked);
     io.runtimeCore=7;
+    assert(!context->qwen35SharedRoleBinding->StacklessCopiesCaptured(0));
+    assert(!io.qwen35BorrowedRoleScope->ProveRoleLocalRamStable(io,7));
     assert(!io.SharedCaptureAndStageHeld());
     assert(!io.SharedCaptureAndStageHeld()); // one-shot, even after a denied proof
     assert(!io.SharedArmAndBeginRelease() && !io.SharedFleetHeldAndQuiescent());

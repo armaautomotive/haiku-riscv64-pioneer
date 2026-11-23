@@ -138,12 +138,14 @@ int main()
         io.stable=false; // deferred preparation must not read private RAM
         assert(owner.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
             ramSnapshot.data(),ramSnapshot.size(),io));
+        assert(!owner.StacklessCopiesCaptured(0) && !owner.StacklessCopiesCaptured(DataflowBarrierWorkers));
         assert(!io.privateRamReads && !owner.OriginalRamWords(0,DataflowRoleReader));
         assert(owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
         assert(owner.PreparePossibleRelease(io) && owner.ReleaseLedgerPrepared());
         assert(owner.BeginReleaseAttempt(io) && !io.privateRamReads);
         io.held=false;
         assert(owner.CaptureStacklessCore(0,io) && owner.MarkStacklessMayRun(0,io));
+        assert(owner.StacklessCopiesCaptured(0) && !owner.StacklessCopiesCaptured(1));
         assert(owner.CaptureStacklessCore(1,io)); // snapshot retained, stack not released
         assert(owner.OriginalRamWords(0,DataflowRoleReader)[0]==ram[0]);
         io.ram[0]^=1; io.held=true; io.stable=true; io.uncapturedProtected=false;
@@ -181,6 +183,7 @@ int main()
         assert(owner.CaptureStacklessCore(0,io) && owner.MarkStacklessMayRun(0,io));
         io.ram[0]^=1; io.failCopyCall=io.copyCalls+2;
         assert(!owner.CaptureStacklessCore(1,io) && owner.RestorationRequired());
+        assert(owner.StacklessCopiesCaptured(0) && !owner.StacklessCopiesCaptured(1));
         assert(!owner.OriginalRamWords(1,DataflowRoleReader));
         assert(!owner.CaptureStacklessCore(2,io));
         io.held=true; io.failCopyCall=UINT32_MAX;

@@ -94,6 +94,11 @@ public:
     const uint32_t* OriginalRamWords(unsigned core,unsigned role) const {
         return fRam.OriginalWords(core,role);
     }
+    // Valid only as historical evidence under CaptureStacklessCore's IO
+    // contract; this alone does not exclude a later reset or authorize NoC IO.
+    bool StacklessCopiesCaptured(unsigned core) const {
+        return fStackless && fRam.StacklessCopiesCaptured(core);
+    }
     // Capture is read-only; these states have not performed any role write.
     bool Untouched() const { return fPhase==Empty || fPhase==Captured || fPhase==Unavailable; }
     template<class IO> bool CaptureAll(uint32_t* code,unsigned codeWords,uint32_t* ram,

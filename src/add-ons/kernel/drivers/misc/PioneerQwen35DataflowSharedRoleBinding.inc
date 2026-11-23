@@ -65,6 +65,10 @@ public:
     PioneerQwen35SharedRoleBinding& operator=(const PioneerQwen35SharedRoleBinding&)=delete;
     ~PioneerQwen35SharedRoleBinding() { free(fCodeSnapshot); free(fRamSnapshot); }
     bool Valid() const { return fCodeSnapshot && fRamSnapshot; }
+    bool StacklessCopiesCaptured(unsigned core) const {
+        return core<PioneerQwen35::DataflowBarrierWorkers && fReleaseConfirmed[core]
+            && fOwner.StacklessCopiesCaptured(core);
+    }
     bool CanDestroy() const { return !fViews.HasMappings() && !fOwner.RestorationRequired(); }
     __attribute__((noinline)) bool CaptureAndStageHeld() {
         using namespace PioneerQwen35;
@@ -321,6 +325,10 @@ public:
     bool FinalizeBeforeResume() { return (fOwner.Untouched() || fOwner.CoveredStateRestored())
         ?fViews.Close():false; }
 };
+
+static bool PioneerQ35SharedRoleCopiesCaptured(const PioneerQwen35SharedRoleBinding* binding,unsigned core) {
+    return binding && binding->StacklessCopiesCaptured(core);
+}
 static_assert(alignof(PioneerQwen35SharedRoleBinding)<=alignof(void*),"shared role binding requires ordinary kernel allocation");
 
 static PioneerQwen35SharedRoleBinding*
