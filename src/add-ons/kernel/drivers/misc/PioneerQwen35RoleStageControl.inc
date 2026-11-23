@@ -113,7 +113,7 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         if (okay) {
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
-                            if (r.version==4) okay=owner->images.StageOne(0,DataflowServiceProbeReaderCodeWords,
+                            if (r.version==4 || r.version==5) okay=owner->images.StageOne(0,DataflowServiceProbeReaderCodeWords,
                                 sizeof(DataflowServiceProbeReaderCodeWords)/sizeof(uint32_t),
                                 DataflowServiceProbeWriterCodeWords,sizeof(DataflowServiceProbeWriterCodeWords)/sizeof(uint32_t),
                                 DataflowServiceProbeReaderShimWords,sizeof(DataflowServiceProbeReaderShimWords)/sizeof(uint32_t),
@@ -149,12 +149,12 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                             || r.version==3
 #endif
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
-                            || r.version==4
+                            || r.version==4 || r.version==5
 #endif
                         )) {
                         r.stage=9;PioneerQ35RoleStageProgress(r.stage);
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
-                        if (r.version==4) okay=prestack.Run(DataflowServiceProbeReaderParkAddress,
+                        if (r.version==4 || r.version==5) okay=prestack.Run(DataflowServiceProbeReaderParkAddress,
                             DataflowServiceProbeWriterParkAddress,65536,false,true
 #ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
                             ,true
@@ -180,7 +180,7 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                             || r.version==3
 #endif
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
-                            || r.version==4
+                            || r.version==4 || r.version==5
 #endif
                         )) okay=prestack.VerifyAfterImages();
 #endif
@@ -221,6 +221,7 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         r.stage=
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+                            r.version==5?TT_Q35_ROLE_SERVICE_FAULT_COMPLETE:
                             r.version==4?TT_Q35_ROLE_SERVICE_COMPLETE:
 #endif
 #ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY

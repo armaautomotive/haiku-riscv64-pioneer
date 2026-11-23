@@ -851,7 +851,7 @@ then
     echo 'offline fault qualification unexpectedly admitted kernel compilation' >&2
     exit 1
 fi
-if ! grep -q 'Fault qualification is offline only' "$temporary/role-fault-kernel.log"; then
+if ! grep -q 'Fault qualification requires its separately tagged resident service build' "$temporary/role-fault-kernel.log"; then
     cat "$temporary/role-fault-kernel.log" >&2
     exit 1
 fi

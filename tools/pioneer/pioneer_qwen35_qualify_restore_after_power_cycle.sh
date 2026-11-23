@@ -101,6 +101,9 @@ case "$stage" in
 	/boot/home/pioneer-q35-role-service-20261123-u)
 		candidateTag=2026112300030012
 		candidateSHA=eb035341f505dc5c406e0e45946fd87b379b857ba58b5ba6fb3b2b1e503fb08a ;;
+	/boot/home/pioneer-q35-role-fault-20261123-v)
+		candidateTag=2026112300030013
+		candidateSHA=a5c45df13f5a4ba8c352167b99f308a4b81f03930a930e325415a4cc3af41e22 ;;
 	*) exit 2;;
 esac
 test -d "$stage" && test ! -L "$stage" && [ "$(stat -c '%u:%a' "$stage")" = 0:700 ] || fail stage

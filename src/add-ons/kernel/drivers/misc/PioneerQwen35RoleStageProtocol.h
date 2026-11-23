@@ -8,7 +8,8 @@
 // No user address, executable payload, model data or inference input.
 #define TT_PCI_PROBE_Q35_ROLE_STAGE_QUALIFY (B_DEVICE_OP_CODES_END+0x61e8)
 enum : uint32_t { TT_Q35_ROLE_STAGE_COMPLETE=8, TT_Q35_ROLE_PRESTACK_COMPLETE=9,
-    TT_Q35_ROLE_LOCAL_RESTORE_COMPLETE=10, TT_Q35_ROLE_SERVICE_COMPLETE=11 };
+    TT_Q35_ROLE_LOCAL_RESTORE_COMPLETE=10, TT_Q35_ROLE_SERVICE_COMPLETE=11,
+    TT_Q35_ROLE_SERVICE_FAULT_COMPLETE=12 };
 struct tt_q35_role_stage_qualification {
     uint32_t version,reserved[3];
     uint64_t expected_tag,expected_generation;
@@ -19,7 +20,9 @@ struct tt_q35_role_stage_qualification {
 static_assert(sizeof(tt_q35_role_stage_qualification)==72,"fixed role stage qualification ABI");
 static inline bool PioneerQ35RoleStageQualificationRequest(const tt_q35_role_stage_qualification& r)
 {
-#if defined(PIONEER_QWEN35_ROLE_SERVICE_QUALIFY)
+#if defined(PIONEER_QWEN35_ROLE_FAULT_QUALIFY)
+    const bool versionValid=r.version==5
+#elif defined(PIONEER_QWEN35_ROLE_SERVICE_QUALIFY)
     const bool versionValid=r.version==4
 #elif defined(PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY)
     const bool versionValid=r.version==3

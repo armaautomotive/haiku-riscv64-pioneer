@@ -31,14 +31,14 @@ int main()
         f.context.io.injectFaultNoc=failure==2;
         f.context.io.dropFaultRestore=failure==3;
         f.context.io.dropFaultInit=failure==4;
-        auto r=Request();r.version=4;
+        auto r=Request();r.version=5;
         assert(Qwen35RoleStageControl(&f.cookie,&r,sizeof(r))==B_OK);
         if (failure==4) assert(!f.context.io.sharedResetWrites && !f.context.io.serviceStarts
             && !f.context.io.faultCommands);
         else assert(f.context.io.sharedResetWrites==1 && f.context.io.serviceStarts==1
             && f.context.io.faultCommands==1);
         if (!failure) {
-            assert(r.operation_status==B_OK && r.stage==TT_Q35_ROLE_SERVICE_COMPLETE
+            assert(r.operation_status==B_OK && r.stage==TT_Q35_ROLE_SERVICE_FAULT_COMPLETE
                 && r.captured && r.staged && r.restored && r.mappings_closed);
             assert(!f.context.qwen35RoleStageQualification && !sColdRecoveryRequired && !gRetains);
             assert(f.context.io.holdWrites==1 && f.context.io.serviceStops==1

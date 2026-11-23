@@ -4,8 +4,10 @@
 #if !defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY) || !defined(PIONEER_QWEN35_ROLE_STAGE_QUALIFY)
 #error This bounded startup probe is only for the restricted qualification build
 #endif
-#if defined(PIONEER_QWEN35_ROLE_FAULT_QUALIFY) && defined(_KERNEL_MODE)
-#error Fault qualification is offline only until separately tagged and recovery-qualified
+#if defined(PIONEER_QWEN35_ROLE_FAULT_QUALIFY) && defined(_KERNEL_MODE) \
+    && (!defined(PIONEER_QWEN35_ROLE_SERVICE_QUALIFY) || !defined(PIONEER_DRIVER_BUILD_TAG) \
+        || PIONEER_DRIVER_BUILD_TAG != 0x2026112300030013ULL)
+#error Fault qualification requires its separately tagged resident service build
 #endif
 #include "PioneerQwen35DataflowRoleFleetPciIO.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleBoot.h"
@@ -171,7 +173,8 @@ class PioneerQwen35RolePrestackProbe {
         for (unsigned queue=0;queue<DataflowCircularBufferCount;queue++) {
             for (unsigned word=0;word<DataflowQueueControlBytes/4;word++) {
                 uint32_t value=0;
-                const uint32_t expected=word==2?DataflowFailureReader:word==4?DataflowFailureWriter:0;
+                const uint32_t expected=word==2?uint32_t(DataflowFailureReader)
+                    :word==4?uint32_t(DataflowFailureWriter):0U;
                 if (!ReadFaultWord(Running,1+queue*(DataflowQueueControlBytes/4)+word,value)
                     || value!=expected) return false;
             }
@@ -196,7 +199,7 @@ class PioneerQwen35RolePrestackProbe {
         return true;
     }
 #endif
-    bool ReadMailbox(uint32_t reset,PioneerQwen35::DataflowRoleMailbox& out) {
+    bool ReadMailboxWords(uint32_t reset) {
         using namespace PioneerQwen35;
         static_assert(sizeof(DataflowRoleMailbox)==16*sizeof(uint32_t),"fixed mailbox size");
         if (!Select(reset)) return false;
@@ -204,8 +207,11 @@ class PioneerQwen35RolePrestackProbe {
         for (unsigned i=0;i<16;i++) first[i]=fIO.Q38PanelRead(DataflowRoleMailboxAddress+i*4);
         fIO.Pause();
         for (unsigned i=0;i<16;i++) second[i]=fIO.Q38PanelRead(DataflowRoleMailboxAddress+i*4);
-        if (memcmp(first,second,sizeof(fState.mailboxReadFirst)) || !Select(reset)) return false;
-        memcpy(&out,second,sizeof(out));return true;
+        return !memcmp(first,second,sizeof(fState.mailboxReadFirst)) && Select(reset);
+    }
+    bool ReadMailbox(uint32_t reset,PioneerQwen35::DataflowRoleMailbox& out) {
+        if (!ReadMailboxWords(reset)) return false;
+        memcpy(&out,fState.mailboxReadSecond,sizeof(out));return true;
     }
     bool WriteMailbox(uint32_t reset,unsigned word,uint32_t value) {
         using namespace PioneerQwen35;
@@ -225,9 +231,10 @@ class PioneerQwen35RolePrestackProbe {
             fState.mailboxInitAttempts|=1U<<i;
             if (!WriteMailbox(Held,i,value)) return false;
         }
-        DataflowRoleMailbox expected{};
-        expected.magic=DataflowRoleMailboxMagic;expected.version=DataflowRoleMailboxVersion;
-        return ReadMailbox(Held,previous) && !memcmp(&previous,&expected,sizeof(expected));
+        if (!ReadMailboxWords(Held) || fState.mailboxReadSecond[0]!=DataflowRoleMailboxMagic
+            || fState.mailboxReadSecond[1]!=DataflowRoleMailboxVersion) return false;
+        for (unsigned i=2;i<16;i++) if (fState.mailboxReadSecond[i]) return false;
+        return true;
     }
     bool RestoreMailbox() {
         using namespace PioneerQwen35;
@@ -236,9 +243,8 @@ class PioneerQwen35RolePrestackProbe {
             fState.mailboxRestoreAttempts|=1U<<i;
             if (!WriteMailbox(Held,i,fState.mailbox[i])) return false;
         }
-        DataflowRoleMailbox restored{};
-        fState.mailboxRestored=ReadMailbox(Held,restored)
-            && !memcmp(&restored,fState.mailbox,sizeof(restored));
+        fState.mailboxRestored=ReadMailboxWords(Held)
+            && !memcmp(fState.mailboxReadSecond,fState.mailbox,sizeof(fState.mailbox));
         return fState.mailboxRestored;
     }
     bool RunIdleService(unsigned polls
@@ -465,9 +471,8 @@ public:
     bool VerifyAfterImages() {
         uint32_t restored[3]{};
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
-        PioneerQwen35::DataflowRoleMailbox mailbox{};
         const bool mailboxOkay=!fState.mailboxCaptured || (fState.mailboxRestored
-            && ReadMailbox(Held,mailbox) && !memcmp(&mailbox,fState.mailbox,sizeof(mailbox)));
+            && ReadMailboxWords(Held) && !memcmp(fState.mailboxReadSecond,fState.mailbox,sizeof(fState.mailbox)));
 #endif
         const bool okay=fState.complete
 #ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
