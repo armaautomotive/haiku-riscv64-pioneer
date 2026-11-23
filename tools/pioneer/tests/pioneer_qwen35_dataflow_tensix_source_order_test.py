@@ -26,9 +26,21 @@ def check(disassembly):
             disassembly,
         ):
             return False
+    # The destination-init source is private to the projection. Its one
+    # initialization and visibility fence must be in one-time Setup, not in
+    # the output-group loop. Inspect the linked device image, not C++ text.
+    setup = re.search(
+        r"<[^>]*DataflowBlackholeTensixOps5SetupEv>:\n(.*?)(?=\n[0-9a-f]+ <|\Z)",
+        disassembly,
+        re.DOTALL,
+    )
+    if not setup or len(re.findall(r"# a03fc\b", disassembly)) != 1:
+        return False
+    if not re.search(r"# a03fc\b", setup.group(1)):
+        return False
     return True
 
 
 if len(sys.argv) != 2 or not check(Path(sys.argv[1]).read_text()):
-    raise SystemExit("compute image lacks L1 source visibility before Tensix access")
-print("PASS compute image orders four L1 source regions before Tensix use; OFFLINE ONLY")
+    raise SystemExit("compute image lacks L1 source visibility or one-time destination initialization")
+print("PASS compute image orders L1 sources and initializes the destination source once per projection; OFFLINE ONLY")

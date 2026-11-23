@@ -110,6 +110,16 @@ class DataflowBlackholeTensixOps {
 			Words(DataflowTensixSourceBHeader),
 			Words(TensixActivationPanel));
 		DataflowL1StoresVisible(Words(TensixActivationPanel)+63);
+		// This range is reserved outside the role queues, stream staging and
+		// program. Initialize it once per projection; every output group can
+		// reuse it until the compute role returns to the coordinator.
+		static_assert(unsigned(TensixDstInitSource)>=unsigned(DataflowLocalBufferEnd)
+			&& TensixDstInitSource+TensixDstInitSourceBytes==0xa0400
+			&& TensixDstInitSource+TensixDstInitSourceBytes<=DataflowProgramAddress,
+			"destination-init source must not overlap mutable dataflow regions");
+		for (unsigned word=0;word<TensixDstInitSourceBytes/4;word++)
+			Words(TensixDstInitSource)[word]=0;
+		DataflowL1StoresVisible(Words(TensixDstInitSource)+TensixDstInitSourceBytes/4-1);
 		// Match the qualified startup state before defining the Dst rows.
 		fEmitter.Op(0x10180000); fEmitter.Drain();
 		return fEmitter.Good();
@@ -117,14 +127,8 @@ class DataflowBlackholeTensixOps {
 
 	bool InitOutputAccumulator()
 	{
-		// The Dst init helper uses the existing validated 0xa0000 source
-		// window with AllDatumsAreZero set. Give that window an explicit local
-		// lifetime in this rewrite image rather than borrowing model input.
-		if (TensixDstInitSource+TensixDstInitSourceBytes>DataflowProgramAddress)
-			return false;
-		for (unsigned word=0;word<TensixDstInitSourceBytes/4;word++)
-			Words(TensixDstInitSource)[word]=0;
-		DataflowL1StoresVisible(Words(TensixDstInitSource)+TensixDstInitSourceBytes/4-1);
+		// Setup initializes the reserved source once; the unpack operation
+		// reads it with AllDatumsAreZero and does not modify the source.
 		PioneerQ38VectorDstInit(fEmitter,false,true,true);
 		return fEmitter.Good();
 	}
@@ -199,7 +203,8 @@ public:
 		return true;
 	}
 
-	bool TensixBeginOutput(unsigned type)
+	// The graph linker places this helper in the saved dispatch image.
+	__attribute__((noinline)) bool TensixBeginOutput(unsigned type)
 	{
 		if (!fBound || !fProgram || fOutputActive || type!=fProgram->type
 			|| !fEmitter.Good()) return false;
