@@ -183,7 +183,7 @@ int main()
     assert(!exported.ContainsRunning(DataflowRoleWriter,DataflowSharedWriterParkAddress));
     PioneerStoreContext context; FakeService service; FakeGraph graph;
     context.qwen35DataflowService=&service; context.qwen35GraphOwner=&graph;
-    PioneerProbeCookie cookie; cookie.context=&context; sRuntimeOwner=&cookie;
+    PioneerProbeCookie cookie; cookie.context=&context; sRuntimeOwner=&cookie; sQwen35ExclusiveCookie=&cookie;
     ResetMaps(); gBorrowedScopeHook=ExerciseBinding;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
     assert(Qwen35DataflowGenerate(&cookie,nullptr,0)==B_OK);

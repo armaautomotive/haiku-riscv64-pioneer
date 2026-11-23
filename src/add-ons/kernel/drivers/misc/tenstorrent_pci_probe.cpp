@@ -1222,6 +1222,12 @@ static_assert(PIONEER_DRIVER_BUILD_TAG!=0,"reload build identity must be nonzero
 static pioneer_driver_reload_guard_info* sReloadGuard=NULL;
 static uint64 sReloadGeneration=0;
 static uint32 sOpenCookies=0;
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+// Opt-in file-level exclusion for the resident rewrite. The lease ends at
+// final free, including a retained fault, so a separate recovery inspector
+// can open the node after the original descriptor is gone.
+static PioneerProbeCookie* sQwen35ExclusiveCookie=NULL;
+#endif
 static bool sReloadQuiesced=false;
 struct PioneerColdRecoveryLatch {
 	bool value=false;
@@ -1693,6 +1699,7 @@ publish_devices()
 
 static status_t ReleaseResidentCookie(PioneerProbeCookie* cookie);
 
+// PIONEER_QWEN35_PROBE_OPEN_BEGIN
 static status_t
 ProbeOpen(const char* name, uint32 flags, void** cookie)
 {
@@ -1709,14 +1716,23 @@ ProbeOpen(const char* name, uint32 flags, void** cookie)
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	status_t locked=acquire_sem(sLock);
 	if (locked!=B_OK) { delete instance; return locked; }
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+	if (sQwen35ExclusiveCookie || ((flags & O_EXCL) && sOpenCookies)) {
+		release_sem(sLock); delete instance; return B_BUSY;
+	}
+#endif
 	if (sOpenCookies==UINT32_MAX) { release_sem(sLock); delete instance; return B_BUSY; }
 	sOpenCookies++;
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+	if (flags & O_EXCL) sQwen35ExclusiveCookie=instance;
+#endif
 	release_sem(sLock);
 #endif
 	*cookie=instance;
 	dprintf("PIONEER-P100A: probe open ready\n");
 	return B_OK;
 }
+// PIONEER_QWEN35_PROBE_OPEN_END
 
 static status_t ProbeClose(void*) { return B_OK; }
 // PIONEER_QWEN35_PROBE_FREE_BEGIN
@@ -1726,6 +1742,9 @@ static status_t ProbeFree(void* cookie) {
 	if (status==B_OK) {
 		status_t locked=acquire_sem(sLock);
 		if (locked!=B_OK) { sColdRecoveryRequired=true; return locked; }
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+		if (sQwen35ExclusiveCookie==cookie) sQwen35ExclusiveCookie=NULL;
+#endif
 		if (!sOpenCookies) sColdRecoveryRequired=true;
 		else sOpenCookies--;
 		release_sem(sLock);
@@ -7411,6 +7430,11 @@ static status_t
 BeginResidentSession(PioneerProbeCookie* cookie,uint64 capacity,tt_resident_session_result& result,bool bankOnly=false)
 {
 	if (cookie->context!=NULL) return B_BUSY;
+#ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+	// A direct ioctl caller cannot bypass the rewrite client's exclusive-open
+	// check. This is host-driver ownership, not a claim about firmware traffic.
+	if (bankOnly && sQwen35ExclusiveCookie!=cookie) return B_BUSY;
+#endif
 	PioneerStoreContext* context=new(std::nothrow) PioneerStoreContext(capacity);
 	if (context==NULL) return B_NO_MEMORY;
 	if (context->initialized==NULL || context->hashes==NULL) { delete context; return B_NO_MEMORY; }

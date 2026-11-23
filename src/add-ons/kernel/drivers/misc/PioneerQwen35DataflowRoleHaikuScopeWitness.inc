@@ -52,7 +52,7 @@ public:
         if (fAttached || !fCookie || !fContext || fContext->io.qwen35BorrowedRoleScope
             || fContext->io.qwen35DataflowContext!=fContext
             || fCookie->magic!=0x50313030 || fCookie->context!=fContext
-            || sRuntimeOwner!=fCookie || sColdRecoveryRequired || sReloadQuiesced
+            || sRuntimeOwner!=fCookie || sQwen35ExclusiveCookie!=fCookie || sColdRecoveryRequired || sReloadQuiesced
             || !sReloadGeneration || !sBankStorageOnly || !fContext->bankStorageOnly
             || fContext->bytes!=PioneerResidentBanks::Total) return false;
         const thread_id current=find_thread(NULL); thread_info info={};
@@ -66,7 +66,7 @@ public:
             || io.qwen35BorrowedRoleScope!=this || io.qwen35DataflowContext!=fContext
             || fThread<0 || find_thread(NULL)!=fThread || fTeam<0 || fCookie->team!=fTeam
             || fCookie->magic!=0x50313030 || fCookie->context!=fContext
-            || sRuntimeOwner!=fCookie || sColdRecoveryRequired || sReloadQuiesced
+            || sRuntimeOwner!=fCookie || sQwen35ExclusiveCookie!=fCookie || sColdRecoveryRequired || sReloadQuiesced
             || !fGeneration || sReloadGeneration!=fGeneration || !sBankStorageOnly
             || !fContext->bankStorageOnly || fContext->bytes!=PioneerResidentBanks::Total) return false;
         thread_info info={};

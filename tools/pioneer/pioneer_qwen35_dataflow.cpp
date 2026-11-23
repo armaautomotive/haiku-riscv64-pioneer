@@ -612,6 +612,24 @@ static bool End(int fd,bool bankOpen,bool spanOpen,bool authorityBound,
 	return bankEnded && okay;
 }
 
+// PIONEER_QWEN35_EXCLUSIVE_CLIENT_BEGIN
+static int OpenExclusiveDataflowDriver()
+{
+	const int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR|O_CLOEXEC|O_EXCL);
+	if (fd<0) { perror("Open Qwen35 dataflow driver"); return -1; }
+	// Do not trust O_EXCL on an older driver: prove that an ordinary second
+	// open is rejected before any model upload, PCI configuration or launch.
+	const int probe=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR|O_CLOEXEC);
+	const int probeError=errno;
+	if (probe>=0 || probeError!=EBUSY) {
+		if (probe>=0) close(probe);
+		fprintf(stderr,"P100A_Q35_DATAFLOW exclusive driver ownership could not be verified\n");
+		close(fd); return -1;
+	}
+	return fd;
+}
+// PIONEER_QWEN35_EXCLUSIVE_CLIENT_END
+
 int main(int argc,char** argv)
 {
 	setvbuf(stdout,nullptr,_IOLBF,0);
@@ -675,8 +693,8 @@ int main(int argc,char** argv)
 		return 1;
 	}
 
-	const int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR|O_CLOEXEC);
-	if (fd<0) { perror("Open Qwen35 dataflow driver"); return 1; }
+	const int fd=OpenExclusiveDataflowDriver();
+	if (fd<0) return 1;
 	const auto loadStart=system_time();
 	bool bankOpen=false,spanOpen=false,authorityBound=false,installAttempted=false;
 	uint64_t uploadedBytes=0;

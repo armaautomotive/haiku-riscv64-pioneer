@@ -236,6 +236,7 @@ static bool PioneerQ35GraphOwnerFaultAckPermitted(const FakeGraph* graph,const v
 }
 #endif
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
+static PioneerProbeCookie* sQwen35ExclusiveCookie=nullptr;
 static bool sColdRecoveryRequired=false,sReloadQuiesced=false,sBankStorageOnly=true;
 static uint64 sReloadGeneration=42;
 static int32_t sLock=1;
@@ -290,10 +291,12 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
     auto* context=cookie->context;
     PioneerQwen35RoleBorrowedScopeWitness scope(cookie,context);
     if (mode==1) gTeam=12;
+    if (mode==8) sQwen35ExclusiveCookie=nullptr;
     const bool attached=scope.Attach();
-    if (mode==1) {
+    if (mode==1 || mode==8) {
         assert(!attached && !context->io.qwen35BorrowedRoleScope);
         gTeam=11;
+        sQwen35ExclusiveCookie=cookie;
     } else {
         assert(attached && context->io.qwen35BorrowedRoleScope==&scope && !scope.Attach());
         if (mode==2) {
@@ -366,6 +369,8 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
             context->io.runtimeCore=savedCore; context->io.firmwareMatches=savedFirmware;
             ++sReloadGeneration; assert(!scope.ProveExclusiveRewrite(context->io)); --sReloadGeneration;
             gThread=6; assert(!scope.ProveExclusiveRewrite(context->io)); gThread=5;
+            sQwen35ExclusiveCookie=nullptr; assert(!scope.ProveExclusiveRewrite(context->io));
+            sQwen35ExclusiveCookie=cookie;
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
             if (mode==5 && gBorrowedScopeHook) gBorrowedScopeHook(context->io);
 #endif
@@ -408,7 +413,7 @@ int main()
 {
     PioneerStoreContext context; FakeService service; FakeGraph graph;
     context.qwen35DataflowService=&service; context.qwen35GraphOwner=&graph;
-    PioneerProbeCookie cookie; cookie.context=&context; sRuntimeOwner=&cookie;
+    PioneerProbeCookie cookie; cookie.context=&context; sRuntimeOwner=&cookie; sQwen35ExclusiveCookie=&cookie;
     {
         PioneerQwen35RoleHaikuScopeWitness scope;
         assert(scope.Open(&cookie) && gLocked && scope.ProveExclusiveRewrite(context.io));
@@ -427,6 +432,7 @@ int main()
         } else assert(status==B_OK && !gLocked);
         sColdRecoveryRequired=false;
     }
+    assert(Qwen35DataflowControl(&cookie,8,nullptr,0)==B_OK && !gLocked);
 #endif
     {
         PioneerQwen35RoleHaikuScopeWitness scope; gTeam=12;
