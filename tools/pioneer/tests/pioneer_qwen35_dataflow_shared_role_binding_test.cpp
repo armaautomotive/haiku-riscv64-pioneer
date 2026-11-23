@@ -14,6 +14,9 @@
 #include <new>
 #include "../PioneerQwen35DataflowOwner.h"
 #include "PioneerQwen35SharedRoleImages.h"
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#include "PioneerQwen35ExclusiveRoleImages.h"
+#endif
 #include "PioneerQwen35DataflowServiceImage.h"
 #define main qwen35_haiku_scope_test_main
 #include "pioneer_qwen35_dataflow_role_haiku_scope_test.cpp"
@@ -23,6 +26,23 @@
 #ifdef TEST_SHARED_POST_RESET
 struct PioneerQ35SharedRoleBindingTestAccess {
     struct Guard { bool ProvePinnedBar(uint64_t,uint64_t) { return true; } };
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    struct FailedFirstWrite {
+        bool AllRolesHeld(unsigned) { return true; }
+        bool DefaultBootRouting(unsigned) { return true; }
+        bool Write(unsigned,unsigned,const uint32_t*,unsigned) { return false; }
+        bool WriteShim(unsigned,unsigned,const uint32_t*,unsigned) { return false; }
+        bool WriteBoot(unsigned,unsigned,uint32_t) { return false; }
+        bool Read(unsigned,unsigned,uint32_t*,unsigned) { return false; }
+        bool ReadShim(unsigned,unsigned,uint32_t*,unsigned) { return false; }
+        bool ReadBoot(unsigned,unsigned,uint32_t&) { return false; }
+    };
+    static bool StageWithFailedWrite(PioneerQwen35SharedRoleBinding& binding) {
+        FailedFirstWrite io;
+        assert(!binding.fTakeover.Stage(binding.RoleImage(),io));
+        return binding.fTakeover.ResetRequired();
+    }
+#endif
     static bool OpenViews(PioneerQwen35SharedRoleBinding& binding) {
         Guard guard;
         return binding.fViews.Open(binding.fContext.io.profile.bar0_host_start,
@@ -38,6 +58,11 @@ static void ExerciseResetRetirement(PioneerSessionIO& io)
     ResetMaps();gAllowWrite=true;
     assert(PioneerQ35SharedRoleBindingTestAccess::OpenViews(*binding));
     assert(!binding->CanDestroy());
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    assert(PioneerQ35SharedRoleBindingTestAccess::StageWithFailedWrite(*binding));
+    assert(!binding->RestoreRolesHeld() && !binding->VerifyAfterResidentRestore()
+        && !binding->FinalizeBeforeResume());
+#endif
     PioneerDriverRecoveryProof proof{};
     proof.flags=PIONEER_RECOVERY_PROOF_REQUIRED & ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;
     proof.core_count=DataflowBarrierWorkers;proof.retained_owners=1;

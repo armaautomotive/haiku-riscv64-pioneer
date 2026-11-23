@@ -180,6 +180,9 @@
 #include "PioneerQwen35DataflowServiceImage.h"
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 #include "PioneerQwen35SharedRoleImages.h"
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#include "PioneerQwen35ExclusiveRoleImages.h"
+#endif
 #endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowBoundWorkspace.h"

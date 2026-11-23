@@ -9,6 +9,9 @@
 #include "PioneerQwen35DataflowHeldFleetSample.h"
 #include "PioneerQwen35DataflowHostDmaSample.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleStartOrder.h"
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#include "../../../../../tools/pioneer/PioneerQwen35ExclusiveRoleFleet.h"
+#endif
 class PioneerQwen35SharedRoleBinding {
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_TEST
     friend struct PioneerQ35SharedRoleBindingTestAccess;
@@ -19,6 +22,9 @@ class PioneerQwen35SharedRoleBinding {
     PioneerQwen35RoleHaikuMap fPlatform;
     Views fViews;
     PioneerQwen35::DataflowRoleFleetRecoveryOwner fOwner;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    PioneerQwen35::DataflowExclusiveRoleFleet fTakeover;
+#endif
     PioneerQwen35::DataflowRoleStartOrder fStartOrder;
     uint32_t* fCodeSnapshot=NULL;
     uint32_t* fRamSnapshot=NULL;
@@ -50,32 +56,57 @@ class PioneerQwen35SharedRoleBinding {
     }
     static PioneerQwen35::DataflowRoleProgramBounds RoleBounds() {
         using namespace PioneerQwen35;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        return {{sizeof(DataflowExclusiveReaderShimWords)/sizeof(uint32_t),
+                 sizeof(DataflowExclusiveWriterShimWords)/sizeof(uint32_t)},
+                {sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),
+                 sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t)},
+                {DataflowExclusiveReaderParkAddress,DataflowExclusiveWriterParkAddress}};
+#else
         return {{sizeof(DataflowSharedReaderShimWords)/sizeof(uint32_t),
                  sizeof(DataflowSharedWriterShimWords)/sizeof(uint32_t)},
                 {sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),
                  sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t)},
                 {DataflowSharedReaderParkAddress,DataflowSharedWriterParkAddress}};
+#endif
     }
     static PioneerQwen35::DataflowRoleProgramImage RoleImage() {
         using namespace PioneerQwen35;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        return {RoleBounds(),{DataflowExclusiveReaderShimWords,DataflowExclusiveWriterShimWords},
+            {DataflowSharedReaderCodeWords,DataflowSharedWriterCodeWords}};
+#else
         return {RoleBounds(),{DataflowSharedReaderShimWords,DataflowSharedWriterShimWords},
             {DataflowSharedReaderCodeWords,DataflowSharedWriterCodeWords}};
+#endif
     }
 public:
     explicit PioneerQwen35SharedRoleBinding(PioneerStoreContext& context)
         :fContext(context),fViews(fPlatform) {
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         fCodeSnapshot=(uint32_t*)malloc(sizeof(uint32_t)*PioneerQwen35::DataflowRoleFleetRecoveryOwner::CodeWords());
         fRamSnapshot=(uint32_t*)malloc(sizeof(uint32_t)*PioneerQwen35::DataflowRoleFleetRecoveryOwner::RamWords());
+#endif
     }
     PioneerQwen35SharedRoleBinding(const PioneerQwen35SharedRoleBinding&)=delete;
     PioneerQwen35SharedRoleBinding& operator=(const PioneerQwen35SharedRoleBinding&)=delete;
     ~PioneerQwen35SharedRoleBinding() { free(fCodeSnapshot); free(fRamSnapshot); }
-    bool Valid() const { return fCodeSnapshot && fRamSnapshot; }
+    bool Valid() const {
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        return RoleImage().Valid();
+#else
+        return fCodeSnapshot && fRamSnapshot;
+#endif
+    }
     bool StacklessCopiesCaptured(unsigned core) const {
         return core<PioneerQwen35::DataflowBarrierWorkers && fReleaseConfirmed[core]
             && fOwner.StacklessCopiesCaptured(core);
     }
-    bool CanDestroy() const { return !fViews.HasMappings() && !fOwner.RestorationRequired(); }
+    bool CanDestroy() const { return !fViews.HasMappings() && !fOwner.RestorationRequired()
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        && !fTakeover.ResetRequired()
+#endif
+        ; }
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
     // A verified ASIC reset invalidates the old tile images and RAM. Retire
     // the host BAR views without restoring those stale snapshots. The reset
@@ -85,7 +116,11 @@ public:
         if (!PioneerQ35GraphRecoveryProofMatches(proof,ticket,
                 fContext.recoveryMapping==NULL,fContext.io.postResetDisposeComplete)) return false;
         fStartOrder.Close();
-        return fViews.Close() && !fViews.HasMappings();
+        if (!fViews.Close() || fViews.HasMappings()) return false;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        fTakeover.RetireAfterVerifiedReset();
+#endif
+        return true;
     }
 #endif
     __attribute__((noinline)) bool CaptureAndStageHeld() {
@@ -111,6 +146,9 @@ public:
         // No role mappings or role memory writes occur without that proof.
         if (!scope->ProveRoleFleetHeldAndQuiet(fContext.io,0) || !OpenForRecovery(*scope)) return false;
         Adapter io(fContext.io,*scope,fViews);
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        return fTakeover.Stage(RoleImage(),io);
+#else
         if (!fOwner.CaptureAllStackless(fCodeSnapshot,DataflowRoleFleetRecoveryOwner::CodeWords(),
                 fRamSnapshot,DataflowRoleFleetRecoveryOwner::RamWords(),io)) return false;
         return fOwner.StageImages(DataflowSharedReaderCodeWords,
@@ -118,14 +156,19 @@ public:
             sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t),DataflowSharedReaderShimWords,
             sizeof(DataflowSharedReaderShimWords)/sizeof(uint32_t),DataflowSharedWriterShimWords,
             sizeof(DataflowSharedWriterShimWords)/sizeof(uint32_t),io);
+#endif
     }
     __attribute__((noinline)) bool ArmAndBeginRelease() {
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        return false; // dedicated release, stop and reset retirement are not wired yet
+#else
         auto* scope=Scope();
         if (!scope || !fViews.Opened()) return false;
         Adapter io(fContext.io,*scope,fViews);
         if (!fOwner.PreparePossibleRelease(io) || !fOwner.BeginReleaseAttempt(io)
             || !fStartOrder.Arm()) return false;
         fReleaseAuthorized=true; return true;
+#endif
     }
     __attribute__((noinline)) bool FleetHeldAndQuiescent() {
         auto* scope=Scope();
@@ -335,22 +378,35 @@ public:
     }
     __attribute__((noinline)) bool RestoreRolesHeld() {
         fStartOrder.Close();
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        return fTakeover.Untouched(); // touched takeover images require verified ASIC reset
+#else
         if (fOwner.Untouched()) return true;
         auto* scope=Scope();
         if (!scope || !OpenForRecovery(*scope)) return false;
         Adapter io(fContext.io,*scope,fViews);
         if (fOwner.CoveredStateRestored()) return fOwner.VerifyAfterResidentRestore(io);
         return fOwner.RestoreAll(io);
+#endif
     }
     __attribute__((noinline)) bool VerifyAfterResidentRestore() {
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        return fTakeover.Untouched();
+#else
         if (fOwner.Untouched()) return true;
         auto* scope=Scope();
         if (!scope || !OpenForRecovery(*scope)) return false;
         Adapter io(fContext.io,*scope,fViews);
         return fOwner.CoveredStateRestored() && fOwner.VerifyAfterResidentRestore(io);
+#endif
     }
-    bool FinalizeBeforeResume() { return (fOwner.Untouched() || fOwner.CoveredStateRestored())
-        ?fViews.Close():false; }
+    bool FinalizeBeforeResume() {
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        return fTakeover.Untouched() && fViews.Close();
+#else
+        return (fOwner.Untouched() || fOwner.CoveredStateRestored()) ?fViews.Close():false;
+#endif
+    }
 };
 
 static bool PioneerQ35SharedRoleCopiesCaptured(const PioneerQwen35SharedRoleBinding* binding,unsigned core) {

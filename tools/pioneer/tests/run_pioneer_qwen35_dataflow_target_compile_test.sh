@@ -249,6 +249,10 @@ for role in reader writer; do
 	test -n "$tick"
 	python3 "$directory/pioneer_qwen35_exclusive_role_start_test.py" "$temporary/exclusive-$role-shim.bin" "$role" "$tick"
 done
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-I"$temporary/shared-role-images" "$directory/pioneer_qwen35_exclusive_role_fleet_test.cpp" \
+	-o "$temporary/exclusive-role-fleet-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exclusive-role-fleet-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_role_boot_test.cpp" \
 	-o "$temporary/role-boot-test"
@@ -647,6 +651,11 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 	-DTEST_SHARED_POST_RESET -I"$directory/role_haiku_stubs" -I"$temporary/shared-role-images" -I"$temporary/shared-graph-service" \
 	"$directory/pioneer_qwen35_dataflow_shared_role_binding_test.cpp" -o "$temporary/shared-role-reset-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/shared-role-reset-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-DTEST_SHARED_POST_RESET -DPIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS \
+	-I"$directory/role_haiku_stubs" -I"$temporary/shared-role-images" -I"$temporary/shared-graph-service" \
+	"$directory/pioneer_qwen35_dataflow_shared_role_binding_test.cpp" -o "$temporary/exclusive-role-binding-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exclusive-role-binding-test"
 PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL=1 \
 	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/graph-trial-service"
 for section in boot text dispatch; do
