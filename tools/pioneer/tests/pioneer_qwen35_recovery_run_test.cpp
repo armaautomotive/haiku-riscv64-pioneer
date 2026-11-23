@@ -151,7 +151,7 @@ static bool PioneerPostResetPciFinish(PioneerSessionIO&,const FakePciResult&,uns
 }
 struct PioneerPostResetMapping {
 	bool firmwareRetryable=false;
-	uint32 firmwareDiagnostic=2,dbiDiagnostic=5;
+	uint32 firmwareDiagnostic=2,dbiDiagnostic=0x166084;
 	explicit PioneerPostResetMapping(FakeProfile&) {}
 	bool Open(){return Step(PIONEER_RECOVERY_STAGE_MAPPING);}
 	bool PrepareOpenRetry(){return retryableMappingFailure;}
@@ -465,7 +465,7 @@ int main(){
 		&& sRuntimeOwner && sColdRecoveryRequired && abortCount==1);
 	Cleanup();Setup();failDbi=true;r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
-		&& r.stage==PIONEER_RECOVERY_STAGE_FIRMWARE && r.detail==(PIONEER_RECOVERY_DETAIL_FIRMWARE_DBI|5)
+		&& r.stage==PIONEER_RECOVERY_STAGE_FIRMWARE && r.detail==(PIONEER_RECOVERY_DETAIL_FIRMWARE_DBI|0x166084)
 		&& sRuntimeOwner && sColdRecoveryRequired && abortCount==1);
 	Cleanup();Setup();sRuntimeOwner->context->recoveryDbi.valid=false;r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_NOT_ALLOWED

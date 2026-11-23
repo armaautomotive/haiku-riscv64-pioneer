@@ -225,8 +225,18 @@ struct PioneerPostResetMapping : ConfigIO {
 		if (dbiAttempted || !snapshot.valid || !SourceStable()) return false;
 		dbiAttempted=true;dbiUnsafe=true;
 		PioneerPostResetAuditResult preliminary{};
-		dbiDiagnostic=2; // held fleet and host DMA audit
-		if (!Audit(preliminary) || !AuditHostDma() || !SourceStable()) return false;
+		dbiDiagnostic=0x100000; // held fleet audit
+		if (!Audit(preliminary)) {
+			// Keep the failing kind, NoC, core and register index; no register
+			// value here grants authority to retry an uncertain operation.
+			dbiDiagnostic|=(preliminary.failure&0xf)<<16 | (preliminary.noc&3)<<14
+				| (preliminary.core&0x7f)<<7 | (preliminary.index&0x7f);
+			return false;
+		}
+		dbiDiagnostic=0x200000; // host DMA audit
+		if (!AuditHostDma()) return false;
+		dbiDiagnostic=0x300000; // stable topology and PCI route
+		if (!SourceStable()) return false;
 		// The DMA audit uses slot 0 read-only. Restore its fresh post-reset
 		// value before taking the separate DBI snapshot.
 		dbiDiagnostic=3; // restore the audit TLB

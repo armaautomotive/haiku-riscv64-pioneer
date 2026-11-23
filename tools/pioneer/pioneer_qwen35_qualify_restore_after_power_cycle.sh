@@ -52,6 +52,8 @@ health() {
 stage=$1
 case "$stage" in
 	/boot/home/pioneer-q35-recovery-qualify-20261123|/boot/home/pioneer-q35-recovery-qualify-20261123-b) ;;
+	/boot/home/pioneer-q35-recovery-qualify-20261123-c)
+		candidateSHA=cabebd7d42b60106c6d97216353400bbfd76a58b0f982b24389715dbc95f3e70 ;;
 	*) exit 2;;
 esac
 test -d "$stage" && test ! -L "$stage" && [ "$(stat -c '%u:%a' "$stage")" = 0:700 ] || fail stage

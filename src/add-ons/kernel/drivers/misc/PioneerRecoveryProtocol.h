@@ -51,8 +51,8 @@ enum : uint32_t {
 enum : uint32_t { PIONEER_RECOVERY_DETAIL_FIRMWARE_WAIT=0x46570002,
 	PIONEER_RECOVERY_DETAIL_MAPPING_WAIT=0x4d500002,
 	PIONEER_RECOVERY_DETAIL_PREPARE_WAIT=0x50520002 };
-// Failure diagnostics, not retry authorizations. The low byte records the
-// specific read-only audit or guarded firmware operation that failed.
+// Failure diagnostics, not retry authorizations. The low 24 bits identify
+// the read-only audit or guarded firmware operation that failed.
 enum : uint32_t { PIONEER_RECOVERY_DETAIL_FIRMWARE_PROBE=0x46000000,
 	PIONEER_RECOVERY_DETAIL_FIRMWARE_DBI=0x44000000,
 	PIONEER_RECOVERY_DETAIL_FIRMWARE_QUEUE=0x51000000 };

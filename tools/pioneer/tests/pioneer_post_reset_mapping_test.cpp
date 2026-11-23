@@ -154,12 +154,13 @@ int main() {
 	nocPage[(0x10000+0x240)/4]=1;
 	assert(dbiBusy.Open() && dbiBusy.ProbeFirmware(3,arc)
 		&& !dbiBusy.RestoreInternalDbi(dbiSnapshot,0x2040) && mapCalls==7);
-	assert(dbiBusy.dbiUnsafe && dbiBusy.dbiDiagnostic==2 && !dbiBusy.Close());
+	assert(dbiBusy.dbiUnsafe && dbiBusy.dbiDiagnostic==(0x100000
+		| (PioneerPostResetAuditOutstanding<<16) | (1<<14) | 4) && !dbiBusy.Close());
 	ResetFake();PioneerPostResetMapping dbiDmaBusy(profile);
 	hdmaPage[0x100/4]=1;
 	assert(dbiDmaBusy.Open() && dbiDmaBusy.ProbeFirmware(3,arc)
 		&& !dbiDmaBusy.RestoreInternalDbi(dbiSnapshot,0x2040) && mapCalls==7
-		&& dbiDmaBusy.dbiUnsafe && !dbiDmaBusy.Close());
+		&& dbiDmaBusy.dbiUnsafe && dbiDmaBusy.dbiDiagnostic==0x200000 && !dbiDmaBusy.Close());
 	ResetFake();PioneerPostResetMapping dbiTlbLost(profile);
 	assert(dbiTlbLost.Open() && dbiTlbLost.ProbeFirmware(3,arc));blockDbiTlbRestore=true;
 	assert(!dbiTlbLost.RestoreInternalDbi(dbiSnapshot,0x2040) && mapCalls==7

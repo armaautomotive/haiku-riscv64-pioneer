@@ -10,11 +10,11 @@ import tempfile
 import pioneer_qwen35_recovery_qualify_script_test as common
 
 
-def main():
+def exercise(suffix, script, candidate_hash):
     with tempfile.TemporaryDirectory() as temp:
         root = Path(temp)
         home, old_stage, installed, guard, _, env = common.fixture(root)
-        stage = old_stage.with_name(old_stage.name + '-b')
+        stage = old_stage.with_name(old_stage.name + suffix)
         old_stage.rename(stage)
         (stage/'guard.previous').write_text('old guard')
         (stage/'guard.previous').chmod(0o755)
@@ -22,13 +22,13 @@ def main():
         driver_state = Path(env['MOCK_STATE'])
         driver_state.write_text(json.dumps(dict(driver=55, tag='2026102100010012', generation=2,
                                                 quiesced=False, cold=False, active=False)))
-        source = (common.ROOT/'tools/pioneer/pioneer_qwen35_recovery_qualify_retry.sh').read_text()
+        source = (common.ROOT/'tools/pioneer'/script).read_text()
         source = source.replace('/boot/home', str(home)).replace('0:1:600:', f'{os.getuid()}:1:600:')
         source = source.replace('= 0:1 ]', f'= {os.getuid()}:1 ]').replace('= 0:700 ]', f'= {os.getuid()}:700 ]')
         for old, path in ((common.OLD_DRIVER, installed), (common.OLD_GUARD, stage/'guard.previous'),
                           (common.NEW_GUARD, guard),
                           (common.ADMIN, home/'pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload'),
-                          (common.CANDIDATE, stage/'candidate'),
+                          (candidate_hash, stage/'candidate'),
                           ('34af989cb81827835f8e1fe762c8018ec5dbbb686443df992a15dea5fee13abc', stage/'client')):
             source = source.replace(old, hashlib.sha256(path.read_bytes()).hexdigest())
         wrapper = root/'retry.sh'
@@ -48,7 +48,7 @@ def main():
         restore = restore.replace('= 0:1 ]', f'= {os.getuid()}:1 ]').replace('= 0:700 ]', f'= {os.getuid()}:700 ]')
         for old, path in ((common.OLD_DRIVER, stage/'restore.incoming'), (common.NEW_GUARD, guard),
                           (common.ADMIN, home/'pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload'),
-                          (common.CANDIDATE, stage/'candidate')):
+                          (common.CANDIDATE, stage/'candidate'), (candidate_hash, stage/'candidate')):
             restore = restore.replace(old, hashlib.sha256(path.read_bytes()).hexdigest())
         restore_path = root/'restore.sh'
         common.put(restore_path, restore)
@@ -56,7 +56,13 @@ def main():
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         assert result.returncode == 0, (result.stdout, result.stderr)
         assert installed.read_text() == 'stable' and not (home/'.pioneer-q35-dataflow-exclusive').exists()
-    print('PASS existing-guard qualification and retained failure; SIMULATED HOST ONLY')
+
+
+def main():
+    exercise('-b', 'pioneer_qwen35_recovery_qualify_retry.sh', common.CANDIDATE)
+    exercise('-c', 'pioneer_qwen35_recovery_qualify_firmware.sh',
+             'cabebd7d42b60106c6d97216353400bbfd76a58b0f982b24389715dbc95f3e70')
+    print('PASS existing-guard qualifications and retained failure; SIMULATED HOST ONLY')
 
 
 if __name__ == '__main__':

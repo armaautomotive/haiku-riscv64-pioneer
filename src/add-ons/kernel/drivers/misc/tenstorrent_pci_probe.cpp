@@ -11523,7 +11523,7 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	context->recoveryFirmwarePending=false;context->recoveryFirmwareTicket=0;
 	if (!context->recoveryMapping->RestoreInternalDbi(context->recoveryDbi,payload.control)) {
 		r.detail=PIONEER_RECOVERY_DETAIL_FIRMWARE_DBI
-			| (context->recoveryMapping->dbiDiagnostic&0xff);
+			| (context->recoveryMapping->dbiDiagnostic&0x00ffffff);
 		return fail(B_DEV_NOT_READY);
 	}
 #endif
