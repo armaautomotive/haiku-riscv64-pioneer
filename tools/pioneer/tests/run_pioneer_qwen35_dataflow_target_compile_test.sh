@@ -270,6 +270,13 @@ sed -n '/PIONEER_Q38_DISPATCH_PREPARE_BEGIN/,/PIONEER_Q38_DISPATCH_PREPARE_END/p
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	-I"$temporary" "$directory/pioneer_qwen35_dedicated_prepare_binding_test.cpp" -o "$temporary/dedicated-prepare-binding-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/dedicated-prepare-binding-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -DTEST_SNAPSHOT_TAKEOVER \
+	-fsanitize=address,undefined -I"$temporary" "$directory/pioneer_qwen35_dedicated_prepare_binding_test.cpp" \
+	-o "$temporary/dedicated-snapshot-prepare-binding-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/dedicated-snapshot-prepare-binding-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	"$directory/pioneer_qwen35_dedicated_snapshot_lifecycle_test.cpp" -o "$temporary/dedicated-snapshot-lifecycle-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/dedicated-snapshot-lifecycle-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	"$directory/pioneer_qwen35_exclusive_role_stop_test.cpp" -o "$temporary/exclusive-role-stop-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exclusive-role-stop-test"
@@ -512,6 +519,16 @@ if python3 "$root/tools/pioneer/build_qwen35_dataflow.py" --compile-device-dispa
 	>"$temporary/invalid-shared-owner-driver.log" 2>&1; then
 	echo 'shared role owner accepted a build without the role-write guard' >&2
 	exit 1
+fi
+if python3 -B "$root/tools/pioneer/build_qwen35_dataflow.py" --compile-snapshot-takeover-prototype \
+	"$build" "$temporary/invalid-snapshot-owner" >"$temporary/invalid-snapshot-owner.log" 2>&1; then
+	echo 'snapshot takeover accepted a build without the shared-role owner' >&2; exit 1
+fi
+if python3 -B "$root/tools/pioneer/build_qwen35_dataflow.py" --compile-device-dispatch-prototype \
+	--compile-role-write-prototype --compile-shared-role-owner-prototype \
+	--compile-exclusive-takeover-prototype --compile-snapshot-takeover-prototype \
+	"$build" "$temporary/invalid-snapshot-exclusive" >"$temporary/invalid-snapshot-exclusive.log" 2>&1; then
+	echo 'snapshot and destructive takeover were accepted together' >&2; exit 1
 fi
 # Per-tile handoff uses only single-writer words and the existing fences.
 "$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding \

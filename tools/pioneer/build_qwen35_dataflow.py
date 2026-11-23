@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import os
+import re
 from pathlib import Path
 import subprocess
 
@@ -12,6 +13,20 @@ TAG = '2026112100010168'
 GRAPH_TRIAL_TAG = '2026112100020168'
 RECOVERY_QUALIFICATION_TAG = '2026112300030001'
 FIRMWARE_RECOVERY_QUALIFICATION_TAG = '2026112300030002'
+
+
+def verify_snapshot_witness_refuses_load(build, driver):
+    objdump = build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-objdump'
+    for symbol in ('init_hardware', 'init_driver'):
+        disassembly = subprocess.check_output(
+            [objdump, '-d', '--disassemble=' + symbol, driver], text=True)
+        if (not re.search(r'<'+symbol+r'>:', disassembly)
+                or not re.search(r'\blui\s+a0,0x80000\b', disassembly)
+                or not re.search(r'\baddi?\s+a0,a0,15\b', disassembly)
+                or not re.search(r'\bret\b', disassembly)
+                or re.search(r'\b(?:call|jal|jalr)\b', disassembly)):
+            raise RuntimeError('snapshot witness does not safely reject ' + symbol)
+    print('snapshot witness init entrypoints reject loading; NO HARDWARE')
 
 
 def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_recovery=False):
@@ -329,6 +344,8 @@ def main():
                         help='compile the fail-closed shared-role owner into a non-loadable driver')
     parser.add_argument('--compile-exclusive-takeover-prototype', action='store_true',
                         help='compile dedicated role staging with release disabled')
+    parser.add_argument('--compile-snapshot-takeover-prototype', action='store_true',
+                        help='compile held dedicated fleet with role snapshot/restore; non-loadable')
     parser.add_argument('--build-device-dispatch-trial', action='store_true',
                         help='build the dedicated graph qualification driver without ASIC reset')
     parser.add_argument('--build-recovery-qualification', action='store_true',
@@ -343,7 +360,8 @@ def main():
     if args.build_recovery_qualification:
         if (args.build_device_dispatch_trial or args.compile_recovery_prototype
                 or args.compile_device_dispatch_prototype or args.compile_role_write_prototype
-                or args.compile_shared_role_owner_prototype or args.compile_exclusive_takeover_prototype):
+                or args.compile_shared_role_owner_prototype or args.compile_exclusive_takeover_prototype
+                or args.compile_snapshot_takeover_prototype):
             parser.error('recovery qualification selects its own restricted build flags')
         args.compile_recovery_prototype = True
         args.compile_device_dispatch_prototype = True
@@ -358,6 +376,9 @@ def main():
         parser.error('shared-role owner witness requires the non-loadable role write prototype')
     if args.compile_exclusive_takeover_prototype and not args.compile_shared_role_owner_prototype:
         parser.error('exclusive takeover requires the non-loadable shared-role owner prototype')
+    if args.compile_snapshot_takeover_prototype and (not args.compile_shared_role_owner_prototype
+            or args.compile_exclusive_takeover_prototype):
+        parser.error('snapshot takeover requires shared-role owner and excludes destructive takeover')
 
     build = args.haiku_build.resolve(strict=True)
     output = args.new_output.absolute()
@@ -384,6 +405,8 @@ def main():
         driver_env['PIONEER_QWEN35_SHARED_ROLE_GRAPH_COMPILE_ONLY'] = '1'
     if args.compile_exclusive_takeover_prototype:
         driver_env['PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_COMPILE_ONLY'] = '1'
+    if args.compile_snapshot_takeover_prototype:
+        driver_env['PIONEER_QWEN35_SNAPSHOT_TAKEOVER_COMPILE_ONLY'] = '1'
     if args.build_recovery_qualification:
         driver_env['PIONEER_QWEN35_RECOVERY_QUALIFY'] = '1'
     if args.build_firmware_recovery_qualification:
@@ -395,6 +418,8 @@ def main():
     verify_kernel_stack_budget(driver, args.build_recovery_qualification,
                                args.build_firmware_recovery_qualification or
                                (args.compile_recovery_prototype and not args.compile_device_dispatch_prototype))
+    if args.compile_snapshot_takeover_prototype:
+        verify_snapshot_witness_refuses_load(build, driver / 'tenstorrent_pci_probe-driver60')
 
     cxx = build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-g++'
     objects = build / 'objects/haiku/riscv64'

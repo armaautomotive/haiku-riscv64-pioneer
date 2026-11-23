@@ -22,8 +22,18 @@ bool PioneerQwen35DedicatedFleetPrepare(IO& io,const Dram& dram,Banks& banks,Lea
 	return true;
 }
 
-// Used only before the dedicated service has touched a worker. Validate the
-// entire held fleet before restoring any peer lease; never resume a worker.
+// Once the snapshot-based service has restored every role and resident
+// image, its closed owner may still exist until the session is destroyed.
+// The role binding and its mapping owner must already have been released.
+template<class Service,class Memory,class Binding>
+bool PioneerQwen35DedicatedServiceReleased(const Service* service,
+    const Memory* memory,const Binding* binding)
+{
+	return (!service || service->Closed()) && !memory && !binding;
+}
+
+// Used after the service has restored its snapshots, or before it has touched
+// a worker. Validate every held tile before restoring any peer lease.
 template<class IO,class Dram,class Banks,class Lease>
 bool PioneerQwen35DedicatedFleetClose(IO& io,const Dram& dram,Banks& banks,Lease& lease)
 {

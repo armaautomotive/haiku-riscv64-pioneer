@@ -165,6 +165,14 @@
 	|| (!defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && !defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL)))
 #error Device dispatch requires a non-loadable witness or the dedicated qualification build
 #endif
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && (!defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
+	|| !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY) \
+	|| defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS))
+#error Snapshot takeover is restricted to the non-loadable shared-role witness
+#endif
+#if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+#define PIONEER_QWEN35_DEDICATED_FLEET_WITNESS 1
+#endif
 #if defined(PIONEER_QWEN35_PAIRED_RECURRENCE) && (!defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
 	|| !defined(PIONEER_QWEN35_DEVICE_DISPATCH))
 #error Paired recurrence is restricted to the shared-role graph witness
@@ -468,7 +476,7 @@
 #include "PioneerQ38MixedLiveFinalReleaseRole.h"
 #endif
 #include "tenstorrent_pci_probe.h"
-#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#ifdef PIONEER_QWEN35_DEDICATED_FLEET_WITNESS
 #include "PioneerQwen35DedicatedPeerLease.h"
 #include "PioneerQwen35DedicatedFleet.h"
 #endif
@@ -4140,7 +4148,7 @@ struct PioneerStoreContext {
 #endif
 #endif
 	bool q38DispatchRoutes=false,dispatchOwnerRetained=false;
-#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#ifdef PIONEER_QWEN35_DEDICATED_FLEET_WITNESS
 	bool qwen35DedicatedFleet=false;
 #endif
 	unsigned q38EndPhase=0;
@@ -4943,10 +4951,12 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 	if (c.q38Span && !c.q38Span->closed) clean=false;
 #endif
 	if (clean && c.q38Dispatch) {
-#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#ifdef PIONEER_QWEN35_DEDICATED_FLEET_WITNESS
 		if (c.qwen35DedicatedFleet)
-			clean=!c.qwen35DataflowService && PioneerQwen35DedicatedFleetClose(c.io,
-				c.baseline.baseline.baseline.baseline.dram,c.banks,*c.q38Dispatch);
+			clean=PioneerQwen35DedicatedServiceReleased(c.qwen35DataflowService,
+				c.qwen35DataflowMemory,c.qwen35SharedRoleBinding)
+				&& PioneerQwen35DedicatedFleetClose(c.io,
+					c.baseline.baseline.baseline.baseline.dram,c.banks,*c.q38Dispatch);
 		else
 #endif
 			clean=PioneerQ38DispatchClose(c.io,c.baseline.baseline.baseline.baseline.dram,c.banks,*c.q38Dispatch,true);
@@ -8346,7 +8356,7 @@ PrepareQ38Dispatch(PioneerStoreContext& c)
 	c.io.q38SpanAllowed=false; // one-way ownership handoff, even if prepare fails
 #endif
 	auto& dram=c.baseline.baseline.baseline.baseline.dram; auto& noc=c.baseline.baseline.baseline.noc;
-#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#ifdef PIONEER_QWEN35_DEDICATED_FLEET_WITNESS
 	if (c.q38Dispatch)
 		return c.qwen35DedicatedFleet && c.q38DispatchRoutes && c.q38Dispatch->prepared==120
 			&& !c.q38Dispatch->bootAttempted && !c.q38Dispatch->booted
@@ -8366,13 +8376,13 @@ PrepareQ38Dispatch(PioneerStoreContext& c)
 	if (!PioneerQ38OutputDmaOwner(c.io,c.host,c.bulkHost,c.wideHost,false)) return false;
 #endif
 	auto& lease=*c.q38Dispatch; c.io.fleetEnabled=true; lease.worker[0].master=&c.lease; lease.worker[0].noc=noc;
-#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#ifdef PIONEER_QWEN35_DEDICATED_FLEET_WITNESS
 	c.qwen35DedicatedFleet=true;
 #endif
 	ready=BlackholeDramAllCoresHeld(c.io,dram);
 	for (unsigned w=1;w<120 && ready;w++) ready=PioneerWorkerNocProbe(c.io,dram,w,lease.worker[w].noc);
 	c.q38DispatchRoutes=ready;
-#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#ifdef PIONEER_QWEN35_DEDICATED_FLEET_WITNESS
 	if (!ready) return PioneerQ38DispatchQuarantine(lease,c.banks);
 	return PioneerQwen35DedicatedFleetPrepare(c.io,dram,c.banks,lease);
 #else

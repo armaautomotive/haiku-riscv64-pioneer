@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 // Compile and execute the driver's actual preparation function using fake IO.
+#define PIONEER_QWEN35_DEDICATED_FLEET_WITNESS 1
+#ifdef TEST_SNAPSHOT_TAKEOVER
+#define PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS 1
+#else
 #define PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS 1
+#endif
 #define main dedicated_fleet_test_main
 #include "pioneer_qwen35_dedicated_fleet_test.cpp"
 #undef main
