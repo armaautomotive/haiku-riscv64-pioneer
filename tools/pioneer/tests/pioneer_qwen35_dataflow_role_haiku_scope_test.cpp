@@ -37,6 +37,9 @@ static bool FailSelectAfterStageWrite();
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
 static void SimulatePrestackCopies();
 static void SimulatePrestackHoldMutation();
+#ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
+static bool SimulateLocalRestore();
+#endif
 #endif
 #endif
 #endif
@@ -177,6 +180,10 @@ struct PioneerSessionIO {
     }
 #if defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
     bool simulatePrestack=true,dropPrestackRelease=false;
+#ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
+    bool simulateLocalRestore=false;
+    unsigned localRestoreMutations=0;
+#endif
     bool SharedRolePrestackReleaseReset() {
         ++sharedResetWrites;
         if (dropPrestackRelease) return true;
@@ -251,10 +258,22 @@ struct PioneerSessionIO {
             else {
                 ++stackCancelWrites;handoff.release=value;
                 if (reset==0x7000 && simulatePrestack && value==DataflowRoleSnapshotCancel) {
+#ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
+                    if (simulateLocalRestore) {
+                        ++localRestoreMutations;
+                        const bool okay=SimulateLocalRestore();
+                        handoff.readerReady=okay?PIONEER_Q35_ROLE_RESTORE_READER_DONE:PIONEER_Q35_ROLE_RESTORE_READER_FAILED;
+                        handoff.writerReady=PIONEER_Q35_ROLE_RESTORE_WRITER_DONE;
+                        rolePc[DataflowRoleReader]=DataflowLocalProbeReaderParkAddress;
+                        rolePc[DataflowRoleWriter]=DataflowLocalProbeWriterParkAddress;
+                    } else
+#endif
+                    {
                     handoff.readerReady=DataflowRoleSnapshotReaderCancelled;
                     handoff.writerReady=DataflowRoleSnapshotWriterCancelled;
                     rolePc[DataflowRoleReader]=DataflowSharedReaderParkAddress;
                     rolePc[DataflowRoleWriter]=DataflowSharedWriterParkAddress;
+                    }
                 }
             }
             return;
@@ -381,9 +400,16 @@ static std::vector<std::vector<uint32_t>> gMemory;
 static std::vector<bool> gMapped;
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
 static bool gPrestackCorruptCopy=false;
+#ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
+static std::vector<uint32_t> gLocalOriginalReader,gLocalOriginalWriter;
+#endif
 static void SimulatePrestackCopies() {
     const unsigned reader=(DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address)/4;
     const unsigned writer=(DataflowRoleWriterRamCopy-DataflowRoleExtraL1Address)/4;
+#ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
+    gLocalOriginalReader=gMemory[DataflowRolePhysicalBriscRam];
+    gLocalOriginalWriter=gMemory[DataflowRolePhysicalNcriscRam];
+#endif
     std::copy(gMemory[DataflowRolePhysicalBriscRam].begin(),gMemory[DataflowRolePhysicalBriscRam].end(),
         gMemory[DataflowRolePhysicalExtraCode].begin()+reader);
     std::copy(gMemory[DataflowRolePhysicalNcriscRam].begin(),gMemory[DataflowRolePhysicalNcriscRam].end(),
@@ -393,6 +419,21 @@ static void SimulatePrestackHoldMutation() {
     const unsigned reader=(DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address)/4;
     if (gPrestackCorruptCopy) gMemory[DataflowRolePhysicalExtraCode][reader]^=1;
 }
+#ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
+static bool gLocalRestoreFailReader=false;
+static bool SimulateLocalRestore() {
+    const unsigned reader=(DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address)/4;
+    const unsigned writer=(DataflowRoleWriterRamCopy-DataflowRoleExtraL1Address)/4;
+    gMemory[DataflowRolePhysicalBriscRam][0]^=1;
+    gMemory[DataflowRolePhysicalNcriscRam][0]^=1;
+    for (unsigned i=0;i<DataflowRoleLocalRamWords;i++) {
+        if (!(gLocalRestoreFailReader && i==0))
+            gMemory[DataflowRolePhysicalBriscRam][i]=gMemory[DataflowRolePhysicalExtraCode][reader+i];
+        gMemory[DataflowRolePhysicalNcriscRam][i]=gMemory[DataflowRolePhysicalExtraCode][writer+i];
+    }
+    return !gLocalRestoreFailReader;
+}
+#endif
 #endif
 #if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
 // The mapped BAR address remains fixed while TLB selection changes its tile.

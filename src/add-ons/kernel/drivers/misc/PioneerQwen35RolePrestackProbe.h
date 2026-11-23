@@ -141,11 +141,19 @@ public:
     bool Attempted() const { return fState.attempted; }
     bool Complete() const { return fState.complete; }
 
-    __attribute__((noinline)) bool Run(uint32_t readerPark,uint32_t writerPark,unsigned polls) {
+    __attribute__((noinline)) bool Run(uint32_t readerPark,uint32_t writerPark,unsigned polls,
+        bool localRestoreProbe=false) {
         using namespace PioneerQwen35;
+#ifndef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
+        if (localRestoreProbe) return false;
+#endif
+        const unsigned readerFirst=localRestoreProbe?DataflowRoleReaderCodeAddress:DataflowRoleReaderShimAddress;
+        const unsigned readerLimit=localRestoreProbe?DataflowRoleReaderCodeLimit:DataflowRoleReaderShimLimit;
+        const unsigned writerFirst=localRestoreProbe?DataflowRoleWriterCodeAddress:DataflowRoleWriterShimAddress;
+        const unsigned writerLimit=localRestoreProbe?DataflowRoleWriterCodeLimit:DataflowRoleWriterShimLimit;
         if (fState.attempted || !polls || polls>65536
-            || (readerPark&3) || readerPark<DataflowRoleReaderShimAddress || readerPark>=DataflowRoleReaderShimLimit
-            || (writerPark&3) || writerPark<DataflowRoleWriterShimAddress || writerPark>=DataflowRoleWriterShimLimit)
+            || (readerPark&3) || readerPark<readerFirst || readerPark>=readerLimit
+            || (writerPark&3) || writerPark<writerFirst || writerPark>=writerLimit)
             return false;
         fState.attempted=true;
         uint32_t first=0,second=0;
@@ -180,8 +188,12 @@ public:
         bool parked=false;
         for (unsigned n=0;n<polls;n++) {
             uint32_t handoff[3]{};
-            if (ReadHandoff(Running,handoff) && handoff[0]==DataflowRoleSnapshotReaderCancelled
-                && handoff[1]==DataflowRoleSnapshotWriterCancelled && handoff[2]==DataflowRoleSnapshotCancel) {
+            const uint32_t readerDone=localRestoreProbe?uint32_t(PIONEER_Q35_ROLE_RESTORE_READER_DONE)
+                :uint32_t(DataflowRoleSnapshotReaderCancelled);
+            const uint32_t writerDone=localRestoreProbe?uint32_t(PIONEER_Q35_ROLE_RESTORE_WRITER_DONE)
+                :uint32_t(DataflowRoleSnapshotWriterCancelled);
+            if (ReadHandoff(Running,handoff) && handoff[0]==readerDone
+                && handoff[1]==writerDone && handoff[2]==DataflowRoleSnapshotCancel) {
                 const uint32_t r1=fIO.SharedRolePcRead(DataflowRoleReader),w1=fIO.SharedRolePcRead(DataflowRoleWriter);
                 fIO.Pause();
                 const uint32_t r2=fIO.SharedRolePcRead(DataflowRoleReader),w2=fIO.SharedRolePcRead(DataflowRoleWriter);

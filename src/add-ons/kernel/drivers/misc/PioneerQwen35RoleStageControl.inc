@@ -6,10 +6,16 @@
 #if !defined(PIONEER_QWEN35_ROLE_STAGE_QUALIFY) || !defined(PIONEER_QWEN35_FLEET_INSPECTION_QUALIFY) || !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
 #error Role stage qualification requires its restricted held-fleet build
 #endif
+#if defined(PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY) && !defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY)
+#error Local restore qualification requires its restricted pre-stack controller
+#endif
 #include "PioneerQwen35RoleStageProtocol.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleFleetImagesOwner.h"
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
 #include "PioneerQwen35RolePrestackProbe.h"
+#endif
+#ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
+#include "PioneerQwen35LocalRestoreProbeImages.h"
 #endif
 
 class PioneerQ35RoleStageQualification {
@@ -100,6 +106,14 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         okay=scope.EnableStageWrites(c->io);
                         if (okay) {
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+#ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
+                            if (r.version==3) okay=owner->images.StageOne(0,DataflowLocalProbeReaderCodeWords,
+                                sizeof(DataflowLocalProbeReaderCodeWords)/sizeof(uint32_t),
+                                DataflowLocalProbeWriterCodeWords,sizeof(DataflowLocalProbeWriterCodeWords)/sizeof(uint32_t),
+                                DataflowLocalProbeReaderShimWords,sizeof(DataflowLocalProbeReaderShimWords)/sizeof(uint32_t),
+                                DataflowLocalProbeWriterShimWords,sizeof(DataflowLocalProbeWriterShimWords)/sizeof(uint32_t),adapter);
+                            else
+#endif
                             if (r.version==2) okay=owner->images.StageOne(0,DataflowSharedReaderCodeWords,
                                 sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),
                                 DataflowSharedWriterCodeWords,sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t),
@@ -116,8 +130,17 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         r.staged=okay;
                     }
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
-                    if (okay && r.version==2) {
+                    if (okay && (r.version==2
+#ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
+                            || r.version==3
+#endif
+                        )) {
                         r.stage=9;PioneerQ35RoleStageProgress(r.stage);
+#ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
+                        if (r.version==3) okay=prestack.Run(DataflowLocalProbeReaderParkAddress,
+                            DataflowLocalProbeWriterParkAddress,65536,true);
+                        else
+#endif
                         okay=prestack.Run(DataflowSharedReaderParkAddress,DataflowSharedWriterParkAddress,65536);
                     }
 #endif
@@ -126,7 +149,11 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         okay=owner->images.RestoreAll(adapter);r.restored=okay;
                     }
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
-                    if (okay && r.version==2) okay=prestack.VerifyAfterImages();
+                    if (okay && (r.version==2
+#ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
+                            || r.version==3
+#endif
+                        )) okay=prestack.VerifyAfterImages();
 #endif
                     if (okay) {
                         r.stage=7;PioneerQ35RoleStageProgress(r.stage);
@@ -164,6 +191,9 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         delete owner;c->qwen35RoleStageQualification=NULL;
                         r.stage=
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+#ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
+                            r.version==3?TT_Q35_ROLE_LOCAL_RESTORE_COMPLETE:
+#endif
                             r.version==2?TT_Q35_ROLE_PRESTACK_COMPLETE:
 #endif
                             TT_Q35_ROLE_STAGE_COMPLETE;

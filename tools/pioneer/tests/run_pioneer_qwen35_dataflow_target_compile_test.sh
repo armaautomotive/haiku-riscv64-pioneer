@@ -255,6 +255,20 @@ for role in reader writer; do
         "$temporary/local-restore-images/${role}.bin" "$role"
 done
 python3 "$directory/pioneer_qwen35_role_local_restore_images_test.py" "$temporary/local-restore-images"
+if PIONEER_QWEN35_RECOVERY_COMPILE_ONLY=1 PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY=1 \
+    sh "$root/tools/pioneer/build_qwen35_local_restore_probe_images.sh" "$build" "$temporary/invalid-local-probe"; then
+    echo 'restricted local restore probe builder accepted missing guard' >&2; exit 1
+fi
+PIONEER_QWEN35_RECOVERY_COMPILE_ONLY=1 PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY=1 \
+    PIONEER_QWEN35_LOCAL_RESTORE_PROBE_BUILD=1 \
+    sh "$root/tools/pioneer/build_qwen35_local_restore_probe_images.sh" "$build" "$temporary/local-restore-probe-images"
+for role in reader writer; do
+    cmp "$temporary/local-restore-images/${role}.bin" "$temporary/local-restore-probe-images/local-restore/${role}.bin"
+    python3 "$directory/pioneer_qwen35_local_restore_probe_test.py" \
+        "$temporary/local-restore-probe-images/${role}-shim.bin" \
+        "$temporary/local-restore-probe-images/local-restore/${role}.bin" "$role"
+done
+python3 "$directory/pioneer_qwen35_local_restore_probe_images_test.py" "$temporary/local-restore-probe-images"
 for witness in copy_aware core_release core_restore_stage core_restore_handoff core_retirement; do
     "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -ffreestanding \
         -fno-exceptions -fno-rtti -fno-stack-protector -mcmodel=medany -fpic -D_KERNEL_MODE \
@@ -799,6 +813,11 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
     -I"$directory/role_haiku_stubs" -I"$temporary/shared-role-images" -I"$temporary/shared-graph-service" -I"$temporary" \
     "$directory/pioneer_qwen35_role_prestack_control_test.cpp" -o "$temporary/role-prestack-control-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-prestack-control-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -I"$directory/role_haiku_stubs" -I"$temporary/shared-role-images" -I"$temporary/shared-graph-service" \
+    -I"$temporary/local-restore-probe-images" -I"$temporary" \
+    "$directory/pioneer_qwen35_role_local_restore_control_test.cpp" -o "$temporary/role-local-restore-control-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-local-restore-control-test"
 PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL=1 \
 	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/graph-trial-service"
 for section in boot text dispatch; do

@@ -10,6 +10,11 @@ int main()
     (void)&EndGuard;
     (void)&Qwen35DataflowGenerate;
     {
+        Fixture f;auto r=Request();r.version=3;
+        assert(Qwen35RoleStageControl(&f.cookie,&r,sizeof(r))==B_BAD_VALUE
+            && !f.context.qwen35RoleStageAttempted);
+    }
+    {
         Fixture f;assert(f.Run()==B_OK && f.request.operation_status==B_OK);
         ResetMaps();gAllowWrite=true;gPerCoreRoleWindows=true;
         gRoleWindowCore=gRoleSelectedCore=f.context.io.runtimeCore;

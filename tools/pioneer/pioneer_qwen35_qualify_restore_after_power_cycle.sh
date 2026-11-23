@@ -38,7 +38,7 @@ idle() {
 		$1=="Id" && $2=="Team" && NF==2 {header++; next}
 		$1~/^[0-9]+$/ && NF>=2 {
 			teams++
-			if($2~/(^|\/)(Assistant|HaikuAssistant|llama-|tenstorrent_haiku|inference-|pioneer_q38|pioneer-q35-dataflow|pioneer-native-|pioneer-dram)/) bad++
+			if($2~/(^|\/)(Assistant|HaikuAssistant|llama-|tenstorrent_haiku|inference-|pioneer_q38|pioneer_assistant|pioneer[_-]qwen27|pioneer-q35-dataflow|pioneer-native-|pioneer-dram)/) bad++
 			next
 		}
 		NF {bad++}
@@ -95,6 +95,9 @@ case "$stage" in
 	/boot/home/pioneer-q35-prestack-20261123-s)
 		candidateTag=2026112300030010
 		candidateSHA=2776db17e4ea8be9e1ddc96395904cc5e6a935eb0706abf800eae8a1bbd8e2fa ;;
+	/boot/home/pioneer-q35-local-restore-20261123-t)
+		candidateTag=2026112300030011
+		candidateSHA=28f938ef92e680ee3d51092b379af828925cdaa939538ee511597c8a452d13e1 ;;
 	*) exit 2;;
 esac
 test -d "$stage" && test ! -L "$stage" && [ "$(stat -c '%u:%a' "$stage")" = 0:700 ] || fail stage
