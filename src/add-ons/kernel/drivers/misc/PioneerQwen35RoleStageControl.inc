@@ -155,7 +155,11 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         r.stage=9;PioneerQ35RoleStageProgress(r.stage);
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
                         if (r.version==4) okay=prestack.Run(DataflowServiceProbeReaderParkAddress,
-                            DataflowServiceProbeWriterParkAddress,65536,false,true);
+                            DataflowServiceProbeWriterParkAddress,65536,false,true
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+                            ,true
+#endif
+                            );
                         else
 #endif
 #ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY

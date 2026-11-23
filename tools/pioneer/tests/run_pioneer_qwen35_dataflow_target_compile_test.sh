@@ -280,6 +280,7 @@ for role in reader writer; do
     python3 "$directory/pioneer_qwen35_role_stackless_copy_test.py" "$temporary/role-service-probe-images/${role}-shim.bin" "$role"
 done
 python3 "$directory/pioneer_qwen35_role_service_probe_test.py" "$temporary/role-service-probe-images"
+python3 "$directory/pioneer_qwen35_role_fault_image_test.py" "$temporary/role-service-probe-images"
 python3 "$directory/pioneer_qwen35_role_service_guard_test.py" "$build"
 for witness in copy_aware core_release core_restore_stage core_restore_handoff core_retirement; do
     "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -ffreestanding \
@@ -835,6 +836,25 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
     -I"$temporary/local-restore-probe-images" -I"$temporary/role-service-probe-images" -I"$temporary" \
     "$directory/pioneer_qwen35_role_service_control_test.cpp" -o "$temporary/role-service-control-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-service-control-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -I"$directory/role_haiku_stubs" -I"$temporary/shared-role-images" -I"$temporary/shared-graph-service" \
+    -I"$temporary/local-restore-probe-images" -I"$temporary/role-service-probe-images" -I"$temporary" \
+    "$directory/pioneer_qwen35_role_fault_control_test.cpp" -o "$temporary/role-fault-control-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-fault-control-test"
+if ${CXX:-c++} -std=c++17 -E -D_KERNEL_MODE -DPIONEER_QWEN35_ROLE_FAULT_QUALIFY \
+    -DPIONEER_QWEN35_ROLE_SERVICE_QUALIFY -DPIONEER_QWEN35_ROLE_PRESTACK_QUALIFY \
+    -DPIONEER_QWEN35_ROLE_STAGE_QUALIFY -I"$root/src/add-ons/kernel/drivers/misc" -x c++ - \
+    >"$temporary/role-fault-kernel.i" 2>"$temporary/role-fault-kernel.log" <<'EOF'
+#include "PioneerQwen35RolePrestackProbe.h"
+EOF
+then
+    echo 'offline fault qualification unexpectedly admitted kernel compilation' >&2
+    exit 1
+fi
+if ! grep -q 'Fault qualification is offline only' "$temporary/role-fault-kernel.log"; then
+    cat "$temporary/role-fault-kernel.log" >&2
+    exit 1
+fi
 PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL=1 \
 	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/graph-trial-service"
 for section in boot text dispatch; do

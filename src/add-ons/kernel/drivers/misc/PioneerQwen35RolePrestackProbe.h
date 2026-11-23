@@ -4,10 +4,19 @@
 #if !defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY) || !defined(PIONEER_QWEN35_ROLE_STAGE_QUALIFY)
 #error This bounded startup probe is only for the restricted qualification build
 #endif
+#if defined(PIONEER_QWEN35_ROLE_FAULT_QUALIFY) && defined(_KERNEL_MODE)
+#error Fault qualification is offline only until separately tagged and recovery-qualified
+#endif
 #include "PioneerQwen35DataflowRoleFleetPciIO.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleBoot.h"
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleMailbox.h"
+#endif
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+#ifndef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+#error Fault qualification requires the guarded resident role service
+#endif
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowKernels.h"
 #endif
 
 // Qualification only. A held-image owner must already retain the entire
@@ -31,6 +40,12 @@ struct PioneerQwen35RolePrestackState {
     uint32_t mailboxInitAttempts=0,mailboxRestoreAttempts=0;
     bool mailboxCaptured=false,serviceReleaseAttempted=false,serviceStarted=false;
     bool serviceStopAttempted=false,serviceStopped=false,mailboxRestored=false;
+#endif
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+    uint32_t faultSaved[1+PioneerQwen35::DataflowQueueStateBytes/4]{};
+    unsigned faultWriteAttempts=0,faultRestoreAttempts=0;
+    bool faultCaptured=false,faultPrepared=false,faultCommandAttempted=false;
+    bool faultSettled=false,faultRestored=false;
 #endif
 };
 template<class IO,class Scope,class Views,class Adapter>
@@ -102,6 +117,85 @@ class PioneerQwen35RolePrestackProbe {
         return fIO.Q38PanelRead(address)==value && Select(reset);
     }
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+    static constexpr unsigned FaultWordCount=1+PioneerQwen35::DataflowQueueStateBytes/4;
+    static constexpr unsigned FaultInvocationAddress=PioneerQwen35::DataflowProgramAddress
+        +offsetof(PioneerQwen35::DataflowCoreInvocation,circularBuffer)
+        +offsetof(PioneerQwen35::DataflowCircularBuffer,address);
+    static_assert(FaultInvocationAddress==0xaa074 && FaultWordCount==25,
+        "fixed offline fault-test memory layout changed");
+    static unsigned FaultAddress(unsigned word) {
+        return word?PioneerQwen35::DataflowQueueStateAddress+(word-1)*4:FaultInvocationAddress;
+    }
+    bool ReadFaultWord(uint32_t reset,unsigned word,uint32_t& out) {
+        if (word>=FaultWordCount || !Select(reset)) return false;
+        const uint32_t first=fIO.Q38PanelRead(FaultAddress(word));fIO.Pause();
+        const uint32_t second=fIO.Q38PanelRead(FaultAddress(word));
+        if (first!=second || !Select(reset)) return false;
+        out=second;return true;
+    }
+    bool WriteFaultWord(uint32_t reset,unsigned word,uint32_t value) {
+        if (word>=FaultWordCount || !Select(reset)) return false;
+        fIO.Q38PanelWrite(FaultAddress(word),value);
+        return fIO.Q38PanelRead(FaultAddress(word))==value && Select(reset);
+    }
+    bool FaultNocQuiet(uint32_t reset) {
+        if (!Select(reset)) return false;
+        for (unsigned pass=0;pass<2;pass++) {
+            if (!PioneerQwen35SampleNocFifosAndClock([&](unsigned offset) { return fIO.ResidentNocRead(offset); }))
+                return false;
+            for (unsigned noc=0;noc<2;noc++) {
+                const unsigned base=noc?0x10000:0;
+                for (unsigned i=0;i<4;i++) if (fIO.ResidentNocRead(base+0x40+i*0x800)) return false;
+                for (unsigned i=0;i<32;i++) if (fIO.ResidentNocRead(base+0x240+i*4)&0xffU) return false;
+            }
+            fIO.Pause();
+            if (!Select(reset)) return false;
+        }
+        return true;
+    }
+    bool PrepareFaultWords() {
+        if (fState.faultCaptured || !FaultNocQuiet(Held)) return false;
+        for (unsigned i=0;i<FaultWordCount;i++)
+            if (!ReadFaultWord(Held,i,fState.faultSaved[i])) return false;
+        fState.faultCaptured=true;
+        // Address zero makes DataflowBindQueues fail before any NoC operation.
+        for (unsigned i=0;i<FaultWordCount;i++) {
+            fState.faultWriteAttempts|=1U<<i;
+            if (!WriteFaultWord(Held,i,0)) return false;
+        }
+        fState.faultPrepared=FaultNocQuiet(Held);return fState.faultPrepared;
+    }
+    bool FaultQueuesExpected() {
+        using namespace PioneerQwen35;
+        for (unsigned queue=0;queue<DataflowCircularBufferCount;queue++) {
+            for (unsigned word=0;word<DataflowQueueControlBytes/4;word++) {
+                uint32_t value=0;
+                const uint32_t expected=word==2?DataflowFailureReader:word==4?DataflowFailureWriter:0;
+                if (!ReadFaultWord(Running,1+queue*(DataflowQueueControlBytes/4)+word,value)
+                    || value!=expected) return false;
+            }
+        }
+        return true;
+    }
+    bool RestoreFaultWords() {
+        if (!fState.faultCaptured || !fState.faultSettled || !fState.serviceStopped
+            || !fState.copiesVerified || !FaultNocQuiet(Held)) return false;
+        for (unsigned i=0;i<FaultWordCount;i++) {
+            fState.faultRestoreAttempts|=1U<<i;
+            if (!WriteFaultWord(Held,i,fState.faultSaved[i])) return false;
+        }
+        fState.faultRestored=true;return true;
+    }
+    bool VerifyFaultWords() {
+        if (!fState.faultRestored) return false;
+        for (unsigned i=0;i<FaultWordCount;i++) {
+            uint32_t value=0;
+            if (!ReadFaultWord(Held,i,value) || value!=fState.faultSaved[i]) return false;
+        }
+        return true;
+    }
+#endif
     bool ReadMailbox(uint32_t reset,PioneerQwen35::DataflowRoleMailbox& out) {
         using namespace PioneerQwen35;
         static_assert(sizeof(DataflowRoleMailbox)==16*sizeof(uint32_t),"fixed mailbox size");
@@ -147,7 +241,11 @@ class PioneerQwen35RolePrestackProbe {
             && !memcmp(&restored,fState.mailbox,sizeof(restored));
         return fState.mailboxRestored;
     }
-    bool RunIdleService(unsigned polls) {
+    bool RunIdleService(unsigned polls
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+        ,bool faultProbe
+#endif
+        ) {
         using namespace PioneerQwen35;
         fState.serviceReleaseAttempted=true;
         if (!WriteHandoff(Running,2,DataflowRoleSnapshotRelease)) return false;
@@ -163,7 +261,27 @@ class PioneerQwen35RolePrestackProbe {
         }
         if (!fState.serviceStarted) return false;
         DataflowRoleMailbox box{};
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+        if (!ReadMailbox(Running,box)) return false;
+        if (faultProbe) {
+            if (!fState.faultPrepared || !FaultNocQuiet(Running) || !DataflowRoleMailboxIssue(box,1)) return false;
+            fState.faultCommandAttempted=true;
+            if (!WriteMailbox(Running,offsetof(DataflowRoleMailbox,command)/sizeof(uint32_t),1)) return false;
+            for (unsigned n=0;n<polls;n++) {
+                if (ReadMailbox(Running,box)
+                    && DataflowRoleMailboxReceipt(box,DataflowRoleReader,1,DataflowRoleFailed)
+                    && DataflowRoleMailboxReceipt(box,DataflowRoleWriter,1,DataflowRoleFailed)) {
+                    fState.faultSettled=true;break;
+                }
+                fIO.Pause();
+            }
+            if (!fState.faultSettled || !FaultQueuesExpected() || !FaultNocQuiet(Running)
+                || !DataflowRoleMailboxRequestFaultStop(box,true,true,true)) return false;
+        } else
+        if (!DataflowRoleMailboxRequestStop(box)) return false;
+#else
         if (!ReadMailbox(Running,box) || !DataflowRoleMailboxRequestStop(box)) return false;
+#endif
         fState.serviceStopAttempted=true;
         constexpr unsigned stopWord=offsetof(DataflowRoleMailbox,stopRequest)/sizeof(uint32_t);
         if (!WriteMailbox(Running,stopWord,1)) return false;
@@ -226,13 +344,20 @@ public:
     bool Complete() const { return fState.complete; }
 
     __attribute__((noinline)) bool Run(uint32_t readerPark,uint32_t writerPark,unsigned polls,
-        bool localRestoreProbe=false,bool serviceProbe=false) {
+        bool localRestoreProbe=false,bool serviceProbe=false
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+        ,bool faultProbe=false
+#endif
+        ) {
         using namespace PioneerQwen35;
 #ifndef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
         if (localRestoreProbe) return false;
 #endif
 #ifndef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
         if (serviceProbe) return false;
+#endif
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+        if (faultProbe && !serviceProbe) return false;
 #endif
         if (localRestoreProbe && serviceProbe) return false;
         const bool restoresLocal=localRestoreProbe || serviceProbe;
@@ -253,6 +378,9 @@ public:
         fState.resetDisable=first;fState.captured=true;Progress(1);
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
         if (serviceProbe && !InitializeMailbox()) return false;
+#endif
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+        if (faultProbe && !PrepareFaultWords()) return false;
 #endif
         for (unsigned i=0;i<3;i++) {
             fState.handoffZeroAttempts|=1U<<i;
@@ -278,7 +406,11 @@ public:
         fState.cancelAttempted=true;
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
         if (serviceProbe) {
-            if (!RunIdleService(polls)) return false;
+            if (!RunIdleService(polls
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+                ,faultProbe
+#endif
+                )) return false;
         } else
 #endif
         if (!WriteHandoff(Running,2,DataflowRoleSnapshotCancel)) return false;
@@ -312,6 +444,9 @@ public:
         Progress(44);
         if (!CompareHeldCopies()) return false;
         fState.copiesVerified=true;Progress(5);
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+        if (faultProbe && !RestoreFaultWords()) return false;
+#endif
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
         if (serviceProbe && !RestoreMailbox()) return false;
 #endif
@@ -335,6 +470,9 @@ public:
             && ReadMailbox(Held,mailbox) && !memcmp(&mailbox,fState.mailbox,sizeof(mailbox)));
 #endif
         const bool okay=fState.complete
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+            && (!fState.faultCaptured || VerifyFaultWords())
+#endif
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
             && mailboxOkay
 #endif

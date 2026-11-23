@@ -186,6 +186,11 @@ struct PioneerSessionIO {
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
     bool simulateService=false,dropServiceStop=false;
     unsigned serviceStarts=0,serviceStops=0;
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+    uint32_t faultInvocationWord=0xabcddcbaU;
+    bool dropFaultReceipt=false,injectFaultNoc=false,dropFaultRestore=false,dropFaultInit=false;
+    unsigned faultCommands=0;
+#endif
 #endif
 #endif
     bool SharedRolePrestackReleaseReset() {
@@ -254,6 +259,19 @@ struct PioneerSessionIO {
         return true;
     }
     void Q38PanelWrite(unsigned address,uint32_t value) {
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+        constexpr unsigned faultAddress=DataflowProgramAddress+offsetof(DataflowCoreInvocation,circularBuffer)
+            +offsetof(DataflowCircularBuffer,address);
+        if (address==faultAddress) {
+            if (!(dropFaultRestore && reset==0x47800 && value)
+                && !(dropFaultInit && reset==0x47800 && !value)) faultInvocationWord=value;
+            return;
+        }
+        if (address>=DataflowQueueStateAddress && address<DataflowQueueStateAddress+DataflowQueueStateBytes) {
+            std::memcpy(reinterpret_cast<uint8_t*>(queueBoxes[runtimeCore])+(address-DataflowQueueStateAddress),
+                &value,sizeof(value));return;
+        }
+#endif
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
         if (address>=DataflowRoleMailboxAddress && address<DataflowRoleMailboxAddress+sizeof(DataflowRoleMailbox)) {
             auto& box=roleBoxes[runtimeCore];
@@ -263,6 +281,20 @@ struct PioneerSessionIO {
                 ++serviceStops;return;
             }
             std::memcpy(reinterpret_cast<uint8_t*>(&box)+offset,&value,sizeof(value));
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+            if (reset==0x7000 && simulateService && offset==offsetof(DataflowRoleMailbox,command) && value==1) {
+                ++faultCommands;assert(faultInvocationWord==0);
+                assert(DataflowRoleMailboxBegin(box,DataflowRoleReader,1)
+                    && DataflowRoleMailboxComplete(box,DataflowRoleReader,1,false));
+                if (!dropFaultReceipt) assert(DataflowRoleMailboxBegin(box,DataflowRoleWriter,1)
+                    && DataflowRoleMailboxComplete(box,DataflowRoleWriter,1,false));
+                for (auto& queue:queueBoxes[runtimeCore]) {
+                    DataflowStoreRoleFailure(queue,DataflowFailureReader);
+                    if (!dropFaultReceipt) DataflowStoreRoleFailure(queue,DataflowFailureWriter);
+                }
+                if (injectFaultNoc) nocOutstanding[0][0]=1;
+            }
+#endif
             if (reset==0x7000 && simulateService && offset==offsetof(DataflowRoleMailbox,stopRequest) && value==1) {
                 ++serviceStops;
                 if (!dropServiceStop) {
@@ -355,6 +387,16 @@ struct PioneerSessionIO {
         }
     }
     uint32_t Q38PanelRead(unsigned address) {
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+        constexpr unsigned faultAddress=DataflowProgramAddress+offsetof(DataflowCoreInvocation,circularBuffer)
+            +offsetof(DataflowCircularBuffer,address);
+        if (address==faultAddress) return faultInvocationWord;
+        if (address>=DataflowQueueStateAddress && address<DataflowQueueStateAddress+DataflowQueueStateBytes) {
+            uint32_t value=0;
+            std::memcpy(&value,reinterpret_cast<const uint8_t*>(queueBoxes[runtimeCore])
+                +(address-DataflowQueueStateAddress),sizeof(value));return value;
+        }
+#endif
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
         if (address>=DataflowRoleMailboxAddress && address<DataflowRoleMailboxAddress+sizeof(DataflowRoleMailbox)) {
             uint32_t value=0;
