@@ -3,10 +3,10 @@
 // any ioctl. Caller holds the driver lock and the exclusive recovery ticket,
 // and retains this object, the mapping and the old session on ALL outcomes.
 // In particular, there is deliberately no destructor-side unmap or TLB
-// restoration. A future retirement path must first prove reset, fresh firmware,
-// fleet and DMA recovery and then dispose virtual areas without touching the
-// pre-reset device state.
+// restoration. Retirement requires reset, fresh firmware, fleet and DMA
+// recovery and disposes virtual areas without touching pre-reset device state.
 #include "PioneerFirmwareReset.h"
+#include "PioneerDriverReloadState.h"
 
 template<class OwnerIO,class Guard> class PioneerFirmwareResetTransport {
 	PioneerPostResetMapping& m;
@@ -20,8 +20,10 @@ template<class OwnerIO,class Guard> class PioneerFirmwareResetTransport {
 	uint32 queueBase=0,request=0;
 	bool opened=false,openAttempted=false,prepareAttempted=false,prepared=false;
 	bool publicationAttempted=false,notificationAttempted=false,delayFailed=false;
+	bool disposeAttempted=false,disposeComplete=false;
+	bool TicketValid() const { return ticket && guard && guard->validate && guard->validate(ticket)==B_OK; }
 	bool Allowed() const {
-		return ticket && guard && guard->validate && guard->validate(ticket)==B_OK && !delayFailed;
+		return !disposeAttempted && TicketValid() && !delayFailed;
 	}
 	bool Accessible() { return opened && !publicationAttempted && Allowed() && m.PciReady(); }
 	bool PublishAccessible() { return opened && !publicationAttempted && Allowed() && m.PciReady(true); }
@@ -31,12 +33,24 @@ public:
 	PioneerFirmwareResetTransport(const PioneerFirmwareResetTransport&)=delete;
 	PioneerFirmwareResetTransport& operator=(const PioneerFirmwareResetTransport&)=delete;
 	~PioneerFirmwareResetTransport() = default;
+	// The driver holds its lock when dropping the temporary module reference.
+	// Never retain a callable pointer across put_module(); a later operation
+	// must obtain the module again and bind the same recovery ticket.
+	void DetachGuard() { guard=NULL; }
+	bool BindGuard(Guard* next,uint64 expectedTicket) {
+		guard=NULL;
+		if (disposeAttempted || !next || !expectedTicket || expectedTicket!=ticket) return false;
+		guard=next;
+		if (!TicketValid()) { guard=NULL;return false; }
+		return true;
+	}
 
 	bool Open() {
 		if (openAttempted) return false;
 		openAttempted=true;
 		if (!Allowed() || !m.ready || !m.firmwareReady || !m.topologyReady
-			|| !m.savedValid || m.queueAttempted || !m.PciReady()) return false;
+			|| !m.savedValid || m.queueAttempted || m.queueArea>=B_OK || m.queueMsiArea>=B_OK
+			|| m.dbiAttempted || m.dbiArea>=B_OK || m.dmaModified || !m.PciReady()) return false;
 		// Any partial mapping or later queue operation is retained; Close()
 		// must not restore pre-reset TLBs or retire uncertain queue state.
 		m.queueAttempted=true;m.queueUnsafe=true;
@@ -125,4 +139,38 @@ public:
 		if (Accessible() && a==4 && size==2 && value==0x442) owner.CardWrite(a,size,value);
 	}
 	void RecoveryDelay() { if (!Allowed() || snooze(100000)!=B_OK) delayFailed=true; }
+
+	// Virtual unmaps only, after independent post-reset firmware, all-core,
+	// NoC and DMA audits. The proof and completed reset must belong to this
+	// exact retained transport/ticket. A failed deletion is never replayed.
+	status_t DisposeAfterVerifiedReset(const PioneerDriverRecoveryProof& proof,
+		const PioneerFirmwareReset<PioneerFirmwareResetTransport>& reset) {
+		if (disposeAttempted) return B_NOT_ALLOWED;
+		if (!opened || !publicationAttempted || !notificationAttempted
+			|| !reset.BoundTo(*this) || reset.Result().stage!=PioneerFirmwareResetComplete
+			|| !proof.ReadyToRetireOneOwner() || proof.reset_generation!=ticket
+			|| proof.firmware_generation!=ticket || !TicketValid()
+			|| m.queueArea>=B_OK || m.queueMsiArea>=B_OK || m.dbiArea>=B_OK)
+			return B_BAD_VALUE;
+		area_id* areas[]={&preparedArea,&msiArea,&queueArea,
+			&m.areas[0],&m.areas[1],&m.areas[2],&m.areas[3],
+			&m.areas[4],&m.areas[5],&m.areas[6]};
+		const unsigned count=sizeof(areas)/sizeof(areas[0]);
+		for (unsigned i=0;i<count;i++) {
+			if (*areas[i]<B_OK) return B_BAD_VALUE;
+			for (unsigned j=0;j<i;j++) if (*areas[i]==*areas[j]) return B_BAD_VALUE;
+		}
+		disposeAttempted=true;
+		for (unsigned i=0;i<count;i++) {
+			if (!TicketValid()) return B_DEV_NOT_READY;
+			const status_t status=delete_area(*areas[i]);
+			if (status!=B_OK) return status;
+			*areas[i]=-1;
+		}
+		queue=msi=preparedMsi=NULL;opened=false;
+		m.tlb=NULL;m.node=m.reset=m.noc=m.hdma=m.scratch=m.csm=NULL;
+		m.ready=false;m.savedValid=false;m.modified=false;m.dmaModified=false;
+		disposeComplete=true;return B_OK;
+	}
+	bool DisposalComplete() const { return disposeComplete; }
 };

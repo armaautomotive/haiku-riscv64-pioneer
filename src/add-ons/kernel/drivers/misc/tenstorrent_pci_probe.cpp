@@ -3940,12 +3940,14 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 #include "PioneerPostResetMapping.inc"
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 #include "PioneerFirmwareResetTransport.inc"
+#include "PioneerFirmwareRecoveryOwner.h"
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && !defined(PIONEER_QWEN35_RECOVERY_QUALIFY)
 // Compile the real Haiku adapter only in the non-loadable witness. No driver
 // operation constructs it until ownership, retirement and recovery are wired.
 using PioneerFirmwareResetCompileTransport = PioneerFirmwareResetTransport<PioneerSessionIO,pioneer_driver_recovery_guard_v2_info>;
 template class PioneerFirmwareResetTransport<PioneerSessionIO,pioneer_driver_recovery_guard_v2_info>;
 template class PioneerFirmwareReset<PioneerFirmwareResetCompileTransport>;
+template class PioneerFirmwareRecoveryOwner<PioneerSessionIO,pioneer_driver_recovery_guard_v2_info>;
 #endif
 #endif
 #ifdef PIONEER_QWEN35_RECOVERY_QUALIFY

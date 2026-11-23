@@ -53,6 +53,7 @@ public:
 	PioneerFirmwareReset(const PioneerFirmwareReset&)=delete;
 	PioneerFirmwareReset& operator=(const PioneerFirmwareReset&)=delete;
 	const PioneerFirmwareResetResult& Result() const { return result; }
+	bool BoundTo(const IO& transport) const { return &io==&transport; }
 
 	// A true result means only that publication and notification were
 	// attempted once. Firmware may not have received either operation.

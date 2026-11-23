@@ -4,19 +4,22 @@
 #include <cstdio>
 #include <cstring>
 
-using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uint64_t;using area_id=int;
+using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uint64_t;using area_id=int;using status_t=int;
 enum { B_OK=0,B_PAGE_SIZE=4096,B_ANY_KERNEL_ADDRESS=0,B_UNCACHED_MEMORY=1,
-	B_KERNEL_READ_AREA=2,B_KERNEL_WRITE_AREA=4 };
+	B_KERNEL_READ_AREA=2,B_KERNEL_WRITE_AREA=4,B_BAD_VALUE=-2,B_NOT_ALLOWED=-3,B_DEV_NOT_READY=-4 };
 static uint32 tlbs[6],queueWords[TT_ARC_QUEUE_CSM_BYTES/4],msi[1024],preparedMsi[1024];
 static unsigned maps=0,queuePublishes=0,resetBells=0,pingBells=0,afterPublishMmio=0;
 static int failMap=-1,dropTlb=-1;static bool published=false,firmwareCompletes=false;
 static bool leaseValid=true;static unsigned validateCalls=0,denyAt=0;static uint32 cardCommand=0x402;
+static int deleted[10],deletionCount=0,failDelete=-1,aliasMap=-1;
 static constexpr uint64 Bar=0x100000000ULL;
 struct Profile { uint64 bar0_host_start=Bar; };
 struct PioneerPostResetMapping {
 	Profile profile;bool ready=true,firmwareReady=true,topologyReady=true,savedValid=true;
-	bool queueAttempted=false,queueUnsafe=false,dmaModified=false;
+	bool queueAttempted=false,queueUnsafe=false,dmaModified=false,dbiAttempted=false,modified=false;
+	area_id areas[7]={20,21,22,23,24,25,26},queueArea=-1,queueMsiArea=-1,dbiArea=-1;
 	uint32 dmaSaved[3]={10,11,12};volatile uint32* tlb=tlbs+3;
+	const volatile uint32 *node=nullptr,*reset=nullptr,*noc=nullptr,*hdma=nullptr,*scratch=nullptr,*csm=nullptr;
 	bool PciReady(bool resetMarker=false) { return cardCommand==(resetMarker?0x442U:0x402U); }
 	uint32 TlbRead(unsigned w) { return PioneerRead32(tlb+w); }
 	void TlbWrite(unsigned w,uint32 value) { PioneerWrite32(tlb+w,value); }
@@ -40,7 +43,11 @@ static int map_physical_memory(const char*,uint64 addr,size_t size,int spec,uint
 	else if (addr==Bar+0x192b0000 && size==B_PAGE_SIZE) *out=msi;
 	else if (addr==Bar+0x190b0000 && size==B_PAGE_SIZE) *out=preparedMsi;
 	else assert(false);
-	return int(n);
+	return int(n)==aliasMap?20:int(n);
+}
+static int delete_area(area_id id) {
+	assert(deletionCount<10);deleted[deletionCount++]=id;
+	return id==failDelete?-5:B_OK;
 }
 static uint32 PioneerRead32(const volatile uint32* p) {
 	assert(leaseValid);
@@ -90,6 +97,7 @@ struct Owner {
 	void CardWrite(uint16 a,uint8 s,uint32 v) { assert(leaseValid && a==4 && s==2 && v==0x442);cardCommand=v; }
 };
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerFirmwareResetTransport.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerFirmwareRecoveryOwner.h"
 
 static void ResetFake() {
 	memset(tlbs,0,sizeof(tlbs));memset(queueWords,0,sizeof(queueWords));
@@ -97,7 +105,13 @@ static void ResetFake() {
 	tlbs[0]=10;tlbs[1]=11;tlbs[2]=12;tlbs[3]=1;tlbs[4]=2;tlbs[5]=3;
 	queueWords[0x1000/4]=0x10028000;queueWords[0x1004/4]=0x404;
 	msi[2]=1;preparedMsi[2]=1;maps=queuePublishes=resetBells=pingBells=afterPublishMmio=0;
-	failMap=dropTlb=-1;published=firmwareCompletes=false;leaseValid=true;validateCalls=denyAt=0;cardCommand=0x402;
+	failMap=dropTlb=failDelete=aliasMap=-1;deletionCount=0;published=firmwareCompletes=false;
+	leaseValid=true;validateCalls=denyAt=0;cardCommand=0x402;
+}
+static PioneerDriverRecoveryProof Evidence() {
+	PioneerDriverRecoveryProof p{};
+	p.flags=PIONEER_RECOVERY_PROOF_REQUIRED & ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;
+	p.core_count=120;p.retained_owners=1;p.reset_generation=p.firmware_generation=123;return p;
 }
 int main() {
 	const auto arc=MockQueue::Arc();const auto health=MockQueue::Health();
@@ -112,8 +126,22 @@ int main() {
 	assert(started && pingBells==1 && queuePublishes==1 && resetBells==1);
 	const unsigned startChecks=validateCalls;
 	assert(m.dmaModified && !afterPublishMmio && !reset.ResumeWait(1));
+	assert(io.DisposeAfterVerifiedReset(Evidence(),reset)==B_BAD_VALUE && !deletionCount);
+	io.DetachGuard();assert(!reset.ResumeWait(1));
+	assert(!io.BindGuard(&guard,124) && !reset.ResumeWait(1));
+	leaseValid=false;assert(!io.BindGuard(&guard,123));leaseValid=true;
+	assert(io.BindGuard(&guard,123));
 	firmwareCompletes=true;assert(reset.ResumeWait(1) && !afterPublishMmio);
 	assert(!reset.Start(arc,health) && queuePublishes==1 && resetBells==1);
+	auto badProof=Evidence();badProof.firmware_generation=124;
+	assert(io.DisposeAfterVerifiedReset(badProof,reset)==B_BAD_VALUE && !deletionCount);
+	PioneerFirmwareReset<decltype(io)> wrongReset(io);
+	assert(io.DisposeAfterVerifiedReset(Evidence(),wrongReset)==B_BAD_VALUE && !deletionCount);
+	assert(io.DisposeAfterVerifiedReset(Evidence(),reset)==B_OK && io.DisposalComplete());
+	assert(deletionCount==10 && deleted[0]==2 && deleted[1]==1 && deleted[2]==0
+		&& deleted[3]==20 && deleted[9]==26 && !m.ready && !m.tlb && !afterPublishMmio);
+	assert(io.DisposeAfterVerifiedReset(Evidence(),reset)==B_NOT_ALLOWED && deletionCount==10);
+	assert(!io.BindGuard(&guard,123));
 	for (int n=0;n<3;n++) {
 		ResetFake();failMap=n;PioneerPostResetMapping partial;
 		PioneerFirmwareResetTransport<Owner,Guard> t(partial,owner,&guard,123);
@@ -143,6 +171,47 @@ int main() {
 	PioneerFirmwareResetTransport<Owner,Guard> b(noBell,owner,&guard,123);
 	assert(b.Open());PioneerFirmwareReset<decltype(b)> br(b);
 	assert(!br.Start(arc,health) && noBell.queueUnsafe && noBell.dmaModified && !queuePublishes);
+	ResetFake();aliasMap=1;PioneerPostResetMapping alias;
+	PioneerFirmwareResetTransport<Owner,Guard> a(alias,owner,&guard,123);
+	assert(a.Open());PioneerFirmwareReset<decltype(a)> ar(a);
+	assert(ar.Start(arc,health));firmwareCompletes=true;assert(ar.ResumeWait(1));
+	assert(a.DisposeAfterVerifiedReset(Evidence(),ar)==B_BAD_VALUE && !deletionCount);
+	for (int failing=0;failing<10;failing++) {
+		ResetFake();PioneerPostResetMapping partial;
+		PioneerFirmwareResetTransport<Owner,Guard> c(partial,owner,&guard,123);
+		assert(c.Open());PioneerFirmwareReset<decltype(c)> cr(c);
+		assert(cr.Start(arc,health));firmwareCompletes=true;assert(cr.ResumeWait(1));
+		failDelete=failing<3?2-failing:20+failing-3;
+		assert(c.DisposeAfterVerifiedReset(Evidence(),cr)==-5 && deletionCount==failing+1);
+		assert(!c.DisposalComplete() && c.DisposeAfterVerifiedReset(Evidence(),cr)==B_NOT_ALLOWED
+			&& deletionCount==failing+1 && !afterPublishMmio);
+	}
+	ResetFake();PioneerPostResetMapping losingLease;
+	PioneerFirmwareResetTransport<Owner,Guard> l(losingLease,owner,&guard,123);
+	assert(l.Open());PioneerFirmwareReset<decltype(l)> lr(l);
+	assert(lr.Start(arc,health));firmwareCompletes=true;assert(lr.ResumeWait(1));
+	denyAt=validateCalls+3; // proof check, first unmap, then ticket loss
+	assert(l.DisposeAfterVerifiedReset(Evidence(),lr)==B_DEV_NOT_READY && deletionCount==1);
+	assert(l.DisposeAfterVerifiedReset(Evidence(),lr)==B_NOT_ALLOWED && deletionCount==1);
+	for (unsigned n=0;n<4;n++) {
+		ResetFake();PioneerPostResetMapping busy;
+		if (n==0) busy.dbiAttempted=true;else if (n==1) busy.dbiArea=99;
+		else if (n==2) busy.queueArea=99;else busy.dmaModified=true;
+		PioneerFirmwareResetTransport<Owner,Guard> blocked(busy,owner,&guard,123);
+		assert(!blocked.Open() && !maps);
+	}
+	ResetFake();PioneerPostResetMapping owned;
+	PioneerFirmwareRecoveryOwner<Owner,Guard> recovery(owned,owner,123);
+	assert(!recovery.Start(&guard,124,arc,health) && !maps);
+	leaseValid=false;assert(!recovery.Start(&guard,123,arc,health) && !maps);leaseValid=true;
+	assert(recovery.Start(&guard,123,arc,health) && queuePublishes==1 && resetBells==1);
+	assert(!recovery.Start(&guard,123,arc,health));
+	assert(!recovery.Resume(&guard,124,1) && !recovery.Resume(&guard,123,1));
+	firmwareCompletes=true;assert(recovery.Resume(&guard,123,1));
+	badProof=Evidence();badProof.reset_generation=124;
+	assert(recovery.Retire(&guard,123,badProof)==B_BAD_VALUE && !deletionCount);
+	assert(recovery.Retire(&guard,123,Evidence())==B_OK && recovery.Retired() && deletionCount==10);
+	assert(!recovery.Resume(&guard,123,1) && queuePublishes==1 && !afterPublishMmio);
 	ResetFake();leaseValid=false;PioneerPostResetMapping denied;
 	PioneerFirmwareResetTransport<Owner,Guard> t(denied,owner,&guard,123);
 	assert(!t.Open() && !maps && !denied.queueUnsafe);
