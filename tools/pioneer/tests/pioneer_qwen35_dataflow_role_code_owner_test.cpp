@@ -9,6 +9,7 @@ struct SimulatedIO {
     std::vector<uint32_t> memory;
     bool held=true,unstable=false;
     bool copyProof=false,dropCopyProofAfterFirst=false;
+    bool retirementProof=false,retirementRetry=false;
     const uint32_t* trustedReader=nullptr; const uint32_t* trustedWriter=nullptr;
     unsigned copyProofCalls=0;
     int failWrite=-1,releaseOnWrite=-1,corruptFirstOnWrite=-1;
@@ -21,6 +22,12 @@ struct SimulatedIO {
         ++copyProofCalls;
         return AllRolesHeld(core) && copyProof && reader==trustedReader && writer==trustedWriter
             && !(dropCopyProofAfterFirst && copyProofCalls>1);
+    }
+    bool CoreRamImageRetirementSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        return AllRolesHeld(core) && retirementProof && reader==trustedReader && writer==trustedWriter;
+    }
+    bool CoreRamImageRetirementRetrySafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        return retirementRetry && CoreRamImageRetirementSafe(core,reader,writer);
     }
     bool Read(unsigned core,unsigned address,uint32_t* out,unsigned bytes) {
         assert(AllRolesHeld(core) && out && DataflowRoleExtraL1Range(address,bytes));
@@ -144,6 +151,46 @@ int main() {
         assert(ownedIO.writes==before && !owned.CodeVerified() && owned.NeedsRestore());
         if (scenario==0) assert(!owned.VerifyStaged(ownedIO)); // ordinary audit still detects the copy
         assert(!owned.Restore(ownedIO) && ownedIO.writes==before);
+    }
+    {
+        // A core-restored proof may retire L1 copies, but an uncertain image
+        // write must not be retried until the separate drain proof is valid.
+        SimulatedIO ownedIO;DataflowRoleCodeOwner owned;
+        const auto originalOwned=ownedIO.memory;
+        std::vector<uint32_t> originalL1(DataflowRoleCodeOwner::RequiredWords());
+        std::vector<uint32_t> readerCopy(DataflowRoleRamCopyBytes/4,0x10203040U);
+        std::vector<uint32_t> writerCopy(DataflowRoleRamCopyBytes/4,0x50607080U);
+        assert(owned.Capture(4,originalL1.data(),originalL1.size(),ownedIO));
+        assert(owned.Stage(true,reader.data(),reader.size(),ownedIO)
+            && owned.Stage(false,writer.data(),writer.size(),ownedIO) && owned.VerifyStaged(ownedIO)
+            && owned.BeginCopyAwareOwnership());
+        const unsigned readerAt=(DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address)/4;
+        const unsigned writerAt=(DataflowRoleWriterRamCopy-DataflowRoleExtraL1Address)/4;
+        for (unsigned i=0;i<readerCopy.size();i++) ownedIO.memory[readerAt+i]=readerCopy[i];
+        for (unsigned i=0;i<writerCopy.size();i++) ownedIO.memory[writerAt+i]=writerCopy[i];
+        ownedIO.trustedReader=readerCopy.data();ownedIO.trustedWriter=writerCopy.data();ownedIO.copyProof=true;
+        const unsigned before=ownedIO.writes;
+        assert(!owned.RestoreAfterCoreRamProof(readerCopy.data(),writerCopy.data(),ownedIO)
+            && ownedIO.writes==before);
+        ownedIO.retirementProof=true;
+        assert(!owned.RestoreAfterCoreRamProof(writerCopy.data(),readerCopy.data(),ownedIO)
+            && ownedIO.writes==before);
+        ownedIO.failWrite=int(ownedIO.writes)+2;
+        assert(!owned.RestoreAfterCoreRamProof(readerCopy.data(),writerCopy.data(),ownedIO)
+            && owned.NeedsRestore() && !owned.RegionRestored());
+        const unsigned partial=ownedIO.writes;
+        ownedIO.failWrite=-1;
+        assert(!owned.Restore(ownedIO)
+            && !owned.RestoreAfterCoreRamProof(readerCopy.data(),writerCopy.data(),ownedIO)
+            && ownedIO.writes==partial);
+        ownedIO.retirementRetry=true;
+        const uint32_t* retainedReader=ownedIO.trustedReader;
+        ownedIO.trustedReader=retainedReader+1;
+        assert(!owned.RestoreAfterCoreRamProof(retainedReader+1,writerCopy.data(),ownedIO)
+            && ownedIO.writes==partial);
+        ownedIO.trustedReader=retainedReader;
+        assert(owned.RestoreAfterCoreRamProof(readerCopy.data(),writerCopy.data(),ownedIO)
+            && owned.RegionRestored() && owned.VerifyOriginal(ownedIO) && ownedIO.memory==originalOwned);
     }
     SimulatedIO failedIO;
     DataflowRoleCodeOwner failed;

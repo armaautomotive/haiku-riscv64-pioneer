@@ -592,6 +592,42 @@ public:
         return reader && writer && StacklessHeldCopySources(core,r,w,captured)
             && captured && reader==r && writer==w;
     }
+    // These retained host pointers remain meaningful after L1 copy windows
+    // are retired. Scope must bind them to the exact RAM recovery ledger and
+    // exclude firmware, resets, misroutes and competing writes. No real
+    // Haiku scope currently provides this authority.
+    bool RetirementRamSnapshotSources(unsigned core,const uint32_t*& reader,const uint32_t*& writer,bool& captured) {
+        using namespace PioneerQwen35;
+        reader=writer=nullptr;captured=false;
+        const uint32_t* r=nullptr;const uint32_t* w=nullptr;bool has=false;
+        const uint32_t* r2=nullptr;const uint32_t* w2=nullptr;bool has2=false;
+        if (core>=DataflowBarrierWorkers || !Select(core)
+            || !fScope.ProveRoleRetirementRamSources(fIO,core,r,w,has)
+            || (has?(!r || !w):(r || w)) || !fGuard.ProveSelectedRoute(core)
+            || !fScope.ProveRoleRetirementRamSources(fIO,core,r2,w2,has2)
+            || r!=r2 || w!=w2 || has!=has2 || !fGuard.ProveSelectedRoute(core)) return false;
+        reader=r;writer=w;captured=has;return true;
+    }
+    bool FleetRamImageRetirementSafe() {
+        return fScope.ProveExclusiveRewrite(fIO) && fScope.ProveRoleFleetImageRetirementSafe(fIO)
+            && fScope.ProveRoleFleetImageRetirementSafe(fIO);
+    }
+    bool FleetRamImageRetirementRetrySafe() {
+        return FleetRamImageRetirementSafe() && fScope.ProveRoleFleetImageRetirementRetrySafe(fIO)
+            && fScope.ProveRoleFleetImageRetirementRetrySafe(fIO);
+    }
+    bool CoreRamImageRetirementSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        const uint32_t* r=nullptr;const uint32_t* w=nullptr;bool captured=false;
+        return reader && writer && FleetRamImageRetirementSafe()
+            && RetirementRamSnapshotSources(core,r,w,captured) && captured && r==reader && w==writer
+            && fScope.ProveRoleCoreImageRetirementSafe(fIO,core,reader,writer)
+            && fGuard.ProveSelectedRoute(core)
+            && fScope.ProveRoleCoreImageRetirementSafe(fIO,core,reader,writer);
+    }
+    bool CoreRamImageRetirementRetrySafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        return FleetRamImageRetirementRetrySafe() && CoreRamImageRetirementSafe(core,reader,writer)
+            && fScope.ProveRoleCoreImageRetirementRetrySafe(fIO,core,reader,writer);
+    }
     // These fixed handoff operations additionally require lifetime-spanning
     // ownership, firmware exclusion and write-drain proof from Scope. The
     // actual Haiku scope denies each proof; samples alone cannot supply it.

@@ -479,6 +479,12 @@ public:
         auto* scope=Scope();
         if (!scope || !OpenForRecovery(*scope)) return false;
         Adapter io(fContext.io,*scope,fViews);
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+        if (fOwner.CoreLocalRestoreMode()) {
+            if (fOwner.CoveredStateRestored()) return fOwner.VerifyAfterCoreLocalResidentRestore(io);
+            return fOwner.RestoreAfterCoreLocalFleetProof(io);
+        }
+#endif
         if (fOwner.CoveredStateRestored()) return fOwner.VerifyAfterResidentRestore(io);
         return fOwner.RestoreAll(io);
 #endif
@@ -491,6 +497,10 @@ public:
         auto* scope=Scope();
         if (!scope || !OpenForRecovery(*scope)) return false;
         Adapter io(fContext.io,*scope,fViews);
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+        if (fOwner.CoreLocalRestoreMode())
+            return fOwner.CoveredStateRestored() && fOwner.VerifyAfterCoreLocalResidentRestore(io);
+#endif
         return fOwner.CoveredStateRestored() && fOwner.VerifyAfterResidentRestore(io);
 #endif
     }

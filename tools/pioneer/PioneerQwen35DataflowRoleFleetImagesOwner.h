@@ -14,6 +14,7 @@ class DataflowRoleFleetImagesOwner {
     Phase fPhase=Empty;
     bool fCopyAwareMode=false;
     bool fCopyAwareVerified=false;
+    bool fCopyRetirementStarted=false;
     DataflowRoleFleetCodeOwner fCode;
     DataflowRoleFleetBootOwner fBoot;
     template<class IO> static bool AllHeld(IO& io) {
@@ -156,6 +157,28 @@ public:
             return false;
         fPhase=Restored;
         return true;
+    }
+    // The scope's fleet proof must remain true while boot and extra-L1
+    // images are restored, even after private-RAM copies are overwritten.
+    // A failure retains all host snapshots and requires a separate drain and
+    // route proof before retry. No physical scope currently grants this.
+    template<class IO> bool RestoreAfterFleetRamProof(IO& io) {
+        if (!fCopyAwareMode || (fPhase!=Staged && fPhase!=Faulted)
+            || !io.FleetRamImageRetirementSafe() || !AllHeld(io)) return false;
+        if (!fCopyRetirementStarted) {
+            if (fPhase!=Staged || !VerifyStagedAllWithCopies(io)) return false;
+        } else if (!io.FleetRamImageRetirementRetrySafe()) return false;
+        fCopyRetirementStarted=true;fCopyAwareVerified=false;fPhase=Faulted;
+        if (fBoot.RestorationRequired()) {
+            if (!fBoot.RestoreAll(io)) return false;
+        } else if (!fBoot.VerifyOriginalAll(io)) return false;
+        if (!io.FleetRamImageRetirementSafe() || !AllHeld(io)) return false;
+        if (fCode.RestorationRequired()) {
+            if (!fCode.RestoreAfterFleetRamProof(io)) return false;
+        } else if (!fCode.VerifyOriginalAll(io)) return false;
+        if (!fBoot.VerifyOriginalAll(io) || !fCode.VerifyOriginalAll(io)
+            || !io.FleetRamImageRetirementSafe() || !AllHeld(io)) return false;
+        fPhase=Restored;return true;
     }
 };
 }

@@ -27,6 +27,7 @@ class DataflowRoleFleetRecoveryOwner {
     bool fStackless=false;
     bool fCoreLocalRestoreMode=false;
     bool fCoreLocalReleaseLedger=false;
+    bool fCoreResetRestoreAttempted=false;
     bool fCoreRestoreStaged[DataflowBarrierWorkers]{};
     bool fCoreRestoreReleaseAttempted[DataflowBarrierWorkers]{};
     DataflowRoleRestoreHandoffOwner fCoreRestoreHandoff[DataflowBarrierWorkers];
@@ -60,6 +61,21 @@ class DataflowRoleFleetRecoveryOwner {
                     || writer!=fRam.OriginalWords(core,DataflowRoleWriter)
                     || !io.StacklessHeldCopySourceSafe(core,reader,writer)) return false;
             } else if (reader || writer) return false;
+        }
+        return true;
+    }
+    // Retained host RAM snapshots must match this exact owner even after L1
+    // copy windows have been overwritten during image retirement.
+    template<class IO> bool VerifyRetirementLedger(IO& io) {
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            const uint32_t* reader=nullptr;const uint32_t* writer=nullptr;bool captured=false;
+            if (!io.RetirementRamSnapshotSources(core,reader,writer,captured)
+                || captured!=fRam.StacklessCopiesCaptured(core)) return false;
+            if (captured) {
+                if (!fCoreRestoreHandoff[core].HandoffRestored()
+                    || reader!=fRam.OriginalWords(core,DataflowRoleReader)
+                    || writer!=fRam.OriginalWords(core,DataflowRoleWriter) || !reader || !writer) return false;
+            } else if (reader || writer || !fCoreRestoreHandoff[core].Untouched()) return false;
         }
         return true;
     }
@@ -366,6 +382,40 @@ public:
             || !fRam.VerifyOriginalAll(io) || !AllSafe(io))
             return false;
         fPhase=Restored; return true;
+    }
+    // Separately gated core-local cleanup. IO must prove restored RAM and
+    // unmodified uncaptured cores across all image writes, including after
+    // the copy windows are overwritten. Incomplete cleanup retains this
+    // owner. No host private-RAM access or physical proof is supplied here.
+    template<class IO> bool RestoreAfterCoreLocalFleetProof(IO& io) {
+        if (!fCoreLocalRestoreMode || !fCoreLocalReleaseLedger || !fStackless
+            || (fPhase!=ReleaseAttempted && fPhase!=Faulted)) return false;
+        fPhase=Faulted;
+        if (!io.FleetRamImageRetirementSafe() || !AllHeldAndRouted(io)
+            || (!fCoreResetRestoreAttempted && !VerifyResetDisable(io,true))
+            || (fCoreResetRestoreAttempted && !io.FleetRamImageRetirementRetrySafe())
+            || !VerifyRetirementLedger(io) || !fRam.VerifyStacklessRestoredByCore(io)) return false;
+        if (fImages.RestorationRequired()) {
+            if (!fImages.RestoreAfterFleetRamProof(io)) return false;
+        } else if (!fImages.VerifyOriginalAll(io)) return false;
+        if (!io.FleetRamImageRetirementSafe() || !VerifyRetirementLedger(io)
+            || !fRam.VerifyStacklessRestoredByCore(io) || !fImages.VerifyOriginalAll(io)) return false;
+        fCoreResetRestoreAttempted=true;
+        if (!RestoreResetDisable(io) || !io.FleetRamImageRetirementSafe()
+            || !VerifyRetirementLedger(io) || !fRam.VerifyStacklessRestoredByCore(io)
+            || !fImages.VerifyOriginalAll(io) || !AllHeldAndRouted(io)) return false;
+        fPhase=Restored;return true;
+    }
+    // The resident owner may touch overlapping L1 after the role cleanup.
+    // Reaudit without falling back to a host private-RAM read.
+    template<class IO> bool VerifyAfterCoreLocalResidentRestore(IO& io) {
+        if (!fCoreLocalRestoreMode || !fCoreLocalReleaseLedger || !fStackless || fPhase!=Restored) return false;
+        fPhase=Faulted;
+        if (!io.FleetRamImageRetirementSafe() || !AllHeldAndRouted(io)
+            || !VerifyRetirementLedger(io) || !fRam.VerifyStacklessRestoredByCore(io)
+            || !fImages.VerifyOriginalAll(io) || !VerifyResetDisable(io,false)
+            || !AllHeldAndRouted(io)) return false;
+        fPhase=Restored;return true;
     }
     // The resident TRISC owner restores its saved L1 after this owner has
     // restored the B/NC state. Its low-L1 snapshot overlaps the role shims,

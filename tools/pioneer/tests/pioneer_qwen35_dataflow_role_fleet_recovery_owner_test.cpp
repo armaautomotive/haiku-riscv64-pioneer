@@ -17,6 +17,8 @@ struct RecoveryIO {
     unsigned releaseReadyCalls=0,failReleaseReadyCall=0;
     bool copyProof=true,copyCaptured[DataflowBarrierWorkers]{};
     bool wrongCopyPointer=false,corruptCopyOnShimWrite=false;
+    bool retirementProof=false,retirementRetry=false;
+    int failRetirementCodeCore=-1;
     const uint32_t* retainedRam=nullptr;
     unsigned privateRamReads=0;
     unsigned copyCalls=0,failCopyCall=UINT32_MAX;
@@ -69,6 +71,17 @@ struct RecoveryIO {
         const uint32_t* expectedReader=nullptr;const uint32_t* expectedWriter=nullptr;bool captured=false;
         return StacklessHeldCopySources(core,expectedReader,expectedWriter,captured) && captured
             && reader==expectedReader && writer==expectedWriter;
+    }
+    bool RetirementRamSnapshotSources(unsigned core,const uint32_t*& reader,const uint32_t*& writer,bool& captured) {
+        return StacklessHeldCopySources(core,reader,writer,captured);
+    }
+    bool FleetRamImageRetirementSafe() const { return held && defaultRoute && retirementProof; }
+    bool FleetRamImageRetirementRetrySafe() const { return FleetRamImageRetirementSafe() && retirementRetry; }
+    bool CoreRamImageRetirementSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        return FleetRamImageRetirementSafe() && StacklessHeldCopySourceSafe(core,reader,writer);
+    }
+    bool CoreRamImageRetirementRetrySafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        return retirementRetry && CoreRamImageRetirementSafe(core,reader,writer);
     }
     bool StacklessCoreRestoreReleaseReady(unsigned core,const uint32_t* reader,const uint32_t* writer) {
         return ++releaseReadyCalls!=failReleaseReadyCall && restoreReleaseReady && !staleRestoreReceipt
@@ -131,7 +144,9 @@ struct RecoveryIO {
     bool Write(unsigned core,unsigned address,const uint32_t* in,unsigned bytes) {
         assert(AllRolesHeld(core) && in && DataflowRoleExtraL1Range(address,bytes));
         const unsigned at=core*CodePerCore+(address-DataflowRoleExtraL1Address)/4;
-        ++writes; for (unsigned i=0;i<bytes/4;i++) code[at+i]=in[i];
+        ++writes;
+        if (int(core)==failRetirementCodeCore) { code[at]=in[0];failRetirementCodeCore=-1;return false; }
+        for (unsigned i=0;i<bytes/4;i++) code[at+i]=in[i];
         return true;
     }
     bool ReadBoot(unsigned core,unsigned address,uint32_t& value) {
@@ -201,6 +216,24 @@ int main()
         assert(io.code==code && io.boots==boots && io.shims==shims && io.resetDisable==disable);
     }
     {
+        // An uncertain first release with no captured core still needs
+        // uncaptured-fleet protection, but can complete without host RAM IO.
+        RecoveryIO io;const auto code=io.code,boots=io.boots,shims=io.shims,disable=io.resetDisable;
+        DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.SelectCoreLocalRestoreMode()
+            && owner.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
+                ramSnapshot.data(),ramSnapshot.size(),io)
+            && owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io)
+            && owner.PreparePossibleRelease(io) && owner.BeginReleaseAttempt(io));
+        io.retainedRam=ramSnapshot.data();io.retirementProof=true;io.uncapturedProtected=false;
+        const unsigned writes=io.writes;
+        assert(!owner.RestoreAfterCoreLocalFleetProof(io) && io.writes==writes);
+        io.uncapturedProtected=true;
+        assert(owner.RestoreAfterCoreLocalFleetProof(io) && owner.CoveredStateRestored()
+            && !io.privateRamReads && io.code==code && io.boots==boots && io.shims==shims
+            && io.resetDisable==disable);
+    }
+    {
         // Restore shim staging is bound to the fleet ledger's actual retained
         // snapshot pointers, with complete held-fleet and reset audits.
         RecoveryIO io; DataflowRoleFleetRecoveryOwner owner;
@@ -257,8 +290,9 @@ int main()
         assert(owner.RestorationRequired() && !owner.CoveredStateRestored()
             && !owner.RestoreAll(io) && !io.privateRamReads);
     }
-    {
-        RecoveryIO io; const auto original=io.ram; DataflowRoleFleetRecoveryOwner owner;
+    for (unsigned fault=0;fault<2;fault++) {
+        RecoveryIO io; const auto original=io.ram,originalCode=io.code,originalBoots=io.boots,
+            originalShims=io.shims,originalDisable=io.resetDisable; DataflowRoleFleetRecoveryOwner owner;
         assert(owner.SelectCoreLocalRestoreMode() && owner.CoreLocalRestoreMode()
             && !owner.SelectCoreLocalRestoreMode());
         assert(!owner.CaptureAll(codeSnapshot.data(),codeSnapshot.size(),ramSnapshot.data(),ramSnapshot.size(),io));
@@ -294,9 +328,37 @@ int main()
         assert(owner.MarkCoreRestoredByCore(0,io) && !owner.VerifyCoreLocalRestores(io));
         io.ram[RecoveryIO::RamPerCore]=original[RecoveryIO::RamPerCore];
         assert(owner.MarkCoreRestoredByCore(1,io) && owner.VerifyCoreLocalRestores(io));
+        io.retirementProof=true;
+        assert(!owner.RestoreAfterCoreLocalFleetProof(io) && io.writes==writes); // handoffs retained
+        io.retirementProof=false;
         assert(owner.RestoreCoreLocalHandoff(0,io) && owner.RestoreCoreLocalHandoff(1,io));
         assert(owner.RestorationRequired() && !owner.CoveredStateRestored()
             && !owner.RestoreAll(io) && io.writes==writes+6 && io.privateRamReads==reads);
+        const unsigned beforeRetirement=io.writes;
+        assert(!owner.RestoreAfterCoreLocalFleetProof(io) && io.writes==beforeRetirement);
+        io.retirementProof=true;io.wrongCopyPointer=true;
+        assert(!owner.RestoreAfterCoreLocalFleetProof(io) && io.writes==beforeRetirement);
+        io.wrongCopyPointer=false;
+        if (fault==0) io.failRetirementCodeCore=0;
+        else io.failDisableCore=37;
+        assert(!owner.RestoreAfterCoreLocalFleetProof(io) && owner.RestorationRequired());
+        const unsigned partial=io.writes;
+        assert(!owner.RestoreAfterCoreLocalFleetProof(io) && io.writes==partial);
+        io.retirementRetry=true;
+        assert(owner.RestoreAfterCoreLocalFleetProof(io) && owner.CoveredStateRestored()
+            && owner.VerifyAfterCoreLocalResidentRestore(io) && io.privateRamReads==reads);
+        assert(io.ram==original && io.code==originalCode && io.boots==originalBoots
+            && io.shims==originalShims && io.resetDisable==originalDisable);
+        if (fault==0) {
+            io.code[0]^=1; // a later resident restore touches an earlier image
+            assert(!owner.VerifyAfterCoreLocalResidentRestore(io) && owner.RestorationRequired());
+            const unsigned beforeRetry=io.writes;io.retirementRetry=false;
+            assert(!owner.RestoreAfterCoreLocalFleetProof(io) && io.writes==beforeRetry);
+            io.retirementRetry=true;
+            assert(owner.RestoreAfterCoreLocalFleetProof(io)
+                && owner.VerifyAfterCoreLocalResidentRestore(io) && io.code==originalCode
+                && io.privateRamReads==reads);
+        }
     }
     {
         RecoveryIO io; DataflowRoleFleetRecoveryOwner owner;

@@ -26,6 +26,9 @@ class DataflowRoleCodeOwner {
     unsigned fReaderWords=0,fWriterWords=0;
     bool fCodeVerified=false;
     bool fCopyAwareMode=false;
+    bool fCopyRetirementStarted=false;
+    const uint32_t* fRetirementReader=nullptr;
+    const uint32_t* fRetirementWriter=nullptr;
     unsigned fCore=DataflowBarrierWorkers;
 
     template<class IO> bool Verify(IO& io,unsigned address,
@@ -149,6 +152,39 @@ public:
             fPhase=Faulted; return false;
         }
         return true;
+    }
+
+    // Retire a held core's L1 copies only after IO independently proves its
+    // exact private-RAM snapshots were restored by the owning cores and will
+    // stay unchanged. The proof must survive overwriting the L1 copies and
+    // cover all competing writers and the full fleet, including misroutes.
+    // Failed writes retain the snapshot; retry needs a separate proof that
+    // every previous write drained and that repeating saved L1 data is safe.
+    // No current physical scope provides either proof.
+    template<class IO> bool RestoreAfterCoreRamProof(const uint32_t* readerCopy,
+        const uint32_t* writerCopy,IO& io) {
+        if (!fCopyAwareMode || !fSnapshot || !readerCopy || !writerCopy
+            || (fPhase!=Touched && fPhase!=Faulted)) return false;
+        if (!io.CoreRamImageRetirementSafe(fCore,readerCopy,writerCopy)) return false;
+        if (!fCopyRetirementStarted) {
+            if (fPhase!=Touched || !VerifyStagedWithCopies(readerCopy,writerCopy,io)) return false;
+            fRetirementReader=readerCopy;fRetirementWriter=writerCopy;
+        } else if (readerCopy!=fRetirementReader || writerCopy!=fRetirementWriter
+            || !io.CoreRamImageRetirementRetrySafe(fCore,readerCopy,writerCopy)) return false;
+        fCopyRetirementStarted=true;fCodeVerified=false;fPhase=Faulted;
+        for (unsigned offset=0;offset<SnapshotWords;offset+=ChunkWords) {
+            const unsigned count=SnapshotWords-offset<ChunkWords?SnapshotWords-offset:ChunkWords;
+            const unsigned address=DataflowRoleExtraL1Address+offset*4;
+            if (!io.CoreRamImageRetirementSafe(fCore,readerCopy,writerCopy) || !io.AllRolesHeld(fCore)
+                || !io.Write(fCore,address,fSnapshot+offset,count*4)
+                || !Verify(io,address,fSnapshot+offset,count)
+                || !io.CoreRamImageRetirementSafe(fCore,readerCopy,writerCopy)) return false;
+        }
+        if (!io.CoreRamImageRetirementSafe(fCore,readerCopy,writerCopy)
+            || !Verify(io,DataflowRoleExtraL1Address,fSnapshot,SnapshotWords)
+            || !io.AllRolesHeld(fCore)
+            || !io.CoreRamImageRetirementSafe(fCore,readerCopy,writerCopy)) return false;
+        fPhase=Restored;return true;
     }
 
     // A fleet owner calls this after every core has restored its snapshot,

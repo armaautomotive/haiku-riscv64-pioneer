@@ -577,6 +577,13 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
                 && !scope.ProveRoleRestoreCompletedAndHeld(context->io,0)
                 && !scope.ProveRoleRestoreHandoffRetrySafe(context->io,0)
                 && !scope.ProveRoleRestoreReleaseReady(context->io,0,nullptr,nullptr));
+            heldReader=heldWriter=reinterpret_cast<const uint32_t*>(1);heldCaptured=true;
+            assert(!scope.ProveRoleRetirementRamSources(context->io,0,heldReader,heldWriter,heldCaptured)
+                && !heldReader && !heldWriter && !heldCaptured
+                && !scope.ProveRoleFleetImageRetirementSafe(context->io)
+                && !scope.ProveRoleFleetImageRetirementRetrySafe(context->io)
+                && !scope.ProveRoleCoreImageRetirementSafe(context->io,0,nullptr,nullptr)
+                && !scope.ProveRoleCoreImageRetirementRetrySafe(context->io,0,nullptr,nullptr));
             const unsigned savedCore=context->io.runtimeCore;
             const bool savedFirmware=context->io.firmwareMatches;
             context->io.runtimeCore=7; context->io.firmwareMatches=true;

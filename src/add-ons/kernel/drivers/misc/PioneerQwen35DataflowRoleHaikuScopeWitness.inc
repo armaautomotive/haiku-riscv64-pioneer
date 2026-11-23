@@ -240,6 +240,14 @@ public:
     bool ProveRoleRestoreCompletedAndHeld(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleRestoreHandoffRetrySafe(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleRestoreReleaseReady(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
+    bool ProveRoleRetirementRamSources(PioneerSessionIO&,unsigned,const uint32_t*& reader,
+        const uint32_t*& writer,bool& captured) const {
+        reader=writer=nullptr;captured=false;return false;
+    }
+    bool ProveRoleFleetImageRetirementSafe(PioneerSessionIO&) const { return false; }
+    bool ProveRoleFleetImageRetirementRetrySafe(PioneerSessionIO&) const { return false; }
+    bool ProveRoleCoreImageRetirementSafe(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
+    bool ProveRoleCoreImageRetirementRetrySafe(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
     // Must fence this tile's particular attempted stack-release write and
     // exclude all later writes to the handoff for the recovery transaction.
     bool ProveRoleStackReleaseWriteDrained(PioneerSessionIO&,unsigned) const { return false; }

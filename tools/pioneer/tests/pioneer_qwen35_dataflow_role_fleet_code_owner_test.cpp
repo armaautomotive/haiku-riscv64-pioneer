@@ -7,12 +7,53 @@ using namespace PioneerQwen35;
 struct FleetIO {
     static constexpr unsigned PerCore=DataflowRoleCodeOwner::RequiredWords();
     std::vector<uint32_t> memory;
+    std::vector<uint32_t> retainedCopies;
+    bool captured[DataflowBarrierWorkers]{};
+    bool copyProof=false,retirementProof=false,retirementRetry=false;
     bool held=true,corruptEnabled=false;
     int failCore=-1,corruptFrom=-1,corruptTarget=-1;
     unsigned writes=0;
     mutable bool failHeldOnStagedCore=false;
-    FleetIO():memory(DataflowRoleFleetCodeOwner::RequiredWords()) {
+    FleetIO():memory(DataflowRoleFleetCodeOwner::RequiredWords()),
+        retainedCopies(DataflowBarrierWorkers*2*(DataflowRoleRamCopyBytes/4)) {
         for (unsigned i=0;i<memory.size();i++) memory[i]=i^0x5a33c5a3U;
+    }
+    void InstallCopies(unsigned core) {
+        const unsigned words=DataflowRoleRamCopyBytes/4,base=core*2*words;
+        const unsigned readerAt=core*PerCore+(DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address)/4;
+        const unsigned writerAt=core*PerCore+(DataflowRoleWriterRamCopy-DataflowRoleExtraL1Address)/4;
+        for (unsigned i=0;i<words;i++) {
+            retainedCopies[base+i]=core^i^0x11223344U;
+            retainedCopies[base+words+i]=core^i^0x55667788U;
+            memory[readerAt+i]=retainedCopies[base+i];memory[writerAt+i]=retainedCopies[base+words+i];
+        }
+        captured[core]=true;
+    }
+    bool RetirementRamSnapshotSources(unsigned core,const uint32_t*& reader,const uint32_t*& writer,bool& has) {
+        if (!held || core>=DataflowBarrierWorkers) return false;
+        has=captured[core];reader=writer=nullptr;
+        if (has) {
+            reader=retainedCopies.data()+core*2*(DataflowRoleRamCopyBytes/4);
+            writer=reader+DataflowRoleRamCopyBytes/4;
+        }
+        return true;
+    }
+    bool StacklessHeldCopySources(unsigned core,const uint32_t*& reader,const uint32_t*& writer,bool& has) {
+        return copyProof && RetirementRamSnapshotSources(core,reader,writer,has);
+    }
+    bool StacklessHeldCopySourceSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        const uint32_t* r=nullptr;const uint32_t* w=nullptr;bool has=false;
+        return StacklessHeldCopySources(core,r,w,has) && has && reader==r && writer==w;
+    }
+    bool FleetRamImageRetirementSafe() { return held && retirementProof; }
+    bool FleetRamImageRetirementRetrySafe() { return held && retirementProof && retirementRetry; }
+    bool CoreRamImageRetirementSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        const uint32_t* r=nullptr;const uint32_t* w=nullptr;bool has=false;
+        return FleetRamImageRetirementSafe() && RetirementRamSnapshotSources(core,r,w,has)
+            && has && reader==r && writer==w;
+    }
+    bool CoreRamImageRetirementRetrySafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        return retirementRetry && CoreRamImageRetirementSafe(core,reader,writer);
     }
     bool AllRolesHeld(unsigned core) const {
         if (failHeldOnStagedCore && core==3 && writes) {
@@ -44,6 +85,22 @@ int main()
 {
     std::vector<uint32_t> snapshots(DataflowRoleFleetCodeOwner::RequiredWords());
     std::vector<uint32_t> reader(100,0x12345678U),writer(70,0xabcdef01U);
+    {
+        FleetIO io;const auto original=io.memory;DataflowRoleFleetCodeOwner fleet;
+        assert(fleet.CaptureAll(snapshots.data(),snapshots.size(),io)
+            && fleet.StageAll(reader.data(),reader.size(),writer.data(),writer.size(),io)
+            && fleet.BeginCopyAwareOwnership());
+        io.InstallCopies(2);io.InstallCopies(83);io.copyProof=true;
+        assert(fleet.VerifyStagedAllWithCopies(io));
+        const unsigned before=io.writes;
+        assert(!fleet.RestoreAfterFleetRamProof(io) && io.writes==before);
+        io.retirementProof=true;io.failCore=2;
+        assert(!fleet.RestoreAfterFleetRamProof(io) && fleet.RestorationRequired());
+        const unsigned partial=io.writes;
+        assert(!fleet.RestoreAll(io) && !fleet.RestoreAfterFleetRamProof(io) && io.writes==partial);
+        io.retirementRetry=true;
+        assert(fleet.RestoreAfterFleetRamProof(io) && fleet.RegionRestored() && io.memory==original);
+    }
     {
         FleetIO io; const auto original=io.memory; DataflowRoleFleetCodeOwner fleet;
         assert(fleet.CaptureAll(snapshots.data(),snapshots.size(),io));

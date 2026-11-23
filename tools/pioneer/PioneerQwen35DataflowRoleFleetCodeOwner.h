@@ -14,11 +14,28 @@ class DataflowRoleFleetCodeOwner {
     unsigned fStagedCore=DataflowBarrierWorkers;
     bool fCopyAwareMode=false;
     bool fCopyAwareVerified=false;
+    bool fCopyRetirementStarted=false;
+    const uint32_t* fRetirementReader[DataflowBarrierWorkers]{};
+    const uint32_t* fRetirementWriter[DataflowBarrierWorkers]{};
+    bool fRetirementCaptured[DataflowBarrierWorkers]{};
     DataflowRoleCodeOwner fCore[DataflowBarrierWorkers];
 
     template<class IO> static bool AllHeld(IO& io) {
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)
             if (!io.AllRolesHeld(core)) return false;
+        return true;
+    }
+    template<class IO> bool CheckRetirementSources(IO& io,bool capture) {
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            const uint32_t* reader=nullptr;const uint32_t* writer=nullptr;bool captured=false;
+            if (!io.RetirementRamSnapshotSources(core,reader,writer,captured)
+                || (captured?(!reader || !writer):(reader || writer))
+                || captured!=fCore[core].CopyAwareOwnership()) return false;
+            if (capture) {
+                fRetirementReader[core]=reader;fRetirementWriter[core]=writer;fRetirementCaptured[core]=captured;
+            } else if (reader!=fRetirementReader[core] || writer!=fRetirementWriter[core]
+                || captured!=fRetirementCaptured[core]) return false;
+        }
         return true;
     }
 public:
@@ -144,6 +161,34 @@ public:
         if (!AllHeld(io)) return false;
         fPhase=Restored;
         return true;
+    }
+    // IO must independently prove that all captured private RAM has already
+    // been restored, every uncaptured core remains protected, retained host
+    // snapshots stay immutable, and these L1 writes cannot target private RAM
+    // or another tile. The proof spans the entire operation, including the
+    // destruction of the L1 copies. A retry additionally requires drainage of
+    // all earlier uncertain writes. No live scope currently grants this.
+    template<class IO> bool RestoreAfterFleetRamProof(IO& io) {
+        if (!fCopyAwareMode || (fPhase!=Staged && fPhase!=Faulted)
+            || !io.FleetRamImageRetirementSafe() || !AllHeld(io)) return false;
+        if (!fCopyRetirementStarted) {
+            if (fPhase!=Staged || !VerifyStagedAllWithCopies(io) || !CheckRetirementSources(io,true)) return false;
+        } else if (!io.FleetRamImageRetirementRetrySafe() || !CheckRetirementSources(io,false)) return false;
+        fCopyRetirementStarted=true;fCopyAwareVerified=false;fPhase=Faulted;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            if (!io.FleetRamImageRetirementSafe() || !AllHeld(io)) return false;
+            if (fCore[core].NeedsRestore()) {
+                if (fRetirementCaptured[core]) {
+                    if (!fCore[core].RestoreAfterCoreRamProof(fRetirementReader[core],fRetirementWriter[core],io))
+                        return false;
+                } else if (!fCore[core].Restore(io)) return false;
+            } else if (!fCore[core].VerifyOriginal(io)) return false;
+            if (!io.FleetRamImageRetirementSafe()) return false;
+        }
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++)
+            if (!fCore[core].VerifyOriginal(io)) return false;
+        if (!io.FleetRamImageRetirementSafe() || !CheckRetirementSources(io,false) || !AllHeld(io)) return false;
+        fPhase=Restored;return true;
     }
 };
 }

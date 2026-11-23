@@ -10,6 +10,8 @@ struct ImagesIO {
     std::vector<uint32_t> retainedCopies;
     bool copyCaptured[DataflowBarrierWorkers]{};
     bool copyProof=true,corruptCapturedOnShimWrite=false;
+    bool retirementProof=false,retirementRetry=false;
+    int failCodeCore=-1;
     bool held=true,defaultRoute=true,corruptCodeOnBoot=false,corruptBootOnCode=false;
     bool corruptShimOnWrite=false,corruptCodeOnShimWrite=false;
     unsigned writes=0;
@@ -48,6 +50,19 @@ struct ImagesIO {
         return StacklessHeldCopySources(core,expectedReader,expectedWriter,captured) && captured
             && reader==expectedReader && writer==expectedWriter;
     }
+    bool RetirementRamSnapshotSources(unsigned core,const uint32_t*& reader,const uint32_t*& writer,bool& captured) {
+        return StacklessHeldCopySources(core,reader,writer,captured);
+    }
+    bool FleetRamImageRetirementSafe() { return held && defaultRoute && retirementProof; }
+    bool FleetRamImageRetirementRetrySafe() { return FleetRamImageRetirementSafe() && retirementRetry; }
+    bool CoreRamImageRetirementSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        const uint32_t* r=nullptr;const uint32_t* w=nullptr;bool captured=false;
+        return FleetRamImageRetirementSafe() && RetirementRamSnapshotSources(core,r,w,captured)
+            && captured && reader==r && writer==w;
+    }
+    bool CoreRamImageRetirementRetrySafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        return retirementRetry && CoreRamImageRetirementSafe(core,reader,writer);
+    }
     bool Read(unsigned core,unsigned address,uint32_t* out,unsigned bytes) {
         assert(AllRolesHeld(core) && out && DataflowRoleExtraL1Range(address,bytes));
         const unsigned at=core*PerCore+(address-DataflowRoleExtraL1Address)/4;
@@ -57,7 +72,9 @@ struct ImagesIO {
     bool Write(unsigned core,unsigned address,const uint32_t* in,unsigned bytes) {
         assert(AllRolesHeld(core) && in && DataflowRoleExtraL1Range(address,bytes));
         const unsigned at=core*PerCore+(address-DataflowRoleExtraL1Address)/4;
-        ++writes; for (unsigned i=0;i<bytes/4;i++) code[at+i]=in[i];
+        ++writes;
+        if (int(core)==failCodeCore) { code[at]=in[0];failCodeCore=-1;return false; }
+        for (unsigned i=0;i<bytes/4;i++) code[at+i]=in[i];
         if (corruptBootOnCode && core==3) { boots[0]^=1; corruptBootOnCode=false; }
         return true;
     }
@@ -101,6 +118,24 @@ int main()
 {
     std::vector<uint32_t> storage(DataflowRoleFleetImagesOwner::RequiredWords());
     const uint32_t codeA[]={1,2,3},codeB[]={4,5},shimA[]={6,7},shimB[]={8,9};
+    {
+        ImagesIO io;const auto code=io.code,boots=io.boots,shims=io.shims;
+        DataflowRoleFleetImagesOwner owner;
+        assert(owner.CaptureAll(storage.data(),storage.size(),io)
+            && owner.StageAll(codeA,3,codeB,2,shimA,2,shimB,2,io)
+            && owner.BeginCopyAwareOwnership());
+        io.InstallCapturedCopies(3);io.InstallCapturedCopies(119);
+        assert(owner.VerifyStagedAllWithCopies(io));
+        const unsigned before=io.writes;
+        assert(!owner.RestoreAfterFleetRamProof(io) && io.writes==before);
+        io.retirementProof=true;io.failCodeCore=3;
+        assert(!owner.RestoreAfterFleetRamProof(io) && owner.RestorationRequired());
+        const unsigned partial=io.writes;
+        assert(!owner.RestoreAll(io) && !owner.RestoreAfterFleetRamProof(io) && io.writes==partial);
+        io.retirementRetry=true;
+        assert(owner.RestoreAfterFleetRamProof(io) && owner.ImagesRestored()
+            && io.code==code && io.boots==boots && io.shims==shims);
+    }
     {
         ImagesIO io; const auto code=io.code,boots=io.boots,shims=io.shims;
         DataflowRoleFleetImagesOwner owner;

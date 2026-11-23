@@ -19,6 +19,7 @@ struct FleetPciTestScope {
     bool heldCopyProof=false,heldCopyCaptured=false,heldCopyDrift=false;
     bool coreRestoreProof=false;
     bool restoreHeld=false,restoreCompletion=false,restoreCompletedHeld=false,restoreRetry=false,restoreRelease=false;
+    bool retirementProof=false,retirementRetry=false;
     const uint32_t* heldReader=nullptr;const uint32_t* heldWriter=nullptr;
     mutable unsigned heldCopyChecks=0;
     mutable unsigned stackDrainChecks=0;
@@ -74,6 +75,19 @@ struct FleetPciTestScope {
     bool ProveRoleRestoreHandoffRetrySafe(PioneerSessionIO&,unsigned) const { return restoreRetry; }
     bool ProveRoleRestoreReleaseReady(PioneerSessionIO&,unsigned,const uint32_t* reader,const uint32_t* writer) const {
         return restoreRelease && reader==heldReader && writer==heldWriter;
+    }
+    bool ProveRoleRetirementRamSources(PioneerSessionIO&,unsigned,const uint32_t*& reader,
+        const uint32_t*& writer,bool& captured) const {
+        if (!retirementProof) return false;
+        reader=heldReader;writer=heldWriter;captured=heldCopyCaptured;return true;
+    }
+    bool ProveRoleFleetImageRetirementSafe(PioneerSessionIO&) const { return retirementProof; }
+    bool ProveRoleFleetImageRetirementRetrySafe(PioneerSessionIO&) const { return retirementRetry; }
+    bool ProveRoleCoreImageRetirementSafe(PioneerSessionIO&,unsigned,const uint32_t* reader,const uint32_t* writer) const {
+        return retirementProof && reader==heldReader && writer==heldWriter;
+    }
+    bool ProveRoleCoreImageRetirementRetrySafe(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const {
+        return retirementRetry;
     }
     bool ProveRoleStackReleaseWriteDrained(PioneerSessionIO&,unsigned) const {
         return stackReleaseDrained && stackDrainChecks++!=stackDrainFailAt;
@@ -178,6 +192,18 @@ int main()
             && captured && reader==readerWords && writer==writerWords);
         assert(io.StacklessHeldCopySourceSafe(7,readerWords,writerWords));
         assert(!io.StacklessHeldCopySourceSafe(7,writerWords,readerWords));
+        const uint32_t* retiredReader=readerWords;const uint32_t* retiredWriter=writerWords;bool retiredCaptured=true;
+        assert(!io.RetirementRamSnapshotSources(7,retiredReader,retiredWriter,retiredCaptured)
+            && !retiredReader && !retiredWriter && !retiredCaptured && !io.FleetRamImageRetirementSafe());
+        scope.retirementProof=true;
+        assert(io.RetirementRamSnapshotSources(7,retiredReader,retiredWriter,retiredCaptured)
+            && retiredCaptured && retiredReader==readerWords && retiredWriter==writerWords
+            && io.CoreRamImageRetirementSafe(7,readerWords,writerWords)
+            && !io.CoreRamImageRetirementSafe(7,writerWords,readerWords)
+            && !io.CoreRamImageRetirementRetrySafe(7,readerWords,writerWords));
+        scope.retirementRetry=true;
+        assert(io.CoreRamImageRetirementRetrySafe(7,readerWords,writerWords));
+        scope.retirementProof=scope.retirementRetry=false;
         assert(!io.StacklessCoreRestoreReleaseReady(7,readerWords,writerWords));
         DataflowRoleSnapshotHandoff restoreHandoff{9,9,9};
         const unsigned initialWrites=context.io.restoreReceiptWrites;
