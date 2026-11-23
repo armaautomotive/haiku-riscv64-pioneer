@@ -34,7 +34,10 @@ int main()
 	assert(sGuard.info.flags==B_KEEP_LOADED && sGuard.info.std_ops(B_MODULE_INIT)==B_OK);
 	assert(sRecoveryGuard.info.flags==B_KEEP_LOADED
 		&& sRecoveryGuard.info.std_ops(B_MODULE_INIT)==B_OK);
-	assert(modules[0]==&sGuard.info && modules[1]==&sRecoveryGuard.info && modules[2]==NULL);
+	assert(sRecoveryGuardV2.info.flags==B_KEEP_LOADED
+		&& sRecoveryGuardV2.info.std_ops(B_MODULE_INIT)==B_OK);
+	assert(modules[0]==&sGuard.info && modules[1]==&sRecoveryGuard.info
+		&& modules[2]==&sRecoveryGuardV2.info && modules[3]==NULL);
 	// Haiku's VFS resolves the first regular file in the module name. Both
 	// exports must resolve to the same installed reload-guard image; otherwise
 	// get_module(recovery) cannot find the shared pinned state.
@@ -43,6 +46,8 @@ int main()
 		&& sGuard.info.name[strlen(imagePath)]=='/');
 	assert(strncmp(sRecoveryGuard.info.name,imagePath,strlen(imagePath))==0
 		&& sRecoveryGuard.info.name[strlen(imagePath)]=='/');
+	assert(strncmp(sRecoveryGuardV2.info.name,imagePath,strlen(imagePath))==0
+		&& sRecoveryGuardV2.info.name[strlen(imagePath)]=='/');
 	sReloadGuard=&sGuard; assert(sReloadGuard->attach(&sReloadGeneration)==B_OK && sReloadGeneration==1);
 	uint64 duplicate=99; assert(sGuard.attach(&duplicate)==B_DEV_NOT_READY && !duplicate);
 	PioneerProbeCookie cookie,other; sOpenCookies=1;
@@ -92,14 +97,18 @@ int main()
 	{
 		uint64 ticket=0,newGeneration=0;
 		assert(sRecoveryGuard.begin(sReloadGeneration,&ticket)==B_OK && ticket);
+		assert(sRecoveryGuardV2.validate(ticket)==B_OK
+			&& sRecoveryGuardV2.validate(ticket+1)==B_DEV_NOT_READY
+			&& sRecoveryGuardV2.validate(0)==B_BAD_VALUE);
 		PioneerDriverRecoveryProof proof={};
 		assert(sRecoveryGuard.complete(ticket,&proof,&newGeneration)==B_DEV_NOT_READY
 			&& !newGeneration && Cold());
 		assert(sRecoveryGuard.abort(ticket)==B_OK && Cold());
+		assert(sRecoveryGuardV2.validate(ticket)==B_DEV_NOT_READY);
 		assert(sRecoveryGuard.complete(ticket,&proof,&newGeneration)==B_DEV_NOT_READY);
 		assert(sRecoveryGuard.begin(sReloadGeneration,&ticket)==B_OK && ticket);
 		proof.flags=PIONEER_RECOVERY_PROOF_REQUIRED;
-		proof.core_count=120; proof.reset_generation=1; proof.firmware_generation=1;
+		proof.core_count=120; proof.reset_generation=ticket; proof.firmware_generation=ticket;
 		PioneerDriverRecoveryProof incomplete=proof;
 		incomplete.core_count=119;
 		assert(sRecoveryGuard.complete(ticket,&incomplete,&newGeneration)==B_DEV_NOT_READY
@@ -110,9 +119,16 @@ int main()
 		incomplete=proof; incomplete.retained_owners=1;
 		assert(sRecoveryGuard.complete(ticket,&incomplete,&newGeneration)==B_DEV_NOT_READY
 			&& !newGeneration && Cold());
+		incomplete=proof; incomplete.reset_generation=ticket+1;
+		assert(sRecoveryGuard.complete(ticket,&incomplete,&newGeneration)==B_DEV_NOT_READY
+			&& !newGeneration && Cold());
+		incomplete=proof; incomplete.firmware_generation=ticket+1;
+		assert(sRecoveryGuard.complete(ticket,&incomplete,&newGeneration)==B_DEV_NOT_READY
+			&& !newGeneration && Cold());
 		const uint64 before=sReloadGeneration;
 		assert(sRecoveryGuard.complete(ticket,&proof,&newGeneration)==B_OK
 			&& newGeneration==before+1 && !Cold());
+		assert(sRecoveryGuardV2.validate(ticket)==B_DEV_NOT_READY);
 		assert(sRecoveryGuard.abort(ticket)==B_BAD_VALUE);
 		sReloadGeneration=newGeneration;
 		sColdRecoveryRequired.ClearAfterVerifiedRecovery();
@@ -125,8 +141,9 @@ int main()
 		uint64 ticket=0,newGeneration=0;
 		assert(sRecoveryGuard.begin(sReloadGeneration,&ticket)==B_OK && ticket);
 		PioneerDriverRecoveryProof proof={}; proof.flags=PIONEER_RECOVERY_PROOF_REQUIRED;
-		proof.core_count=120; proof.reset_generation=2; proof.firmware_generation=2;
+		proof.core_count=120; proof.reset_generation=ticket; proof.firmware_generation=ticket;
 		sGuard.fault(sReloadGeneration);
+		assert(sRecoveryGuardV2.validate(ticket)==B_DEV_NOT_READY);
 		assert(sRecoveryGuard.complete(ticket,&proof,&newGeneration)==B_DEV_NOT_READY
 			&& !newGeneration && Cold());
 		assert(sRecoveryGuard.abort(ticket)==B_OK && Cold());
@@ -137,7 +154,7 @@ int main()
 		uint64 ticket=0,newGeneration=0;
 		assert(sRecoveryGuard.begin(sReloadGeneration,&ticket)==B_OK);
 		PioneerDriverRecoveryProof proof={};proof.flags=PIONEER_RECOVERY_PROOF_REQUIRED;
-		proof.core_count=120;proof.reset_generation=3;proof.firmware_generation=3;
+		proof.core_count=120;proof.reset_generation=ticket;proof.firmware_generation=ticket;
 		injectAtomicFault=true;
 		assert(sRecoveryGuard.complete(ticket,&proof,&newGeneration)==B_DEV_NOT_READY
 			&& !newGeneration && Cold() && sState.generation==sReloadGeneration);

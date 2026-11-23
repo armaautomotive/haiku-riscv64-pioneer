@@ -90,6 +90,16 @@ static status_t AbortRecovery(uint64 ticket)
 	return okay?B_OK:B_BAD_VALUE;
 }
 
+static status_t ValidateRecovery(uint64 ticket)
+{
+	if (!ticket) return B_BAD_VALUE;
+	status_t status=acquire_sem(sStateLock); if (status!=B_OK) return status;
+	const uint32 faultState=uint32(atomic_get(&sFaultState));
+	const bool okay=sState.CanResumeRecovery(ticket,faultState);
+	release_sem(sStateLock);
+	return okay?B_OK:B_DEV_NOT_READY;
+}
+
 static status_t StandardOps(int32 operation,...)
 {
 	if (operation==B_MODULE_INIT) {
@@ -108,6 +118,10 @@ static pioneer_driver_recovery_guard_info sRecoveryGuard={
 	{PIONEER_DRIVER_RECOVERY_GUARD_MODULE,B_KEEP_LOADED,StandardOps},
 	1,BeginRecovery,CompleteRecovery,AbortRecovery
 };
+static pioneer_driver_recovery_guard_v2_info sRecoveryGuardV2={
+	{PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE,B_KEEP_LOADED,StandardOps},
+	2,BeginRecovery,CompleteRecovery,AbortRecovery,ValidateRecovery
+};
 extern "C" {
-module_info* modules[]={&sGuard.info,&sRecoveryGuard.info,NULL};
+module_info* modules[]={&sGuard.info,&sRecoveryGuard.info,&sRecoveryGuardV2.info,NULL};
 }

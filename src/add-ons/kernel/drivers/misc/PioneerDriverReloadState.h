@@ -85,6 +85,11 @@ struct PioneerDriverReloadState {
 		pendingFaultEpoch=0;
 		return true; // cold deliberately remains set
 	}
+	bool CanResumeRecovery(uint64_t ticket,uint32_t faultEpoch) const {
+		return ticket && ticket==pendingRecoveryTicket && attached && cold
+			&& generation==pendingRecoveryGeneration && generation!=UINT64_MAX
+			&& (faultEpoch&1U) && faultEpoch!=UINT32_MAX && faultEpoch==pendingFaultEpoch;
+	}
 	bool CompleteRecovery(uint64_t ticket,uint32_t faultEpoch,
 		const PioneerDriverRecoveryProof& proof,uint32_t& begunFaultEpoch,
 		uint64_t& newGeneration) {
@@ -92,7 +97,8 @@ struct PioneerDriverReloadState {
 		newGeneration=0;
 		if (!ticket || ticket!=pendingRecoveryTicket || !attached || !cold
 			|| generation!=pendingRecoveryGeneration || generation==UINT64_MAX
-			|| faultEpoch!=pendingFaultEpoch || !proof.Complete()) return false;
+			|| faultEpoch!=pendingFaultEpoch || !proof.Complete()
+			|| proof.reset_generation!=ticket || proof.firmware_generation!=ticket) return false;
 		begunFaultEpoch=pendingFaultEpoch;
 		newGeneration=++generation;
 		cold=false;
