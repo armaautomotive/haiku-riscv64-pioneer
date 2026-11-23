@@ -51,7 +51,7 @@ elif sys.argv[1]=='--quiesce':
  s['quiesced']=True
 elif sys.argv[1]=='--wait':
  assert s['quiesced'] and int(sys.argv[3],16)==s['generation']
- s['tag']=sys.argv[2];s['driver']=60 if s['tag']=='2026112300030001' else 55
+ s['tag']=sys.argv[2];s['driver']=60 if s['tag'] in ('2026112300030001','2026112300030002') else 55
  s['generation']+=1;s['quiesced']=False
 else: raise SystemExit(2)
 json.dump(s,open(p,'w'))

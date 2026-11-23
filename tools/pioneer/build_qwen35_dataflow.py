@@ -11,6 +11,7 @@ ROOT = HERE.parents[1]
 TAG = '2026112100010168'
 GRAPH_TRIAL_TAG = '2026112100020168'
 RECOVERY_QUALIFICATION_TAG = '2026112300030001'
+FIRMWARE_RECOVERY_QUALIFICATION_TAG = '2026112300030002'
 
 
 def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_recovery=False):
@@ -32,11 +33,18 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
                    'PioneerRecoveryRootCommand', 'PioneerPreReset', 'ProbeControl')
         selected = [(name, frame, kind) for name, frame, kind in entries
                     if any(marker in name for marker in markers)]
-        for required in ('Qwen35RecoveryRequest(', 'Qwen35RecoveryFinishLocked(',
-                         'PioneerFirmwareRecoveryOwner<OwnerIO, Guard>::Start(',
-                         'PioneerFirmwareRecoveryOwner<OwnerIO, Guard>::Resume(',
-                         'PioneerFirmwareRecoveryOwner<OwnerIO, Guard>::Retire(',
-                         'PioneerFirmwareReset<IO>::Start(', 'ProbeControl('):
+        required_frames = ['Qwen35RecoveryRequest(', 'Qwen35RecoveryFinishLocked(',
+                           'PioneerFirmwareRecoveryOwner<OwnerIO, Guard>::Resume(',
+                           'PioneerFirmwareReset<IO>::Start(', 'ProbeControl(']
+        if qualification:
+            # The compiler inlines the owner Start and Retire methods into
+            # this locked call; its emitted frame includes those locals.
+            required_frames += ['Qwen35RecoveryRunLocked(',
+                                'PioneerFirmwareResetTransport<OwnerIO, Guard>::DisposeAfterVerifiedReset(']
+        else:
+            required_frames += ['PioneerFirmwareRecoveryOwner<OwnerIO, Guard>::Start(',
+                                'PioneerFirmwareRecoveryOwner<OwnerIO, Guard>::Retire(']
+        for required in required_frames:
             if not any(required in name for name, _, _ in selected):
                 raise RuntimeError('missing firmware recovery stack frame: ' + required)
         if any(kind != 'static' for _, _, kind in selected):
@@ -48,14 +56,15 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
               '(sum of selected frames plus 4096-byte allowance; not a whole-program proof)')
 
     if qualification:
-        markers = ('Recovery', 'PostReset', 'AsicReset', 'BlackholeArc',
+        markers = ('Recovery', 'PostReset', 'AsicReset', 'BlackholeArc', 'FirmwareReset',
                    'Q38ArcQueue', 'Q38BankControl', 'BeginResidentSession', 'ProbeControl',
                    'PcieRoot', 'QualificationTrace')
         selected = [(name, frame, kind) for name, frame, kind in entries
                     if any(marker in name for marker in markers)]
-        for required in ('Qwen35RecoveryRequest(', 'Qwen35RecoveryRunLocked(',
-                         'Qwen35RecoveryFinishLocked(', 'BlackholeAsicReset(',
-                         'Q38BankControl(', 'ProbeControl('):
+        required_frames = ['Qwen35RecoveryRequest(', 'Qwen35RecoveryRunLocked(',
+                           'Qwen35RecoveryFinishLocked(', 'Q38BankControl(', 'ProbeControl(']
+        required_frames.append('PioneerFirmwareReset<IO>::Start(' if firmware_recovery else 'BlackholeAsicReset(')
+        for required in required_frames:
             if not any(required in name for name, _, _ in selected):
                 raise RuntimeError('missing recovery qualification stack frame: ' + required)
         if any(kind != 'static' for _, _, kind in selected):
@@ -315,7 +324,13 @@ def main():
                         help='build the dedicated graph qualification driver without ASIC reset')
     parser.add_argument('--build-recovery-qualification', action='store_true',
                         help='build the restricted idle-session ASIC recovery qualification driver')
+    parser.add_argument('--build-firmware-recovery-qualification', action='store_true',
+                        help='build the restricted idle-session firmware reset qualification driver')
     args = parser.parse_args()
+    if args.build_firmware_recovery_qualification:
+        if args.build_recovery_qualification:
+            parser.error('select only one recovery qualification')
+        args.build_recovery_qualification = True
     if args.build_recovery_qualification:
         if (args.build_device_dispatch_trial or args.compile_recovery_prototype
                 or args.compile_device_dispatch_prototype or args.compile_role_write_prototype
@@ -344,7 +359,8 @@ def main():
     driver = output / 'driver'
     driver_env = dict(env, PIONEER_Q38_PANEL_DRIVER='15',
                       PIONEER_DRIVER_RELOAD='1',
-                      PIONEER_DRIVER_BUILD_TAG=(RECOVERY_QUALIFICATION_TAG if args.build_recovery_qualification
+                      PIONEER_DRIVER_BUILD_TAG=(FIRMWARE_RECOVERY_QUALIFICATION_TAG if args.build_firmware_recovery_qualification
+                                               else RECOVERY_QUALIFICATION_TAG if args.build_recovery_qualification
                                                else GRAPH_TRIAL_TAG if args.build_device_dispatch_trial else TAG),
                       PIONEER_Q38_SPAN_PRELOAD='1',
                       PIONEER_Q38_SPAN_FAST='1')
@@ -361,12 +377,15 @@ def main():
         driver_env['PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_COMPILE_ONLY'] = '1'
     if args.build_recovery_qualification:
         driver_env['PIONEER_QWEN35_RECOVERY_QUALIFY'] = '1'
+    if args.build_firmware_recovery_qualification:
+        driver_env['PIONEER_QWEN35_FIRMWARE_RESET_QUALIFY'] = '1'
     if args.build_device_dispatch_trial:
         driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL'] = '1'
     subprocess.run(['sh', HERE / 'build_qwen38_banks_driver.sh', build, driver],
                    check=True, env=driver_env)
     verify_kernel_stack_budget(driver, args.build_recovery_qualification,
-                               args.compile_recovery_prototype and not args.compile_device_dispatch_prototype)
+                               args.build_firmware_recovery_qualification or
+                               (args.compile_recovery_prototype and not args.compile_device_dispatch_prototype))
 
     cxx = build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-g++'
     objects = build / 'objects/haiku/riscv64'

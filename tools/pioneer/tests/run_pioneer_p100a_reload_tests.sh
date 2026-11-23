@@ -97,6 +97,10 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  -DTEST_FIRMWARE_RESET -I"$temporary" "$directory/pioneer_qwen35_recovery_run_test.cpp" -o "$temporary/firmware-recovery-run-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/firmware-recovery-run-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DTEST_FIRMWARE_RESET -DTEST_GRAPH_RECOVERY -DTEST_LIVE_TAKEOVER -DTEST_RECOVERY_QUALIFY \
+ -I"$temporary" "$directory/pioneer_qwen35_recovery_run_test.cpp" -o "$temporary/firmware-qualification-run-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/firmware-qualification-run-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -DTEST_GRAPH_RECOVERY -I"$temporary" "$directory/pioneer_qwen35_recovery_run_test.cpp" -o "$temporary/graph-recovery-run-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/graph-recovery-run-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \

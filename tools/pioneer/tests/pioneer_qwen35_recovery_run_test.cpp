@@ -228,11 +228,15 @@ struct PioneerPostResetMapping {
 #ifdef TEST_FIRMWARE_RESET
 template<class IO,class Guard> class PioneerFirmwareRecoveryOwner {
 	IO& ownerIo;uint64 ticket;bool started=false,retired=false;
+	struct FakeResult {uint32 failedStage=3;tt_arc_queue_result probe{};} result;
 public:
 	PioneerFirmwareRecoveryOwner(PioneerPostResetMapping& m,IO& io,uint64 t):ownerIo(io),ticket(t) {assert(m.isPre);}
 	bool Start(Guard* guard,uint64 t,const tt_arc_scratch_result&,const tt_arc_telemetry_result&) {
 		assert(guard && t==ticket && !started);++firmwareStarts;
 		if (!Step(PIONEER_RECOVERY_STAGE_ASIC_RESET) || failFirmwareStart) return false;
+		#ifdef TEST_RECOVERY_QUALIFY
+		fakeResetIssued=true;
+		#endif
 		started=true;return true;
 	}
 	bool Resume(Guard* guard,uint64 t,unsigned) {
@@ -246,6 +250,7 @@ public:
 		retired=true;return B_OK;
 	}
 	bool Retired() const {return retired;}
+	const FakeResult& Result() const {return result;}
 };
 #endif
 #ifdef TEST_LIVE_TAKEOVER
@@ -367,6 +372,9 @@ static void Cleanup(){if(sRuntimeOwner){delete sRuntimeOwner->context;delete sRu
 #ifdef TEST_FIRMWARE_RESET
 int main(){
 	PioneerProbeCookie inspector;
+	#ifdef TEST_RECOVERY_QUALIFY
+	(void)&Qwen35RecoveryForce;(void)&Qwen35RecoveryPcieEvidence;
+	#endif
 	Setup();auto r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
 		&& !sRuntimeOwner && !sColdRecoveryRequired && completeCount==1 && !abortCount);
@@ -415,6 +423,9 @@ int main(){
 		r=Request();assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK
 			&& r.operation_status==B_DEV_NOT_READY && sRuntimeOwner && sColdRecoveryRequired
 			&& sRuntimeOwner->context->recoveryPreResetMapping && !firmwareRetires && abortCount==1);
+		if (fault==0) assert(r.detail==PIONEER_RECOVERY_DETAIL_RESET_PREMAP);
+		if (fault==1) assert(r.detail==(PIONEER_RECOVERY_DETAIL_RESET_PREPROBE|2));
+		if (fault==2) assert(r.detail==(PIONEER_RECOVERY_DETAIL_RESET_SUBMIT|(3<<8)));
 		Cleanup();
 	}
 	Setup();failFirmwareRetire=true;r=Request();
@@ -422,6 +433,16 @@ int main(){
 		&& sRuntimeOwner && sRuntimeOwner->context->recoveryFirmwareResetOwner && firmwareRetires==1
 		&& sColdRecoveryRequired && abortCount==1 && !completeCount);
 	Cleanup();
+	#ifdef TEST_RECOVERY_QUALIFY
+	Setup();auto* live=sRuntimeOwner;live->finalFreeRetained=false;sQwen35ExclusiveCookie=live;
+	live->context->dispatchOwnerRetained=false;
+	live->context->qwen35DataflowService=nullptr;live->context->qwen35SharedRoleBinding=nullptr;
+	live->context->qwen35GraphOwner=nullptr;fakeAerPost=0;sColdRecoveryRequired=false;r=Request();
+	assert(Qwen35RecoveryQualify(live,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && !live->context && !sColdRecoveryRequired && firmwareStarts==1
+		&& firmwareResumes==1 && firmwareRetires==1 && !abortCount && completeCount==1);
+	sQwen35ExclusiveCookie=nullptr;delete live;
+	#endif
 	puts("PASS firmware reset wired into actual recovery sequence: one-shot resume, proof retirement and fault retention; SIMULATED ONLY");
 }
 #else

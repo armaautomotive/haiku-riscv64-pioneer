@@ -404,7 +404,8 @@ static bool ResetStoppedRewrite(int fd,bool force,bool qualification=false)
 	tt_pioneer_driver_reload before{};before.version=1;
 	if (!Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&before,sizeof(before))
 		|| before.driver!=TT_QWEN35_DATAFLOW_DRIVER || !before.build_tag || !before.generation
-		|| (qualification && before.build_tag!=UINT64_C(0x2026112300030001))
+		|| (qualification && before.build_tag!=UINT64_C(0x2026112300030001)
+			&& before.build_tag!=UINT64_C(0x2026112300030002))
 		|| (!force && !before.cold) || before.quiesced || !before.active_owner || before.open_count!=1) return false;
 	auto verifyIdle=[&](uint64_t expectedGeneration,bool exact) {
 		tt_pioneer_driver_reload after{};after.version=1;
@@ -732,7 +733,8 @@ static bool QualifyRecovery()
 	tt_pioneer_driver_reload status{};status.version=1;
 	bool okay=Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&status,sizeof(status))
 		&& status.driver==TT_QWEN35_DATAFLOW_DRIVER
-		&& status.build_tag==UINT64_C(0x2026112300030001) && status.generation
+		&& (status.build_tag==UINT64_C(0x2026112300030001)
+			|| status.build_tag==UINT64_C(0x2026112300030002)) && status.generation
 		&& !status.cold && !status.quiesced && !status.active_owner
 		&& status.open_count==1 && status.guard_version==1;
 	tt_q38_bank_session session{};session.version=TT_Q38_BANK_PROTOCOL;
@@ -773,7 +775,8 @@ static bool QualifyRecovery()
 		// CPU metadata before choosing normal end or guarded fault recovery.
 		tt_pioneer_driver_reload current{};current.version=1;
 		if (Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&current,sizeof(current))
-			&& current.build_tag==UINT64_C(0x2026112300030001) && current.active_owner) {
+			&& (current.build_tag==UINT64_C(0x2026112300030001)
+				|| current.build_tag==UINT64_C(0x2026112300030002)) && current.active_owner) {
 			if (current.cold) (void)ResetStoppedRewrite(fd,true);
 			else {
 				tt_q38_bank_session end{};end.version=TT_Q38_BANK_PROTOCOL;

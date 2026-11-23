@@ -20,7 +20,7 @@ static bool Call(int fd,uint32_t op,void* data,size_t) {
     if (op==TT_PCI_PROBE_RELOAD_STATUS) {
         auto& r=*static_cast<tt_pioneer_driver_reload*>(data);
         const bool first=statusCalls++==0;
-        r.driver=60;r.build_tag=mode==2?UINT64_C(0x111):UINT64_C(0x2026112300030001);
+        r.driver=60;r.build_tag=mode==2?UINT64_C(0x111):mode==12?UINT64_C(0x2026112300030002):UINT64_C(0x2026112300030001);
         r.generation=1;r.open_count=1;r.guard_version=1;
         if (mode==9 && first) r.guard_version=0;
         if (!first && (mode==3 || mode==4 || mode==10 || mode==11)) {
@@ -44,10 +44,10 @@ static bool Call(int fd,uint32_t op,void* data,size_t) {
 }
 #include "pioneer_qualify_client.inc"
 int main() {
-    for (mode=1;mode<=11;mode++) {
+    for (mode=1;mode<=12;mode++) {
         statusCalls=beginCalls=endCalls=resetCalls=closeCalls=evidenceCalls=0;lastQualification=false;
-        assert(QualifyRecovery()==(mode==1 || mode==6));
-        if (mode==1 || mode==6 || mode==8)
+        assert(QualifyRecovery()==(mode==1 || mode==6 || mode==12));
+        if (mode==1 || mode==6 || mode==8 || mode==12)
             assert(beginCalls==1 && resetCalls==1 && lastQualification && !endCalls);
         if (mode==2 || mode==9) assert(!beginCalls && !resetCalls && !endCalls);
         if (mode==3) assert(beginCalls==1 && endCalls==1 && !resetCalls);

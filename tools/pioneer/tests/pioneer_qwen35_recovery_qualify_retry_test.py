@@ -10,7 +10,7 @@ import tempfile
 import pioneer_qwen35_recovery_qualify_script_test as common
 
 
-def exercise(suffix, script, candidate_hash, client_hash='34af989cb81827835f8e1fe762c8018ec5dbbb686443df992a15dea5fee13abc', reject=False):
+def exercise(suffix, script, candidate_hash, client_hash='34af989cb81827835f8e1fe762c8018ec5dbbb686443df992a15dea5fee13abc', reject=False, succeed=False):
     with tempfile.TemporaryDirectory() as temp:
         root = Path(temp)
         home, old_stage, installed, guard, _, env = common.fixture(root)
@@ -34,9 +34,15 @@ def exercise(suffix, script, candidate_hash, client_hash='34af989cb81827835f8e1f
         wrapper = root/'retry.sh'
         common.put(wrapper, source)
         def run(mode, extra=None):
-            return subprocess.run(['bash', str(wrapper), mode, '2'], env=dict(env, MOCK_AER_FORMAT='1' if suffix in ('-g','-h','-i','-j') else '0', **(extra or {})),
+            return subprocess.run(['bash', str(wrapper), mode, '2'], env=dict(env, MOCK_AER_FORMAT='1' if suffix in ('-g','-h','-i','-j','-k') else '0', **(extra or {})),
                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         assert run('--prepare-existing-guard').returncode == 0
+        if succeed:
+            result = run('--run')
+            assert result.returncode == 0, (result.stdout, result.stderr)
+            assert installed.read_text() == 'stable' and (stage/'state').read_text().strip() == 'RECOVERY_QUALIFIED_STABLE_RESTORED'
+            assert not (home/'.pioneer-q35-dataflow-exclusive').exists()
+            return
         if reject:
             result = run('--run', {'MOCK_REJECT': '1'})
             assert result.returncode != 0 and installed.read_text() == 'stable'
@@ -48,7 +54,7 @@ def exercise(suffix, script, candidate_hash, client_hash='34af989cb81827835f8e1f
         assert (stage/'state').read_text().strip() == 'QUALIFICATION_FAILED_RETAIN_FOR_INSPECTION'
         assert (home/'.pioneer-q35-dataflow-exclusive').is_dir()
         assert run('--run').returncode != 0
-        driver_state.write_text(json.dumps(dict(driver=60, tag='2026112300030001', generation=1,
+        driver_state.write_text(json.dumps(dict(driver=60, tag='2026112300030002' if suffix=='-k' else '2026112300030001', generation=1,
                                                 quiesced=False, cold=False, active=False)))
         restore = common.RESTORE.read_text().replace('/boot/home', str(home)).replace('0:1:600:', f'{os.getuid()}:1:600:')
         restore = restore.replace('= 0:1 ]', f'= {os.getuid()}:1 ]').replace('= 0:700 ]', f'= {os.getuid()}:700 ]')
@@ -110,6 +116,10 @@ def main():
     exercise('-j', 'pioneer_qwen35_recovery_qualify_reset_phase.sh',
              'f3b8951e9d6c47a94d298a004a9fbb8833870ee42013fcfd4632ce0817123aa8',
              '9ff0ce212b9bb593202d92a2065d9bc77ccac25125b2c03f025592bc6a608e21', reject=True)
+    for options in ({}, {'reject': True}, {'succeed': True}):
+        exercise('-k', 'pioneer_qwen35_recovery_qualify_firmware_reset.sh',
+                 '638b3a74449e0574ccfe11e0ba078632f1c7f19c3e61d0ef64326ab04a2b5c15',
+                 '50ef9ee8086c94a4149cabd889fefcd824e9955897df25bbe8dfdde5cae7986d', **options)
     print('PASS existing-guard qualifications and retained failure; SIMULATED HOST ONLY')
 
 
