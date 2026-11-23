@@ -6,6 +6,12 @@ struct FleetRecoveryProbeIO {
     bool AllRolesHeld(unsigned core) { return core<DataflowBarrierWorkers; }
     bool DefaultBootRouting(unsigned) { return true; }
     bool LocalRamStable(unsigned) { return true; }
+    bool StacklessCopiesSafe(unsigned core) { return core<DataflowBarrierWorkers; }
+    bool StacklessUncapturedRamProtected(unsigned core) { return core<DataflowBarrierWorkers; }
+    bool ReadStacklessRamCopy(unsigned,unsigned,unsigned,uint32_t* out,unsigned bytes) {
+        for (unsigned i=0;i<bytes/4;i++) static_cast<volatile uint32_t*>(out)[i]=0;
+        return true;
+    }
     bool ReadResetDisable(unsigned,uint32_t& value) { value=0; return true; }
     bool WriteResetDisable(unsigned,uint32_t) { return true; }
     bool Read(unsigned,unsigned,uint32_t* out,unsigned bytes) {
@@ -35,4 +41,11 @@ bool PioneerQwen35RoleFleetRecoveryOwnerTargetProbe(DataflowRoleFleetRecoveryOwn
         && fleet.StageImages(image,words,image,words,image,words,image,words,io)
         && fleet.PreparePossibleRelease(io) && fleet.BeginReleaseAttempt(io)
         && fleet.RestoreAll(io) && fleet.VerifyAfterResidentRestore(io);
+}
+bool PioneerQwen35StacklessFleetTargetProbe(DataflowRoleFleetLocalRamOwner& fleet,uint32_t* storage)
+{
+    FleetRecoveryProbeIO io;
+    return fleet.PrepareStackless(storage,DataflowRoleFleetLocalRamOwner::RequiredWords())
+        && fleet.CaptureStacklessCore(0,io) && fleet.MarkStacklessMayRun(0,io)
+        && fleet.RestoreStackless(io) && fleet.VerifyStacklessRestored(io);
 }

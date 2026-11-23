@@ -6,16 +6,32 @@
 using namespace PioneerQwen35;
 struct FleetRamIO {
     static constexpr unsigned PerCore=DataflowRoleLocalRamOwner::RequiredWords();
-    std::vector<uint32_t> memory;
+    std::vector<uint32_t> memory,copies;
     bool held=true,stable=true,corruptEnabled=false;
+    bool stacklessSafe=true,uncapturedProtected=true;
     int failCore=-1,readFailCore=-1,unstableAfterReadCore=-1,corruptFrom=-1,corruptTarget=-1;
+    int failCopyCore=-1;
+    unsigned revokeProtectionAtWrite=UINT32_MAX;
     unsigned writes=0;
     unsigned reads[DataflowBarrierWorkers]{};
     FleetRamIO():memory(DataflowRoleFleetLocalRamOwner::RequiredWords()) {
         for (unsigned i=0;i<memory.size();i++) memory[i]=i^0x7733cc44U;
+        copies=memory;
     }
     bool AllRolesHeld(unsigned core) const { return held && core<DataflowBarrierWorkers; }
     bool LocalRamStable(unsigned core) const { return stable && core<DataflowBarrierWorkers; }
+    bool StacklessCopiesSafe(unsigned core) const { return !held && stacklessSafe && core<DataflowBarrierWorkers; }
+    bool StacklessUncapturedRamProtected(unsigned core) const {
+        return held && uncapturedProtected && core<DataflowBarrierWorkers;
+    }
+    bool ReadStacklessRamCopy(unsigned core,unsigned role,unsigned offset,uint32_t* output,unsigned bytes) {
+        if (!StacklessCopiesSafe(core) || int(core)==failCopyCore || role>=DataflowRoleCount || !output
+            || !bytes || (offset&3) || (bytes&3) || offset>DataflowRoleLocalRamBytes
+            || bytes>DataflowRoleLocalRamBytes-offset) return false;
+        const unsigned first=core*PerCore+role*DataflowRoleLocalRamWords+offset/4;
+        for (unsigned i=0;i<bytes/4;i++) output[i]=copies[first+i];
+        return true;
+    }
     bool ReadRam(unsigned core,unsigned role,uint32_t address,uint32_t* output,unsigned bytes) {
         assert(AllRolesHeld(core) && LocalRamStable(core) && output && DataflowRoleLocalRamRange(role,address,bytes));
         ++reads[core];
@@ -31,6 +47,7 @@ struct FleetRamIO {
         const uint32_t base=role==DataflowRoleReader?DataflowRoleBriscLocalRam:DataflowRoleNcriscLocalRam;
         const unsigned offset=core*PerCore+role*DataflowRoleLocalRamWords+(address-base)/4;
         ++writes;
+        if (writes==revokeProtectionAtWrite) uncapturedProtected=false;
         if (int(core)==failCore) { memory[offset]=input[0]; failCore=-1; return false; }
         for (unsigned i=0;i<bytes/4;i++) memory[offset+i]=input[i];
         if (corruptEnabled && int(core)==corruptFrom) {
@@ -78,5 +95,79 @@ int main()
     for (unsigned core=5;core<DataflowBarrierWorkers;core++) assert(io.reads[core]==0);
     io.unstableAfterReadCore=-1; io.stable=true;
     assert(fleet.RestoreAll(io) && io.memory==original);
+    {
+        FleetRamIO staged; const auto before=staged.memory;
+        std::vector<uint32_t> saved(DataflowRoleFleetLocalRamOwner::RequiredWords());
+        DataflowRoleFleetLocalRamOwner partial;
+        assert(!partial.PrepareStackless(saved.data(),saved.size()-1));
+        assert(partial.PrepareStackless(saved.data(),saved.size()));
+        assert(!partial.OriginalWords(0,DataflowRoleReader));
+        staged.held=false;
+        for (unsigned core=0;core<3;core++) assert(partial.CaptureStacklessCore(core,staged));
+        assert(!partial.CaptureStacklessCore(2,staged));
+        assert(!partial.OriginalWords(3,DataflowRoleReader));
+        assert(partial.MarkStacklessMayRun(0,staged) && partial.MarkStacklessMayRun(1,staged));
+        staged.memory[0]^=1; staged.memory[FleetRamIO::PerCore]^=2;
+        assert(!partial.RestoreStackless(staged) && !staged.writes);
+        staged.held=true; staged.uncapturedProtected=false;
+        assert(!partial.RestoreStackless(staged) && !staged.writes);
+        staged.uncapturedProtected=true;
+        staged.revokeProtectionAtWrite=staged.writes+1;
+        assert(!partial.RestoreStackless(staged) && staged.writes==1);
+        staged.revokeProtectionAtWrite=UINT32_MAX; staged.uncapturedProtected=true; staged.failCore=1;
+        assert(!partial.RestoreStackless(staged) && partial.RestorationRequired());
+        staged.corruptEnabled=true; staged.corruptFrom=1; staged.corruptTarget=0;
+        assert(!partial.RestoreStackless(staged) && partial.RestorationRequired());
+        assert(partial.RestoreStackless(staged) && partial.RestoredOriginal() && staged.memory==before);
+        assert(partial.VerifyStacklessRestored(staged));
+        staged.uncapturedProtected=false;
+        assert(!partial.VerifyStacklessRestored(staged) && partial.RestorationRequired());
+        staged.uncapturedProtected=true;
+        assert(partial.RestoreStackless(staged) && staged.memory==before);
+        staged.memory[0]^=1;
+        assert(!partial.VerifyStacklessRestored(staged) && partial.RestorationRequired());
+        assert(partial.RestoreStackless(staged) && staged.memory==before);
+    }
+    {
+        FleetRamIO staged; const auto before=staged.memory;
+        std::vector<uint32_t> saved(DataflowRoleFleetLocalRamOwner::RequiredWords());
+        DataflowRoleFleetLocalRamOwner partial;
+        assert(partial.PrepareStackless(saved.data(),saved.size())); staged.held=false;
+        assert(partial.CaptureStacklessCore(0,staged));
+        staged.stacklessSafe=false;
+        assert(!partial.MarkStacklessMayRun(0,staged) && partial.RestorationRequired());
+        assert(!partial.CaptureStacklessCore(1,staged));
+        staged.held=true;
+        assert(partial.RestoreStackless(staged) && staged.memory==before);
+    }
+    {
+        FleetRamIO staged; const auto before=staged.memory;
+        std::vector<uint32_t> saved(DataflowRoleFleetLocalRamOwner::RequiredWords());
+        DataflowRoleFleetLocalRamOwner partial;
+        assert(partial.PrepareStackless(saved.data(),saved.size()));
+        staged.held=false;
+        assert(partial.CaptureStacklessCore(0,staged) && partial.MarkStacklessMayRun(0,staged));
+        staged.memory[0]^=1; staged.failCopyCore=1;
+        assert(!partial.CaptureStacklessCore(1,staged));
+        assert(!partial.OriginalWords(1,DataflowRoleReader));
+        assert(!partial.CaptureStacklessCore(2,staged) && !partial.MarkStacklessMayRun(0,staged));
+        staged.held=true;
+        assert(partial.RestoreStackless(staged) && staged.memory==before);
+    }
+    {
+        FleetRamIO staged;
+        std::vector<uint32_t> saved(DataflowRoleFleetLocalRamOwner::RequiredWords());
+        DataflowRoleFleetLocalRamOwner all;
+        assert(all.PrepareStackless(saved.data(),saved.size())); staged.held=false;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            assert(all.CaptureStacklessCore(core,staged));
+            assert(all.MarkStacklessMayRun(core,staged));
+            assert(all.OriginalWords(core,DataflowRoleWriter)
+                ==saved.data()+core*FleetRamIO::PerCore+DataflowRoleLocalRamWords);
+        }
+        for (unsigned count:staged.reads) assert(!count); // no private-RAM NoC snapshots
+        staged.held=true;
+        assert(all.RestoreStackless(staged) && all.VerifyStacklessRestored(staged));
+    }
     std::puts("PASS 120-core private RAM recovery, simultaneous corruption and unreadable routes; SIMULATED ONLY");
 }
