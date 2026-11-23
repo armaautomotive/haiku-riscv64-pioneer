@@ -24,6 +24,7 @@ class PioneerQwen35SharedRoleBinding {
     bool fStackReleaseAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStackReleaseWriting[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStackReleaseConfirmed[PioneerQwen35::DataflowBarrierWorkers]{};
+    bool fStackReleaseDrainedAbsent[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStackCancelAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fReleaseHeld[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fStopAttempted[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -228,11 +229,19 @@ public:
             for (unsigned i=0;i<PioneerQwen35::DataflowBarrierWorkers;i++) {
                 if (!fReleaseAttempted[i] || fReleaseHeld[i]) continue;
                 if (fHoldAttempted[i]) { if (!io.HoldObserved(i)) { stage=11;core=i;return false; } continue; }
+                if (fStackReleaseAttempted[i] && !fStackReleaseConfirmed[i]
+                    && !fStackReleaseDrainedAbsent[i]) {
+                    typename Adapter::StackReleaseObservation state=Adapter::StackReleaseNotObserved;
+                    if (!io.ObserveDrainedStackRelease(i,state)) { stage=16;core=i;return false; }
+                    if (state==Adapter::StackReleaseObserved) fStackReleaseConfirmed[i]=true;
+                    else fStackReleaseDrainedAbsent[i]=true;
+                }
                 if (!fStackReleaseConfirmed[i]) {
-                    // A possibly posted release can race cancellation.
-                    if (fStackReleaseAttempted[i]) { stage=16;core=i;return false; }
+                    // An unfenced posted release can race cancellation.
+                    if (fStackReleaseAttempted[i] && !fStackReleaseDrainedAbsent[i])
+                        { stage=16;core=i;return false; }
                     if (!fStackCancelAttempted[i]
-                        && !io.RequestStackCancel(i,fStackCancelAttempted[i]))
+                        && !io.RequestStackCancel(i,fStackCancelAttempted[i],fStackReleaseAttempted[i]))
                         { stage=16;core=i;return false; }
                     continue;
                 }

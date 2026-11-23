@@ -173,17 +173,36 @@ public:
         return fIO.ResetRead()==0x47800 && fGuard.ProveSelectedRoute(core)
             && fScope.ProveRoleReleaseWriteDrained(fIO,core);
     }
-    // Only called if no stack-release write was ever attempted on the tile.
+    enum StackReleaseObservation { StackReleaseNotObserved, StackReleaseObserved };
+    // This is evidence for recovery only, not authorization to issue a
+    // release. Two reads do not themselves drain an earlier posted write.
+    bool ObserveDrainedStackRelease(unsigned core,StackReleaseObservation& observation) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || !fScope.ProveExclusiveRewrite(fIO)
+            || !fScope.ProveRoleStackReleaseWriteDrained(fIO,core) || !SelectForStop(core)) return false;
+        DataflowRoleSnapshotHandoff snapshot{};
+        if (!ReadStableStackHandoff(core,snapshot)
+            || snapshot.readerReady!=DataflowRoleSnapshotReaderReady
+            || snapshot.writerReady!=DataflowRoleSnapshotWriterReady
+            || (snapshot.release && snapshot.release!=DataflowRoleSnapshotRelease)
+            || !fScope.ProveRoleStackReleaseWriteDrained(fIO,core) || !SelectForStop(core)) return false;
+        observation=snapshot.release?StackReleaseObserved:StackReleaseNotObserved;
+        return true;
+    }
+    // Called only if no stack-release write was attempted, or if that exact
+    // attempt was independently drained and the release word remained zero.
     // Consume the cancellation before the write; a posted write may arrive
     // even if readback fails, so retries may observe but must not reissue it.
-    bool RequestStackCancel(unsigned core,bool& attempted) {
+    bool RequestStackCancel(unsigned core,bool& attempted,bool releaseWasAttempted=false) {
         using namespace PioneerQwen35;
         if (attempted || core>=DataflowBarrierWorkers || !fScope.ProveExclusiveRewrite(fIO)
+            || (releaseWasAttempted && !fScope.ProveRoleStackReleaseWriteDrained(fIO,core))
             || !fScope.ProveRoleStackCancelSafe(fIO,core) || !SelectForStop(core)) return false;
         DataflowRoleSnapshotHandoff snapshot{};
         if (!ReadStableStackHandoff(core,snapshot)
             || snapshot.readerReady!=DataflowRoleSnapshotReaderReady
             || snapshot.writerReady!=DataflowRoleSnapshotWriterReady || snapshot.release
+            || (releaseWasAttempted && !fScope.ProveRoleStackReleaseWriteDrained(fIO,core))
             || !fScope.ProveRoleStackCancelSafe(fIO,core) || !fGuard.ProveSelectedRoute(core)
             || fIO.ResetRead()!=0x6000 || fIO.ResetRead()!=0x6000) return false;
         attempted=true;

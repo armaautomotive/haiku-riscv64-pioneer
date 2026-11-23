@@ -150,6 +150,9 @@ public:
     // Requires stable exclusive ownership of the handoff, RAM copies and
     // live images, plus recovery if the release write may still be posted.
     bool ProveRoleStartupHandoffSafe(PioneerSessionIO&,unsigned) const { return false; }
+    // Must fence this tile's particular attempted stack-release write and
+    // exclude all later writes to the handoff for the recovery transaction.
+    bool ProveRoleStackReleaseWriteDrained(PioneerSessionIO&,unsigned) const { return false; }
     // These require exclusive control of the handoff and owned code, no
     // possible stack-release write, and independent stopped/NoC proofs.
     bool ProveRoleStackCancelSafe(PioneerSessionIO&,unsigned) const { return false; }

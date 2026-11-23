@@ -316,6 +316,7 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
             assert(!scope.ProveRoleControlWriteSafe(context->io,0,0,0x3c0));
             assert(!scope.ProveRoleStackCancelSafe(context->io,0));
             assert(!scope.ProveRoleStackCancelledSafe(context->io,0));
+            assert(!scope.ProveRoleStackReleaseWriteDrained(context->io,0));
             const unsigned savedCore=context->io.runtimeCore;
             const bool savedFirmware=context->io.firmwareMatches;
             context->io.runtimeCore=7; context->io.firmwareMatches=true;

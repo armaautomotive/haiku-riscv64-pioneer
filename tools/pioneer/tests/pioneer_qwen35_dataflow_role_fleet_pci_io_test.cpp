@@ -11,6 +11,9 @@ struct FleetPciTestScope {
     bool computeStop=false,computePark=false,hold=false,heldAfter=false,releaseDrained=false;
     bool runtime=false;
     bool stackCancel=false,stackCancelled=false;
+    bool stackReleaseDrained=false;
+    mutable unsigned stackDrainChecks=0;
+    unsigned stackDrainFailAt=UINT32_MAX;
     bool imageInspection=false;
     bool faultAudit=false,faultAck=false;
     bool ProveExclusiveRewrite(PioneerSessionIO&) const { return gLocked && exclusive; }
@@ -23,6 +26,9 @@ struct FleetPciTestScope {
     bool ProveRoleBootRoutingInspectionAllowed(PioneerSessionIO&,unsigned) const { return held && routing; }
     bool ProveRoleLocalRamStable(PioneerSessionIO&,unsigned) const { return held && stable; }
     bool ProveRoleStartupHandoffSafe(PioneerSessionIO&,unsigned) const { return runtime; }
+    bool ProveRoleStackReleaseWriteDrained(PioneerSessionIO&,unsigned) const {
+        return stackReleaseDrained && stackDrainChecks++!=stackDrainFailAt;
+    }
     bool ProveRoleStackCancelSafe(PioneerSessionIO&,unsigned) const { return stackCancel; }
     bool ProveRoleStackCancelledSafe(PioneerSessionIO&,unsigned) const { return stackCancelled; }
     bool ProveRoleReleaseSafe(PioneerSessionIO&,unsigned) const { return release; }
@@ -205,6 +211,26 @@ int main()
         auto& handoff=context.io.roleHandoffs[core];
         handoff.readerReady=DataflowRoleSnapshotReaderReady;
         handoff.writerReady=DataflowRoleSnapshotWriterReady;
+        decltype(io)::StackReleaseObservation observed=decltype(io)::StackReleaseObserved;
+        assert(!io.ObserveDrainedStackRelease(core,observed)
+            && observed==decltype(io)::StackReleaseObserved);
+        scope.stackReleaseDrained=true;
+        assert(io.ObserveDrainedStackRelease(core,observed)
+            && observed==decltype(io)::StackReleaseNotObserved);
+        scope.stackDrainChecks=0; scope.stackDrainFailAt=1;
+        assert(!io.ObserveDrainedStackRelease(core,observed));
+        scope.stackDrainFailAt=UINT32_MAX;
+        handoff.release=DataflowRoleSnapshotRelease;
+        assert(io.ObserveDrainedStackRelease(core,observed)
+            && observed==decltype(io)::StackReleaseObserved);
+        handoff.release=DataflowRoleSnapshotCancel;
+        assert(!io.ObserveDrainedStackRelease(core,observed)
+            && observed==decltype(io)::StackReleaseObserved);
+        handoff.release=0;
+        context.io.handoffReads=0; context.io.handoffChangeAt=1;
+        assert(!io.ObserveDrainedStackRelease(core,observed));
+        context.io.handoffChangeAt=UINT32_MAX;
+        scope.stackReleaseDrained=false;
         bool cancelAttempted=false;
         assert(!io.RequestStackCancel(core,cancelAttempted) && !cancelAttempted && !context.io.stackCancelWrites);
         scope.stackCancel=true;
@@ -214,7 +240,9 @@ int main()
         handoff.release=DataflowRoleSnapshotRelease;
         assert(!io.RequestStackCancel(core,cancelAttempted) && !cancelAttempted);
         handoff.release=0;
-        assert(io.RequestStackCancel(core,cancelAttempted) && cancelAttempted && context.io.stackCancelWrites==1);
+        assert(!io.RequestStackCancel(core,cancelAttempted,true) && !cancelAttempted);
+        scope.stackReleaseDrained=true;
+        assert(io.RequestStackCancel(core,cancelAttempted,true) && cancelAttempted && context.io.stackCancelWrites==1);
         assert(!io.RequestStackCancel(core,cancelAttempted) && context.io.stackCancelWrites==1);
         const unsigned readerPark=DataflowRoleReaderShimAddress+0x30;
         const unsigned writerPark=DataflowRoleWriterShimAddress+0x30;
