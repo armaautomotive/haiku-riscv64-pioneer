@@ -592,20 +592,57 @@ public:
         return reader && writer && StacklessHeldCopySources(core,r,w,captured)
             && captured && reader==r && writer==w;
     }
-    // No live implementation yet proves fresh cleared restore receipts,
-    // the exact shim and continuous exclusion through a one-shot release.
-    // Keep the concrete adapter denied even if ordinary copy proof succeeds.
-    bool StacklessCoreRestoreReleaseReady(unsigned,const uint32_t*,const uint32_t*) {
-        return false;
+    // These fixed handoff operations additionally require lifetime-spanning
+    // ownership, firmware exclusion and write-drain proof from Scope. The
+    // actual Haiku scope denies each proof; samples alone cannot supply it.
+    bool RestoreHandoffHeldSafe(unsigned core) {
+        return core<PioneerQwen35::DataflowBarrierWorkers
+            && fScope.ProveRoleRestoreHandoffHeldSafe(fIO,core) && AllRolesHeld(core)
+            && DefaultBootRouting(core) && fScope.ProveRoleRestoreHandoffHeldSafe(fIO,core)
+            && fGuard.ProveSelectedRoute(core);
     }
-    // These remain denied until a live scope owns and fences the handoff,
-    // exact restore shims and completed-core state for the whole transaction.
-    bool RestoreHandoffHeldSafe(unsigned) { return false; }
-    bool RestoreCompletionSafe(unsigned) { return false; }
-    bool RestoreCompletedAndHeld(unsigned) { return false; }
-    bool RestoreHandoffRetrySafe(unsigned) { return false; }
-    bool ReadRestoreHandoff(unsigned,PioneerQwen35::DataflowRoleSnapshotHandoff&) { return false; }
-    bool WriteRestoreHandoffWord(unsigned,unsigned,uint32_t) { return false; }
+    bool RestoreCompletionSafe(unsigned core) {
+        return core<PioneerQwen35::DataflowBarrierWorkers
+            && fScope.ProveRoleRestoreCompletionSafe(fIO,core)
+            && fScope.ProveExclusiveRewrite(fIO) && fIO.SelectRuntimeCore(core)
+            && fIO.MapQ38Panel() && fIO.DataflowPanelMappingStable() && fGuard.ProveSelectedRoute(core)
+            && PioneerQwen35WithSelectedClock(fIO,core,[&]() {
+                return fIO.ResetRead()==0x7000 && fIO.ResetRead()==0x7000;
+            }) && fScope.ProveRoleRestoreCompletionSafe(fIO,core) && fGuard.ProveSelectedRoute(core);
+    }
+    bool RestoreCompletedAndHeld(unsigned core) {
+        return RestoreHandoffHeldSafe(core) && fScope.ProveRoleRestoreCompletedAndHeld(fIO,core)
+            && RestoreHandoffHeldSafe(core) && fScope.ProveRoleRestoreCompletedAndHeld(fIO,core);
+    }
+    bool RestoreHandoffRetrySafe(unsigned core) {
+        return RestoreHandoffHeldSafe(core) && fScope.ProveRoleRestoreHandoffRetrySafe(fIO,core)
+            && RestoreHandoffHeldSafe(core) && fScope.ProveRoleRestoreHandoffRetrySafe(fIO,core);
+    }
+    bool ReadRestoreHandoff(unsigned core,PioneerQwen35::DataflowRoleSnapshotHandoff& result) {
+        const bool held=RestoreHandoffHeldSafe(core);
+        if (!held && !RestoreCompletionSafe(core)) return false;
+        PioneerQwen35::DataflowRoleSnapshotHandoff observed{};
+        if (!ReadStableStackHandoff(core,observed)
+            || !(held?RestoreHandoffHeldSafe(core):RestoreCompletionSafe(core))) return false;
+        result=observed;return true;
+    }
+    bool WriteRestoreHandoffWord(unsigned core,unsigned word,uint32_t value) {
+        using namespace PioneerQwen35;
+        if (word>=3 || !RestoreHandoffHeldSafe(core)) return false;
+        const unsigned address=DataflowRoleSnapshotHandoffAddress+word*4;
+        fIO.Q38PanelWrite(address,value); // the owner records the attempt first
+        return fGuard.ProveSelectedRoute(core) && fIO.Q38PanelRead(address)==value
+            && RestoreHandoffHeldSafe(core);
+    }
+    bool StacklessCoreRestoreReleaseReady(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        PioneerQwen35::DataflowRoleSnapshotHandoff handoff{};
+        return StacklessHeldCopySourceSafe(core,reader,writer) && RestoreHandoffHeldSafe(core)
+            && fScope.ProveRoleRestoreReleaseReady(fIO,core,reader,writer)
+            && ReadStableStackHandoff(core,handoff)
+            && !handoff.readerReady && !handoff.writerReady && !handoff.release
+            && fScope.ProveRoleRestoreReleaseReady(fIO,core,reader,writer)
+            && StacklessHeldCopySourceSafe(core,reader,writer) && RestoreHandoffHeldSafe(core);
+    }
     // A matching L1 copy alone does not prove the core restored private RAM.
     // Scope must additionally prove the exact one-shot restore, fresh result,
     // stopped roles, preserved source and writer exclusion. It currently

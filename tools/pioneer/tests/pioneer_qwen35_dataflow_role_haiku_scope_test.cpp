@@ -92,6 +92,7 @@ struct PioneerSessionIO {
     DataflowQueueControl queueBoxes[DataflowBarrierWorkers][DataflowCircularBufferCount]{};
     unsigned roleStopWrites=0; bool dropRoleStopWrite=false;
     unsigned stackCancelWrites=0; bool dropStackCancelWrite=false;
+    unsigned restoreReceiptWrites=0; bool dropRestoreReceiptWrite=false;
     unsigned computeStopWrites=0,holdWrites=0; bool dropComputeStopWrite=false,dropHoldWrite=false;
     uint32_t rolePc[2]{};
     unsigned rolePcReads[2]{},rolePcChangeAt[2]{UINT32_MAX,UINT32_MAX};
@@ -257,7 +258,13 @@ struct PioneerSessionIO {
             return;
         }
 #endif
-        if (address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest)) {
+        if (address==DataflowRoleSnapshotHandoffAddress || address==DataflowRoleSnapshotHandoffAddress+4) {
+            ++restoreReceiptWrites;
+            if (!dropRestoreReceiptWrite) {
+                if (address==DataflowRoleSnapshotHandoffAddress) roleHandoffs[runtimeCore].readerReady=value;
+                else roleHandoffs[runtimeCore].writerReady=value;
+            }
+        } else if (address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest)) {
             ++roleStopWrites;
             if (!dropRoleStopWrite) {
                 roleBoxes[runtimeCore].stopRequest=value;
@@ -287,10 +294,8 @@ struct PioneerSessionIO {
         }
     }
     uint32_t Q38PanelRead(unsigned address) {
-#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
         if (address==DataflowRoleSnapshotHandoffAddress) return roleHandoffs[runtimeCore].readerReady;
         if (address==DataflowRoleSnapshotHandoffAddress+4) return roleHandoffs[runtimeCore].writerReady;
-#endif
         if (address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest))
             return roleBoxes[runtimeCore].stopRequest;
         if (address==DataflowRoleSnapshotHandoffAddress+offsetof(DataflowRoleSnapshotHandoff,release))
@@ -567,6 +572,11 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
             assert(!scope.ProveRoleHeldCopySources(context->io,0,heldReader,heldWriter,heldCaptured)
                 && !heldReader && !heldWriter && !heldCaptured);
             assert(!scope.ProveRoleCoreRestore(context->io,0,nullptr,nullptr));
+            assert(!scope.ProveRoleRestoreHandoffHeldSafe(context->io,0)
+                && !scope.ProveRoleRestoreCompletionSafe(context->io,0)
+                && !scope.ProveRoleRestoreCompletedAndHeld(context->io,0)
+                && !scope.ProveRoleRestoreHandoffRetrySafe(context->io,0)
+                && !scope.ProveRoleRestoreReleaseReady(context->io,0,nullptr,nullptr));
             const unsigned savedCore=context->io.runtimeCore;
             const bool savedFirmware=context->io.firmwareMatches;
             context->io.runtimeCore=7; context->io.firmwareMatches=true;

@@ -68,6 +68,11 @@ public:
         reader=writer=nullptr;captured=false;return false;
     }
     bool ProveRoleCoreRestore(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
+    bool ProveRoleRestoreHandoffHeldSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleRestoreCompletionSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleRestoreCompletedAndHeld(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleRestoreHandoffRetrySafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleRestoreReleaseReady(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
     bool ProveRoleMemoryReadSafe(PioneerSessionIO& io,unsigned core,unsigned which) const {
         return (which<=PioneerQwen35::DataflowRolePhysicalExtraCode
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY

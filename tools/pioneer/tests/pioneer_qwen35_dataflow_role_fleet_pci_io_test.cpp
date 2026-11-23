@@ -18,6 +18,7 @@ struct FleetPciTestScope {
     bool stacklessSnapshot=false;
     bool heldCopyProof=false,heldCopyCaptured=false,heldCopyDrift=false;
     bool coreRestoreProof=false;
+    bool restoreHeld=false,restoreCompletion=false,restoreCompletedHeld=false,restoreRetry=false,restoreRelease=false;
     const uint32_t* heldReader=nullptr;const uint32_t* heldWriter=nullptr;
     mutable unsigned heldCopyChecks=0;
     mutable unsigned stackDrainChecks=0;
@@ -66,6 +67,13 @@ struct FleetPciTestScope {
     }
     bool ProveRoleCoreRestore(PioneerSessionIO&,unsigned,const uint32_t* reader,const uint32_t* writer) const {
         return coreRestoreProof && reader==heldReader && writer==heldWriter;
+    }
+    bool ProveRoleRestoreHandoffHeldSafe(PioneerSessionIO&,unsigned) const { return restoreHeld; }
+    bool ProveRoleRestoreCompletionSafe(PioneerSessionIO&,unsigned) const { return restoreCompletion; }
+    bool ProveRoleRestoreCompletedAndHeld(PioneerSessionIO&,unsigned) const { return restoreCompletedHeld; }
+    bool ProveRoleRestoreHandoffRetrySafe(PioneerSessionIO&,unsigned) const { return restoreRetry; }
+    bool ProveRoleRestoreReleaseReady(PioneerSessionIO&,unsigned,const uint32_t* reader,const uint32_t* writer) const {
+        return restoreRelease && reader==heldReader && writer==heldWriter;
     }
     bool ProveRoleStackReleaseWriteDrained(PioneerSessionIO&,unsigned) const {
         return stackReleaseDrained && stackDrainChecks++!=stackDrainFailAt;
@@ -171,6 +179,38 @@ int main()
         assert(io.StacklessHeldCopySourceSafe(7,readerWords,writerWords));
         assert(!io.StacklessHeldCopySourceSafe(7,writerWords,readerWords));
         assert(!io.StacklessCoreRestoreReleaseReady(7,readerWords,writerWords));
+        DataflowRoleSnapshotHandoff restoreHandoff{9,9,9};
+        const unsigned initialWrites=context.io.restoreReceiptWrites;
+        const unsigned initialStackCancelWrites=context.io.stackCancelWrites;
+        assert(!io.ReadRestoreHandoff(7,restoreHandoff)
+            && !io.WriteRestoreHandoffWord(7,0,0)
+            && context.io.restoreReceiptWrites==initialWrites);
+        scope.restoreHeld=true;
+        context.io.roleHandoffs[7]={11,22,33};
+        assert(io.ReadRestoreHandoff(7,restoreHandoff)
+            && restoreHandoff.readerReady==11 && restoreHandoff.writerReady==22 && restoreHandoff.release==33);
+        context.io.dropRestoreReceiptWrite=true;
+        assert(!io.WriteRestoreHandoffWord(7,0,0));
+        context.io.dropRestoreReceiptWrite=false;
+        assert(io.WriteRestoreHandoffWord(7,0,0) && io.WriteRestoreHandoffWord(7,1,0)
+            && io.WriteRestoreHandoffWord(7,2,0) && !io.WriteRestoreHandoffWord(7,3,0));
+        assert(!io.RestoreHandoffRetrySafe(7) && !io.RestoreCompletedAndHeld(7));
+        scope.restoreRetry=scope.restoreCompletedHeld=scope.restoreRelease=true;
+        assert(io.RestoreHandoffRetrySafe(7) && io.RestoreCompletedAndHeld(7)
+            && io.StacklessCoreRestoreReleaseReady(7,readerWords,writerWords));
+        context.io.roleHandoffs[7].readerReady=1;
+        assert(!io.StacklessCoreRestoreReleaseReady(7,readerWords,writerWords));
+        context.io.handoffChangeAt=context.io.handoffReads+1;
+        assert(!io.ReadRestoreHandoff(7,restoreHandoff));
+        context.io.handoffChangeAt=UINT32_MAX;
+        context.io.reset=0x7000;scope.restoreCompletion=true;
+        context.io.roleHandoffs[7]={PIONEER_Q35_ROLE_RESTORE_READER_DONE,PIONEER_Q35_ROLE_RESTORE_WRITER_DONE,0};
+        assert(!io.RestoreHandoffHeldSafe(7) && io.RestoreCompletionSafe(7)
+            && io.ReadRestoreHandoff(7,restoreHandoff)
+            && restoreHandoff.readerReady==PIONEER_Q35_ROLE_RESTORE_READER_DONE);
+        context.io.reset=0x47800;scope.restoreHeld=scope.restoreCompletion=scope.restoreCompletedHeld=false;
+        scope.restoreRetry=scope.restoreRelease=false;
+        context.io.stackCancelWrites=initialStackCancelWrites;
         assert(!io.StacklessCoreRestoreProven(7,readerWords,writerWords));
         scope.coreRestoreProof=true;
         assert(io.StacklessCoreRestoreProven(7,readerWords,writerWords)

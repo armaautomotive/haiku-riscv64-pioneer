@@ -233,6 +233,13 @@ public:
         reader=writer=nullptr;captured=false;return false;
     }
     bool ProveRoleCoreRestore(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
+    // These require lifetime-spanning ownership and drain guarantees, not
+    // merely sampled reset/route/receipt values. No live proof exists yet.
+    bool ProveRoleRestoreHandoffHeldSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleRestoreCompletionSafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleRestoreCompletedAndHeld(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleRestoreHandoffRetrySafe(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleRestoreReleaseReady(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
     // Must fence this tile's particular attempted stack-release write and
     // exclude all later writes to the handoff for the recovery transaction.
     bool ProveRoleStackReleaseWriteDrained(PioneerSessionIO&,unsigned) const { return false; }
