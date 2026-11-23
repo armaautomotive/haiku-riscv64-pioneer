@@ -128,9 +128,13 @@ int main()
         const auto ramBefore=io->roles.ram;
         const unsigned readsPerTile=DataflowRoleCount*(DataflowRoleLocalRamWords/64)*3;
         io->roles.failCopyCall=3*readsPerTile+2;
-        assert(owner->Install(image,*io)==DataflowServiceStartFailed && io->roleStarts==DataflowCoreCount);
+        assert(owner->Install(image,*io)==DataflowServiceStartFailed && io->roleStarts==4);
         assert(io->roleOwner.RestorationRequired() && io->roleOwner.OriginalRamWords(0,DataflowRoleReader));
         assert(!io->roleOwner.OriginalRamWords(3,DataflowRoleReader) && !io->roles.privateRamReads);
+        for (unsigned core=0;core<DataflowCoreCount;core++) {
+            assert(io->roleStarted[core]==(core<4));
+            assert(io->roleOwner.StacklessCopiesCaptured(core)==(core<3));
+        }
         io->roles.failCopyCall=UINT32_MAX;
         assert(owner->Close(*io)==DataflowServiceClosed && io->resumeCount==1);
         assert(io->roles.ram==ramBefore && io->roles.resetDisable==disableBefore);
@@ -141,6 +145,8 @@ int main()
         const auto disableBefore=io->roles.resetDisable;
         io->failStartCore=37;
         assert(owner->Install(image,*io)==DataflowServiceStartFailed && io->roleStarts==37);
+        for (unsigned core=0;core<DataflowCoreCount;core++)
+            assert(io->roleOwner.StacklessCopiesCaptured(core)==(core<37));
         assert(owner->Close(*io)==DataflowServiceClosed && io->resumeCount==1);
         assert(io->roles.resetDisable==disableBefore);
     }

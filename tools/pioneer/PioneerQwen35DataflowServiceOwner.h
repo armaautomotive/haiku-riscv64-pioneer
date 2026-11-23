@@ -503,18 +503,18 @@ public:
 				fPhase=PhaseFaulted;
 				return DataflowServiceStartFailed;
 			}
-		}
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
-		// Both role shims stay stackless until the host has verified their
-		// copies against retained RAM snapshots. Consume each handoff once.
-		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			// Retain this tile's private RAM before releasing another tile.
+			// A partial launch can then leave at most the current tile
+			// released without a completed stackless snapshot. The shims
+			// remain stackless until the one-shot handoff succeeds.
 			if (!io.SharedPrepareRoleStacks(core)) {
 				DataflowWorkerSnapshot snapshot{};
 				SetDiagnostic(DataflowServiceDiagnosticWorkerProof,core,snapshot);
 				fPhase=PhaseFaulted; return DataflowServiceStartFailed;
 			}
-		}
 #endif
+		}
 		// Drain startup state from the whole fleet before returning a failure.
 		// A core can publish an early startup fault while later cores are still
 		// entering the service image. Stopping the owner scan at the first fault

@@ -347,7 +347,9 @@ struct MockDataflowIO {
 		return true;
 	}
 	bool SharedStartCore(unsigned core) {
-		if (!roleArmed || core>=DataflowCoreCount || roleStarted[core] || !StartCore(core)) return false;
+		if (!roleArmed || core>=DataflowCoreCount || roleStarted[core]
+			|| (core && roleHandoff[core-1].release!=DataflowRoleSnapshotRelease)
+			|| !StartCore(core)) return false;
 		roleHandoff[core].readerReady=DataflowRoleSnapshotReaderReady;
 		roleHandoff[core].writerReady=DataflowRoleSnapshotWriterReady;
 		roleStarted[core]=true; ++roleStarts; return true;

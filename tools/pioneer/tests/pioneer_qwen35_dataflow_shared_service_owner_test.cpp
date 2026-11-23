@@ -92,9 +92,10 @@ int main()
         auto owner=std::make_unique<DataflowServiceOwner>();
         io->failStackHandoffCore=47;
         assert(owner->Install(image,*io)==DataflowServiceStartFailed && owner->Faulted());
-        assert(io->roleStarts==DataflowCoreCount && !io->resumeCount);
+        assert(io->roleStarts==48 && !io->resumeCount);
         for (unsigned core=0;core<DataflowCoreCount;core++)
-            assert(io->roleHandoff[core].release==(core<47?DataflowRoleSnapshotRelease:0));
+            assert(io->roleHandoff[core].release==(core<47?DataflowRoleSnapshotRelease:0)
+                && io->roleStarted[core]==(core<=47));
         assert(owner->Close(*io)==DataflowServiceClosed); // simulated recovery only
     }
     {
