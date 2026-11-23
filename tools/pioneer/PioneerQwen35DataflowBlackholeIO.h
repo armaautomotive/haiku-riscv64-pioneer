@@ -334,6 +334,7 @@ class DataflowBlackholeReaderOps {
 	}
 
 public:
+	using WeightReadTicket=DataflowNocReadTicket;
 	bool Bind(const DataflowCoreInvocation& program)
 	{
 		fProgram=nullptr;

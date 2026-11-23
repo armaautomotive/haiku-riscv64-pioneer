@@ -12,7 +12,19 @@ template<class Ops>
 bool PioneerQwen35SharedActivationReader(const DataflowCoreInvocation& program,
     DataflowQueueView& weights,DataflowQueueView& ready,uint8_t* activationCache,Ops& ops)
 {
+    // BeginWeightRead fills the command/counter fields before setting active.
+    // Initialize only that field so the freestanding role needs no memset.
+    typename Ops::WeightReadTicket firstRead;
+    firstRead.active=0;
+    bool firstReadPending=false;
     auto fail=[&]() {
+        // If packing or publication fails after issuing the prefetch, try to
+        // drain it once. A failed drain remains a retained NoC fault; never
+        // publish or reuse the page on that path.
+        if (firstReadPending) {
+            firstReadPending=false;
+            (void)ops.CompleteWeightRead(firstRead);
+        }
         DataflowQueueFail(weights,DataflowFailureReader);
         DataflowQueueFail(ready,DataflowFailureReader);
         return false;
@@ -21,18 +33,31 @@ bool PioneerQwen35SharedActivationReader(const DataflowCoreInvocation& program,
         || !DataflowQueueValid(ready) || !activationCache || !ops.Bind(program)) return fail();
     if (!program.assignment.active) return true;
     if (!ops.ReadActivation(program.input,program.inputRows,activationCache,
-            program.inputRows*sizeof(float))
-        || !DataflowPackActivationCache(program,ready,activationCache,ops)) return fail();
+            program.inputRows*sizeof(float))) return fail();
+    const unsigned tileBytes=program.circularBuffer[0].pageBytes;
+    const auto& firstWeight=program.assignment.weight[0];
+    uint32_t firstTicket=0;
+    if (!DataflowQueueReserveBack(weights,firstTicket) || firstTicket!=0) return fail();
+    uint8_t* const firstPage=DataflowQueueWritePage(weights,firstTicket);
+    if (!firstPage || tileBytes>firstWeight.bytes) return fail();
+    // Record the possible transfer before invoking the transport. If an
+    // implementation reports failure after issuing it, fail() still attempts
+    // the one allowed drain before returning the retained fault.
+    firstReadPending=true;
+    if (!ops.BeginWeightRead(firstWeight.bank,firstWeight.address,firstPage,tileBytes,firstRead)) return fail();
+    if (!DataflowPackActivationCache(program,ready,activationCache,ops)) return fail();
     uint32_t readyTicket=0;
     if (!DataflowQueueReserveBack(ready,readyTicket) || readyTicket!=0
         || !DataflowQueuePublishBack(ready,readyTicket)) return fail();
-    const unsigned tileBytes=program.circularBuffer[0].pageBytes;
+    firstReadPending=false; // Complete is attempted once, even if its result is uncertain.
+    if (!ops.CompleteWeightRead(firstRead) || !DataflowQueuePublishBack(weights,firstTicket)) return fail();
     for (unsigned segmentIndex=0;segmentIndex<program.assignment.segmentCount;segmentIndex++) {
         const auto& segment=program.assignment.weight[segmentIndex];
         for (unsigned group=0;group<segment.groups;group++) {
             const uint64_t groupBytes=uint64_t(16)*program.weights.rowBytes;
             const uint64_t groupOffset=uint64_t(group)*groupBytes;
             for (unsigned block=0;block<program.blocks;block++) {
+                if (!segmentIndex && !group && !block) continue; // prefetched above
                 uint32_t ticket=0;
                 if (!DataflowQueueReserveBack(weights,ticket)) return fail();
                 uint8_t* page=DataflowQueueWritePage(weights,ticket);
