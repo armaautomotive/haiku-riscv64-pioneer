@@ -2997,7 +2997,11 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 #endif
 		void* view=NULL;
 		q38PanelArea=map_physical_memory("P100A exact local Q38 panel probe saved L1",profile.bar0_host_start+0x1906e000,
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+			TT_Q38_PANEL_VIEW_BYTES,B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA,&view);
+#else
 			TT_Q38_PANEL_VIEW_BYTES,B_ANY_KERNEL_ADDRESS,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
+#endif
 		if (q38PanelArea<B_OK) return false;
 		q38PanelView=(volatile uint32*)view; return true;
 	}

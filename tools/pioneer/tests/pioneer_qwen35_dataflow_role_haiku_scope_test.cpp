@@ -234,8 +234,8 @@ status_t release_sem(int32_t lock) {
 }
 area_id map_physical_memory(const char*,phys_addr_t physical,size_t bytes,uint32_t addressMode,
     uint32_t flags,void** output) {
-    assert(gLocked && addressMode==B_ANY_KERNEL_ADDRESS && (flags&B_KERNEL_READ_AREA)
-        && (flags&B_UNCACHED_MEMORY) && bool(flags&B_KERNEL_WRITE_AREA)==gAllowWrite);
+    assert(gLocked && addressMode==(B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY) && (flags&B_KERNEL_READ_AREA)
+        && !(flags&B_UNCACHED_MEMORY) && bool(flags&B_KERNEL_WRITE_AREA)==gAllowWrite);
     const unsigned index=gMapCalls++;
     DataflowRolePhysicalWindow plan{}; assert(DataflowRolePhysicalWindowPlan(index,plan));
     assert(physical==0x4900000000ULL+plan.offset && bytes==plan.bytes);

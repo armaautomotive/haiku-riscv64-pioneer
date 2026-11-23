@@ -23,8 +23,9 @@ area_id map_physical_memory(const char*,phys_addr_t physical,size_t bytes,uint32
         assert(DataflowRolePhysicalWindowPlan(i,plan));
         if (physical==BarStart+plan.offset) break;
     }
-    assert(i<=DataflowRolePhysicalControl && bytes==plan.bytes && addressMode==B_ANY_KERNEL_ADDRESS);
-    assert((flags&B_KERNEL_READ_AREA) && (flags&B_KERNEL_WRITE_AREA) && (flags&B_UNCACHED_MEMORY));
+    assert(i<=DataflowRolePhysicalControl && bytes==plan.bytes
+        && addressMode==(B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY));
+    assert((flags&B_KERNEL_READ_AREA) && (flags&B_KERNEL_WRITE_AREA) && !(flags&B_UNCACHED_MEMORY));
     if (int(i)==failMap) return -1;
     assert(!mapped[i]);
     if (memory[i].empty()) memory[i].assign(bytes/4,0);

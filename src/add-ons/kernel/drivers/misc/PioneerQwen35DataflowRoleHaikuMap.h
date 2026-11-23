@@ -13,8 +13,8 @@ struct PioneerQwen35RoleHaikuMap {
         if (uint64_t(phys_addr_t(physical))!=physical || !bytes) return false;
         void* view=NULL;
         const area_id result=map_physical_memory("P100A Qwen35 role read-only witness",
-            phys_addr_t(physical),bytes,B_ANY_KERNEL_ADDRESS,
-            B_KERNEL_READ_AREA|B_UNCACHED_MEMORY,&view);
+            phys_addr_t(physical),bytes,B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,
+            B_KERNEL_READ_AREA,&view);
         area=int32_t(result);
         output=static_cast<const volatile uint32_t*>(view);
         return result>=B_OK && view;
@@ -29,8 +29,8 @@ struct PioneerQwen35RoleHaikuMap {
         if (uint64_t(phys_addr_t(physical))!=physical || !bytes) return false;
         void* view=NULL;
         const area_id result=map_physical_memory("P100A Qwen35 role write witness",
-            phys_addr_t(physical),bytes,B_ANY_KERNEL_ADDRESS,
-            B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
+            phys_addr_t(physical),bytes,B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,
+            B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA,&view);
         area=int32_t(result); output=static_cast<volatile uint32_t*>(view);
         return result>=B_OK && view;
     }
