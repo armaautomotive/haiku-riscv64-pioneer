@@ -40,7 +40,8 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
             // reprogram any route if the whole-fleet proof is unavailable.
             && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)
             && fIO.SelectRuntimeCore(core) && fIO.MapQ38Panel() && fIO.DataflowPanelMappingStable()
-            && fGuard.ProveSelectedRoute(core);
+            && fGuard.ProveSelectedRoute(core)
+            && PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; });
     }
     bool ReadWords(unsigned core,unsigned which,unsigned offset,uint32_t* output,unsigned bytes) {
         using namespace PioneerQwen35;
@@ -134,6 +135,7 @@ public:
             || !fScope.ProveExclusiveRewrite(fIO) || !fScope.ProveRoleReleaseSafe(fIO,core)
             || !fIO.SelectRuntimeCore(core) || !fIO.MapQ38Panel()
             || !fIO.DataflowPanelMappingStable() || !fGuard.ProveSelectedRoute(core)
+            || !PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; })
             || fIO.ResetRead()!=0x47800 || fIO.ResetRead()!=0x47800) return false;
         uint32_t first=0,second=0;
         if (!fViews.Read(core,DataflowRolePhysicalControl,0x224,first,fGuard)
@@ -156,7 +158,8 @@ public:
         if (core>=PioneerQwen35::DataflowBarrierWorkers || !fScope.ProveExclusiveRewrite(fIO)
             || !fScope.ProveRoleReleaseWriteDrained(fIO,core) || !fIO.SelectRuntimeCore(core)
             || !fIO.MapQ38Panel() || !fIO.DataflowPanelMappingStable()
-            || !fGuard.ProveSelectedRoute(core)) return false;
+            || !fGuard.ProveSelectedRoute(core)
+            || !PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; })) return false;
         if (fIO.ResetRead()!=0x47800) return false;
         fIO.Pause();
         return fIO.ResetRead()==0x47800 && fGuard.ProveSelectedRoute(core)
@@ -262,7 +265,8 @@ public:
     bool HoldObserved(unsigned core) {
         if (core>=PioneerQwen35::DataflowBarrierWorkers || !fScope.ProveExclusiveRewrite(fIO)
             || !fScope.ProveRoleHeldAfterAttempt(fIO,core) || !fIO.SelectRuntimeCore(core)
-            || !fIO.MapQ38Panel() || !fIO.DataflowPanelMappingStable() || !fGuard.ProveSelectedRoute(core)) return false;
+            || !fIO.MapQ38Panel() || !fIO.DataflowPanelMappingStable() || !fGuard.ProveSelectedRoute(core)
+            || !PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; })) return false;
         return fIO.ResetRead()==0x47800 && fIO.ResetRead()==0x47800
             && fScope.ProveRoleHeldAfterAttempt(fIO,core) && fGuard.ProveSelectedRoute(core);
     }

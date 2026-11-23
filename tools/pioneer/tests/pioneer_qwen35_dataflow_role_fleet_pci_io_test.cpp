@@ -145,6 +145,21 @@ int main()
     assert(!io.ReleaseCore(8,attempted) && !attempted && context.io.runtimeCore==7
         && !context.io.sharedResetWrites);
     scope.release=true;
+    scope.releaseDrained=true; scope.heldAfter=true;
+    for (unsigned noc=0;noc<2;noc++) {
+        context.io.nocConfig[noc]=1U<<12;
+        const unsigned previousReads=context.io.resetReads;
+        const unsigned previousWrites=context.io.sharedResetWrites;
+        uint32_t boot=0;
+        assert(!io.ReadBoot(8,DataflowRoleBriscBootAddress,boot));
+        assert(!io.DefaultBootRouting(8));
+        assert(!io.ReleaseCore(8,attempted) && !attempted);
+        assert(!io.UnconfirmedReleaseHeld(8));
+        assert(!io.HoldObserved(8));
+        assert(context.io.resetReads==previousReads && context.io.sharedResetWrites==previousWrites);
+        context.io.nocConfig[noc]=0;
+    }
+    scope.releaseDrained=false; scope.heldAfter=false;
     gMemory[DataflowRolePhysicalControl][0x224/4]&=~uint32_t(DataflowRolePreserveResetMask);
     assert(!io.ReleaseCore(8,attempted) && !attempted && !context.io.sharedResetWrites);
     gMemory[DataflowRolePhysicalControl][0x224/4]|=DataflowRolePreserveResetMask;
