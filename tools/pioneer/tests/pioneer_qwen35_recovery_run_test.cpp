@@ -23,6 +23,8 @@ static unsigned failStage=0,abortCount=0,completeCount=0,contextDeleted=0,cookie
 static bool failPayloadRead=false,failPayloadRestore=false,failFirmwareQueue=false,failDbi=false;
 static bool ticketPending=false,invalidTicket=false,guardV2Missing=false;
 static unsigned validateCalls=0,invalidateOnValidate=0;
+static bool resetTimeout=false,resumeResetTimeout=false;
+static unsigned resetResumeWaits=0;
 #ifdef TEST_GRAPH_RECOVERY
 static bool failGraphRelease=false;
 static bool failSharedRoleRelease=false;
@@ -82,7 +84,10 @@ struct PioneerPostResetPciResult {uint32 stage=0;};
 struct PioneerPciePayloadSnapshot {uint32 capability=0x70,version=2,supported=2,control=0x20;bool valid=true;};
 constexpr uint32 PIONEER_RECOVERY_DBI_MPS_MASK=0xe0;
 struct PioneerRecoveryDbiSnapshot {uint32 mps=0x20;bool valid=true;};
-struct BlackholeAsicResetResult {uint32 stage=0;};
+enum : uint32 { BLACKHOLE_ASIC_RESET_COMPLETE=5,BLACKHOLE_ASIC_RESET_TIMEOUT=6 };
+struct BlackholeAsicResetResult {
+	uint32 stage=0,polls=0,command_before=0,marker_after=0,trigger_target=0,trigger_control=0;
+};
 struct FakeProfile {};
 struct PioneerSessionIO {
 	bool postResetDisposeComplete=false;
@@ -98,7 +103,22 @@ static bool PioneerPreResetDisableMaster(PioneerSessionIO&) { return Step(PIONEE
 static bool PioneerPciePayloadRead(PioneerSessionIO&,PioneerPciePayloadSnapshot&) {return !failPayloadRead;}
 static bool PioneerPciePayloadRestore(PioneerSessionIO&,const PioneerPciePayloadSnapshot&) {return !failPayloadRestore;}
 template<class IO> static bool BlackholeAsicReset(IO&,unsigned,BlackholeAsicResetResult& r) {
-	r.stage=7;return Step(PIONEER_RECOVERY_STAGE_ASIC_RESET);
+	r.stage=7;
+	if (!Step(PIONEER_RECOVERY_STAGE_ASIC_RESET)) return false;
+	r.trigger_target=1;r.trigger_control=0x11;
+	r.stage=resetTimeout?BLACKHOLE_ASIC_RESET_TIMEOUT:BLACKHOLE_ASIC_RESET_COMPLETE;
+	return !resetTimeout;
+}
+[[maybe_unused]] static bool BlackholeAsicResetResumable(const BlackholeAsicResetResult& r) {
+	return (r.stage==BLACKHOLE_ASIC_RESET_TIMEOUT || r.stage==BLACKHOLE_ASIC_RESET_COMPLETE)
+		&& r.trigger_target==1 && r.trigger_control==0x11;
+}
+template<class IO> static bool BlackholeAsicResetResumeWait(IO&,unsigned,BlackholeAsicResetResult& r) {
+	++resetResumeWaits;
+	if (!BlackholeAsicResetResumable(r)) return false;
+	if (r.stage==BLACKHOLE_ASIC_RESET_COMPLETE) return true;
+	if (resumeResetTimeout) return false;
+	r.stage=BLACKHOLE_ASIC_RESET_COMPLETE;return true;
 }
 static bool PioneerPostResetPciRestore(PioneerSessionIO&,PioneerPostResetPciResult& r) {
 	r.stage=4;return Step(PIONEER_RECOVERY_STAGE_PCI_RESTORE);
@@ -123,6 +143,7 @@ struct PioneerStoreContext {
 	PioneerPostResetMapping* recoveryMapping=nullptr;bool recoveryAttempted=false,dispatchOwnerRetained=true;
 	PioneerDriverRecoveryProof recoveryFinishProof{};uint64 recoveryFinishTicket=0;bool recoveryFinishPending=false;
 	PioneerPciePayloadSnapshot recoveryPayload{};bool recoveryFinishNeedsAudit=false;
+	BlackholeAsicResetResult recoveryResetResult{};uint64 recoveryResetTicket=0;bool recoveryResetPending=false;
 #ifdef TEST_GRAPH_RECOVERY
 	FakeGraphOwner graphOwner;FakeGraphOwner* qwen35GraphOwner=&graphOwner;
 	FakeSharedRoleOwner sharedRoleOwner;FakeSharedRoleOwner* qwen35SharedRoleBinding=&sharedRoleOwner;
@@ -173,6 +194,7 @@ static void Setup() {
 	failPayloadRead=failPayloadRestore=failFirmwareQueue=failDbi=false;
 	ticketPending=invalidTicket=guardV2Missing=false;
 	validateCalls=invalidateOnValidate=0;
+	resetTimeout=resumeResetTimeout=false;resetResumeWaits=0;
 #ifdef TEST_GRAPH_RECOVERY
 	failGraphRelease=failSharedRoleRelease=graphReleased=false;graphReleases=sharedRoleReleases=0;
 #endif
@@ -194,7 +216,26 @@ int main(){
 		&& !sRuntimeOwner->context->recoveryAttempted && sColdRecoveryRequired
 		&& !ticketPending && !abortCount && !completeCount);
 	Cleanup();
-	Setup();auto r=Request();assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK
+	Setup();resetTimeout=true;auto r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.stage==PIONEER_RECOVERY_STAGE_ASIC_RESET && r.detail==BLACKHOLE_ASIC_RESET_TIMEOUT
+		&& sRuntimeOwner && sRuntimeOwner->context->recoveryResetPending
+		&& sRuntimeOwner->context->recoveryMapping && ticketPending && !abortCount && sColdRecoveryRequired);
+	resumeResetTimeout=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.stage==PIONEER_RECOVERY_STAGE_ASIC_RESET && resetResumeWaits==1
+		&& sRuntimeOwner && ticketPending && !abortCount);
+	resumeResetTimeout=false;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && !sColdRecoveryRequired && resetResumeWaits==2
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
+	Setup();resetTimeout=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY);
+	invalidTicket=true;const auto resetTrace=trace;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& trace==resetTrace && !resetResumeWaits && sRuntimeOwner && sColdRecoveryRequired && ticketPending);
+	Cleanup();
+	Setup();r=Request();assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK
 		&& r.operation_status==B_OK && r.stage==PIONEER_RECOVERY_STAGE_COMPLETE && r.new_generation==4
 		&& !sColdRecoveryRequired && !sRuntimeOwner && contextDeleted==1 && cookieDeleted==1 && !abortCount && completeCount==1);
 #ifdef TEST_GRAPH_RECOVERY
@@ -236,7 +277,7 @@ int main(){
 		&& trace==traceBefore && sRuntimeOwner && sColdRecoveryRequired && ticketPending
 		&& sharedRoleReleases==1 && !graphReleases && !completeCount);
 	Cleanup();
-	Setup();invalidateOnValidate=2;r=Request();
+	Setup();invalidateOnValidate=3;r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
 		&& sRuntimeOwner && sColdRecoveryRequired && ticketPending && sharedRoleReleases==1
 		&& !sRuntimeOwner->context->qwen35SharedRoleBinding && !graphReleases && !completeCount);

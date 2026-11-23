@@ -83,6 +83,25 @@ static void TestTimeoutDoesNotRetryOrClearMarker()
 	assert(result.stage==BLACKHOLE_ASIC_RESET_TIMEOUT && result.polls==4);
 	assert(result.marker_after==0x0442 && pci.command==0x0442);
 	assert(pci.delays==4 && pci.writes.size()==3);
+	pci.clearMarkerAfter=6;
+	assert(BlackholeAsicResetResumeWait(pci,4,result));
+	assert(result.stage==BLACKHOLE_ASIC_RESET_COMPLETE && result.polls==6);
+	assert(pci.delays==6 && pci.writes.size()==3);
+}
+
+static void TestResumeRefusesInvalidOrUnsafeEvidence()
+{
+	BlackholeAsicResetResult result{};FakePci pci;
+	assert(!BlackholeAsicResetResumeWait(pci,4,result) && pci.writes.empty());
+	assert(!BlackholeAsicReset(pci,1,result) && result.stage==BLACKHOLE_ASIC_RESET_TIMEOUT);
+	auto invalid=result;invalid.trigger_control=0;
+	assert(!BlackholeAsicResetResumeWait(pci,4,invalid) && pci.writes.size()==3);
+	pci.command&=~0x0040u;pci.bridgeCommand|=0x0004u;
+	assert(!BlackholeAsicResetResumeWait(pci,1,result) && result.stage==BLACKHOLE_ASIC_RESET_TIMEOUT);
+	pci.bridgeCommand&=~0x0004u;pci.rootVendor=0xffffffff;
+	assert(!BlackholeAsicResetResumeWait(pci,1,result) && result.stage==BLACKHOLE_ASIC_RESET_TIMEOUT);
+	pci.rootVendor=0x20421e30;
+	assert(BlackholeAsicResetResumeWait(pci,1,result) && pci.writes.size()==3);
 }
 
 int main()
@@ -90,5 +109,6 @@ int main()
 	TestOneResetSequence();
 	TestFailClosedPreflight();
 	TestTimeoutDoesNotRetryOrClearMarker();
+	TestResumeRefusesInvalidOrUnsafeEvidence();
 	puts("PASS Blackhole ASIC reset: exact three-write order, bus-master and identity gates, bounded marker wait, no retry or marker clear;NO PCI/MMIO/reset/native qualification");
 }

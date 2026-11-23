@@ -23,11 +23,50 @@ struct BlackholeAsicResetResult {
 	uint32_t trigger_control=0;
 };
 
+inline bool BlackholeAsicResetResumable(const BlackholeAsicResetResult& result)
+{
+	return (result.stage==BLACKHOLE_ASIC_RESET_WAIT || result.stage==BLACKHOLE_ASIC_RESET_TIMEOUT
+			|| result.stage==BLACKHOLE_ASIC_RESET_COMPLETE)
+		&& !(result.command_before&0x0044) && result.command_before<=0xffff
+		&& result.trigger_target==1 && result.trigger_control==0x11;
+}
+
+// Poll only a previously issued reset. The caller must retain the exact
+// kernel-owned result and an independently validated recovery ticket; this
+// routine neither proves that ownership nor writes or clears the marker.
+// A timeout can be polled again without issuing another reset.
+template<class IO>
+bool
+BlackholeAsicResetResumeWait(IO& io,unsigned pollLimit,BlackholeAsicResetResult& result)
+{
+	if (!pollLimit || !BlackholeAsicResetResumable(result)) return false;
+	if (result.stage==BLACKHOLE_ASIC_RESET_COMPLETE) return true;
+	result.stage=BLACKHOLE_ASIC_RESET_WAIT;
+	for (unsigned poll=0;poll<pollLimit;poll++) {
+		io.RecoveryDelay();
+		const uint32_t vendor=io.CardRead(0,4);
+		const uint32_t marker=io.CardRead(4,2);
+		const uint32_t rootVendor=io.RootRead(0,4);
+		const uint32_t rootClass=io.RootRead(8,4);
+		const uint32_t bridgeCommand=io.RootRead(4,2);
+		if (result.polls!=UINT32_MAX) ++result.polls;
+		result.marker_after=marker;
+		if (vendor==0xb1401e52 && rootVendor==0x20421e30
+			&& (rootClass>>8)==0x060400 && marker!=UINT32_MAX
+			&& bridgeCommand!=UINT32_MAX && !(marker&0x0044) && !(bridgeCommand&0x0004)) {
+			result.stage=BLACKHOLE_ASIC_RESET_COMPLETE;
+			return true;
+		}
+	}
+	result.stage=BLACKHOLE_ASIC_RESET_TIMEOUT;
+	return false;
+}
+
 // Blackhole ASIC reset follows the three PCI config writes used by the
 // Tenstorrent kernel driver: set PCI_COMMAND_PARITY as a reset marker, then
 // program the interface timer target and force its interrupt. Callers must
-// serialize the operation and keep bus mastering disabled. A timeout is
-// terminal for this attempt; the helper never retries or clears the marker.
+// serialize the operation and keep bus mastering disabled. Never reissue a
+// reset after an uncertain write; a completed trigger may only be polled.
 template<class IO>
 bool
 BlackholeAsicReset(IO& io,unsigned pollLimit,BlackholeAsicResetResult& result)
@@ -55,20 +94,7 @@ BlackholeAsicReset(IO& io,unsigned pollLimit,BlackholeAsicResetResult& result)
 	io.CardWrite(0x930,4,0x11);
 	result.trigger_control=0x11;
 	result.stage=BLACKHOLE_ASIC_RESET_WAIT;
-	for (unsigned poll=0;poll<pollLimit;poll++) {
-		io.RecoveryDelay();
-		const uint32_t vendor=io.CardRead(0,4);
-		const uint32_t marker=io.CardRead(4,2);
-		result.polls=poll+1;
-		result.marker_after=marker;
-		if (vendor==0xb1401e52 && marker!=UINT32_MAX
-			&& (marker&0x0040)==0) {
-			result.stage=BLACKHOLE_ASIC_RESET_COMPLETE;
-			return true;
-		}
-	}
-	result.stage=BLACKHOLE_ASIC_RESET_TIMEOUT;
-	return false;
+	return BlackholeAsicResetResumeWait(io,pollLimit,result);
 }
 
 #endif
