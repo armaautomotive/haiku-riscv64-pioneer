@@ -10,6 +10,8 @@ namespace PioneerQwen35 {
 class DataflowRoleFleetCodeOwner {
     enum Phase { Empty, Captured, Faulted, Staged, Restored, Unavailable };
     Phase fPhase=Empty;
+    // Sentinel means the ordinary all-core staging path.
+    unsigned fStagedCore=DataflowBarrierWorkers;
     DataflowRoleCodeOwner fCore[DataflowBarrierWorkers];
 
     template<class IO> static bool AllHeld(IO& io) {
@@ -64,9 +66,25 @@ public:
         if (fPhase!=Staged) return false;
         if (!AllHeld(io)) { fPhase=Faulted; return false; }
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)
-            if (!fCore[core].VerifyStaged(io)) { fPhase=Faulted; return false; }
+            if (!(fStagedCore==DataflowBarrierWorkers || core==fStagedCore
+                    ?fCore[core].VerifyStaged(io):fCore[core].VerifyOriginal(io)))
+                { fPhase=Faulted; return false; }
         if (!AllHeld(io)) { fPhase=Faulted; return false; }
         return true;
+    }
+    // Restricted single-core qualification still captures and audits every
+    // tile, so a misrouted write cannot silently damage an untouched worker.
+    template<class IO> bool StageOne(unsigned core,const uint32_t* reader,unsigned readerWords,
+        const uint32_t* writer,unsigned writerWords,IO& io) {
+        if (fPhase!=Captured || core>=DataflowBarrierWorkers || !reader || !readerWords
+            || !writer || !writerWords) return false;
+        fPhase=Faulted;fStagedCore=core;
+        if (!AllHeld(io) || !fCore[core].Stage(true,reader,readerWords,io)
+            || !fCore[core].Stage(false,writer,writerWords,io)) return false;
+        for (unsigned i=0;i<DataflowBarrierWorkers;i++)
+            if (!(i==core?fCore[i].VerifyStaged(io):fCore[i].VerifyOriginal(io))) return false;
+        if (!AllHeld(io)) return false;
+        fPhase=Staged;return true;
     }
     template<class IO> bool VerifyOriginalAll(IO& io) {
         if (fPhase!=Captured && fPhase!=Restored) return false;

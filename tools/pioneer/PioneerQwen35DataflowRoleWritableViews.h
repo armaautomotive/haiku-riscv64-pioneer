@@ -27,6 +27,11 @@ public:
     DataflowRoleWritableViews& operator=(const DataflowRoleWritableViews&)=delete;
     bool Opened() const { return fOpen; }
     bool HasMappings() const { for (auto area:fArea) if (area>=0) return true; return false; }
+    // Mapping metadata only; it neither reads the device nor grants access.
+    bool ReadViewBound(unsigned which,unsigned offset) const {
+        return fOpen && which<Count && fArea[which]>=0 && fView[which]
+            && !(offset&3) && offset<=fBytes[which] && 4<=fBytes[which]-offset;
+    }
     // Sticky for this mapping lifetime: a failed post-store check may leave a
     // posted write in flight. A later successful write cannot prove it drained.
     bool ImageWritesConfirmed() const { return !fImageWriteUnconfirmed; }

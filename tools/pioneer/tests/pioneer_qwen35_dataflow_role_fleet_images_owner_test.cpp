@@ -81,6 +81,31 @@ int main()
         ImagesIO io; const auto code=io.code,boots=io.boots,shims=io.shims;
         DataflowRoleFleetImagesOwner owner;
         assert(owner.CaptureAll(storage.data(),storage.size(),io));
+        assert(!owner.StageOne(DataflowBarrierWorkers,codeA,3,codeB,2,shimA,2,shimB,2,io));
+        assert(!io.writes);
+        assert(owner.StageOne(3,codeA,3,codeB,2,shimA,2,shimB,2,io));
+        assert(owner.StagedAndVerified() && owner.VerifyStagedAll(io) && io.writes<20);
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) if (core!=3) {
+            assert(io.boots[core*2]==boots[core*2] && io.boots[core*2+1]==boots[core*2+1]);
+            for (unsigned i=0;i<DataflowRoleCodeOwner::RequiredWords();i++)
+                assert(io.code[core*ImagesIO::PerCore+i]==code[core*ImagesIO::PerCore+i]);
+        }
+        assert(owner.RestoreAll(io) && owner.ImagesRestored());
+        assert(io.code==code && io.boots==boots && io.shims==shims);
+    }
+    {
+        ImagesIO io; const auto code=io.code,boots=io.boots,shims=io.shims;
+        DataflowRoleFleetImagesOwner owner;
+        assert(owner.CaptureAll(storage.data(),storage.size(),io));
+        io.corruptCodeOnBoot=true; // a core-3 write silently damages core 119
+        assert(!owner.StageOne(3,codeA,3,codeB,2,shimA,2,shimB,2,io));
+        assert(owner.RestorationRequired() && owner.RestoreAll(io) && owner.ImagesRestored());
+        assert(io.code==code && io.boots==boots && io.shims==shims);
+    }
+    {
+        ImagesIO io; const auto code=io.code,boots=io.boots,shims=io.shims;
+        DataflowRoleFleetImagesOwner owner;
+        assert(owner.CaptureAll(storage.data(),storage.size(),io));
         assert(owner.StageAll(codeA,3,codeB,2,shimA,2,shimB,2,io));
         assert(owner.StagedAndVerified());
         io.held=false; const unsigned writes=io.writes;

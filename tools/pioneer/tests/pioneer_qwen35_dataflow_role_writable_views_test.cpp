@@ -76,6 +76,9 @@ int main()
         Reset(); Guard guard; Platform platform; platform.guard=&guard;
         DataflowRoleWritableViews<Platform> views(platform);
         assert(views.Open(BarStart,BarEnd,guard) && maps==DataflowRolePhysicalControl+1);
+        assert(views.ReadViewBound(DataflowRolePhysicalBriscRam,0)
+            && !views.ReadViewBound(DataflowRolePhysicalBriscRam,DataflowRoleLocalRamBytes)
+            && !views.ReadViewBound(DataflowRolePhysicalPc,0));
         uint32_t value=99,words[]={0x11223344,0xaabbccdd};
         const unsigned extraTail=DataflowRoleExtraL1Limit-DataflowRoleExtraL1Address-8;
         assert(views.Read(3,DataflowRolePhysicalBriscBoot,0,value,guard) && !value);

@@ -14,7 +14,8 @@ namespace PioneerQwen35 {
 // currently binds this interface.
 class DataflowRoleCodeOwner {
     enum Phase { Empty, Captured, Touched, Faulted, Restored };
-    enum : unsigned { ChunkWords=64, SnapshotWords=(DataflowRoleExtraL1Limit
+    // The extra readback buffer is on the Haiku kernel stack.
+    enum : unsigned { ChunkWords=16, SnapshotWords=(DataflowRoleExtraL1Limit
         -DataflowRoleExtraL1Address)/sizeof(uint32_t) };
     Phase fPhase=Empty;
     uint32_t* fSnapshot=nullptr;

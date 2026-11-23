@@ -10,6 +10,7 @@ namespace PioneerQwen35 {
 class DataflowRoleFleetBootOwner {
     enum Phase { Empty, Captured, Faulted, Staged, Restored, Unavailable };
     Phase fPhase=Empty;
+    unsigned fStagedCore=DataflowBarrierWorkers;
     DataflowRoleBootOwner fCore[DataflowBarrierWorkers];
     template<class IO> static bool AllHeld(IO& io) {
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)
@@ -49,9 +50,22 @@ public:
         if (fPhase!=Staged) return false;
         if (!AllHeld(io)) { fPhase=Faulted; return false; }
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)
-            if (!fCore[core].VerifyStaged(io)) { fPhase=Faulted; return false; }
+            if (!(fStagedCore==DataflowBarrierWorkers || core==fStagedCore
+                    ?fCore[core].VerifyStaged(io):fCore[core].VerifyOriginal(io)))
+                { fPhase=Faulted; return false; }
         if (!AllHeld(io)) { fPhase=Faulted; return false; }
         return true;
+    }
+    template<class IO> bool StageOne(unsigned core,const uint32_t* reader,unsigned readerWords,
+        const uint32_t* writer,unsigned writerWords,IO& io) {
+        if (fPhase!=Captured || core>=DataflowBarrierWorkers || !reader || !readerWords
+            || !writer || !writerWords) return false;
+        fPhase=Faulted;fStagedCore=core;
+        if (!AllHeld(io) || !fCore[core].Stage(reader,readerWords,writer,writerWords,io)) return false;
+        for (unsigned i=0;i<DataflowBarrierWorkers;i++)
+            if (!(i==core?fCore[i].VerifyStaged(io):fCore[i].VerifyOriginal(io))) return false;
+        if (!AllHeld(io)) return false;
+        fPhase=Staged;return true;
     }
     template<class IO> bool VerifyOriginalAll(IO& io) {
         if (fPhase!=Captured && fPhase!=Restored) return false;

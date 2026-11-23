@@ -96,12 +96,22 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                     }
                     if (okay) {
                         r.stage=5;PioneerQ35RoleStageProgress(r.stage);
-                        okay=scope.EnableStageWrites(c->io)
-                            && owner->images.StageAll(DataflowSharedReaderCodeWords,
+                        okay=scope.EnableStageWrites(c->io);
+                        if (okay) {
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+                            if (r.version==2) okay=owner->images.StageOne(0,DataflowSharedReaderCodeWords,
                                 sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),
                                 DataflowSharedWriterCodeWords,sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t),
                                 DataflowSharedReaderShimWords,sizeof(DataflowSharedReaderShimWords)/sizeof(uint32_t),
                                 DataflowSharedWriterShimWords,sizeof(DataflowSharedWriterShimWords)/sizeof(uint32_t),adapter);
+                            else
+#endif
+                            okay=owner->images.StageAll(DataflowSharedReaderCodeWords,
+                                sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),
+                                DataflowSharedWriterCodeWords,sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t),
+                                DataflowSharedReaderShimWords,sizeof(DataflowSharedReaderShimWords)/sizeof(uint32_t),
+                                DataflowSharedWriterShimWords,sizeof(DataflowSharedWriterShimWords)/sizeof(uint32_t),adapter);
+                        }
                         r.staged=okay;
                     }
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY

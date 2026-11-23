@@ -55,14 +55,44 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
         using namespace PioneerQwen35;
         if (!output || !bytes || (offset&3) || (bytes&3) || offset>UINT32_MAX-bytes
             || !DataflowRolePhysicalReadAllowed(which,offset)
-            || !DataflowRolePhysicalReadAllowed(which,offset+bytes-4) || !Select(core)) return false;
+            || !DataflowRolePhysicalReadAllowed(which,offset+bytes-4)) {
+#if defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY) && defined(_KERNEL_MODE)
+            if (which==DataflowRolePhysicalBriscRam || which==DataflowRolePhysicalNcriscRam)
+                dprintf("P100A_Q35_PRESTACK_READ_FAILURE stage=whitelist core=%u which=%u offset=%u bytes=%u\n",
+                    core,which,offset,bytes);
+#endif
+            return false;
+        }
+        if (!Select(core)) {
+#if defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY) && defined(_KERNEL_MODE)
+            if (which==DataflowRolePhysicalBriscRam || which==DataflowRolePhysicalNcriscRam)
+                dprintf("P100A_Q35_PRESTACK_READ_FAILURE stage=select core=%u which=%u offset=%u\n",core,which,offset);
+#endif
+            return false;
+        }
         // Image windows use bounded copies that recheck route and authority
         // around every 64 words. A failed copy is never a valid snapshot.
         // RAM and control reads retain their per-word checks.
         if (which<=DataflowRolePhysicalExtraCode)
             return fViews.CopyWords(core,which,offset,output,bytes/4,fGuard);
-        for (unsigned n=0;n<bytes/4;n++)
-            if (!fViews.Read(core,which,offset+n*4,output[n],fGuard)) return false;
+        for (unsigned n=0;n<bytes/4;n++) {
+            const unsigned at=offset+n*4;
+            if (!fViews.Read(core,which,at,output[n],fGuard)) {
+#if defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY) && defined(_KERNEL_MODE)
+                if (which==DataflowRolePhysicalBriscRam || which==DataflowRolePhysicalNcriscRam) {
+                    // These post-failure samples are diagnostic only. They do
+                    // not turn an uncertain earlier read into a valid result.
+                    const bool bound=fViews.ReadViewBound(which,at);
+                    const bool pinned=fGuard.ProvePinnedBar(fIO.profile.bar0_host_start,fIO.profile.bar0_host_end);
+                    const bool route=fGuard.ProveSelectedRoute(core);
+                    const bool allowed=fGuard.ProveReadAllowed(core,which,at);
+                    dprintf("P100A_Q35_PRESTACK_READ_FAILURE stage=view core=%u which=%u offset=%u bound=%u pinned=%u route=%u allowed=%u\n",
+                        core,which,at,unsigned(bound),unsigned(pinned),unsigned(route),unsigned(allowed));
+                }
+#endif
+                return false;
+            }
+        }
         return true;
     }
     bool WriteWords(unsigned core,unsigned which,unsigned offset,const uint32_t* input,unsigned bytes) {
@@ -685,7 +715,12 @@ public:
     }
     bool ReadRam(unsigned core,unsigned role,uint32_t address,uint32_t* out,unsigned bytes) {
         using namespace PioneerQwen35;
-        if (!DataflowRoleLocalRamRange(role,address,bytes)) return false;
+        if (!DataflowRoleLocalRamRange(role,address,bytes)) {
+#if defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY) && defined(_KERNEL_MODE)
+            dprintf("P100A_Q35_PRESTACK_READ_FAILURE stage=range core=%u role=%u bytes=%u\n",core,role,bytes);
+#endif
+            return false;
+        }
         const uint32_t base=role==DataflowRoleReader?DataflowRoleBriscLocalRam:DataflowRoleNcriscLocalRam;
         return ReadWords(core,role==DataflowRoleReader?DataflowRolePhysicalBriscRam:DataflowRolePhysicalNcriscRam,
             address-base,out,bytes);

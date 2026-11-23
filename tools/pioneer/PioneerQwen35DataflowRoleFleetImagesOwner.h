@@ -58,6 +58,20 @@ public:
             || !AllHeld(io)) { fPhase=Faulted; return false; }
         return true;
     }
+    // The startup qualification executes one tile, but snapshots and checks
+    // all 120 so writes routed to another tile remain detectable.
+    template<class IO> bool StageOne(unsigned core,const uint32_t* reader,unsigned readerWords,
+        const uint32_t* writer,unsigned writerWords,const uint32_t* readerShim,
+        unsigned readerShimWords,const uint32_t* writerShim,unsigned writerShimWords,IO& io) {
+        if (fPhase!=Captured || core>=DataflowBarrierWorkers || !reader || !readerWords
+            || !writer || !writerWords || !readerShim || !readerShimWords
+            || !writerShim || !writerShimWords) return false;
+        fPhase=Faulted;
+        if (!AllHeld(io) || !fCode.StageOne(core,reader,readerWords,writer,writerWords,io)
+            || !fBoot.StageOne(core,readerShim,readerShimWords,writerShim,writerShimWords,io)
+            || !fCode.VerifyStagedAll(io) || !fBoot.VerifyStagedAll(io) || !AllHeld(io)) return false;
+        fPhase=Staged;return true;
+    }
     template<class IO> bool VerifyOriginalAll(IO& io) {
         if (fPhase!=Captured && fPhase!=Restored) return false;
         if (!AllHeld(io) || !fBoot.VerifyOriginalAll(io) || !fCode.VerifyOriginalAll(io)

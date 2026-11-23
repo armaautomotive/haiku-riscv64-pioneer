@@ -84,7 +84,7 @@ class PioneerQwen35RolePrestackProbe {
     bool ComparePrivateRam() {
         using namespace PioneerQwen35;
         // Keep the kernel stack bounded while checking all 4096 RAM words.
-        uint32_t copy[16],ram[16];
+        uint32_t copy[8],ram[8];
         for (unsigned role=0;role<DataflowRoleCount;role++) {
             const unsigned copied=role==DataflowRoleReader?DataflowRoleReaderRamCopy:DataflowRoleWriterRamCopy;
             const uint32_t base=role==DataflowRoleReader?DataflowRoleBriscLocalRam:DataflowRoleNcriscLocalRam;
