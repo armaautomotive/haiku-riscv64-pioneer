@@ -427,6 +427,8 @@ static bool ResetStoppedRewrite(int fd,bool force)
 			&& ((reset.stage==PIONEER_RECOVERY_STAGE_ASIC_RESET && reset.detail==BLACKHOLE_ASIC_RESET_TIMEOUT)
 				|| (reset.stage==PIONEER_RECOVERY_STAGE_FIRMWARE
 					&& reset.detail==PIONEER_RECOVERY_DETAIL_FIRMWARE_WAIT)
+				|| (reset.stage==PIONEER_RECOVERY_STAGE_MAPPING
+					&& reset.detail==PIONEER_RECOVERY_DETAIL_MAPPING_WAIT)
 				|| reset.stage==PIONEER_RECOVERY_STAGE_OWNER_RELEASE);
 		if (!pending || attempt==3 || snooze(1000000)!=B_OK) return false;
 	}

@@ -26,6 +26,7 @@ struct PioneerPostResetMapping : ConfigIO {
 	tt_arc_telemetry_result firmwareTelemetry={};
 	uint32 saved[3]={},dmaSaved[3]={};
 	bool attempted=false,ready=false,savedValid=false,modified=false,dmaModified=false;
+	bool mappingAllocationFailed=false;
 	bool firmwareAttempted=false,firmwareRetryable=false,firmwareReady=false,topologyReady=false;
 	bool queueAttempted=false,queueReady=false,queueUnsafe=false;
 	bool fleetAudited=false,dmaAudited=false;
@@ -75,7 +76,12 @@ struct PioneerPostResetMapping : ConfigIO {
 			areas[i]=map_physical_memory("P100A fresh post-reset audit window",
 				profile.bar0_host_start+offsets[i],lengths[i],B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,
 				flags,&views[i]);
-			if (areas[i]<B_OK || !views[i]) return false;
+			if (areas[i]<B_OK || !views[i]) {
+				// Only an ordinary failed allocation with no returned view is
+				// eligible for cleanup and a later fresh mapping attempt.
+				mappingAllocationFailed=areas[i]==B_NO_MEMORY && !views[i];
+				return false;
+			}
 		}
 		tlb=(volatile uint32*)((uint8*)views[0]+0x96c);
 		node=(const volatile uint32*)views[1];
@@ -92,6 +98,15 @@ struct PioneerPostResetMapping : ConfigIO {
 		}
 		if ((saved[2]|dmaSaved[2])&0xffffc000) return false;
 		savedValid=true;ready=true;return true;
+	}
+	// Open has not changed a TLB or issued a device command. A resource
+	// allocation failure can be retried after every partial area is unmapped
+	// and the same PCI route is revalidated. Other failures stay one-shot.
+	bool PrepareOpenRetry() {
+		if (!attempted || !mappingAllocationFailed || ready || savedValid || modified
+			|| dmaModified || firmwareAttempted || queueAttempted || !PciReady()) return false;
+		if (!Close() || !PciReady()) return false;
+		mappingAllocationFailed=false;attempted=false;return true;
 	}
 	uint32 TlbRead(unsigned i) { return i<3?PioneerRead32(tlb+i):UINT32_MAX; }
 	void TlbWrite(unsigned i,uint32 value) {

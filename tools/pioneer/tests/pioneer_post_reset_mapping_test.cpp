@@ -7,7 +7,7 @@
 #include <string.h>
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeArcTelemetryProbe.h"
 using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using area_id=int;
-enum {B_OK=0,B_PAGE_SIZE=4096,B_KERNEL_READ_AREA=1,B_KERNEL_WRITE_AREA=2,
+enum {B_OK=0,B_NO_MEMORY=-2,B_PAGE_SIZE=4096,B_KERNEL_READ_AREA=1,B_KERNEL_WRITE_AREA=2,
 	B_UNCACHED_MEMORY=4,B_ANY_KERNEL_ADDRESS=0,TT_PIONEER_RANGE_COUNT=1,TT_DRAM_SOURCE_WORDS=16};
 struct tt_pioneer_profile { uint64_t bar0_host_start=0x100000000ULL,bar0_host_end=0,bar2_host_start=0,bar2_host_end=0; unsigned root_bus=0; int ranges[1]={}; };
 struct PioneerBlackholeBarPlan { uint64_t hostStart[2]={0x100000000ULL,0},hostEnd[2]={0,0}; uint32 bars[6]={12,0,12,0,12,0},bridge[3]={1,2,3}; };
@@ -32,7 +32,7 @@ static uint32 BlackholeDramFixedTlbWord(uint32 base,uint32 x,uint32 y,bool readO
 	return w==0?base>>21:w==1?(x<<11)|(y<<17)|(x<<23)|((y&7)<<29):(y>>3)|(readOnly?0xa40:0x40);
 }
 static uint32 tlbPage[1024],nodePage[1024],resetPage[1024],nocPage[0x12000/4],hdmaPage[1024],scratchPage[1024],csmPage[0x30000/4],msiPage[1024],dbiPage[1024];
-static unsigned mapCalls=0,unmapCalls=0;static int failMap=-1,failUnmap=-1;static bool wrongNode=false;
+static unsigned mapCalls=0,unmapCalls=0;static int failMap=-1,failUnmap=-1,mapFailureStatus=B_NO_MEMORY;static bool wrongNode=false;
 static uint32 cardBars[6]={12,0,12,0,12,0};
 struct Pci {
 	uint32 read_pci_config(unsigned,unsigned,unsigned,unsigned offset,unsigned) {
@@ -50,7 +50,7 @@ struct ConfigIO {
 static int map_physical_memory(const char*,uint64_t addr,size_t size,int addressSpec,uint32 flags,void** out) {
 	assert(addressSpec==(B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY));
 	assert((flags&B_KERNEL_READ_AREA) && !(flags&B_UNCACHED_MEMORY));
-	const unsigned call=mapCalls++;if(int(call)==failMap)return -1;
+	const unsigned call=mapCalls++;if(int(call)==failMap)return mapFailureStatus;
 	const uint64_t base=0x100000000ULL;
 	if(addr==base+0x1fc00000 && size==4096 && (flags&B_KERNEL_WRITE_AREA)) *out=tlbPage;
 	else if(addr==base+0x1fd04000 && size==4096 && !(flags&B_KERNEL_WRITE_AREA)) *out=nodePage;
@@ -107,7 +107,7 @@ static void ResetFake() {
 	memset(tlbPage,0,sizeof(tlbPage));memset(nodePage,0,sizeof(nodePage));
 	memset(resetPage,0,sizeof(resetPage));memset(nocPage,0,sizeof(nocPage));memset(hdmaPage,0,sizeof(hdmaPage));memset(scratchPage,0,sizeof(scratchPage));memset(csmPage,0,sizeof(csmPage));memset(msiPage,0,sizeof(msiPage));
 	memset(dbiPage,0,sizeof(dbiPage));dropDbiWrite=blockDbiTlbRestore=false;
-	mapCalls=unmapCalls=0;failMap=failUnmap=-1;wrongNode=false;
+	mapCalls=unmapCalls=0;failMap=failUnmap=-1;mapFailureStatus=B_NO_MEMORY;wrongNode=false;
 	fakePciPendingPeer=-1;spins=mutateAfter=0;sleeps=firmwareReadyAfter=0;sleepFails=false;blockTlbRestore=false;
 	fakeQueueTimeout=fakeQueueBadReply=false;
 	cardBars[0]=12;nodePage[0x44/4]=2;resetPage[0x1b0/4]=0x47800;
@@ -185,6 +185,22 @@ int main() {
 	assert(!badBar.Open() && !mapCalls && badBar.Close());
 	ResetFake();failMap=2;PioneerPostResetMapping partial(profile);
 	assert(!partial.Open() && partial.Close() && unmapCalls==2);
+	for (int failed=0;failed<7;failed++) {
+		ResetFake();failMap=failed;PioneerPostResetMapping retry(profile);
+		assert(!retry.Open() && retry.PrepareOpenRetry() && unmapCalls==unsigned(failed));
+		failMap=-1;assert(retry.Open() && retry.ProbeFirmware(3,arc) && retry.Close());
+	}
+	ResetFake();failMap=2;failUnmap=0;PioneerPostResetMapping failedCleanup(profile);
+	assert(!failedCleanup.Open() && !failedCleanup.PrepareOpenRetry());
+	failUnmap=-1;assert(failedCleanup.Close());
+	ResetFake();failMap=2;mapFailureStatus=-1;PioneerPostResetMapping otherError(profile);
+	assert(!otherError.Open() && !otherError.PrepareOpenRetry() && otherError.Close());
+	ResetFake();failMap=2;PioneerPostResetMapping driftDuringRetry(profile);
+	assert(!driftDuringRetry.Open());cardBars[0]=0;
+	assert(!driftDuringRetry.PrepareOpenRetry() && !unmapCalls);
+	cardBars[0]=12;assert(driftDuringRetry.Close());
+	ResetFake();nodePage[0x44/4]=3;PioneerPostResetMapping invalidNode(profile);
+	assert(!invalidNode.Open() && !invalidNode.PrepareOpenRetry() && invalidNode.Close());
 	ResetFake();wrongNode=true;PioneerPostResetMapping wrong(profile);
 	assert(wrong.Open() && wrong.ProbeFirmware(3,arc) && !wrong.Audit(r) && r.failure==PioneerPostResetAuditSelect);
 	assert(wrong.Close() && tlbPage[0x96c/4]==7);

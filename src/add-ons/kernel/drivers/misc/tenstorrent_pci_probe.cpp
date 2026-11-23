@@ -3947,6 +3947,8 @@ struct PioneerStoreContext {
 	bool recoveryResetPending=false;
 	uint64 recoveryFirmwareTicket=0;
 	bool recoveryFirmwarePending=false;
+	uint64 recoveryMappingTicket=0;
+	bool recoveryMappingPending=false;
 	PioneerDriverRecoveryProof recoveryFinishProof={};
 	uint64 recoveryFinishTicket=0;
 	bool recoveryFinishPending=false;
@@ -11290,21 +11292,25 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	PioneerStoreContext* context=owner->context;
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	if (context->recoveryResetPending && (context->recoveryFinishPending
-		|| context->recoveryFirmwarePending || !context->recoveryAttempted
+		|| context->recoveryFirmwarePending || context->recoveryMappingPending || !context->recoveryAttempted
 		|| !context->recoveryMapping || !context->recoveryPayload.valid))
 		return B_NOT_ALLOWED;
 	if (context->recoveryFirmwarePending && (context->recoveryFinishPending
-		|| context->recoveryResetPending || !context->recoveryAttempted
+		|| context->recoveryResetPending || context->recoveryMappingPending || !context->recoveryAttempted
 		|| !context->recoveryMapping || !context->recoveryPayload.valid || !context->recoveryFirmwareTicket))
+		return B_NOT_ALLOWED;
+	if (context->recoveryMappingPending && (context->recoveryFinishPending
+		|| context->recoveryResetPending || context->recoveryFirmwarePending || !context->recoveryAttempted
+		|| !context->recoveryMapping || !context->recoveryPayload.valid || !context->recoveryMappingTicket))
 		return B_NOT_ALLOWED;
 #endif
 	if ((context->recoveryAttempted
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
-		&& !context->recoveryFinishPending && !context->recoveryResetPending && !context->recoveryFirmwarePending
+		&& !context->recoveryFinishPending && !context->recoveryResetPending && !context->recoveryFirmwarePending && !context->recoveryMappingPending
 #endif
 		) || (context->recoveryMapping
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
-		&& !context->recoveryResetPending && !context->recoveryFirmwarePending
+		&& !context->recoveryResetPending && !context->recoveryFirmwarePending && !context->recoveryMappingPending
 #endif
 		)
 		|| !context->transaction.config_attempted || !context->transaction.map_attempted)
@@ -11345,6 +11351,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	} else if (context->recoveryFirmwarePending) {
 		ticket=context->recoveryFirmwareTicket;
 		status=ticket?guard->validate(ticket):B_BAD_VALUE;
+	} else if (context->recoveryMappingPending) {
+		ticket=context->recoveryMappingTicket;
+		status=ticket?guard->validate(ticket):B_BAD_VALUE;
 	} else status=guard->begin(sReloadGeneration,&ticket);
 #else
 	if (!guard || guard->version!=1) status=B_BAD_VALUE;
@@ -11366,6 +11375,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	Qwen35RecoveryResetIO resetIo(context->io);BlackholeAsicResetResult reset{};
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	if (context->recoveryFirmwarePending) {
+		payload=context->recoveryPayload;
+	} else {
+	if (context->recoveryMappingPending) {
 		payload=context->recoveryPayload;
 	} else {
 	if (context->recoveryResetPending) {
@@ -11423,9 +11435,23 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	PioneerPostResetPciResult pci{};
 	if (!PioneerPostResetPciRestore(context->io,pci)) { r.detail=pci.stage;return fail(B_DEV_NOT_READY); }
 	if (!PioneerPciePayloadRestore(context->io,payload)) return fail(B_DEV_NOT_READY);
-	r.stage=PIONEER_RECOVERY_STAGE_MAPPING;
-	if (!context->recoveryMapping->Open()) return fail(B_DEV_NOT_READY);
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	} // A resumed mapping attempt retains PCI decoding and the reset ticket.
+#endif
+	r.stage=PIONEER_RECOVERY_STAGE_MAPPING;
+	if (!context->recoveryMapping->Open()) {
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+		if (context->recoveryMapping->PrepareOpenRetry()) {
+			context->recoveryMappingPending=true;context->recoveryMappingTicket=ticket;
+			r.detail=PIONEER_RECOVERY_DETAIL_MAPPING_WAIT;
+			put_module(guardName);return B_DEV_NOT_READY;
+		}
+		context->recoveryMappingPending=false;context->recoveryMappingTicket=0;
+#endif
+		return fail(B_DEV_NOT_READY);
+	}
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	context->recoveryMappingPending=false;context->recoveryMappingTicket=0;
 	} // A resumed firmware poll keeps the existing mapping and reset ticket.
 #endif
 	r.stage=PIONEER_RECOVERY_STAGE_FIRMWARE;

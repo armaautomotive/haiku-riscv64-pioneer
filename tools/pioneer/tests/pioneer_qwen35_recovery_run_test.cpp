@@ -28,6 +28,7 @@ constexpr int B_OK=0,B_BAD_VALUE=-1,B_NOT_ALLOWED=-2,B_BUSY=-3,B_DEV_NOT_READY=-
 static unsigned failStage=0,abortCount=0,completeCount=0,contextDeleted=0,cookieDeleted=0;
 static bool failPayloadRead=false,failPayloadRestore=false,failFirmwareQueue=false,failDbi=false;
 static bool firmwareNotReady=false;
+static bool retryableMappingFailure=false;
 static bool ticketPending=false,invalidTicket=false,guardV2Missing=false;
 static unsigned validateCalls=0,invalidateOnValidate=0;
 static bool resetTimeout=false,resumeResetTimeout=false;
@@ -141,6 +142,7 @@ struct PioneerPostResetMapping {
 	bool firmwareRetryable=false;
 	explicit PioneerPostResetMapping(FakeProfile&) {}
 	bool Open(){return Step(PIONEER_RECOVERY_STAGE_MAPPING);}
+	bool PrepareOpenRetry(){return retryableMappingFailure;}
 	bool ProbeFirmware(unsigned,tt_arc_scratch_result& r){
 		r.state=2;firmwareRetryable=firmwareNotReady;
 		return Step(PIONEER_RECOVERY_STAGE_FIRMWARE) && !firmwareNotReady;
@@ -164,6 +166,7 @@ struct PioneerStoreContext {
 	PioneerPciePayloadSnapshot recoveryPayload{};bool recoveryFinishNeedsAudit=false;
 	BlackholeAsicResetResult recoveryResetResult{};uint64 recoveryResetTicket=0;bool recoveryResetPending=false;
 	uint64 recoveryFirmwareTicket=0;bool recoveryFirmwarePending=false;
+	uint64 recoveryMappingTicket=0;bool recoveryMappingPending=false;
 #ifdef TEST_GRAPH_RECOVERY
 	FakeGraphOwner graphOwner;FakeGraphOwner* qwen35GraphOwner=&graphOwner;
 	FakeSharedRoleOwner sharedRoleOwner;FakeSharedRoleOwner* qwen35SharedRoleBinding=&sharedRoleOwner;
@@ -227,7 +230,7 @@ static tt_pioneer_recovery_run Request(){tt_pioneer_recovery_run r={};r.version=
 static void Setup() {
 	failStage=abortCount=completeCount=contextDeleted=cookieDeleted=0;trace.clear();
 	failPayloadRead=failPayloadRestore=failFirmwareQueue=failDbi=false;
-	firmwareNotReady=false;
+	firmwareNotReady=retryableMappingFailure=false;
 	ticketPending=invalidTicket=guardV2Missing=false;
 	validateCalls=invalidateOnValidate=0;
 	resetTimeout=resumeResetTimeout=false;resetResumeWaits=0;
@@ -269,6 +272,35 @@ int main(){
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
 		&& !sRuntimeOwner && !sColdRecoveryRequired && resetResumeWaits==2
 		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
+	Setup();failStage=PIONEER_RECOVERY_STAGE_MAPPING;retryableMappingFailure=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.stage==PIONEER_RECOVERY_STAGE_MAPPING && r.detail==PIONEER_RECOVERY_DETAIL_MAPPING_WAIT
+		&& sRuntimeOwner && sRuntimeOwner->context->recoveryMappingPending
+		&& sRuntimeOwner->context->recoveryMappingTicket==9 && ticketPending && !abortCount);
+	r=Request();assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK
+		&& r.operation_status==B_DEV_NOT_READY && sRuntimeOwner->context->recoveryMappingPending);
+	failStage=0;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && !sColdRecoveryRequired && completeCount==1 && !abortCount
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_PCI_RESTORE)==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_MAPPING)==3);
+	Setup();failStage=PIONEER_RECOVERY_STAGE_MAPPING;retryableMappingFailure=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY);
+	invalidTicket=true;const auto mappingTrace=trace;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& trace==mappingTrace && sRuntimeOwner && sColdRecoveryRequired && ticketPending);
+	Cleanup();
+	Setup();failStage=PIONEER_RECOVERY_STAGE_MAPPING;retryableMappingFailure=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY);
+	failStage=0;firmwareNotReady=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& r.detail==PIONEER_RECOVERY_DETAIL_FIRMWARE_WAIT
+		&& !sRuntimeOwner->context->recoveryMappingPending && sRuntimeOwner->context->recoveryFirmwarePending);
+	firmwareNotReady=false;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_PCI_RESTORE)==1);
 	Setup();firmwareNotReady=true;r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
 		&& r.stage==PIONEER_RECOVERY_STAGE_FIRMWARE && r.detail==PIONEER_RECOVERY_DETAIL_FIRMWARE_WAIT && sRuntimeOwner
