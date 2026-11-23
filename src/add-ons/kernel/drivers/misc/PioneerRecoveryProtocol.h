@@ -5,6 +5,9 @@
 
 #define TT_PCI_PROBE_RECOVERY_STATUS (B_DEVICE_OP_CODES_END+0x61e2)
 #define TT_PCI_PROBE_RECOVERY_RUN (B_DEVICE_OP_CODES_END+0x61e3)
+// Explicitly abandon a faulted exclusive rewrite session and quarantine it
+// before attempting the same guarded reset as RECOVERY_RUN.
+#define TT_PCI_PROBE_RECOVERY_FORCE (B_DEVICE_OP_CODES_END+0x61e4)
 
 // Read-only owner-lifetime status. This operation never authorizes or issues
 // a reset, and accepts no user-provided hardware addresses or recovery proof.

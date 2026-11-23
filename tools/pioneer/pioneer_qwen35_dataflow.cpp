@@ -399,12 +399,12 @@ static bool RecoverRewrite(int fd,bool installAttempted)
 }
 
 // PIONEER_QWEN35_LIVE_RESET_CLIENT_BEGIN
-static bool ResetStoppedRewrite(int fd)
+static bool ResetStoppedRewrite(int fd,bool force)
 {
 	tt_pioneer_driver_reload before{};before.version=1;
 	if (!Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&before,sizeof(before))
 		|| before.driver!=TT_QWEN35_DATAFLOW_DRIVER || !before.build_tag || !before.generation
-		|| !before.cold || before.quiesced || !before.active_owner || before.open_count!=1) return false;
+		|| (!force && !before.cold) || before.quiesced || !before.active_owner || before.open_count!=1) return false;
 	auto verifyIdle=[&](uint64_t expectedGeneration,bool exact) {
 		tt_pioneer_driver_reload after{};after.version=1;
 		return Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&after,sizeof(after))
@@ -418,7 +418,8 @@ static bool ResetStoppedRewrite(int fd)
 		reset.expected_tag=before.build_tag;reset.expected_generation=before.generation;
 		// A lost ioctl reply may follow successful reset completion. Recheck
 		// the guard state; never issue a second request on an unknown reply.
-		if (!Call(fd,TT_PCI_PROBE_RECOVERY_RUN,&reset,sizeof(reset))) return verifyIdle(0,false);
+		const uint32_t operation=force && !attempt?TT_PCI_PROBE_RECOVERY_FORCE:TT_PCI_PROBE_RECOVERY_RUN;
+		if (!Call(fd,operation,&reset,sizeof(reset))) return verifyIdle(0,false);
 		if (reset.operation_status==B_OK)
 			return reset.stage==PIONEER_RECOVERY_STAGE_COMPLETE && reset.build_tag==before.build_tag
 				&& reset.new_generation && verifyIdle(reset.new_generation,true);
@@ -450,7 +451,7 @@ static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,
 		if (serviceClosed) return true;
 		if (request.result==TT_QWEN35_DATAFLOW_RESULT_RESET_REQUIRED
 			&& request.state==TT_QWEN35_DATAFLOW_STATE_FAULTED && request.recovery_required) {
-			resetCompleted=ResetStoppedRewrite(fd);
+			resetCompleted=ResetStoppedRewrite(fd,false);
 			serviceClosed=resetCompleted;
 			return resetCompleted;
 		}
@@ -471,7 +472,21 @@ static bool CloseRewrite(int fd,bool authorityBound,bool installAttempted,
 					"attempt=%u\n",attempt+1);
 				continue;
 			}
+			if (request.state==TT_QWEN35_DATAFLOW_STATE_FAULTED) {
+				resetCompleted=ResetStoppedRewrite(fd,true);
+				serviceClosed=resetCompleted;
+				return resetCompleted;
+			}
 			break;
+		}
+		if (request.state==TT_QWEN35_DATAFLOW_STATE_FAULTED && request.recovery_required
+			&& ((request.result==TT_QWEN35_DATAFLOW_RESULT_STOP_AUDIT_FAILED && attempt==2)
+				|| request.result==TT_QWEN35_DATAFLOW_RESULT_RESTORE_FAILED
+				|| request.result==TT_QWEN35_DATAFLOW_RESULT_RECOVERY_PENDING
+				|| (request.result==TT_QWEN35_DATAFLOW_RESULT_RESUME_FAILED && attempt==2))) {
+			resetCompleted=ResetStoppedRewrite(fd,true);
+			serviceClosed=resetCompleted;
+			return resetCompleted;
 		}
 		if (request.result!=TT_QWEN35_DATAFLOW_RESULT_RESUME_FAILED
 			|| !request.recovery_required || attempt==2) break;

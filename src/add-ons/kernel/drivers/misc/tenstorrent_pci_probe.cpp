@@ -3939,6 +3939,9 @@ struct PioneerStoreContext {
 #endif
 	PioneerQwen35DataflowPciMemory<PioneerSessionIO>* qwen35DataflowMemory=NULL;
 	PioneerQwen35::DataflowServiceOwner* qwen35DataflowService=NULL;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+	bool qwen35LiveFaultRecoveryRequested=false;
+#endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 	PioneerQwen35SharedRoleBinding* qwen35SharedRoleBinding=NULL;
 #endif
@@ -11207,13 +11210,15 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 		|| r.expected_generation!=sReloadGeneration) return B_BAD_VALUE;
 	bool liveTakeoverOwner=false;
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
-	// A fully stopped takeover can reset through its own live fd. The
-	// borrowed ioctl scope must have detached before recovery may free state.
+	// A stopped or explicitly quarantined faulted takeover can reset through
+	// its own live fd. The borrowed ioctl scope must have detached first.
 	liveTakeoverOwner=sRuntimeOwner && sRuntimeOwner==inspector && !inspector->finalFreeRetained
 		&& sQwen35ExclusiveCookie==inspector && sBankStorageOnly && inspector->context
 		&& inspector->context->bankStorageOnly && inspector->context->dispatchOwnerRetained
 		&& inspector->context->qwen35DataflowService
-		&& inspector->context->qwen35DataflowService->StoppedResetReady()
+		&& (inspector->context->qwen35DataflowService->StoppedResetReady()
+			|| (inspector->context->qwen35LiveFaultRecoveryRequested
+				&& inspector->context->qwen35DataflowService->Faulted()))
 		&& !inspector->context->io.qwen35BorrowedRoleScope;
 #endif
 	if (!sColdRecoveryRequired || sReloadQuiesced || sOpenCookies!=1
@@ -11392,7 +11397,7 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 }
 
 static status_t
-Qwen35RecoveryRun(PioneerProbeCookie* cookie,void* data,size_t length)
+Qwen35RecoveryRequest(PioneerProbeCookie* cookie,void* data,size_t length,bool force)
 {
 	if (!cookie || !data || length!=sizeof(tt_pioneer_recovery_run)) return B_BAD_VALUE;
 	thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
@@ -11401,10 +11406,50 @@ Qwen35RecoveryRun(PioneerProbeCookie* cookie,void* data,size_t length)
 	tt_pioneer_recovery_run r={};status=user_memcpy(&r,data,sizeof(r));
 	if (status!=B_OK || !PioneerRecoveryRunRequest(r)) return status!=B_OK?status:B_BAD_VALUE;
 	status=acquire_sem(sLock);if (status!=B_OK) return status;
-	r.operation_status=Qwen35RecoveryRunLocked(cookie,r);r.build_tag=PIONEER_DRIVER_BUILD_TAG;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+	if (force) {
+		PioneerStoreContext* context=cookie->context;
+		if (!sReloadGuard || !sReloadGeneration || r.expected_tag!=PIONEER_DRIVER_BUILD_TAG
+			|| r.expected_generation!=sReloadGeneration) r.operation_status=B_BAD_VALUE;
+		else if (sReloadQuiesced || sOpenCookies!=1 || sRuntimeOwner!=cookie
+			|| sQwen35ExclusiveCookie!=cookie || cookie->finalFreeRetained
+			|| !sBankStorageOnly || !context || !context->bankStorageOnly
+			|| !context->qwen35DataflowService || !context->qwen35DataflowService->Faulted()
+			|| context->io.qwen35BorrowedRoleScope) r.operation_status=B_BUSY;
+		else {
+			if (!context->dispatchOwnerRetained) {
+				tt_resident_session_result retained={};
+				RetainQ38DispatchOwner(*context,retained);
+			}
+			if (!context->dispatchOwnerRetained || !sColdRecoveryRequired)
+				r.operation_status=B_NOT_ALLOWED;
+			else {
+				context->qwen35LiveFaultRecoveryRequested=true;
+				r.operation_status=Qwen35RecoveryRunLocked(cookie,r);
+			}
+		}
+	} else
+#else
+	(void)force;
+#endif
+		r.operation_status=Qwen35RecoveryRunLocked(cookie,r);
+	r.build_tag=PIONEER_DRIVER_BUILD_TAG;
 	status=user_memcpy(data,&r,sizeof(r));
 	release_sem(sLock);return status;
 }
+
+static status_t
+Qwen35RecoveryRun(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	return Qwen35RecoveryRequest(cookie,data,length,false);
+}
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+static status_t
+Qwen35RecoveryForce(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	return Qwen35RecoveryRequest(cookie,data,length,true);
+}
+#endif
 // PIONEER_QWEN35_RECOVERY_RUN_END
 #endif
 
@@ -11421,6 +11466,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return Qwen35RecoveryStatus(instance,data,length);
 	if (operation==TT_PCI_PROBE_RECOVERY_RUN)
 		return Qwen35RecoveryRun(instance,data,length);
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+	if (operation==TT_PCI_PROBE_RECOVERY_FORCE)
+		return Qwen35RecoveryForce(instance,data,length);
+#endif
 #endif
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 	// The rewrite's private ioctl numbers are one contiguous range. Routing

@@ -149,7 +149,8 @@ struct PioneerPostResetMapping {
 	bool Close(){return Step(PIONEER_RECOVERY_STAGE_CLOSE_MAPPING);}
 };
 #ifdef TEST_LIVE_TAKEOVER
-struct FakeDataflowService { bool ready=true;bool StoppedResetReady()const{return ready;} };
+struct FakeDataflowService { bool ready=true,faulted=true;bool StoppedResetReady()const{return ready;}
+	bool Faulted()const{return faulted;} };
 #endif
 struct PioneerStoreContext {
 	PioneerPostResetMapping* recoveryMapping=nullptr;bool recoveryAttempted=false,dispatchOwnerRetained=true;
@@ -162,7 +163,7 @@ struct PioneerStoreContext {
 #endif
 	PioneerRecoveryDbiSnapshot recoveryDbi;
 #ifdef TEST_LIVE_TAKEOVER
-	bool bankStorageOnly=true;
+	bool bankStorageOnly=true,qwen35LiveFaultRecoveryRequested=false;
 	FakeDataflowService service;FakeDataflowService* qwen35DataflowService=&service;
 #endif
 	struct {bool config_attempted=true,map_attempted=true;} transaction;
@@ -195,6 +196,11 @@ struct PioneerProbeCookie {uint32 magic=0x50313030;int team=17;PioneerStoreConte
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
 #ifdef TEST_LIVE_TAKEOVER
 static PioneerProbeCookie* sQwen35ExclusiveCookie=nullptr;
+struct tt_resident_session_result {};
+static unsigned retainCalls=0;
+static void RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result&) {
+	++retainCalls;c.dispatchOwnerRetained=true;sColdRecoveryRequired=true;
+}
 #endif
 struct FakeCard {int bus=0,device=0,function=0;} sCard;[[maybe_unused]] static int sCookie;
 #define TT_PCI_PROBE_DEVICE "fake"
@@ -220,6 +226,7 @@ static void Setup() {
 	sColdRecoveryRequired.value=true;sReloadQuiesced=false;sBankStorageOnly=true;sReloadGeneration=3;sOpenCookies=1;
 	#ifdef TEST_LIVE_TAKEOVER
 	sQwen35ExclusiveCookie=nullptr;
+	retainCalls=0;
 	#endif
 	sRuntimeOwner=new PioneerProbeCookie;sRuntimeOwner->context=new PioneerStoreContext;sRuntimeOwner->finalFreeRetained=true;
 }
@@ -354,6 +361,42 @@ int main(){
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_BAD_VALUE && trace.empty());
 	Cleanup();
 #ifdef TEST_LIVE_TAKEOVER
+	Setup();auto* fault=sRuntimeOwner;fault->finalFreeRetained=false;sQwen35ExclusiveCookie=fault;
+	fault->context->service.ready=false;fault->context->dispatchOwnerRetained=false;
+	sColdRecoveryRequired=false;r=Request();r.expected_generation=2;
+	assert(Qwen35RecoveryForce(fault,&r,sizeof(r))==B_OK && r.operation_status==B_BAD_VALUE && !retainCalls);
+	r=Request();r.expected_tag++;
+	assert(Qwen35RecoveryForce(fault,&r,sizeof(r))==B_OK && r.operation_status==B_BAD_VALUE && !retainCalls);
+	activeTeam=18;r=Request();
+	assert(Qwen35RecoveryForce(fault,&r,sizeof(r))==B_NOT_ALLOWED && !retainCalls);
+	activeTeam=17;
+	sOpenCookies=2;r=Request();
+	assert(Qwen35RecoveryForce(fault,&r,sizeof(r))==B_OK && r.operation_status==B_BUSY && !retainCalls);
+	sOpenCookies=1;fault->context->service.faulted=false;r=Request();
+	assert(Qwen35RecoveryForce(fault,&r,sizeof(r))==B_OK && r.operation_status==B_BUSY && !retainCalls);
+	fault->context->service.faulted=true;fault->context->io.qwen35BorrowedRoleScope=reinterpret_cast<void*>(1);r=Request();
+	assert(Qwen35RecoveryForce(fault,&r,sizeof(r))==B_OK && r.operation_status==B_BUSY && !retainCalls);
+	fault->context->io.qwen35BorrowedRoleScope=nullptr;sQwen35ExclusiveCookie=nullptr;r=Request();
+	assert(Qwen35RecoveryForce(fault,&r,sizeof(r))==B_OK && r.operation_status==B_BUSY && !retainCalls);
+	sQwen35ExclusiveCookie=fault;resetTimeout=true;r=Request();
+	assert(Qwen35RecoveryForce(fault,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& retainCalls==1 && fault->context->qwen35LiveFaultRecoveryRequested
+		&& fault->context->recoveryResetPending && ticketPending && sColdRecoveryRequired);
+	resetTimeout=false;r=Request();
+	assert(Qwen35RecoveryRun(fault,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && !fault->context && !sColdRecoveryRequired && retainCalls==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
+	sQwen35ExclusiveCookie=nullptr;delete fault;
+	Setup();fault=sRuntimeOwner;fault->finalFreeRetained=false;sQwen35ExclusiveCookie=fault;
+	fault->context->service.ready=false;fault->context->dispatchOwnerRetained=false;
+	sColdRecoveryRequired=false;failSharedRoleRelease=true;r=Request();
+	assert(Qwen35RecoveryForce(fault,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& retainCalls==1 && sRuntimeOwner==fault && ticketPending);
+	failSharedRoleRelease=false;r=Request();
+	assert(Qwen35RecoveryRun(fault,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && !fault->context && retainCalls==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
+	sQwen35ExclusiveCookie=nullptr;delete fault;
 	Setup();auto* live=sRuntimeOwner;live->finalFreeRetained=false;sQwen35ExclusiveCookie=live;
 	live->context->io.qwen35BorrowedRoleScope=reinterpret_cast<void*>(1);r=Request();
 	assert(Qwen35RecoveryRun(live,&r,sizeof(r))==B_OK && r.operation_status==B_BUSY && trace.empty());
