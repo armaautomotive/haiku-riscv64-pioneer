@@ -50,6 +50,7 @@ def exercise(suffix, script, candidate_hash):
                           (common.ADMIN, home/'pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload'),
                           (common.CANDIDATE, stage/'candidate'),
                           ('cabebd7d42b60106c6d97216353400bbfd76a58b0f982b24389715dbc95f3e70', stage/'candidate'),
+                          ('1326f14e7d2f5997b2f2048e2308fc51747b46b949e6cd7417a78a474b61b292', stage/'candidate'),
                           (candidate_hash, stage/'candidate')):
             restore = restore.replace(old, hashlib.sha256(path.read_bytes()).hexdigest())
         restore_path = root/'restore.sh'
@@ -66,6 +67,8 @@ def main():
              'cabebd7d42b60106c6d97216353400bbfd76a58b0f982b24389715dbc95f3e70')
     exercise('-d', 'pioneer_qwen35_recovery_qualify_audit.sh',
              '1326f14e7d2f5997b2f2048e2308fc51747b46b949e6cd7417a78a474b61b292')
+    exercise('-e', 'pioneer_qwen35_recovery_qualify_dma.sh',
+             'bdbcc8dc0d9823c2e249dba7eb508289be2332d70b78fe5174c3966f8841c265')
     print('PASS existing-guard qualifications and retained failure; SIMULATED HOST ONLY')
 
 
