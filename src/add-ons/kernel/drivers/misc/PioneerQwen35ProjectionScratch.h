@@ -1,0 +1,165 @@
+/* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_QWEN35_PROJECTION_SCRATCH_H
+#define PIONEER_QWEN35_PROJECTION_SCRATCH_H
+
+#ifndef PIONEER_QWEN35_DEVICE_DISPATCH
+#error Fixed projection scratch requires the private Q35 bank reservation
+#endif
+#include "PioneerResidentStore.h"
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowProjectionQualification.h"
+#include <string.h>
+
+// Heap-owned by the exclusive diagnostic session until its entire bank
+// context is destroyed. ReserveQ35Stream is sticky: even after successful
+// restoration this object must outlive the bank claim. Scope must prove the
+// locked session and held worker-zero transfer resources for every page, and
+// must independently prove the resident fleet stopped before MarkStopped.
+// RetainScratch must retain the owner and snapshots and quarantine the
+// session when a transfer or its authorization becomes uncertain.
+// This is not authority to start a worker or an inference fallback.
+class PioneerQ35ProjectionScratch {
+    using Fixture=PioneerQwen35::DataflowProjectionQualification;
+    enum Phase { Empty, Capturing, Captured, Staging, Staged, Running, Stopped, Restoring, Restored, Failed };
+    Phase phase=Empty;
+    unsigned bank=0,firstOffset=0,dirtyPages=0;
+    uint32_t* saved=nullptr;
+    uint32_t page[Fixture::PageBytes/sizeof(uint32_t)]{};
+    PioneerQ35StreamBankRange ranges[PioneerQwen35::DataflowCoreCount]{};
+    bool outputVerified=false,transferFailed=false;
+
+    template<class IO,class Scope>
+    bool Transfer(IO& io,Scope& scope,const tt_dram_samples_result& dram,
+        const tt_compute_noc_result& noc,const tt_host_page_result& host,
+        PioneerResidentLease& lease,PioneerResidentBanks& banks,unsigned index,
+        bool write,uint32_t* words) {
+        if (index>=Fixture::ScratchPages || !words
+            || !scope.ScratchTransferAllowed(this,bank,firstOffset+index*Fixture::PageBytes,write)) {
+            phase=Failed;scope.RetainScratch(this);return false;
+        }
+        tt_resident_store_result result{};
+        const bool okay=PioneerResidentStorePage(io,dram,noc,host,lease,
+            PioneerResidentBanks::Capacity,firstOffset+index*Fixture::PageBytes,
+            write,words,result,&banks,bank,this);
+        if (!okay) {
+            // A failed transfer can leave a posted operation. Never retry or
+            // free the claim/snapshot under this transaction's own authority.
+            transferFailed=true;phase=Failed;scope.RetainScratch(this);
+        }
+        return okay;
+    }
+
+    bool FillPage(unsigned index) {
+        memset(page,0,sizeof(page));
+        uint8_t* bytes=reinterpret_cast<uint8_t*>(page);
+        if (index<Fixture::WeightPages)
+            return Fixture::FillWeightBytes(index*Fixture::PageBytes,bytes,Fixture::PageBytes);
+        index-=Fixture::WeightPages;
+        if (index<Fixture::InputPages) {
+            const unsigned offset=index*Fixture::PageBytes;
+            const unsigned remaining=Fixture::InputBytes-offset;
+            return Fixture::FillInputBytes(offset,bytes,remaining<Fixture::PageBytes?remaining:Fixture::PageBytes);
+        }
+        index-=Fixture::InputPages;
+        if (index>=Fixture::OutputPages) return false;
+        const unsigned offset=index*Fixture::PageBytes;
+        const unsigned remaining=Fixture::OutputBytes-offset;
+        return Fixture::FillOutputBytes(offset,bytes,remaining<Fixture::PageBytes?remaining:Fixture::PageBytes);
+    }
+public:
+    static constexpr unsigned SavedWords=Fixture::ScratchPages*Fixture::PageBytes/sizeof(uint32_t);
+    static_assert(unsigned(Fixture::ScratchPages)>=unsigned(PioneerQwen35::DataflowCoreCount),
+        "the private reservation partitions the entire scratch span");
+    PioneerQ35ProjectionScratch()=default;
+    PioneerQ35ProjectionScratch(const PioneerQ35ProjectionScratch&)=delete;
+    PioneerQ35ProjectionScratch& operator=(const PioneerQ35ProjectionScratch&)=delete;
+    bool IsCaptured() const { return phase==Captured; }
+    bool IsStaged() const { return phase==Staged; }
+    bool IsRestored() const { return phase==Restored; }
+    bool FailedTransfer() const { return transferFailed; }
+    bool OutputVerified() const { return outputVerified; }
+
+    template<class IO,class Scope>
+    bool Capture(IO& io,Scope& scope,const tt_dram_samples_result& dram,
+        const tt_compute_noc_result& noc,const tt_host_page_result& host,
+        PioneerResidentLease& lease,PioneerResidentBanks& banks,unsigned whichBank,unsigned offset,
+        const uint8_t* initialized,unsigned initializedPages,uint32_t* snapshot,unsigned snapshotWords) {
+        if (phase!=Empty || !snapshot || snapshotWords!=SavedWords || whichBank>=PioneerQwen35::Banks
+            || (offset&(Fixture::PageBytes-1)) || offset>=PioneerResidentBanks::Capacity
+            || Fixture::ScratchBytes>PioneerResidentBanks::Capacity-offset
+            || !scope.ScratchReserveAllowed(this,whichBank,offset,Fixture::ScratchBytes)) return false;
+        // Exactly 120 disjoint ranges cover the fixed contiguous scratch span.
+        // The existing bank owner checks every page is uninitialized and
+        // blocks normal bank access to the claim.
+        for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+            const unsigned pages=core+1==PioneerQwen35::DataflowCoreCount
+                ?Fixture::ScratchPages-(PioneerQwen35::DataflowCoreCount-1):1;
+            ranges[core]={whichBank,offset+core*Fixture::PageBytes,pages*Fixture::PageBytes};
+        }
+        if (!banks.ReserveQ35Stream(dram,this,ranges,PioneerQwen35::DataflowCoreCount,
+            initialized,initializedPages)) return false;
+        bank=whichBank;firstOffset=offset;saved=snapshot;phase=Capturing;
+        for (unsigned n=0;n<Fixture::ScratchPages;n++)
+            if (!Transfer(io,scope,dram,noc,host,lease,banks,n,false,saved+n*(Fixture::PageBytes/4)))
+                return false;
+        phase=Captured;return true;
+    }
+
+    template<class IO,class Scope>
+    bool Stage(IO& io,Scope& scope,const tt_dram_samples_result& dram,
+        const tt_compute_noc_result& noc,const tt_host_page_result& host,
+        PioneerResidentLease& lease,PioneerResidentBanks& banks) {
+        if (phase!=Captured || !scope.ScratchStageAllowed(this)) return false;
+        phase=Staging;
+        for (unsigned n=0;n<Fixture::ScratchPages;n++) {
+            if (!FillPage(n)) { phase=Failed;scope.RetainScratch(this);return false; }
+            // Mark before the attempted store; a failed write can be posted.
+            dirtyPages=n+1;
+            if (!Transfer(io,scope,dram,noc,host,lease,banks,n,true,page)) return false;
+        }
+        phase=Staged;return true;
+    }
+    template<class Scope> bool MarkRunning(Scope& scope) {
+        if (phase!=Staged || !scope.ScratchRunAllowed(this)) return false;
+        phase=Running;return true;
+    }
+    template<class Scope> bool MarkStopped(Scope& scope) {
+        if (phase!=Running || !scope.ScratchStopped(this)) return false;
+        phase=Stopped;return true;
+    }
+
+    template<class IO,class Scope>
+    bool VerifyOutput(IO& io,Scope& scope,const tt_dram_samples_result& dram,
+        const tt_compute_noc_result& noc,const tt_host_page_result& host,
+        PioneerResidentLease& lease,PioneerResidentBanks& banks) {
+        if (phase!=Stopped || outputVerified || !scope.ScratchOutputAllowed(this)) return false;
+        bool valid=true;
+        for (unsigned n=0;n<Fixture::OutputPages;n++) {
+            if (!Transfer(io,scope,dram,noc,host,lease,banks,Fixture::WeightPages+Fixture::InputPages+n,false,page)) return false;
+            const unsigned first=n*Fixture::PageBytes/4;
+            const unsigned limit=(first+Fixture::PageBytes/4<Fixture::Rows)?first+Fixture::PageBytes/4:Fixture::Rows;
+            for (unsigned row=first;row<limit;row++)
+                if (!Fixture::OutputMatches(row,page[row-first])) valid=false;
+        }
+        outputVerified=valid;return valid;
+    }
+
+    template<class IO,class Scope>
+    bool Restore(IO& io,Scope& scope,const tt_dram_samples_result& dram,
+        const tt_compute_noc_result& noc,const tt_host_page_result& host,
+        PioneerResidentLease& lease,PioneerResidentBanks& banks) {
+        if ((phase!=Staged && phase!=Stopped) || !saved || transferFailed
+            || dirtyPages!=Fixture::ScratchPages || !scope.ScratchRestoreAllowed(this)) return false;
+        phase=Restoring;
+        for (unsigned n=0;n<Fixture::ScratchPages;n++)
+            if (!Transfer(io,scope,dram,noc,host,lease,banks,n,true,saved+n*(Fixture::PageBytes/4))) return false;
+        // Audit every page again after all writes, including cross-page damage.
+        for (unsigned n=0;n<Fixture::ScratchPages;n++) {
+            if (!Transfer(io,scope,dram,noc,host,lease,banks,n,false,page)) return false;
+            if (memcmp(page,saved+n*(Fixture::PageBytes/4),Fixture::PageBytes)!=0) {
+                phase=Failed;scope.RetainScratch(this);return false;
+            }
+        }
+        phase=Restored;return true;
+    }
+};
+#endif

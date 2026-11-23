@@ -4632,6 +4632,7 @@ struct PioneerStoreContext {
 #include "PioneerQwen35DataflowDriverBinding.inc"
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 #include "PioneerQwen35DataflowRoleHaikuScopeWitness.inc"
+#include "PioneerQwen35ProjectionScratchCompileWitness.inc"
 #endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 #include "PioneerQwen35ActiveRootLease.h"
