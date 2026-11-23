@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_DATAFLOW_BLACKHOLE_IO_H
 
 #include "PioneerQwen35DataflowKernels.h"
+#include "PioneerQwen35DataflowNocReadPipeline.h"
 #include "PioneerQ38ProjectionInput.h"
 
 namespace PioneerQwen35 {
@@ -239,6 +240,16 @@ class DataflowBlackholeNoc {
 	}
 
 public:
+	// The shared reader is the sole NoC 0 issuer during a projection. The
+	// surrounding service must actually establish that ownership before use.
+	struct ReadPipelineIO {
+		uint32_t Read(unsigned offset) const { return *Words(Base+offset); }
+		void Write(unsigned offset,uint32_t value) const { *Words(Base+offset)=value; }
+		void Fence() const { DataflowBlackholeNoc::Fence(); }
+		uint32_t Counter(unsigned index) const { return DataflowBlackholeNoc::Counter(index); }
+		bool Quiet() const { return DataflowBlackholeNoc::Quiet(); }
+	};
+
 	bool BeginRead(uint32_t remote,unsigned route,uint8_t* local,unsigned bytes,
 		DataflowNocReadTicket& ticket) const
 	{
@@ -335,6 +346,28 @@ class DataflowBlackholeReaderOps {
 
 public:
 	using WeightReadTicket=DataflowNocReadTicket;
+	class WeightPipeline {
+		DataflowBlackholeReaderOps& fReader;
+		typename DataflowBlackholeNoc<0>::ReadPipelineIO fIO;
+		DataflowNocReadPipeline<decltype(fIO)> fPipeline;
+	public:
+		explicit WeightPipeline(DataflowBlackholeReaderOps& reader)
+			: fReader(reader),fIO(),fPipeline(fIO) {}
+		bool Start() { return fPipeline.Start(); }
+		bool Issue(uint32_t sequence,unsigned bank,uint32_t address,uint8_t* output,unsigned bytes) {
+			const uintptr_t local=reinterpret_cast<uintptr_t>(output);
+			return fReader.fProgram && local<=UINT32_MAX && bank<Banks
+				&& fReader.OwnsWeight(bank,address,bytes)
+				&& local>=DataflowLocalBufferStart && local<DataflowLocalBufferEnd
+				&& bytes<=DataflowLocalBufferEnd-local
+				&& fPipeline.Issue(sequence,address,fReader.fProgram->bankRoute[0][bank],
+					uint32_t(local),bytes,DataflowNocPollLimit);
+		}
+		bool Complete(uint32_t sequence) { return fPipeline.Complete(sequence,DataflowNocPollLimit); }
+		bool Finish() { return fPipeline.Finish(); }
+		uint32_t Issued() const { return fPipeline.Issued(); }
+		uint32_t Retired() const { return fPipeline.Retired(); }
+	};
 	bool Bind(const DataflowCoreInvocation& program)
 	{
 		fProgram=nullptr;

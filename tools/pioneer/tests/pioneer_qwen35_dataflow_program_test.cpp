@@ -198,11 +198,24 @@ struct SharedComputeOps : RoleTestOps {
 	const uint8_t* cache;
 	DataflowQueueControl* ready;
 	const PioneerQ38ProjectionInput* expected=nullptr;
+	const DataflowCoreInvocation* weightProgram=nullptr;
+	uint32_t weightSequence=0;
 	SharedComputeOps(RoleTestCounters& counters,const uint8_t* data,DataflowQueueControl* control)
 		:RoleTestOps{counters},cache(data),ready(control) {}
 	bool TensixMatmul(unsigned type,unsigned block,const uint8_t* weight,const uint8_t* input)
 	{
-		if (!weight || weight[1]!=uint8_t(generation)
+		if (!weightProgram || !weightProgram->blocks || block!=weightSequence%weightProgram->blocks)
+			return false;
+		unsigned group=weightSequence/weightProgram->blocks,segmentIndex=0;
+		while (segmentIndex<weightProgram->assignment.segmentCount
+			&& group>=weightProgram->assignment.weight[segmentIndex].groups)
+			group-=weightProgram->assignment.weight[segmentIndex++].groups;
+		if (segmentIndex>=weightProgram->assignment.segmentCount) return false;
+		const auto& segment=weightProgram->assignment.weight[segmentIndex];
+		const uint32_t address=segment.address+group*16*weightProgram->weights.rowBytes
+			+block*weightProgram->circularBuffer[0].pageBytes;
+		if (!weight || weight[0]!=uint8_t(segment.bank^(address>>8))
+			|| weight[1]!=uint8_t(generation)
 			|| !ready || DataflowLoadAcquire(ready->produced)!=1
 			|| DataflowLoadAcquire(ready->consumed)!=0
 			|| input!=DataflowPackedActivationPage(cache,type,Hidden,block)) return false;
@@ -218,6 +231,7 @@ struct SharedComputeOps : RoleTestOps {
 			sum+=(v&0x8000)?-int(v&1023):int(v&1023);
 		}
 		if (DataflowActivationSum(cache,type,block,panel)!=sum) return false;
+		weightSequence++;
 		return RoleTestOps::TensixMatmul(type,block,weight,input);
 	}
 };
@@ -369,6 +383,7 @@ static void CheckCoordinatedRoles()
 	RoleTestOps readerOps{counters},computeOps{counters},writerOps{counters};
 	DataflowRoleMailbox box{};
 	box.magic=DataflowRoleMailboxMagic; box.version=DataflowRoleMailboxVersion;
+
 	struct ReaderBody {
 		const DataflowCoreInvocation& program; DataflowQueueView* queues;
 		uint8_t* activation; RoleTestOps& ops;
@@ -457,28 +472,46 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 	std::atomic<unsigned> generation{0};
 	struct ReaderProxy {
 		RoleTestOps& ops; bool failWeight;
-		struct WeightReadTicket { unsigned bank=0;uint32_t address=0;uint8_t* output=nullptr;unsigned bytes=0;bool active=false; };
-		bool pending=false,failPack=false,failBeginAfterIssue=false;
+		bool failPack=false,failBeginAfterIssue=false,failReadyAfterFirst=false;
 		DataflowQueueControl* weightControl=nullptr;
+		DataflowQueueControl* readyControl=nullptr;
 		bool earlyPublished=false;
-		unsigned begins=0,completions=0,overlaps=0;
+		unsigned begins=0,completions=0,overlaps=0,pending=0,peakPending=0;
 		bool Bind(const DataflowCoreInvocation& p) { return ops.Bind(p); }
 		bool ReadActivation(const RowSpace& r,unsigned n,uint8_t* out,unsigned bytes)
 			{ return ops.ReadActivation(r,n,out,bytes); }
-		bool ReadWeight(unsigned bank,uint32_t address,uint8_t* out,unsigned bytes)
-			{ return !(failWeight && ops.generation==8) && ops.ReadWeight(bank,address,out,bytes); }
-		bool BeginWeightRead(unsigned bank,uint32_t address,uint8_t* out,unsigned bytes,WeightReadTicket& ticket) {
-			if (pending || ticket.active || !out) return false;
-			ticket={bank,address,out,bytes,true};pending=true;begins++;return !failBeginAfterIssue;
-		}
-		bool CompleteWeightRead(WeightReadTicket& ticket) {
-			if (!pending || !ticket.active) return false;
-			pending=false;ticket.active=false;completions++;
-			if (weightControl && DataflowLoadAcquire(weightControl->produced)) { earlyPublished=true;return false; }
-			return ReadWeight(ticket.bank,ticket.address,ticket.output,ticket.bytes);
-		}
 		bool PackActivation(unsigned t,unsigned n,unsigned c,const float* in,uint8_t* out,unsigned bytes)
 			{ if (!c) { if (!pending) return false; overlaps++; } return !failPack && ops.PackActivation(t,n,c,in,out,bytes); }
+		struct WeightPipeline {
+			struct Request { unsigned bank=0;uint32_t address=0;uint8_t* output=nullptr;unsigned bytes=0;bool active=false; };
+			ReaderProxy& reader; Request requests[2]{};
+			uint32_t issued=0,retired=0; bool fault=false;
+			explicit WeightPipeline(ReaderProxy& r):reader(r) {}
+			bool Start() { reader.begins++;return true; }
+			bool Issue(uint32_t sequence,unsigned bank,uint32_t address,uint8_t* out,unsigned bytes) {
+				if (fault || sequence!=issued || issued-retired>=2 || requests[sequence%2].active || !out) return false;
+				requests[sequence%2]={bank,address,out,bytes,true};issued++;reader.pending++;
+				if (reader.pending>reader.peakPending) reader.peakPending=reader.pending;
+				if (reader.failBeginAfterIssue) { fault=true;return false; }
+				return true;
+			}
+			bool Complete(uint32_t sequence) {
+				if (fault || sequence!=retired || !requests[sequence%2].active) return false;
+				auto& r=requests[sequence%2];
+				if (reader.weightControl && DataflowLoadAcquire(reader.weightControl->produced)>sequence) {
+					reader.earlyPublished=true;fault=true;return false;
+				}
+				if ((reader.failWeight && reader.ops.generation==8)
+					|| !reader.ops.ReadWeight(r.bank,r.address,r.output,r.bytes)) { fault=true;return false; }
+				r.active=false;retired++;reader.pending--;
+				if (!sequence && reader.failReadyAfterFirst && reader.readyControl)
+					DataflowStoreRoleFailure(*reader.readyControl,DataflowFailureCompute);
+				return true;
+			}
+			bool Finish() { if (fault || issued!=retired) return false;reader.completions++;return true; }
+			uint32_t Issued() const { return issued; }
+			uint32_t Retired() const { return retired; }
+		};
 	} readerProxy{readerOps,failReader};
 	readerProxy.weightControl=&controls[0];
 	for (unsigned fault=0;fault<3;fault++) {
@@ -496,9 +529,26 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 		DataflowActivationReuseSetStep(failedReuse,1,1);DataflowActivationReuseCommit(failedReuse,invocation);
 		DataflowActivationReuseSetStep(failedReuse,1,3); // force a miss, then fail
 		assert(!PioneerQwen35SharedActivationReader(invocation,failedQueues[0],failedQueues[1],failedActivation,failedReader,&failedReuse));
-		assert(failedReader.begins==1 && failedReader.completions==1
-			&& failedReader.overlaps==(fault==1?0U:1U) && !failedReader.pending && !failedReader.earlyPublished);
+		assert(failedReader.begins==1 && failedReader.completions==(fault==0?1U:0U)
+			&& failedReader.overlaps==(fault==1?0U:1U)
+			&& failedReader.pending==(fault==0?0U:fault==1?1U:2U) && !failedReader.earlyPublished);
 		assert(!failedReuse.magic && !failedControls[0].produced && failedControls[1].produced==(fault==2?1U:0U)
+			&& DataflowQueueFailure(failedControls[0]) && DataflowQueueFailure(failedControls[1]));
+	}
+	{
+		DataflowQueueControl failedControls[DataflowCircularBufferCount]{};
+		alignas(16) uint8_t failedLocal[DataflowLocalBufferEnd-DataflowWeightBufferAddress]{};
+		alignas(float) uint8_t failedActivation[DataflowActivationCacheBytes]{};
+		DataflowQueueView failedQueues[DataflowCircularBufferCount]{};
+		assert(DataflowBindQueues(invocation,failedControls,failedLocal,failedQueues));
+		RoleTestCounters failureCounters{}; RoleTestOps failureOps{failureCounters};
+		failureOps.projectionType=type;failureOps.realPack=true;
+		ReaderProxy failedReader{failureOps,false};
+		failedReader.weightControl=&failedControls[0];failedReader.readyControl=&failedControls[1];
+		failedReader.failReadyAfterFirst=true;
+		assert(!PioneerQwen35SharedActivationReader(invocation,failedQueues[0],failedQueues[1],failedActivation,failedReader));
+		assert(failedReader.peakPending==2 && !failedReader.pending && failedReader.completions==1
+			&& failureCounters.weightReads==2 && failedControls[0].produced==1
 			&& DataflowQueueFailure(failedControls[0]) && DataflowQueueFailure(failedControls[1]));
 	}
 	struct ReaderBody {
@@ -524,6 +574,7 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 		std::atomic<unsigned>& generation;
 		bool RunCompute() {
 			ops.bound=false; ops.generation=generation.load(); ops.projectionType=program.type;
+			ops.weightProgram=&program;ops.weightSequence=0;
 			return PioneerQwen35SharedActivationCompute(program,queues[0],queues[1],queues[2],activation,ops);
 		}
 		void Pause() { std::this_thread::yield(); }
@@ -581,8 +632,9 @@ static void CheckCoordinatedSharedActivationRoles(unsigned type,bool failReader=
 		bad.store(true);
 	reader.join(); writer.join();
 	assert(!bad.load() && DataflowRoleMailboxStopReceipts(box));
-	assert(readerProxy.begins==runs && readerProxy.completions==runs
-		&& readerProxy.overlaps==expectedReads && !readerProxy.pending && !readerProxy.earlyPublished);
+	assert(readerProxy.begins==runs && readerProxy.completions==completedRuns
+		&& readerProxy.overlaps==expectedReads && readerProxy.peakPending==2
+		&& (failReader?readerProxy.pending==2:readerProxy.pending==0) && !readerProxy.earlyPublished);
 	assert(counters.okay && counters.binds==3*runs && counters.activationReads==expectedReads);
 	if (failReader) {
 		assert(completedRuns==runs-1 && box.acknowledged==runs-1
