@@ -2,6 +2,9 @@
 #ifndef PIONEER_QWEN35_DATAFLOW_SERVICE_OWNER_H
 #define PIONEER_QWEN35_DATAFLOW_SERVICE_OWNER_H
 
+#if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) && !defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+#error Dedicated takeover requires the shared role owner and reset retirement path
+#endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 #if !defined(PIONEER_QWEN35_DEVICE_DISPATCH) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY)
 #error Shared-role service lifecycle is a non-loadable recovery witness only
@@ -127,14 +130,11 @@ struct DataflowServiceDiagnostic {
 	unsigned stage,core,state,failure,phase,detail;
 };
 
-// Owns the resident image lifecycle and the projection coordinator. IO is the
-// only platform-specific layer: it must prove driver/session idleness, save
-// and restore each core's touched L1/runtime state, perform bounded L1 copies,
-	// and audit reset, route, worker status, and NoC state. RestoreCoreState
-	// must leave cores held; ResumeRestoredFleet restores their captured reset
-	// states only after every core's L1 and boot state has been verified. This class does no
-// inference and starts no core until all 120 images and startup records have
-// been read back successfully.
+// Owns the resident image lifecycle and the projection coordinator. IO must
+// prove session idleness and audit reset, routes, worker status and NoC state.
+// The snapshot lifecycle restores each core before resuming; the dedicated
+// takeover instead retains its owner until a verified device reset. Neither
+// path starts a core until all 120 images and startup records are read back.
 class DataflowServiceOwner {
 	enum Phase { PhaseEmpty, PhaseInstalling, PhaseReady, PhaseFaulted, PhaseClosed
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
@@ -149,6 +149,7 @@ class DataflowServiceOwner {
 #endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 	bool fStoppedResetReady=false;
+	bool fDedicatedTakeoverTouched=false;
 #endif
 	DataflowServiceDiagnostic fDiagnostic={DataflowServiceDiagnosticNone,
 		DataflowCoreCount,0,0,0,0};
@@ -199,8 +200,8 @@ class DataflowServiceOwner {
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 	// A ready-looking compute mailbox is initialized by the host before
 	// release. It cannot prove either separate firmware image has actually
-	// run. Wait for both role-owned receipts and a stable empty handoff before
-	// accepting the tile; leave physical PC/NoC proof to SharedCoreReady.
+	// run. Wait for both role-owned receipts before accepting the tile; leave
+	// physical PC/NoC proof to SharedCoreReady.
 	template<class IO>
 	static bool SharedWaitRoleStartup(unsigned core,IO& io)
 	{
@@ -250,7 +251,9 @@ class DataflowServiceOwner {
 			DataflowQueueControl queues[DataflowCircularBufferCount]{};
 			DataflowWorkerMailbox mailbox{};
 			DataflowRoleMailbox role{};
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 			DataflowRoleSnapshotHandoff handoff{};
+#endif
 			mailbox.magic=DataflowWorkerMailboxMagic; mailbox.version=DataflowWorkerMailboxVersion;
 			mailbox.state=DataflowWorkerReady; mailbox.logicalCore=core;
 			role.magic=DataflowRoleMailboxMagic; role.version=DataflowRoleMailboxVersion;
@@ -265,8 +268,11 @@ class DataflowServiceOwner {
 				|| memcmp(&mailbox,readback,sizeof(mailbox))
 				|| !io.ReadCoreMemory(core,DataflowRoleMailboxAddress,readback,sizeof(role))
 				|| memcmp(&role,readback,sizeof(role))
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 				|| !io.ReadCoreMemory(core,DataflowRoleSnapshotHandoffAddress,readback,sizeof(handoff))
-				|| memcmp(&handoff,readback,sizeof(handoff))) return false;
+				|| memcmp(&handoff,readback,sizeof(handoff))
+#endif
+				) return false;
 			auto zeroPacket=[&](unsigned address) {
 				if (!io.ReadCoreMemory(core,address,readback,DataflowBarrierPacketBytes)) return false;
 				for (unsigned i=0;i<DataflowBarrierPacketBytes/sizeof(uint32_t);i++)
@@ -393,6 +399,7 @@ public:
 				return DataflowServicePreflightFailed;
 			}
 		}
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			if (!io.CaptureCoreState(core)) {
 				ReleaseSnapshots(io);
@@ -401,7 +408,13 @@ public:
 			}
 			fSaved[core]=true;
 		}
+#endif
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+			// A failed hold may have changed a worker. From this point the
+			// dedicated owner must retire through verified device reset.
+			fDedicatedTakeoverTouched=true;
+#endif
 			if (!io.HoldCore(core) || !io.CoreHeld(core)) {
 				fPhase=PhaseFaulted;
 				return DataflowServiceHoldFailed;
@@ -418,8 +431,8 @@ public:
 		}
 #endif
 
-		// Every original state is captured and every core held before the first
-		// image write. No partially staged core is allowed to start.
+		// Every core is held before the first image write. No partially staged
+		// core is allowed to start.
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 			if (!WriteAndVerifyImage(core,image,io)) {
 				fPhase=PhaseFaulted;
@@ -459,6 +472,7 @@ public:
 				fPhase=PhaseFaulted;
 				return DataflowServiceStartupReadbackFailed;
 			}
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 			DataflowRoleSnapshotHandoff handoff{},handoffReadback{};
 			if (!io.WriteCoreMemory(core,DataflowRoleSnapshotHandoffAddress,&handoff,sizeof(handoff))) {
 				fPhase=PhaseFaulted; return DataflowServiceStartupWriteFailed;
@@ -467,6 +481,7 @@ public:
 				|| memcmp(&handoff,&handoffReadback,sizeof(handoff))) {
 				fPhase=PhaseFaulted; return DataflowServiceStartupReadbackFailed;
 			}
+#endif
 #endif
 			DataflowQueueControl queueReadback[DataflowCircularBufferCount];
 			DataflowWorkerMailbox mailboxReadback{};
@@ -746,9 +761,9 @@ public:
 			}
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
-			// A stopped takeover intentionally discarded old role RAM. Keep
-			// the owner alive until the reset/reinitialization transaction.
-			if (fSharedAttempted && io.SharedTakeoverResetRequired()) {
+			// A takeover discards previous core state. Keep the owner alive
+			// until the reset/reinitialization transaction.
+			if (fDedicatedTakeoverTouched || (fSharedAttempted && io.SharedTakeoverResetRequired())) {
 				fStoppedResetReady=true;return DataflowServiceResetRequired;
 			}
 #endif

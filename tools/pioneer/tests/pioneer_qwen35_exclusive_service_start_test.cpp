@@ -12,6 +12,26 @@
 struct DedicatedIO : MockDataflowIO {
     unsigned releaseAttempts=0;
     bool allowStop=false;
+    unsigned failHoldCore=UINT32_MAX;
+    bool CaptureCoreState(unsigned)=delete;
+    bool HoldCore(unsigned core) {
+        if (core>=DataflowCoreCount) return false;
+        held[core]=true;started[core]=false;
+        return core!=failHoldCore; // a failed write may still have taken effect
+    }
+    bool SharedCaptureAndStageHeld() {
+        ++roleStages;
+        for (unsigned core=0;core<DataflowCoreCount;core++) if (!held[core]) return false;
+        roleStaged=true;return !failRoleStage;
+    }
+    bool ReadCoreMemory(unsigned core,unsigned address,void* output,unsigned bytes) {
+        assert(address!=DataflowRoleSnapshotHandoffAddress);
+        return MockDataflowIO::ReadCoreMemory(core,address,output,bytes);
+    }
+    bool WriteCoreMemory(unsigned core,unsigned address,const void* input,unsigned bytes) {
+        assert(address!=DataflowRoleSnapshotHandoffAddress);
+        return MockDataflowIO::WriteCoreMemory(core,address,input,bytes);
+    }
     bool SharedStartCore(unsigned core) {
         assert(core==releaseAttempts++ && roleArmed);
         if (!StartCore(core)) return false;
@@ -26,7 +46,7 @@ struct DedicatedIO : MockDataflowIO {
         stage=17;core=releaseAttempts?releaseAttempts-1:DataflowCoreCount;
         ++roleStops;return allowStop;
     }
-    bool SharedTakeoverResetRequired() { return true; }
+    bool SharedTakeoverResetRequired() { return false; }
 };
 int main() {
     assert(!DataflowPciRunningWriteRange(DataflowRoleSnapshotHandoffAddress
@@ -36,9 +56,25 @@ int main() {
     {
         auto io=std::make_unique<DedicatedIO>();auto owner=std::make_unique<DataflowServiceOwner>();
         assert(owner->Install(image,*io)==DataflowServiceComplete && owner->Ready());
-        assert(io->releaseAttempts==DataflowCoreCount && io->roleStarts==DataflowCoreCount);
+        assert(io->releaseAttempts==DataflowCoreCount && io->roleStarts==DataflowCoreCount && !io->captureCount);
         for (unsigned i=0;i<DataflowCoreCount;i++) assert(!io->roleHandoff[i].release);
         assert(owner->Close(*io)==DataflowServiceStopAuditFailed && io->restoreCount==0);
+    }
+    {
+        auto io=std::make_unique<DedicatedIO>();auto owner=std::make_unique<DataflowServiceOwner>();
+        io->failHoldCore=3;
+        assert(owner->Install(image,*io)==DataflowServiceHoldFailed && owner->Faulted());
+        assert(io->held[3] && !io->captureCount && !io->roleStages && !io->releaseAttempts);
+        assert(owner->Close(*io)==DataflowServiceResetRequired && owner->StoppedResetReady());
+        assert(io->stopCount==1 && !io->restoreCount && !io->resumeCount);
+    }
+    {
+        auto io=std::make_unique<DedicatedIO>();auto owner=std::make_unique<DataflowServiceOwner>();
+        io->failRoleStage=true;io->allowStop=true;
+        assert(owner->Install(image,*io)==DataflowServiceSnapshotFailed && owner->Faulted());
+        assert(!io->captureCount && !io->releaseAttempts);
+        assert(owner->Close(*io)==DataflowServiceResetRequired && owner->StoppedResetReady());
+        assert(!io->restoreCount && !io->resumeCount);
     }
     {
         auto io=std::make_unique<DedicatedIO>();auto owner=std::make_unique<DataflowServiceOwner>();
