@@ -225,6 +225,14 @@ public:
     // unsnapshotted tiles (including misrouted restoration writes).
     bool ProveRoleStacklessFleetPreparationSafe(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleUncapturedRamProtected(PioneerSessionIO&,unsigned) const { return false; }
+    // A future copy-aware restore must bind these pointers to the retained
+    // fleet ledger and exclude every source/destination writer for the whole
+    // transaction. No physical proof is implemented yet.
+    bool ProveRoleHeldCopySources(PioneerSessionIO&,unsigned,const uint32_t*& reader,
+        const uint32_t*& writer,bool& captured) const {
+        reader=writer=nullptr;captured=false;return false;
+    }
+    bool ProveRoleCoreRestore(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
     // Must fence this tile's particular attempted stack-release write and
     // exclude all later writes to the handoff for the recovery transaction.
     bool ProveRoleStackReleaseWriteDrained(PioneerSessionIO&,unsigned) const { return false; }

@@ -38,6 +38,9 @@ struct StacklessRamIO : RamIO {
     bool safe=true;
     unsigned copyReads=0,failCopyAt=UINT32_MAX,corruptAtRead=UINT32_MAX;
     mutable unsigned safeChecks=0,failSafeAt=UINT32_MAX;
+    bool restoredProof=false;
+    mutable unsigned restoreProofChecks=0,failRestoreProofAt=UINT32_MAX;
+    const uint32_t* trustedReader=nullptr;const uint32_t* trustedWriter=nullptr;
     bool StacklessCopiesSafe(unsigned core) const {
         return core==9 && safe && safeChecks++!=failSafeAt;
     }
@@ -49,6 +52,13 @@ struct StacklessRamIO : RamIO {
         if (call==corruptAtRead) copies[0]^=1;
         const unsigned first=role*DataflowRoleLocalRamWords+offset/4;
         for (unsigned i=0;i<bytes/4;i++) output[i]=copies[first+i];
+        return true;
+    }
+    bool StacklessCoreRestoreProven(unsigned core,const uint32_t* reader,const uint32_t* writer) const {
+        if (!restoredProof || restoreProofChecks++==failRestoreProofAt || !AllRolesHeld(core)
+            || reader!=trustedReader || writer!=trustedWriter) return false;
+        for (unsigned i=0;i<DataflowRoleLocalRamWords;i++)
+            if (ram[i]!=reader[i] || ram[DataflowRoleLocalRamWords+i]!=writer[i]) return false;
         return true;
     }
 };
@@ -75,6 +85,28 @@ int main()
         io.ram[0]^=1;
         assert(!owner.VerifyOriginal(io) && owner.RestorationRequired());
         assert(owner.Restore(io) && io.ram==original);
+    }
+    {
+        StacklessRamIO io; const auto original=io.ram; DataflowRoleLocalRamOwner owner;
+        assert(owner.CaptureStackless(9,snapshot.data(),snapshot.size(),io)
+            && owner.MarkMayRunStackless(io));
+        io.trustedReader=snapshot.data();io.trustedWriter=snapshot.data()+DataflowRoleLocalRamWords;
+        io.ram.assign(io.ram.size(),0);const unsigned reads=io.reads,writes=io.writes;
+        assert(!owner.MarkRestoredByCore(io) && owner.RestorationRequired());
+        io.restoredProof=true;
+        assert(!owner.MarkRestoredByCore(io) && owner.RestorationRequired()); // data not restored
+        io.ram=original;io.held=false;
+        assert(!owner.MarkRestoredByCore(io) && owner.RestorationRequired());
+        io.held=true;io.restoreProofChecks=0;io.failRestoreProofAt=1;
+        assert(!owner.MarkRestoredByCore(io) && owner.RestorationRequired());
+        io.restoreProofChecks=0;io.failRestoreProofAt=UINT32_MAX;
+        assert(owner.MarkRestoredByCore(io) && owner.RestoredOriginal()
+            && owner.VerifyRestoredByCore(io));
+        assert(owner.AuditOriginal(io)==DataflowRoleLocalRamOwner::OriginalUnreadable
+            && io.reads==reads && io.writes==writes);
+        io.restoredProof=false;
+        assert(!owner.VerifyRestoredByCore(io) && owner.RestorationRequired());
+        assert(io.reads==reads && io.writes==writes);
     }
     {
         StacklessRamIO io; const auto original=io.ram; DataflowRoleLocalRamOwner owner;

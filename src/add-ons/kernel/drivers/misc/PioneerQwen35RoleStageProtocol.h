@@ -3,8 +3,9 @@
 #define PIONEER_QWEN35_ROLE_STAGE_PROTOCOL_H
 #include <stdint.h>
 
-// Restricted fixed-image, held-core qualification only. No user address,
-// executable payload, reset/release request, model data or inference input.
+// Restricted fixed-image qualification. Version 1 keeps all roles held;
+// version 2 performs its fixed B/NC startup/cancel sequence on worker zero.
+// No user address, executable payload, model data or inference input.
 #define TT_PCI_PROBE_Q35_ROLE_STAGE_QUALIFY (B_DEVICE_OP_CODES_END+0x61e8)
 enum : uint32_t { TT_Q35_ROLE_STAGE_COMPLETE=8, TT_Q35_ROLE_PRESTACK_COMPLETE=9 };
 struct tt_q35_role_stage_qualification {

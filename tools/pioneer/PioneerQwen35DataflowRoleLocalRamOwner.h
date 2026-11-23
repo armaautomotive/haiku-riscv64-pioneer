@@ -31,6 +31,7 @@ class DataflowRoleLocalRamOwner {
     unsigned fCore=DataflowBarrierWorkers;
     uint32_t* fSnapshot=nullptr;
     bool fFromStacklessCopy=false;
+    bool fRestoredByCore=false;
     template<class IO> bool Stable(IO& io) const {
         return io.AllRolesHeld(fCore) && io.LocalRamStable(fCore);
     }
@@ -59,6 +60,7 @@ public:
     static constexpr unsigned RequiredWords() { return TotalWords; }
     bool RestorationRequired() const { return fPhase==Dirty; }
     bool RestoredOriginal() const { return fPhase==Restored; }
+    bool RestoredByCore() const { return fPhase==Restored && fRestoredByCore; }
     const uint32_t* OriginalWords(unsigned role) const {
         return role<DataflowRoleCount && fPhase!=Empty && fSnapshot
             ?fSnapshot+role*DataflowRoleLocalRamWords:nullptr;
@@ -138,13 +140,39 @@ public:
         fPhase=Dirty; return true;
     }
     template<class IO> OriginalAudit AuditOriginal(IO& io) {
-        if ((fPhase!=Captured && fPhase!=Restored) || !fSnapshot) return OriginalUnreadable;
+        // A core-proved restoration uses a different authority path; never
+        // silently fall back to the host's slow private-RAM read.
+        if ((fPhase!=Captured && fPhase!=Restored) || !fSnapshot || fRestoredByCore)
+            return OriginalUnreadable;
         const OriginalAudit result=CompareOriginal(io);
         if (result!=OriginalMatches) fPhase=Dirty;
         return result;
     }
     template<class IO> bool VerifyOriginal(IO& io) {
         return AuditOriginal(io)==OriginalMatches;
+    }
+    // The IO proof must independently establish this exact retained snapshot,
+    // immutable L1 restore sources, verified restore shim/receipt freshness,
+    // held roles, route and exclusion of all competing writers. No current
+    // physical scope provides that proof. This method itself does not launch,
+    // write private RAM, or read it through the host's slow mapping.
+    template<class IO> bool MarkRestoredByCore(IO& io) {
+        if (fPhase!=Dirty || !fFromStacklessCopy || !fSnapshot) return false;
+        const uint32_t* reader=fSnapshot;
+        const uint32_t* writer=fSnapshot+DataflowRoleLocalRamWords;
+        if (!io.AllRolesHeld(fCore) || !io.StacklessCoreRestoreProven(fCore,reader,writer)
+            || !io.AllRolesHeld(fCore) || !io.StacklessCoreRestoreProven(fCore,reader,writer)) return false;
+        fRestoredByCore=true;fPhase=Restored;return true;
+    }
+    template<class IO> bool VerifyRestoredByCore(IO& io) {
+        if (fPhase!=Restored || !fRestoredByCore || !fSnapshot) return false;
+        const uint32_t* reader=fSnapshot;
+        const uint32_t* writer=fSnapshot+DataflowRoleLocalRamWords;
+        if (!io.AllRolesHeld(fCore) || !io.StacklessCoreRestoreProven(fCore,reader,writer)
+            || !io.AllRolesHeld(fCore) || !io.StacklessCoreRestoreProven(fCore,reader,writer)) {
+            fRestoredByCore=false;fPhase=Dirty;return false;
+        }
+        return true;
     }
     template<class IO> bool Restore(IO& io) {
         if (fPhase!=Dirty || !fSnapshot || !Stable(io)) return false;
@@ -158,7 +186,7 @@ public:
             }
         }
         if (CompareOriginal(io)!=OriginalMatches) return false; // retain on mismatch or unreadable state
-        fPhase=Restored; return true;
+        fRestoredByCore=false;fPhase=Restored; return true;
     }
 };
 }

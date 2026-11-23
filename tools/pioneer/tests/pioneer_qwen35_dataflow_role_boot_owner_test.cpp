@@ -97,5 +97,46 @@ int main()
         assert(!owner.VerifyStaged(io) && owner.RestorationRequired());
         assert(owner.Restore(io) && io.shim==original);
     }
-    std::puts("PASS boot/shim snapshots, partial-write retention and verified restoration; SIMULATED ONLY");
+    {
+        const uint32_t shorterReader[]={0x31,0x32},shorterWriter[]={0x41};
+        BootIO io; const auto original=io.shim; DataflowRoleBootOwner owner;
+        assert(owner.Capture(7,io) && owner.Stage(reader,4,writer,3,io));
+        const uint32_t b0=io.boot[0],b1=io.boot[1]; const unsigned bootWrites=io.bootWrites;
+        assert(owner.Restage(shorterReader,2,shorterWriter,1,io) && owner.VerifyStaged(io));
+        assert(io.boot[0]==b0 && io.boot[1]==b1 && io.bootWrites==bootWrites);
+        assert(io.shim[0]==shorterReader[0] && io.shim[1]==shorterReader[1]
+            && io.shim[2]==original[2] && io.shim[64]==shorterWriter[0]
+            && io.shim[65]==original[65]);
+        assert(owner.Restore(io) && io.shim==original);
+    }
+    for (unsigned failed=1;failed<=3;failed++) {
+        const uint32_t replacement[]={0x51,0x52};
+        BootIO io; const auto original=io.shim; DataflowRoleBootOwner owner;
+        assert(owner.Capture(7,io) && owner.Stage(reader,4,writer,3,io));
+        const unsigned priorBootWrites=io.bootWrites;
+        io.failWrite=int(io.writes+failed);
+        assert(!owner.Restage(replacement,2,replacement,2,io) && owner.RestorationRequired());
+        assert(io.bootWrites==priorBootWrites);
+        io.failWrite=-1;
+        assert(owner.Restore(io) && io.shim==original);
+    }
+    {
+        const uint32_t replacement[]={0x61};
+        BootIO io; const auto original=io.shim; DataflowRoleBootOwner owner;
+        assert(owner.Capture(7,io) && owner.Stage(reader,4,writer,3,io));
+        io.shim[0]^=1; const unsigned writes=io.writes;
+        assert(!owner.Restage(replacement,1,replacement,1,io)
+            && owner.RestorationRequired() && io.writes==writes);
+        assert(owner.Restore(io) && io.shim==original);
+    }
+    {
+        const uint32_t replacement[]={0x71};
+        BootIO io; const auto original=io.shim; DataflowRoleBootOwner owner;
+        assert(owner.Capture(7,io) && owner.Stage(reader,4,writer,3,io));
+        const unsigned bootWrites=io.bootWrites; io.corruptReaderOnWriter=true;
+        assert(!owner.Restage(replacement,1,replacement,1,io)
+            && owner.RestorationRequired() && io.bootWrites==bootWrites);
+        assert(owner.Restore(io) && io.shim==original);
+    }
+    std::puts("PASS boot/shim snapshots, held restaging, partial-write retention and restoration; SIMULATED ONLY");
 }

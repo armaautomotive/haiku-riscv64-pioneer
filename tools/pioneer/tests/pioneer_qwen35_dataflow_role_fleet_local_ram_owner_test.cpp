@@ -9,6 +9,9 @@ struct FleetRamIO {
     std::vector<uint32_t> memory,copies;
     bool held=true,stable=true,corruptEnabled=false;
     bool stacklessSafe=true,uncapturedProtected=true;
+    bool coreRestoreProof=false;
+    int driftWhenProvingCore=-1;
+    const uint32_t* ownedSnapshots=nullptr;
     int failCore=-1,readFailCore=-1,unstableAfterReadCore=-1,corruptFrom=-1,corruptTarget=-1;
     int failCopyCore=-1;
     unsigned revokeProtectionAtWrite=UINT32_MAX;
@@ -23,6 +26,14 @@ struct FleetRamIO {
     bool StacklessCopiesSafe(unsigned core) const { return !held && stacklessSafe && core<DataflowBarrierWorkers; }
     bool StacklessUncapturedRamProtected(unsigned core) const {
         return held && uncapturedProtected && core<DataflowBarrierWorkers;
+    }
+    bool StacklessCoreRestoreProven(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        if (!coreRestoreProof || !AllRolesHeld(core) || !ownedSnapshots) return false;
+        if (int(core)==driftWhenProvingCore) { memory[0]^=1;driftWhenProvingCore=-1; }
+        const uint32_t* expected=ownedSnapshots+core*PerCore;
+        if (reader!=expected || writer!=expected+DataflowRoleLocalRamWords) return false;
+        for (unsigned i=0;i<PerCore;i++) if (memory[core*PerCore+i]!=expected[i]) return false;
+        return true;
     }
     bool ReadStacklessRamCopy(unsigned core,unsigned role,unsigned offset,uint32_t* output,unsigned bytes) {
         if (!StacklessCopiesSafe(core) || int(core)==failCopyCore || role>=DataflowRoleCount || !output
@@ -127,6 +138,42 @@ int main()
         staged.memory[0]^=1;
         assert(!partial.VerifyStacklessRestored(staged) && partial.RestorationRequired());
         assert(partial.RestoreStackless(staged) && staged.memory==before);
+    }
+    {
+        FleetRamIO staged; const auto before=staged.memory;
+        std::vector<uint32_t> saved(DataflowRoleFleetLocalRamOwner::RequiredWords());
+        DataflowRoleFleetLocalRamOwner partial;
+        assert(partial.PrepareStackless(saved.data(),saved.size()));staged.held=false;
+        assert(partial.CaptureStacklessCore(0,staged) && partial.CaptureStacklessCore(1,staged));
+        assert(partial.MarkStacklessMayRun(0,staged) && partial.MarkStacklessMayRun(1,staged));
+        staged.memory[0]^=1;staged.memory[FleetRamIO::PerCore]^=2;
+        staged.held=true;staged.ownedSnapshots=saved.data();
+        const unsigned writes=staged.writes;
+        assert(!partial.MarkCoreRestoredByCore(0,staged) && partial.RestorationRequired());
+        staged.coreRestoreProof=true;
+        assert(!partial.MarkCoreRestoredByCore(0,staged)); // exact data still differs
+        staged.memory[0]=before[0];
+        assert(partial.MarkCoreRestoredByCore(0,staged));
+        assert(!partial.VerifyStacklessRestoredByCore(staged)); // core 1 not yet proved
+        staged.memory[FleetRamIO::PerCore]=before[FleetRamIO::PerCore];
+        assert(partial.MarkCoreRestoredByCore(1,staged) && partial.VerifyStacklessRestoredByCore(staged)
+            && partial.StacklessRestoredByCore());
+        staged.driftWhenProvingCore=1;
+        assert(!partial.VerifyStacklessRestoredByCore(staged) && partial.RestorationRequired());
+        staged.memory[0]=before[0];
+        assert(partial.MarkCoreRestoredByCore(0,staged) && partial.VerifyStacklessRestoredByCore(staged));
+        for (unsigned reads:staged.reads) assert(!reads);
+        assert(staged.writes==writes);
+        staged.uncapturedProtected=false;
+        assert(!partial.VerifyStacklessRestoredByCore(staged) && partial.RestorationRequired());
+        staged.uncapturedProtected=true;
+        assert(partial.VerifyStacklessRestoredByCore(staged));
+        staged.memory[0]^=1;
+        assert(!partial.VerifyStacklessRestoredByCore(staged) && partial.RestorationRequired());
+        staged.memory[0]=before[0];
+        assert(partial.MarkCoreRestoredByCore(0,staged) && partial.VerifyStacklessRestoredByCore(staged));
+        for (unsigned reads:staged.reads) assert(!reads);
+        assert(staged.writes==writes);
     }
     {
         FleetRamIO staged; const auto before=staged.memory;

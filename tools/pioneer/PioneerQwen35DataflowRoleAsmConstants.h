@@ -14,4 +14,10 @@
 #define PIONEER_Q35_ROLE_SNAPSHOT_CANCEL 0x43
 #define PIONEER_Q35_ROLE_SNAPSHOT_READER_CANCELLED 0x71
 #define PIONEER_Q35_ROLE_SNAPSHOT_WRITER_CANCELLED 0x72
+/* Experimental local-RAM restore receipts. The host must clear and own the
+   handoff before release; these values alone are not a completion proof. */
+#define PIONEER_Q35_ROLE_RESTORE_READER_DONE 0x81
+#define PIONEER_Q35_ROLE_RESTORE_WRITER_DONE 0x82
+#define PIONEER_Q35_ROLE_RESTORE_READER_FAILED 0xe1
+#define PIONEER_Q35_ROLE_RESTORE_WRITER_FAILED 0xe2
 #endif

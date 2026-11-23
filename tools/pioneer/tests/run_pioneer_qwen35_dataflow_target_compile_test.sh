@@ -242,6 +242,36 @@ for role in reader writer; do
 	python3 "$directory/pioneer_qwen35_role_local_restore_test.py" \
 		"$temporary/local-restore-${role}.bin" "$role"
 done
+if PIONEER_QWEN35_RECOVERY_COMPILE_ONLY=0 PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY=0 \
+    sh "$root/tools/pioneer/build_qwen35_local_restore_images.sh" "$build" \
+        "$temporary/invalid-local-restore-images" >/dev/null 2>&1; then
+    echo 'local restore images accepted a build without recovery guards' >&2; exit 1
+fi
+PIONEER_QWEN35_RECOVERY_COMPILE_ONLY=1 PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY=1 \
+    sh "$root/tools/pioneer/build_qwen35_local_restore_images.sh" "$build" "$temporary/local-restore-images"
+for role in reader writer; do
+    cmp "$temporary/local-restore-${role}.bin" "$temporary/local-restore-images/${role}.bin"
+    python3 "$directory/pioneer_qwen35_role_local_restore_test.py" \
+        "$temporary/local-restore-images/${role}.bin" "$role"
+done
+python3 "$directory/pioneer_qwen35_role_local_restore_images_test.py" "$temporary/local-restore-images"
+"$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -ffreestanding \
+    -fno-exceptions -fno-rtti -fno-stack-protector -mcmodel=medany -fpic -D_KERNEL_MODE \
+    -fstack-usage -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+    -c "$directory/pioneer_qwen35_copy_aware_kernel_compile.cpp" -o "$temporary/copy-aware-kernel.o"
+python3 - "$temporary/copy-aware-kernel.su" <<'PYSTACK'
+from pathlib import Path
+import sys
+rows=[line.rsplit('\t',2) for line in Path(sys.argv[1]).read_text().splitlines()]
+if not rows or any(len(row)!=3 or not row[1].isdigit() or row[2]!='static' for row in rows):
+    raise SystemExit('copy-aware compile witness has missing or non-static stack frames')
+if not any('PioneerQ35CopyAwareCompileWitness' in row[0] for row in rows):
+    raise SystemExit('copy-aware compile witness entry is missing')
+total=sum(int(row[1]) for row in rows)
+if total>4096:
+    raise SystemExit(f'copy-aware compile witness selected frames exceed budget: {total}')
+print(f'PASS copy-aware Haiku SDK compile, selected frames {total}/4096; IO/caller not audited')
+PYSTACK
 # Dedicated takeover entry has no private-RAM preservation or snapshot
 # handoff. Keep it separately linked and unavailable to the existing owner.
 "$cxx" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \

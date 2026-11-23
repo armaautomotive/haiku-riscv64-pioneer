@@ -116,6 +116,29 @@ public:
         if (!VerifyImages(io)) { fPhase=Faulted; return false; }
         return true;
     }
+    // Replace held roles' shims while retaining the original boot/shim
+    // snapshot. This is a building block for the separate local-RAM restore
+    // witness, not permission to release a role. IO must independently own
+    // every relevant writer and keep the fleet held. New source images must
+    // remain immutable until restoration. An uncertain write is not retried.
+    template<class IO> bool Restage(const uint32_t* reader,unsigned readerWords,
+        const uint32_t* writer,unsigned writerWords,IO& io) {
+        if (fPhase!=Staged || !reader || !readerWords || !writer || !writerWords
+            || readerWords>(DataflowRoleReaderShimLimit-DataflowRoleReaderShimAddress)/4
+            || writerWords>(DataflowRoleWriterShimLimit-DataflowRoleWriterShimAddress)/4)
+            return false;
+        fPhase=Faulted;
+        if (!Held(io) || !VerifyImages(io)) return false;
+        // Reinstall saved padding before the new images so a shorter shim
+        // cannot leave stale instructions after its last word.
+        if (!io.WriteShim(fCore,DataflowRoleReaderShimAddress,fShim,sizeof(fShim))
+            || !Held(io) || !io.WriteShim(fCore,DataflowRoleReaderShimAddress,reader,readerWords*4)
+            || !Held(io) || !io.WriteShim(fCore,DataflowRoleWriterShimAddress,writer,writerWords*4))
+            return false;
+        fReader=reader; fReaderWords=readerWords; fWriter=writer; fWriterWords=writerWords;
+        if (!VerifyImages(io)) return false;
+        fPhase=Staged; return true;
+    }
     // Fleet-level final readback also checks captured tiles which were not
     // intentionally written, since a later transfer may have been misrouted.
     template<class IO> bool VerifyOriginal(IO& io) {

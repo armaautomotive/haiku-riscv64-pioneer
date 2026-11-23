@@ -22,6 +22,8 @@ public:
     DataflowRoleFleetBootOwner(const DataflowRoleFleetBootOwner&)=delete;
     DataflowRoleFleetBootOwner& operator=(const DataflowRoleFleetBootOwner&)=delete;
     bool StagedAndVerified() const { return fPhase==Staged; }
+    bool CanRestageCore(unsigned core) const { return fPhase==Staged && core<DataflowBarrierWorkers
+        && (fStagedCore==DataflowBarrierWorkers || core==fStagedCore); }
     bool RestorationRequired() const { return fPhase==Faulted || fPhase==Staged; }
     bool RestoredOriginal() const { return fPhase==Restored; }
     template<class IO> bool CaptureAll(IO& io) {
@@ -64,6 +66,23 @@ public:
         if (!AllHeld(io) || !fCore[core].Stage(reader,readerWords,writer,writerWords,io)) return false;
         for (unsigned i=0;i<DataflowBarrierWorkers;i++)
             if (!(i==core?fCore[i].VerifyStaged(io):fCore[i].VerifyOriginal(io))) return false;
+        if (!AllHeld(io)) return false;
+        fPhase=Staged;return true;
+    }
+    // Replace one held core's staged shims while retaining and auditing the
+    // entire fleet. A cross-core misroute remains a fault requiring restore.
+    template<class IO> bool RestageOne(unsigned core,const uint32_t* reader,unsigned readerWords,
+        const uint32_t* writer,unsigned writerWords,IO& io) {
+        if (!CanRestageCore(core)
+            || !reader || !readerWords || !writer || !writerWords
+            || readerWords>(DataflowRoleReaderShimLimit-DataflowRoleReaderShimAddress)/4
+            || writerWords>(DataflowRoleWriterShimLimit-DataflowRoleWriterShimAddress)/4) return false;
+        if (!VerifyStagedAll(io)) return false;
+        fPhase=Faulted;
+        if (!fCore[core].Restage(reader,readerWords,writer,writerWords,io)) return false;
+        for (unsigned i=0;i<DataflowBarrierWorkers;i++)
+            if (!(fStagedCore==DataflowBarrierWorkers || i==fStagedCore
+                    ?fCore[i].VerifyStaged(io):fCore[i].VerifyOriginal(io))) return false;
         if (!AllHeld(io)) return false;
         fPhase=Staged;return true;
     }

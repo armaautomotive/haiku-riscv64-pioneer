@@ -561,6 +561,12 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
             assert(!scope.ProveRoleStacklessSnapshotSafe(context->io,0));
             assert(!scope.ProveRoleStacklessFleetPreparationSafe(context->io,0));
             assert(!scope.ProveRoleUncapturedRamProtected(context->io,0));
+            const uint32_t* heldReader=reinterpret_cast<const uint32_t*>(1);
+            const uint32_t* heldWriter=reinterpret_cast<const uint32_t*>(1);
+            bool heldCaptured=true;
+            assert(!scope.ProveRoleHeldCopySources(context->io,0,heldReader,heldWriter,heldCaptured)
+                && !heldReader && !heldWriter && !heldCaptured);
+            assert(!scope.ProveRoleCoreRestore(context->io,0,nullptr,nullptr));
             const unsigned savedCore=context->io.runtimeCore;
             const bool savedFirmware=context->io.firmwareMatches;
             context->io.runtimeCore=7; context->io.firmwareMatches=true;

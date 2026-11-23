@@ -25,6 +25,7 @@ class DataflowRoleCodeOwner {
     const uint32_t* fWriterImage=nullptr;
     unsigned fReaderWords=0,fWriterWords=0;
     bool fCodeVerified=false;
+    bool fCopyAwareMode=false;
     unsigned fCore=DataflowBarrierWorkers;
 
     template<class IO> bool Verify(IO& io,unsigned address,
@@ -39,6 +40,19 @@ class DataflowRoleCodeOwner {
         }
         return true;
     }
+    template<class IO> bool VerifyStagedCode(IO& io) const {
+        const unsigned readerOffset=(DataflowRoleReaderCodeAddress-DataflowRoleExtraL1Address)/4;
+        const unsigned writerOffset=(DataflowRoleWriterCodeAddress-DataflowRoleExtraL1Address)/4;
+        const unsigned readerSlot=(DataflowRoleReaderCodeLimit-DataflowRoleReaderCodeAddress)/4;
+        const unsigned writerSlot=(DataflowRoleWriterCodeLimit-DataflowRoleWriterCodeAddress)/4;
+        return io.AllRolesHeld(fCore)
+            && Verify(io,DataflowRoleReaderCodeAddress,fReaderImage,fReaderWords)
+            && Verify(io,DataflowRoleReaderCodeAddress+fReaderWords*4,
+                fSnapshot+readerOffset+fReaderWords,readerSlot-fReaderWords)
+            && Verify(io,DataflowRoleWriterCodeAddress,fWriterImage,fWriterWords)
+            && Verify(io,DataflowRoleWriterCodeAddress+fWriterWords*4,
+                fSnapshot+writerOffset+fWriterWords,writerSlot-fWriterWords);
+    }
 public:
     DataflowRoleCodeOwner()=default;
     DataflowRoleCodeOwner(const DataflowRoleCodeOwner&)=delete;
@@ -47,6 +61,14 @@ public:
     bool CapturedSnapshot() const { return fPhase==Captured || fPhase==Touched || fPhase==Faulted; }
     bool NeedsRestore() const { return fPhase==Touched || fPhase==Faulted; }
     bool CodeVerified() const { return fPhase==Touched && fCodeVerified; }
+    bool CopyAwareOwnership() const { return fCopyAwareMode; }
+    // Consume this ledger before any role can overwrite its L1 copy windows.
+    // No device access occurs; ordinary restore remains blocked afterward.
+    bool BeginCopyAwareOwnership() {
+        if (fPhase!=Touched || fCopyAwareMode || !fSnapshot || !fCodeVerified
+            || !fReaderImage || !fReaderWords || !fWriterImage || !fWriterWords) return false;
+        fCopyAwareMode=true;fCodeVerified=false;return true;
+    }
     bool RegionRestored() const { return fPhase==Restored; }
 
     template<class IO> bool Capture(unsigned core,uint32_t* storage,
@@ -72,7 +94,7 @@ public:
         unsigned words,IO& io) {
         const unsigned address=reader?DataflowRoleReaderCodeAddress:DataflowRoleWriterCodeAddress;
         const unsigned limit=reader?DataflowRoleReaderCodeLimit:DataflowRoleWriterCodeLimit;
-        if ((fPhase!=Captured && fPhase!=Touched) || !code || !words
+        if ((fPhase!=Captured && fPhase!=Touched) || fCopyAwareMode || !code || !words
             || words>(limit-address)/4) return false;
         // Keep the captured state for recovery even before the first write.
         if (!io.AllRolesHeld(fCore)) { fPhase=Faulted; return false; }
@@ -96,25 +118,36 @@ public:
     // Read back both complete staged images after all writes. The caller must
     // still establish boot, cache, NoC, reset and fleet-wide launch proofs.
     template<class IO> bool VerifyStaged(IO& io) {
-        if (fPhase!=Touched || !fReaderImage || !fReaderWords
+        if (fPhase!=Touched || fCopyAwareMode || !fReaderImage || !fReaderWords
             || !fWriterImage || !fWriterWords) return false;
         fCodeVerified=false;
-        const unsigned readerOffset=(DataflowRoleReaderCodeAddress-DataflowRoleExtraL1Address)/4;
-        const unsigned writerOffset=(DataflowRoleWriterCodeAddress-DataflowRoleExtraL1Address)/4;
-        const unsigned readerSlot=(DataflowRoleReaderCodeLimit-DataflowRoleReaderCodeAddress)/4;
-        const unsigned writerSlot=(DataflowRoleWriterCodeLimit-DataflowRoleWriterCodeAddress)/4;
-        if (!io.AllRolesHeld(fCore)
-            || !Verify(io,DataflowRoleReaderCodeAddress,fReaderImage,fReaderWords)
-            || !Verify(io,DataflowRoleReaderCodeAddress+fReaderWords*4,
-                fSnapshot+readerOffset+fReaderWords,readerSlot-fReaderWords)
-            || !Verify(io,DataflowRoleWriterCodeAddress,fWriterImage,fWriterWords)
-            || !Verify(io,DataflowRoleWriterCodeAddress+fWriterWords*4,
-                fSnapshot+writerOffset+fWriterWords,writerSlot-fWriterWords)
+        if (!VerifyStagedCode(io)
             || !Verify(io,DataflowRoleWriterCodeLimit,
                 fSnapshot+(DataflowRoleWriterCodeLimit-DataflowRoleExtraL1Address)/4,
                 (DataflowRoleExtraL1Limit-DataflowRoleWriterCodeLimit)/4)
             || !io.AllRolesHeld(fCore)) { fPhase=Faulted; return false; }
         fCodeVerified=true;
+        return true;
+    }
+
+    // Audit a held core after its verified startup shims populated the two
+    // L1 copy windows. The caller must independently bind both immutable
+    // arrays to this core's retained original private-RAM snapshots and prove
+    // no writer can change either source or destination during the audit.
+    // This does not authorize restaging, release, restore or owner disposal.
+    template<class IO> bool VerifyStagedWithCopies(const uint32_t* readerCopy,
+        const uint32_t* writerCopy,IO& io) {
+        if (fPhase!=Touched || !fCopyAwareMode || !fReaderImage || !fReaderWords
+            || !fWriterImage || !fWriterWords) return false;
+        fCodeVerified=false;
+        if (!readerCopy || !writerCopy) { fPhase=Faulted; return false; }
+        if (!io.StacklessHeldCopySourceSafe(fCore,readerCopy,writerCopy)
+            || !VerifyStagedCode(io)
+            || !Verify(io,DataflowRoleReaderRamCopy,readerCopy,DataflowRoleRamCopyBytes/4)
+            || !Verify(io,DataflowRoleWriterRamCopy,writerCopy,DataflowRoleRamCopyBytes/4)
+            || !io.AllRolesHeld(fCore) || !io.StacklessHeldCopySourceSafe(fCore,readerCopy,writerCopy)) {
+            fPhase=Faulted; return false;
+        }
         return true;
     }
 
@@ -129,7 +162,7 @@ public:
     }
 
     template<class IO> bool Restore(IO& io) {
-        if ((fPhase!=Touched && fPhase!=Faulted) || !fSnapshot) return false;
+        if ((fPhase!=Touched && fPhase!=Faulted) || fCopyAwareMode || !fSnapshot) return false;
         // Any failed restoration remains faulted and forbids further staging.
         fCodeVerified=false;
         fPhase=Faulted;

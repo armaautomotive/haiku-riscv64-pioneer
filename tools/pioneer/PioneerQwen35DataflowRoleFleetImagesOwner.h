@@ -12,6 +12,8 @@ namespace PioneerQwen35 {
 class DataflowRoleFleetImagesOwner {
     enum Phase { Empty, Captured, Faulted, Staged, Restored, Unavailable };
     Phase fPhase=Empty;
+    bool fCopyAwareMode=false;
+    bool fCopyAwareVerified=false;
     DataflowRoleFleetCodeOwner fCode;
     DataflowRoleFleetBootOwner fBoot;
     template<class IO> static bool AllHeld(IO& io) {
@@ -24,7 +26,14 @@ public:
     DataflowRoleFleetImagesOwner(const DataflowRoleFleetImagesOwner&)=delete;
     DataflowRoleFleetImagesOwner& operator=(const DataflowRoleFleetImagesOwner&)=delete;
     static constexpr unsigned RequiredWords() { return DataflowRoleFleetCodeOwner::RequiredWords(); }
-    bool StagedAndVerified() const { return fPhase==Staged; }
+    bool StagedAndVerified() const { return fPhase==Staged && !fCopyAwareMode; }
+    bool CopyAwareStagedAndVerified() const { return fPhase==Staged && fCopyAwareMode && fCopyAwareVerified; }
+    // Call before the first release that can populate private-RAM copies.
+    // This is a software retention ledger, not a physical ownership proof.
+    bool BeginCopyAwareOwnership() {
+        if (fPhase!=Staged || fCopyAwareMode || !fCode.BeginCopyAwareOwnership()) return false;
+        fCopyAwareMode=true;fCopyAwareVerified=false;return true;
+    }
     bool RestorationRequired() const { return fPhase==Faulted || fPhase==Staged; }
     bool ImagesRestored() const { return fPhase==Restored; }
     // Keep a distinct frame for the Haiku qualification's stack-budget audit.
@@ -53,9 +62,19 @@ public:
         return true;
     }
     template<class IO> bool VerifyStagedAll(IO& io) {
-        if (fPhase!=Staged) return false;
+        if (fPhase!=Staged || fCopyAwareMode) return false;
         if (!AllHeld(io) || !fCode.VerifyStagedAll(io) || !fBoot.VerifyStagedAll(io)
             || !AllHeld(io)) { fPhase=Faulted; return false; }
+        return true;
+    }
+    // An independent retained-copy proof is required for every captured
+    // core; ordinary VerifyStagedAll deliberately still rejects those changes.
+    template<class IO> bool VerifyStagedAllWithCopies(IO& io) {
+        if (fPhase!=Staged || !fCopyAwareMode) return false;
+        fCopyAwareVerified=false;
+        if (!AllHeld(io) || !fCode.VerifyStagedAllWithCopies(io) || !fBoot.VerifyStagedAll(io)
+            || !AllHeld(io)) { fPhase=Faulted; return false; }
+        fCopyAwareVerified=true;
         return true;
     }
     // The startup qualification executes one tile, but snapshots and checks
@@ -72,6 +91,46 @@ public:
             || !fCode.VerifyStagedAll(io) || !fBoot.VerifyStagedAll(io) || !AllHeld(io)) return false;
         fPhase=Staged;return true;
     }
+    // Offline-only building block for replacing held-core shims. Code, other
+    // cores and original snapshots remain owned and audited throughout. This
+    // still requires the original staged extra-L1 contents: role-produced
+    // RAM copies change that region and need the separate copy-aware path
+    // and its currently unavailable physical authority. Never clear a
+    // copy merely to make this audit pass.
+    template<class IO> bool RestageOne(unsigned core,const uint32_t* reader,unsigned readerWords,
+        const uint32_t* writer,unsigned writerWords,IO& io) {
+        if (fPhase!=Staged || fCopyAwareMode || !fBoot.CanRestageCore(core)
+            || !reader || !readerWords || !writer || !writerWords
+            || readerWords>(DataflowRoleReaderShimLimit-DataflowRoleReaderShimAddress)/4
+            || writerWords>(DataflowRoleWriterShimLimit-DataflowRoleWriterShimAddress)/4) return false;
+        if (!VerifyStagedAll(io)) return false;
+        fPhase=Faulted;
+        if (!fBoot.RestageOne(core,reader,readerWords,writer,writerWords,io)
+            || !fCode.VerifyStagedAll(io) || !fBoot.VerifyStagedAll(io) || !AllHeld(io)) return false;
+        fPhase=Staged;return true;
+    }
+    // Copy-aware counterpart for a future stackless restore transaction. IO
+    // must bind all captured L1 copy windows to protected retained snapshots,
+    // and separately prove held fleet, reset, route and writer exclusion.
+    // This method itself does not release roles or establish those proofs.
+    template<class IO> bool RestageOneWithCopies(unsigned core,const uint32_t* reader,unsigned readerWords,
+        const uint32_t* writer,unsigned writerWords,IO& io) {
+        if (fPhase!=Staged || !fCopyAwareMode || !fBoot.CanRestageCore(core)
+            || !reader || !readerWords || !writer || !writerWords
+            || readerWords>(DataflowRoleReaderShimLimit-DataflowRoleReaderShimAddress)/4
+            || writerWords>(DataflowRoleWriterShimLimit-DataflowRoleWriterShimAddress)/4) return false;
+        if (!VerifyStagedAllWithCopies(io)) return false;
+        const uint32_t* savedReader=nullptr;const uint32_t* savedWriter=nullptr;bool captured=false;
+        if (!io.StacklessHeldCopySources(core,savedReader,savedWriter,captured) || !captured
+            || !savedReader || !savedWriter || !io.StacklessHeldCopySourceSafe(core,savedReader,savedWriter)) {
+            fPhase=Faulted;fCopyAwareVerified=false;return false;
+        }
+        fPhase=Faulted;fCopyAwareVerified=false;
+        if (!fBoot.RestageOne(core,reader,readerWords,writer,writerWords,io)
+            || !fCode.VerifyStagedAllWithCopies(io) || !fBoot.VerifyStagedAll(io) || !AllHeld(io)
+            || !io.StacklessHeldCopySourceSafe(core,savedReader,savedWriter)) return false;
+        fPhase=Staged;fCopyAwareVerified=true;return true;
+    }
     template<class IO> bool VerifyOriginalAll(IO& io) {
         if (fPhase!=Captured && fPhase!=Restored) return false;
         if (!AllHeld(io) || !fBoot.VerifyOriginalAll(io) || !fCode.VerifyOriginalAll(io)
@@ -79,7 +138,9 @@ public:
         return true;
     }
     template<class IO> bool RestoreAll(IO& io) {
-        if (fPhase!=Faulted && fPhase!=Staged) return false;
+        // Do not erase role-produced L1 copies until a separately proved
+        // private-RAM restore has retired this copy-aware lifecycle.
+        if (fCopyAwareMode || (fPhase!=Faulted && fPhase!=Staged)) return false;
         fPhase=Faulted;
         if (!AllHeld(io)) return false;
         // Restore boot entry points before the backing code. Unchanged owners

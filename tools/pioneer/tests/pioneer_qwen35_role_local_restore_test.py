@@ -9,13 +9,14 @@ def signed(value, bits):
     return value - (1 << bits) if value & (1 << (bits - 1)) else value
 
 
-def run(code, role, bypass=True, dropped_store=None):
+def run(code, role, bypass=True, dropped_store=None, changed_source=None):
     base = 0x70000 if role == 'reader' else 0x70100
     source = 0xB8000 if role == 'reader' else 0xBA000
     receipt_address = 0xAB540 + (0 if role == 'reader' else 4)
     success, failure = (0x81, 0xE1) if role == 'reader' else (0x82, 0xE2)
     local_base, words = 0xFFB00000, 2048
     expected = [(0x9E3779B9 * (i + 1) ^ 0xA1556C3D) & 0xFFFFFFFF for i in range(words)]
+    source_words = expected.copy()
     memory = [0xDEADBEEF] * words
     regs = [0] * 32
     pc, cfg, stores, checks, receipt, fences = base, 0, 0, 0, 0, 0
@@ -41,7 +42,9 @@ def run(code, role, bypass=True, dropped_store=None):
             if source <= address < source + words * 4:
                 index = (address - source) // 4
                 assert index == (stores if stores < words else checks)
-                value = expected[index]
+                if stores == words and checks == 0 and changed_source is not None:
+                    source_words[changed_source] ^= 1
+                value = source_words[index]
             elif local_base <= address < local_base + words * 4:
                 assert stores == words and fences >= 2
                 index = (address - local_base) // 4
@@ -64,8 +67,9 @@ def run(code, role, bypass=True, dropped_store=None):
             else:
                 assert address == receipt_address and stores == words and not receipt
                 receipt = regs[rs2]
-                assert receipt == (success if dropped_store is None else failure)
-                assert checks == (words if dropped_store is None else dropped_store + 1)
+                bad_index = dropped_store if dropped_store is not None else changed_source
+                assert receipt == (success if bad_index is None else failure)
+                assert checks == (words if bad_index is None else bad_index + 1)
         elif op == 0x63:
             imm = (((insn >> 31) & 1) << 12) | (((insn >> 7) & 1) << 11)
             imm |= (((insn >> 25) & 63) << 5) | (((insn >> 8) & 15) << 1)
@@ -89,8 +93,10 @@ def run(code, role, bypass=True, dropped_store=None):
                     assert not stores and not receipt and memory == [0xDEADBEEF] * words
                 else:
                     assert receipt and observed_receipt
-                    if dropped_store is None:
+                    if dropped_store is None and changed_source is None:
                         assert memory == expected and receipt == success
+                    elif changed_source is not None:
+                        assert memory == expected and source_words != expected and receipt == failure
                     else:
                         assert memory[dropped_store] != expected[dropped_store] and receipt == failure
                 return
@@ -112,5 +118,6 @@ image = Path(sys.argv[1]).read_bytes()
 assert image and len(image) <= 256 and len(image) % 4 == 0
 run(image, sys.argv[2])
 run(image, sys.argv[2], dropped_store=1024)
+run(image, sys.argv[2], changed_source=1024)
 run(image, sys.argv[2], bypass=False)
-print(f'PASS {sys.argv[2]} RV32 local restore, mismatch receipt and cache-bypass refusal; SIMULATED ONLY')
+print(f'PASS {sys.argv[2]} RV32 local restore, data/source drift and cache-bypass refusal; SIMULATED ONLY')

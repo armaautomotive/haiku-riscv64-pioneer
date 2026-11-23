@@ -12,6 +12,8 @@ class DataflowRoleFleetCodeOwner {
     Phase fPhase=Empty;
     // Sentinel means the ordinary all-core staging path.
     unsigned fStagedCore=DataflowBarrierWorkers;
+    bool fCopyAwareMode=false;
+    bool fCopyAwareVerified=false;
     DataflowRoleCodeOwner fCore[DataflowBarrierWorkers];
 
     template<class IO> static bool AllHeld(IO& io) {
@@ -26,7 +28,13 @@ public:
     static constexpr unsigned RequiredWords() {
         return DataflowBarrierWorkers*DataflowRoleCodeOwner::RequiredWords();
     }
-    bool StagedAndVerified() const { return fPhase==Staged; }
+    bool StagedAndVerified() const { return fPhase==Staged && !fCopyAwareMode; }
+    bool CopyAwareStagedAndVerified() const { return fPhase==Staged && fCopyAwareMode && fCopyAwareVerified; }
+    // Retain all possible L1 copies before releasing even the first role.
+    bool BeginCopyAwareOwnership() {
+        if (fPhase!=Staged || fCopyAwareMode) return false;
+        fCopyAwareMode=true;fCopyAwareVerified=false;return true;
+    }
     bool RestorationRequired() const { return fPhase==Faulted || fPhase==Staged; }
     bool RegionRestored() const { return fPhase==Restored; }
 
@@ -63,13 +71,40 @@ public:
         return true;
     }
     template<class IO> bool VerifyStagedAll(IO& io) {
-        if (fPhase!=Staged) return false;
+        if (fPhase!=Staged || fCopyAwareMode) return false;
         if (!AllHeld(io)) { fPhase=Faulted; return false; }
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)
             if (!(fStagedCore==DataflowBarrierWorkers || core==fStagedCore
                     ?fCore[core].VerifyStaged(io):fCore[core].VerifyOriginal(io)))
                 { fPhase=Faulted; return false; }
         if (!AllHeld(io)) { fPhase=Faulted; return false; }
+        return true;
+    }
+    // For post-start restoration, IO must provide an independently owned,
+    // immutable pair of snapshots for each captured core, and must prove that
+    // its capture ledger and all source/destination writers stay excluded for
+    // the whole fleet audit. Uncaptured cores still match the original L1.
+    // This does not authorize an image write or a processor release.
+    template<class IO> bool VerifyStagedAllWithCopies(IO& io) {
+        if (fPhase!=Staged || !fCopyAwareMode) return false;
+        fCopyAwareVerified=false;
+        if (!AllHeld(io)) { fPhase=Faulted; return false; }
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            const uint32_t* reader=nullptr; const uint32_t* writer=nullptr; bool captured=false;
+            if (!io.StacklessHeldCopySources(core,reader,writer,captured)) { fPhase=Faulted; return false; }
+            const bool staged=fStagedCore==DataflowBarrierWorkers || core==fStagedCore;
+            if (captured) {
+                if (!staged || !reader || !writer
+                    || (!fCore[core].CopyAwareOwnership() && !fCore[core].BeginCopyAwareOwnership())
+                    || !fCore[core].VerifyStagedWithCopies(reader,writer,io)) {
+                    fPhase=Faulted; return false;
+                }
+            } else if (reader || writer || !(staged?fCore[core].VerifyStaged(io):fCore[core].VerifyOriginal(io))) {
+                fPhase=Faulted; return false;
+            }
+        }
+        if (!AllHeld(io)) { fPhase=Faulted; return false; }
+        fCopyAwareVerified=true;
         return true;
     }
     // Restricted single-core qualification still captures and audits every
@@ -95,7 +130,9 @@ public:
         return true;
     }
     template<class IO> bool RestoreAll(IO& io) {
-        if (fPhase!=Faulted && fPhase!=Staged) return false;
+        // The ordinary L1 restore would erase retained private-RAM copies.
+        // A future, separately proved local restore must retire them first.
+        if (fCopyAwareMode || (fPhase!=Faulted && fPhase!=Staged)) return false;
         fPhase=Faulted;
         if (!AllHeld(io)) return false;
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)

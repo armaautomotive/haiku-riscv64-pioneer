@@ -63,6 +63,11 @@ public:
             && ProveRoleStatusInspectionAllowed(io);
     }
     bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleHeldCopySources(PioneerSessionIO&,unsigned,const uint32_t*& reader,
+        const uint32_t*& writer,bool& captured) const {
+        reader=writer=nullptr;captured=false;return false;
+    }
+    bool ProveRoleCoreRestore(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
     bool ProveRoleMemoryReadSafe(PioneerSessionIO& io,unsigned core,unsigned which) const {
         return (which<=PioneerQwen35::DataflowRolePhysicalExtraCode
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY

@@ -571,6 +571,38 @@ public:
             && fScope.ProveExclusiveRewrite(fIO)
             && fScope.ProveRoleUncapturedRamProtected(fIO,core);
     }
+    // Copy-aware fleet restaging needs an independently protected ledger of
+    // original private-RAM snapshots. Scope supplies that proof and the
+    // immutable pointers; this adapter additionally checks the held route.
+    // The real witness scope currently denies this proof.
+    bool StacklessHeldCopySources(unsigned core,const uint32_t*& reader,const uint32_t*& writer,bool& captured) {
+        using namespace PioneerQwen35;
+        reader=writer=nullptr;captured=false;
+        const uint32_t* r=nullptr;const uint32_t* w=nullptr;bool hasCopies=false;
+        const uint32_t* r2=nullptr;const uint32_t* w2=nullptr;bool hasCopies2=false;
+        if (core>=DataflowBarrierWorkers || !Select(core)
+            || !fScope.ProveRoleHeldCopySources(fIO,core,r,w,hasCopies)
+            || (hasCopies?(!r || !w):(r || w)) || !fGuard.ProveSelectedRoute(core)
+            || !fScope.ProveRoleHeldCopySources(fIO,core,r2,w2,hasCopies2)
+            || r!=r2 || w!=w2 || hasCopies!=hasCopies2 || !fGuard.ProveSelectedRoute(core)) return false;
+        reader=r;writer=w;captured=hasCopies;return true;
+    }
+    bool StacklessHeldCopySourceSafe(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        const uint32_t* r=nullptr;const uint32_t* w=nullptr;bool captured=false;
+        return reader && writer && StacklessHeldCopySources(core,r,w,captured)
+            && captured && reader==r && writer==w;
+    }
+    // A matching L1 copy alone does not prove the core restored private RAM.
+    // Scope must additionally prove the exact one-shot restore, fresh result,
+    // stopped roles, preserved source and writer exclusion. It currently
+    // rejects this proof in the real Haiku witness.
+    bool StacklessCoreRestoreProven(unsigned core,const uint32_t* reader,const uint32_t* writer) {
+        return StacklessHeldCopySourceSafe(core,reader,writer)
+            && fScope.ProveRoleCoreRestore(fIO,core,reader,writer)
+            && fGuard.ProveSelectedRoute(core)
+            && fScope.ProveRoleCoreRestore(fIO,core,reader,writer)
+            && StacklessHeldCopySourceSafe(core,reader,writer);
+    }
     bool ReadStacklessRamCopy(unsigned core,unsigned role,unsigned offset,uint32_t* output,unsigned bytes) {
         using namespace PioneerQwen35;
         if (role>=DataflowRoleCount || !output || !bytes || (offset&3) || (bytes&3)

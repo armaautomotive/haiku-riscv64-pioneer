@@ -12,6 +12,7 @@ class DataflowRoleFleetLocalRamOwner {
         StacklessPrepared, StacklessFaulted, StacklessRestored };
     Phase fPhase=Empty;
     bool fReleaseLedgerReady=false;
+    bool fStacklessCoreRestored=false;
     DataflowRoleLocalRamOwner fCore[DataflowBarrierWorkers];
     uint32_t* fStacklessStorage=nullptr;
     bool fStacklessCaptured[DataflowBarrierWorkers]{};
@@ -95,6 +96,36 @@ public:
         if (!fCore[core].MarkMayRunStackless(io)) { fPhase=StacklessFaulted; return false; }
         return true;
     }
+    // Record one independently proved core-local restore without any host
+    // private-RAM access. IO must prove the exact retained source, fresh
+    // restore receipt, held route and lifetime-spanning writer exclusion.
+    template<class IO> bool MarkCoreRestoredByCore(unsigned core,IO& io) {
+        if ((fPhase!=StacklessPrepared && fPhase!=StacklessFaulted)
+            || core>=DataflowBarrierWorkers || !fStacklessCaptured[core]) return false;
+        fPhase=StacklessFaulted;fStacklessCoreRestored=false;
+        if (!StacklessHeldAndProtected(io)) return false;
+        if (!fCore[core].RestorationRequired() && !fCore[core].RestoredByCore()
+            && !fCore[core].MarkPossiblyDirty()) return false;
+        if (fCore[core].RestoredByCore()) {
+            if (!fCore[core].VerifyRestoredByCore(io)) return false;
+        } else if (!fCore[core].MarkRestoredByCore(io)) return false;
+        return StacklessHeldAndProtected(io);
+    }
+    template<class IO> bool VerifyStacklessRestoredByCore(IO& io) {
+        if (fPhase!=StacklessPrepared && fPhase!=StacklessFaulted && fPhase!=StacklessRestored) return false;
+        fPhase=StacklessFaulted;fStacklessCoreRestored=false;
+        if (!StacklessHeldAndProtected(io)) return false;
+        // A later core's proof must not hide drift in an earlier core.
+        // These repeated observations still require external exclusion.
+        for (unsigned pass=0;pass<2;pass++)
+            for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+                if (fStacklessCaptured[core]
+                    && (!fCore[core].RestoredByCore() || !fCore[core].VerifyRestoredByCore(io))) return false;
+            }
+        if (!StacklessHeldAndProtected(io)) return false;
+        fStacklessCoreRestored=true;fPhase=StacklessRestored;return true;
+    }
+    bool StacklessRestoredByCore() const { return fPhase==StacklessRestored && fStacklessCoreRestored; }
     // Uncaptured tiles have no bytes to restore. A separate physical proof
     // must establish they remain untouched by roles and all other writers,
     // including misrouted restoration writes, for the whole transaction.

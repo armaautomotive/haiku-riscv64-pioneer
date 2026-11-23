@@ -16,6 +16,10 @@ struct FleetPciTestScope {
     bool stackCancel=false,stackCancelled=false;
     bool stackReleaseDrained=false;
     bool stacklessSnapshot=false;
+    bool heldCopyProof=false,heldCopyCaptured=false,heldCopyDrift=false;
+    bool coreRestoreProof=false;
+    const uint32_t* heldReader=nullptr;const uint32_t* heldWriter=nullptr;
+    mutable unsigned heldCopyChecks=0;
     mutable unsigned stackDrainChecks=0;
     unsigned stackDrainFailAt=UINT32_MAX;
     bool imageInspection=false;
@@ -53,6 +57,16 @@ struct FleetPciTestScope {
     bool ProveRoleStacklessSnapshotSafe(PioneerSessionIO&,unsigned) const { return stacklessSnapshot; }
     bool ProveRoleStacklessFleetPreparationSafe(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleUncapturedRamProtected(PioneerSessionIO&,unsigned) const { return false; }
+    bool ProveRoleHeldCopySources(PioneerSessionIO&,unsigned,const uint32_t*& reader,
+        const uint32_t*& writer,bool& captured) const {
+        if (!heldCopyProof) return false;
+        captured=heldCopyCaptured;reader=heldReader;writer=heldWriter;
+        if (heldCopyDrift && heldCopyChecks++==1) reader=nullptr;
+        return true;
+    }
+    bool ProveRoleCoreRestore(PioneerSessionIO&,unsigned,const uint32_t* reader,const uint32_t* writer) const {
+        return coreRestoreProof && reader==heldReader && writer==heldWriter;
+    }
     bool ProveRoleStackReleaseWriteDrained(PioneerSessionIO&,unsigned) const {
         return stackReleaseDrained && stackDrainChecks++!=stackDrainFailAt;
     }
@@ -143,6 +157,44 @@ int main()
         && counted.copies==1 && counted.reads==4);
     for (unsigned core=0;core<DataflowBarrierWorkers;core++)
         assert(io.AllRolesHeld(core) && io.DefaultBootRouting(core) && io.LocalRamStable(core));
+    {
+        const uint32_t readerWords[]={1},writerWords[]={2};
+        const uint32_t* reader=readerWords;const uint32_t* writer=writerWords;bool captured=true;
+        assert(!io.StacklessHeldCopySources(7,reader,writer,captured)
+            && !reader && !writer && !captured);
+        scope.heldCopyProof=true;
+        assert(io.StacklessHeldCopySources(7,reader,writer,captured)
+            && !reader && !writer && !captured);
+        scope.heldCopyCaptured=true;scope.heldReader=readerWords;scope.heldWriter=writerWords;
+        assert(io.StacklessHeldCopySources(7,reader,writer,captured)
+            && captured && reader==readerWords && writer==writerWords);
+        assert(io.StacklessHeldCopySourceSafe(7,readerWords,writerWords));
+        assert(!io.StacklessHeldCopySourceSafe(7,writerWords,readerWords));
+        assert(!io.StacklessCoreRestoreProven(7,readerWords,writerWords));
+        scope.coreRestoreProof=true;
+        assert(io.StacklessCoreRestoreProven(7,readerWords,writerWords)
+            && !io.StacklessCoreRestoreProven(7,writerWords,readerWords));
+        scope.coreRestoreProof=false;
+        scope.heldCopyDrift=true;scope.heldCopyChecks=0;
+        assert(!io.StacklessHeldCopySources(7,reader,writer,captured)
+            && !reader && !writer && !captured);
+        scope.heldCopyProof=false;scope.heldCopyCaptured=false;scope.heldCopyDrift=false;
+        scope.heldReader=scope.heldWriter=nullptr;
+    }
+    {
+        // Exercise held shim replacement through the real PCI adapter and
+        // mapped views, then verify the original boot words and bytes.
+        const auto originalShim=gMemory[DataflowRolePhysicalShim];
+        const uint32_t originalB=gMemory[DataflowRolePhysicalBriscBoot][0];
+        const uint32_t originalNC=gMemory[DataflowRolePhysicalNcriscBoot][0];
+        const uint32_t reader[]={1,2,3,4},writer[]={5,6,7},restore[]={8,9};
+        DataflowRoleBootOwner owner;
+        assert(owner.Capture(7,io) && owner.Stage(reader,4,writer,3,io));
+        assert(owner.Restage(restore,2,restore,2,io) && owner.VerifyStaged(io));
+        assert(owner.Restore(io) && gMemory[DataflowRolePhysicalShim]==originalShim
+            && gMemory[DataflowRolePhysicalBriscBoot][0]==originalB
+            && gMemory[DataflowRolePhysicalNcriscBoot][0]==originalNC);
+    }
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     // The final stop audit uses status admission even after stage access has
     // been revoked; it must still reject unsafe or inaccessible samples.
