@@ -1,0 +1,32 @@
+P100A_Q35_FLEET_INSPECTION replied=1 status=0 stage=4 core=120 l2cpu=0x0000000f restore_failed=0 prepared=120
+P100A_Q35_ROLE_STAGE replied=1 status=0 stage=12 captured=1 staged=1 restored=1 mappings_closed=1
+P100A_Q35_FLEET_INSPECTION clean_end=1
+0:1:600:2740937888 /boot/home/pioneer-qwen35-4b-225/Qwen3.5-4B-Q4_K_M.gguf
+0:1:600:18973870528 /boot/home/models/Qwen3.8-27B-Q4_K_M.gguf
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+adbc86495803654471b83330ea8f2591f0433f8d71e083d6e9f790685bc985a4  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+P100A_RELOAD driver55 tag2026102100010012 generation10 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+   Id Team
+    1 kernel_team
+  100 /boot/system/servers/launch_daemon
+  105 /boot/system/servers/registrar
+  106 /boot/system/servers/debug_server
+  108 /boot/system/servers/mount_server
+  109 /boot/system/servers/net_server
+  110 /boot/system/servers/package_daemon
+  111 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho
+  118 /boot/system/servers/power_daemon
+  120 /boot/system/servers/launch_daemon baron
+  124 /boot/system/servers/syslog_daemon
+  146 /boot/system/servers/media_server
+  184 /boot/system/servers/app_server
+  194 /boot/system/Tracker
+  196 /boot/system/Deskbar
+  218 /boot/system/servers/input_server
+  243 /boot/system/servers/media_addon_server
+  684 /boot/system/bin/screen_blanker
+ 1359 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de
+ 1361 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de
+ 1362 /boot/system/bin/ps -o Id -o Team
+ 1368 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de
+ 1370 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de
