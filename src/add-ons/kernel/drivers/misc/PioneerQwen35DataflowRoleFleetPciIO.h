@@ -71,7 +71,9 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
         return core<PioneerQwen35::DataflowBarrierWorkers && fScope.ProveExclusiveRewrite(fIO)
             && fIO.SelectRuntimeCore(core) && fIO.MapQ38Panel()
             && fIO.DataflowPanelMappingStable() && fGuard.ProveSelectedRoute(core)
-            && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+            && PioneerQwen35WithSelectedClock(fIO,core,[&]() {
+                return fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+            });
     }
     bool ReadStableRoleMailbox(unsigned core,PioneerQwen35::DataflowRoleMailbox& output) {
         PioneerQwen35::DataflowRoleMailbox first{},second{};
@@ -278,6 +280,24 @@ public:
         return DataflowServicePcInImage(pc1,textWords,dispatchWords)
             && DataflowServicePcInImage(pc2,textWords,dispatchWords)
             && fScope.ProveRoleRuntimeSafe(fIO,core) && fGuard.ProveSelectedRoute(core)
+            && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
+    }
+    // Two snapshots of each B/NC PC must be in its own exported image and
+    // outside the stop/failure park loop. A speculative PC is only a sample,
+    // never a substitute for the independent runtime/NoC/ownership proof.
+    bool RunningRolePcs(unsigned core,const PioneerQwen35::DataflowRoleProgramBounds& bounds,bool fault) {
+        using namespace PioneerQwen35;
+        auto allowed=[&]() { return fault?fScope.ProveRoleFaultAuditSafe(fIO,core)
+            :fScope.ProveRoleRuntimeSafe(fIO,core); };
+        if (core>=DataflowBarrierWorkers || !bounds.Valid() || !allowed() || !SelectForStop(core)) return false;
+        uint32_t first[DataflowRoleCount]{},second[DataflowRoleCount]{};
+        for (unsigned role=0;role<DataflowRoleCount;role++) first[role]=fIO.SharedRolePcRead(role);
+        fIO.Pause();
+        for (unsigned role=0;role<DataflowRoleCount;role++) second[role]=fIO.SharedRolePcRead(role);
+        for (unsigned role=0;role<DataflowRoleCount;role++)
+            if (!bounds.ContainsRunning(role,first[role]) || !bounds.ContainsRunning(role,second[role]))
+                return false;
+        return allowed() && fGuard.ProveSelectedRoute(core)
             && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
     }
     bool CompletedForAcknowledgement(unsigned core,unsigned textWords,unsigned dispatchWords) {

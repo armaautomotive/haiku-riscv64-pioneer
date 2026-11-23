@@ -4,6 +4,34 @@
 #include "PioneerQwen35DataflowRoleMemoryPlan.h"
 #include "PioneerQwen35DataflowRoleMailbox.h"
 namespace PioneerQwen35 {
+// Bounds of the two exported startup shims and role text images. A parked
+// shim is not a running role: it is reached after stop or an invalid tick.
+// PC snapshots can be speculative; callers must separately prove images,
+// mailbox/queue state, NoC settlement, ownership and safe recovery.
+struct DataflowRoleProgramBounds {
+    unsigned shimWords[DataflowRoleCount];
+    unsigned codeWords[DataflowRoleCount];
+    unsigned park[DataflowRoleCount];
+    bool Valid() const {
+        for (unsigned role=0;role<DataflowRoleCount;role++) {
+            const unsigned shim=role==DataflowRoleReader?DataflowRoleReaderShimAddress:DataflowRoleWriterShimAddress;
+            const unsigned shimLimit=role==DataflowRoleReader?DataflowRoleReaderShimLimit:DataflowRoleWriterShimLimit;
+            const unsigned code=role==DataflowRoleReader?DataflowRoleReaderCodeAddress:DataflowRoleWriterCodeAddress;
+            const unsigned codeLimit=role==DataflowRoleReader?DataflowRoleReaderCodeLimit:DataflowRoleWriterCodeLimit;
+            if (!shimWords[role] || shimWords[role]>(shimLimit-shim)/4
+                || !codeWords[role] || codeWords[role]>(codeLimit-code)/4
+                || (park[role]&3) || park[role]<shim || park[role]-shim>=shimWords[role]*4) return false;
+        }
+        return true;
+    }
+    bool ContainsRunning(unsigned role,uint32_t pc) const {
+        if (role>=DataflowRoleCount || !Valid() || (pc&3) || pc==park[role]) return false;
+        const unsigned shim=role==DataflowRoleReader?DataflowRoleReaderShimAddress:DataflowRoleWriterShimAddress;
+        const unsigned code=role==DataflowRoleReader?DataflowRoleReaderCodeAddress:DataflowRoleWriterCodeAddress;
+        return (pc>=shim && pc-shim<shimWords[role]*4)
+            || (pc>=code && pc-code<codeWords[role]*4);
+    }
+};
 // Link-only boot-word planning. The target must be the audited startup shim
 // inside its low-L1 shim slot; encoding a jump does not establish that a
 // shim exists or that reset, boot memory, or local RAM are owned.

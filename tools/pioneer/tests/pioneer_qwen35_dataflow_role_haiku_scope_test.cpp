@@ -67,6 +67,8 @@ struct PioneerSessionIO {
     unsigned roleStopWrites=0; bool dropRoleStopWrite=false;
     unsigned computeStopWrites=0,holdWrites=0; bool dropComputeStopWrite=false,dropHoldWrite=false;
     uint32_t rolePc[2]{};
+    unsigned rolePcReads[2]{},rolePcChangeAt[2]{UINT32_MAX,UINT32_MAX};
+    uint32_t rolePcChanged[2]{};
     uint32_t computePc=0;
     bool SelectRuntimeCore(unsigned core) {
         if (core>=DataflowBarrierWorkers) return false;
@@ -112,7 +114,11 @@ struct PioneerSessionIO {
     bool SharedRoleHoldReset() { ++holdWrites; if (!dropHoldWrite) reset=0x47800; return true; }
     uint32_t RuntimePcRead() const { return computePc; }
     bool SharedRoleReleaseReset() { ++sharedResetWrites; if (!dropSharedResetWrite) reset=0x6000; return true; }
-    uint32_t SharedRolePcRead(unsigned role) { return role<2?rolePc[role]:UINT32_MAX; }
+    uint32_t SharedRolePcRead(unsigned role) {
+        if (role>=2) return UINT32_MAX;
+        const unsigned count=rolePcReads[role]++;
+        return count==rolePcChangeAt[role]?rolePcChanged[role]:rolePc[role];
+    }
     bool ReadCoreMemory(unsigned core,unsigned address,void* output,unsigned bytes) {
         if (core>=DataflowBarrierWorkers || !output) return false;
         runtimeCore=core;

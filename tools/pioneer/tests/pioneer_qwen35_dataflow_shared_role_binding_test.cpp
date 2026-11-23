@@ -89,6 +89,15 @@ static void ExerciseUnexpectedFirmware(PioneerSessionIO& io)
 
 int main()
 {
+    DataflowRoleProgramBounds exported={
+        {sizeof(DataflowSharedReaderShimWords)/sizeof(uint32_t),sizeof(DataflowSharedWriterShimWords)/sizeof(uint32_t)},
+        {sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t)},
+        {DataflowSharedReaderParkAddress,DataflowSharedWriterParkAddress}};
+    assert(exported.Valid());
+    assert(exported.ContainsRunning(DataflowRoleReader,DataflowRoleReaderCodeAddress));
+    assert(exported.ContainsRunning(DataflowRoleWriter,DataflowRoleWriterCodeAddress));
+    assert(!exported.ContainsRunning(DataflowRoleReader,DataflowSharedReaderParkAddress));
+    assert(!exported.ContainsRunning(DataflowRoleWriter,DataflowSharedWriterParkAddress));
     PioneerStoreContext context; FakeService service; FakeGraph graph;
     context.qwen35DataflowService=&service; context.qwen35GraphOwner=&graph;
     PioneerProbeCookie cookie; cookie.context=&context; sRuntimeOwner=&cookie;

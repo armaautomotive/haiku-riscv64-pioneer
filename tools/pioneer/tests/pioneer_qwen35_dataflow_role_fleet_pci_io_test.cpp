@@ -246,6 +246,39 @@ int main()
     assert(!io.RunningReady(11,readySnapshot,0x1000,0x100));
     scope.runtime=true;
     assert(io.RunningReady(11,readySnapshot,0x1000,0x100));
+    DataflowRoleProgramBounds bounds={{32,32},{64,64},
+        {DataflowRoleReaderShimAddress+0x44,DataflowRoleWriterShimAddress+0x44}};
+    assert(io.RunningRolePcs(11,bounds,false));
+    for (unsigned noc=0;noc<2;noc++) {
+        context.io.nocConfig[noc]=1U<<12;
+        const unsigned previousResetReads=context.io.resetReads;
+        assert(!io.RunningRolePcs(11,bounds,false) && context.io.resetReads==previousResetReads);
+        context.io.nocConfig[noc]=0;
+    }
+    for (unsigned role=0;role<DataflowRoleCount;role++) {
+        const uint32_t originalPc=context.io.rolePc[role];
+        context.io.rolePc[role]=bounds.park[role];
+        assert(!io.RunningRolePcs(11,bounds,false));
+        context.io.rolePc[role]=role==DataflowRoleReader?DataflowRoleWriterCodeAddress:DataflowRoleReaderCodeAddress;
+        assert(!io.RunningRolePcs(11,bounds,false));
+        context.io.rolePc[role]=originalPc;
+        context.io.rolePcChangeAt[role]=context.io.rolePcReads[role]+1;
+        context.io.rolePcChanged[role]=UINT32_MAX;
+        assert(!io.RunningRolePcs(11,bounds,false));
+        context.io.rolePcChangeAt[role]=UINT32_MAX;
+    }
+    context.io.rolePc[0]=DataflowRoleReaderCodeAddress;
+    context.io.rolePc[1]=DataflowRoleWriterCodeAddress;
+    assert(io.RunningRolePcs(11,bounds,false));
+    scope.runtime=false;
+    assert(!io.RunningRolePcs(11,bounds,false));
+    scope.runtime=true;
+    assert(!io.RunningRolePcs(11,bounds,true));
+    scope.faultAudit=true;
+    assert(io.RunningRolePcs(11,bounds,true));
+    scope.faultAudit=false;
+    auto invalidBounds=bounds; invalidBounds.shimWords[0]=0;
+    assert(!io.RunningRolePcs(11,invalidBounds,false));
     context.io.roleBoxes[11].command=1;
     assert(!io.RunningReady(11,readySnapshot,0x1000,0x100));
     context.io.roleBoxes[11].command=0;

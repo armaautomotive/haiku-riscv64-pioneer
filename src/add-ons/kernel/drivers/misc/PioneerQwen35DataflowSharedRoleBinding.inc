@@ -35,6 +35,14 @@ class PioneerQwen35SharedRoleBinding {
         if (fViews.HasMappings()) return fViews.ReopenForRecovery(guard);
         return fViews.Open(fContext.io.profile.bar0_host_start,fContext.io.profile.bar0_host_end,guard);
     }
+    static PioneerQwen35::DataflowRoleProgramBounds RoleBounds() {
+        using namespace PioneerQwen35;
+        return {{sizeof(DataflowSharedReaderShimWords)/sizeof(uint32_t),
+                 sizeof(DataflowSharedWriterShimWords)/sizeof(uint32_t)},
+                {sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),
+                 sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t)},
+                {DataflowSharedReaderParkAddress,DataflowSharedWriterParkAddress}};
+    }
 public:
     explicit PioneerQwen35SharedRoleBinding(PioneerStoreContext& context)
         :fContext(context),fViews(fPlatform) {
@@ -104,7 +112,8 @@ public:
         Adapter io(fContext.io,*scope,fViews);
         return io.RunningReady(core,snapshot,
             sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
-            sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t));
+            sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t))
+            && io.RunningRolePcs(core,RoleBounds(),false);
     }
     __attribute__((noinline)) bool RuntimeStable(unsigned core) {
         auto* scope=Scope();
@@ -113,8 +122,9 @@ public:
         Adapter io(fContext.io,*scope,fViews);
         const unsigned textWords=sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t);
         const unsigned dispatchWords=sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t);
-        return scope->RetainedFaultAuditActive(fContext.io)?io.FaultRuntimeStable(core,textWords,dispatchWords)
-            :io.RuntimeStable(core,textWords,dispatchWords);
+        const bool fault=scope->RetainedFaultAuditActive(fContext.io);
+        return (fault?io.FaultRuntimeStable(core,textWords,dispatchWords)
+            :io.RuntimeStable(core,textWords,dispatchWords)) && io.RunningRolePcs(core,RoleBounds(),fault);
     }
     __attribute__((noinline)) bool FaultCoreSettled(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot) {
         auto* scope=Scope();
@@ -122,7 +132,8 @@ public:
             || !fReleaseAuthorized || !fViews.Opened() || !scope->RetainedFaultAuditActive(fContext.io)) return false;
         Adapter io(fContext.io,*scope,fViews);
         return io.FaultSettled(core,snapshot,sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
-            sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t));
+            sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t))
+            && io.RunningRolePcs(core,RoleBounds(),true);
     }
     __attribute__((noinline)) bool CoreIdleForWrite(unsigned core,unsigned address,unsigned bytes) {
         using namespace PioneerQwen35;
@@ -134,10 +145,12 @@ public:
         if (scope->RetainedFaultAuditActive(fContext.io))
             return address==acknowledgement && bytes==sizeof(uint32_t)
                 && io.FaultCompletedForAcknowledgement(core,sizeof(DataflowServiceTextWords)/sizeof(uint32_t),
-                    sizeof(DataflowServiceDispatchWords)/sizeof(uint32_t));
+                    sizeof(DataflowServiceDispatchWords)/sizeof(uint32_t))
+                && io.RunningRolePcs(core,RoleBounds(),true);
         if (address==acknowledgement && bytes==sizeof(uint32_t))
             return io.CompletedForAcknowledgement(core,sizeof(DataflowServiceTextWords)/sizeof(uint32_t),
-                sizeof(DataflowServiceDispatchWords)/sizeof(uint32_t));
+                sizeof(DataflowServiceDispatchWords)/sizeof(uint32_t))
+                && io.RunningRolePcs(core,RoleBounds(),false);
         DataflowWorkerSnapshot snapshot{};
         return fContext.io.ReadWorkerSnapshot(core,snapshot) && CoreReady(core,snapshot);
     }
