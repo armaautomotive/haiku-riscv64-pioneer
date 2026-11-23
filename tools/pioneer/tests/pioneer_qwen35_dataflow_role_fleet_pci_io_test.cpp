@@ -22,6 +22,8 @@ struct FleetPciTestScope {
     bool faultAudit=false,faultAck=false;
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     bool dedicatedRelease=false;
+    bool dedicatedObservedStage=false;
+    bool ProveRoleDedicatedObservedStage(PioneerSessionIO&) const { return dedicatedObservedStage; }
     mutable unsigned dedicatedChecks=0;
     unsigned dedicatedFailAt=UINT32_MAX;
     bool ProveRoleDedicatedReleaseSafe(PioneerSessionIO&,unsigned) const {

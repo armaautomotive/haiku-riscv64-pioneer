@@ -13,10 +13,10 @@
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleWritableViews.h"
 
 // Adapter from the existing role recovery owner's exact ranges to the fixed
-// Haiku BAR views. Scope must prove the caller already owns the driver lock,
-// every relevant tile is held and quiet, private RAM is stable, and snapshots
-// authorize the operation. Reset and stop writes require additional scope
-// proofs; the real borrowed scope currently refuses those proofs.
+// Haiku BAR views. The snapshot path requires held/quiet and RAM proofs.
+// The dedicated staging witness instead uses bounded observations and
+// selected-tile rechecks; it does not establish firmware write exclusion.
+// Reset and stop writes require separate, currently unavailable proofs.
 template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
     IO& fIO;
     Scope& fScope;
@@ -36,12 +36,20 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
     };
     bool Select(unsigned core) {
         return core<PioneerQwen35::DataflowBarrierWorkers && fScope.ProveExclusiveRewrite(fIO)
-            // This prerequisite is independent of the selected TLB. Do not
-            // reprogram any route if the whole-fleet proof is unavailable.
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+            // The dedicated stage uses sampled ownership and rechecks each
+            // selected tile. This does not claim firmware write exclusion.
+            && (fScope.ProveRoleDedicatedObservedStage(fIO) || fScope.ProveRoleFleetHeldAndQuiet(fIO,core))
+#else
             && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)
+#endif
             && fIO.SelectRuntimeCore(core) && fIO.MapQ38Panel() && fIO.DataflowPanelMappingStable()
             && fGuard.ProveSelectedRoute(core)
-            && PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; });
+            && PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; })
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+            && SelectedHeldAndQuiet(core)
+#endif
+            ;
     }
     bool ReadWords(unsigned core,unsigned which,unsigned offset,uint32_t* output,unsigned bytes) {
         using namespace PioneerQwen35;
@@ -556,8 +564,18 @@ public:
         return FaultSettled(core,snapshot,textWords,dispatchWords) && fScope.ProveRoleFaultAckSafe(fIO,core);
     }
     bool AllRolesHeld(unsigned core) {
-        return Select(core) && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)
-            && SelectedHeldAndQuiet(core) && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)
+        return Select(core)
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+            && (fScope.ProveRoleDedicatedObservedStage(fIO) || fScope.ProveRoleFleetHeldAndQuiet(fIO,core))
+#else
+            && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)
+#endif
+            && SelectedHeldAndQuiet(core)
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+            && (fScope.ProveRoleDedicatedObservedStage(fIO) || fScope.ProveRoleFleetHeldAndQuiet(fIO,core))
+#else
+            && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)
+#endif
             && fGuard.ProveSelectedRoute(core);
     }
     bool DefaultBootRouting(unsigned core) {
@@ -571,7 +589,11 @@ public:
             && fViews.Read(core,DataflowRolePhysicalControl,0x23c,ncrisc2,fGuard)
             && trisc1==trisc2 && ncrisc1==ncrisc2 && !(trisc1&1U) && !(ncrisc1&1U)
             && fIO.ResetRead()==0x47800 && fIO.ResetRead()==0x47800
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+            && (fScope.ProveRoleDedicatedObservedStage(fIO) || fScope.ProveRoleFleetHeldAndQuiet(fIO,core))
+#else
             && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)
+#endif
             && fScope.ProveRoleBootRoutingInspectionAllowed(fIO,core)
             && fGuard.ProveSelectedRoute(core);
     }

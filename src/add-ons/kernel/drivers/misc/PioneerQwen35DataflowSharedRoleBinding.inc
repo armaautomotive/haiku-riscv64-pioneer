@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Actual Haiku session/owner/mapping composition for the non-loadable shared
-// role witness. The borrowed scope currently denies all physical proofs,
-// including role release: this is not an executable service.
+// role witness. Dedicated staging can use bounded observations; role release,
+// physical ownership and recovery remain unqualified.
 #if !defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) || !defined(PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 #error Shared role binding is a non-loadable recovery witness only
 #endif
@@ -148,10 +148,13 @@ public:
         const bool dmaSample=PioneerQwen35SampleHostDma(fContext.io,*scope,route,restoreFailed);
         if (restoreFailed) sColdRecoveryRequired=true;
         if (!dmaSample) return false;
-        // These status samples do not establish the independent global
-        // incoming-NoC/ownership proof, which remains false in this build.
-        // No role mappings or role memory writes occur without that proof.
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        // Admit only this locked staging attempt after the observations.
+        // This does not establish absence of firmware writes or enable release.
+        if (!scope->BeginDedicatedObservedStage(fContext.io) || !OpenForRecovery(*scope)) return false;
+#else
         if (!scope->ProveRoleFleetHeldAndQuiet(fContext.io,0) || !OpenForRecovery(*scope)) return false;
+#endif
         Adapter io(fContext.io,*scope,fViews);
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         return fTakeover.Stage(RoleImage(),io);
@@ -190,14 +193,15 @@ public:
         return true;
     }
     __attribute__((noinline)) bool StartCore(unsigned core) {
-#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
-        if (!fTakeover.BeginRelease(core)) return false;
-#else
-        if (!fStartOrder.BeginRelease(core)) return false;
-#endif
         auto* scope=Scope();
         if (!scope || !fReleaseAuthorized || core>=PioneerQwen35::DataflowBarrierWorkers
             || fReleaseAttempted[core] || !fViews.Opened()) return false;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        if (!fTakeover.BeginRelease(core)) return false;
+        scope->EndDedicatedObservedStage();
+#else
+        if (!fStartOrder.BeginRelease(core)) return false;
+#endif
         Adapter io(fContext.io,*scope,fViews);
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         fReleaseConfirmed[core]=io.ReleaseDedicatedCore(core,fReleaseAttempted[core]);

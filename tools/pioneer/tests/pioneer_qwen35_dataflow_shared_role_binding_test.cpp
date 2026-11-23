@@ -172,14 +172,50 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
     io.dropHdmaRestore=false;
     assert(io.SelectRuntimeCore(7) && route.ProveSelectedRoute(7));
     io.selectCalls=io.tlbWrites=io.hdmaReads=0;
-    // ARC, DMA inspection and both 120-core sweeps can finish, but they cannot
-    // authorize the independent fleet ownership proof or role mapping.
+    // The dedicated compile witness can stage under observed checks; the
+    // hardware release and recovery contracts remain separately denied.
+#if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
+    gAllowWrite=true;
+    assert(io.SharedCaptureAndStageHeld());
+    assert(io.tlbWrites==12 && io.hdmaReads==12 && gMapCalls>0);
+    assert(context->qwen35SharedRoleBinding->TakeoverResetRequired());
+    assert(scope->ProveRoleDedicatedObservedStage(io));
+    const unsigned selected=io.runtimeCore;
+    assert(scope->ProveRoleMemoryReadSafe(io,selected,DataflowRolePhysicalExtraCode)
+        && scope->ProveRoleMemoryWriteSafe(io,selected,DataflowRolePhysicalExtraCode,0,4));
+    assert(!scope->ProveRoleMemoryReadSafe(io,selected,DataflowRolePhysicalBriscRam)
+        && !scope->ProveRoleMemoryWriteSafe(io,selected,DataflowRolePhysicalBriscRam,0,4)
+        && !scope->ProveRoleMemoryWriteSafe(io,selected,DataflowRolePhysicalExtraCode,3,4)
+        && !scope->ProveRoleMemoryReadSafe(io,(selected+1)%DataflowBarrierWorkers,DataflowRolePhysicalExtraCode)
+        && !scope->ProveRoleFleetHeldAndQuiet(io,selected));
+    io.firmwareMatches=false;assert(!scope->ProveRoleDedicatedObservedStage(io)
+        && !scope->ProveRoleMemoryWriteSafe(io,selected,DataflowRolePhysicalExtraCode,0,4));
+    io.firmwareMatches=true;io.reset=0x6000;
+    assert(!scope->ProveRoleMemoryReadSafe(io,selected,DataflowRolePhysicalExtraCode));
+    io.reset=0x47800;
+    io.nocConfig[0]=1U<<12;io.resetReads=0;
+    assert(!scope->ProveRoleMemoryReadSafe(io,selected,DataflowRolePhysicalExtraCode)
+        && !io.resetReads);
+    io.nocConfig[0]=0;
+    assert(!io.SharedArmAndBeginRelease() && !io.SharedStartCore(0));
+    assert(!io.sharedResetWrites && !io.holdWrites);
+    PioneerDriverRecoveryProof proof{};
+    proof.flags=PIONEER_RECOVERY_PROOF_REQUIRED & ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;
+    proof.core_count=DataflowBarrierWorkers;proof.retained_owners=1;
+    proof.reset_generation=proof.firmware_generation=9;
+    io.postResetDisposeComplete=true;
+    assert(PioneerQ35ReleaseSharedRoleAfterReset(context->qwen35SharedRoleBinding,proof,9));
+    assert(!context->qwen35SharedRoleBinding);
+    io.postResetDisposeComplete=false;gAllowWrite=false;
+#else
+    // The snapshot-based scope still denies the independent fleet proof.
     assert(!io.SharedCaptureAndStageHeld());
     assert(io.tlbWrites==12 && io.selectCalls==243 && io.hdmaReads==12 && io.runtimeCore==7);
     assert(!gMapCalls && !io.sharedResetWrites && !io.holdWrites);
     assert(!io.SharedArmAndBeginRelease() && !io.SharedStartCore(0));
     assert(PioneerQ35DestroySharedRoleBinding(context->qwen35SharedRoleBinding));
     context->qwen35SharedRoleBinding=nullptr;
+#endif
     io.nocConfig[0]=io.nocConfig[1]=io.nocAvailable[0]=io.nocAvailable[1]=0;
     io.simulateArc=false; io.simulateHdma=false; io.firmwareMatches=false;
 }
@@ -197,6 +233,31 @@ static void ExerciseUnexpectedFirmware(PioneerSessionIO& io)
     assert(PioneerQ35DestroySharedRoleBinding(context->qwen35SharedRoleBinding));
     context->qwen35SharedRoleBinding=nullptr; io.simulateArc=false;
 }
+
+#if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
+static void ExerciseObservedStageResetDrift(PioneerSessionIO& io)
+{
+    auto* context=io.qwen35DataflowContext;
+    context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
+    assert(context->qwen35SharedRoleBinding && io.qwen35BorrowedRoleScope);
+    io.runtimeCore=7;io.simulateArc=io.simulateHdma=io.firmwareMatches=true;
+    io.hdmaSourceStable=true;io.reset=0x47800;io.resetReads=0;io.resetChangeAt=10000;
+    gAllowWrite=true;
+    assert(!io.SharedCaptureAndStageHeld() && gMapCalls>0
+        && context->qwen35SharedRoleBinding->TakeoverResetRequired());
+    assert(gMemory[DataflowRolePhysicalExtraCode][0]!=0x76540000U+DataflowRolePhysicalExtraCode);
+    assert(!io.SharedCaptureAndStageHeld() && !io.SharedArmAndBeginRelease()
+        && !io.sharedResetWrites && !io.holdWrites);
+    io.resetChangeAt=-1;
+    PioneerDriverRecoveryProof proof{};
+    proof.flags=PIONEER_RECOVERY_PROOF_REQUIRED & ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;
+    proof.core_count=DataflowBarrierWorkers;proof.retained_owners=1;
+    proof.reset_generation=proof.firmware_generation=9;io.postResetDisposeComplete=true;
+    assert(PioneerQ35ReleaseSharedRoleAfterReset(context->qwen35SharedRoleBinding,proof,9));
+    io.postResetDisposeComplete=false;io.simulateArc=io.simulateHdma=io.firmwareMatches=false;
+    gAllowWrite=false;
+}
+#endif
 
 int main()
 {
@@ -221,6 +282,10 @@ int main()
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
     gBorrowedScopeHook=ExerciseStatusSampling;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+#if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
+    ResetMaps();gBorrowedScopeHook=ExerciseObservedStageResetDrift;
+    assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+#endif
 #ifdef TEST_SHARED_POST_RESET
     gBorrowedScopeHook=ExerciseResetRetirement;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
@@ -228,5 +293,9 @@ int main()
     service.capturePending=false;
     assert(!gLocked && !context.qwen35SharedRoleBinding && !context.io.qwen35BorrowedRoleScope);
     gBorrowedScopeHook=nullptr;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    std::puts("PASS dedicated observed staging and denied release using actual role binding; SIMULATED ONLY");
+#else
     std::puts("PASS actual shared role binding denies mapping, reset and release without fleet proof; SIMULATED ONLY");
+#endif
 }

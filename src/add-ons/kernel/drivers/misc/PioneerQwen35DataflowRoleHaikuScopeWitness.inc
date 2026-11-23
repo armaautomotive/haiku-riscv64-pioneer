@@ -27,12 +27,25 @@ class PioneerQwen35RoleBorrowedScopeWitness {
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
     friend status_t Qwen35DataflowGenerate(PioneerProbeCookie*,void*,size_t);
 #endif
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    friend class PioneerQwen35SharedRoleBinding;
+#endif
     PioneerProbeCookie* fCookie;
     PioneerStoreContext* fContext;
     thread_id fThread=-1;
     team_id fTeam=-1;
     uint64 fGeneration=0;
     bool fAttached=false,fAttempted=false;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    bool fDedicatedStageObserved=false;
+    // The binding calls this only after its ARC, fleet and DMA observations.
+    // It records a point-in-time admission, not firmware write exclusion.
+    bool BeginDedicatedObservedStage(PioneerSessionIO& io) {
+        if (fDedicatedStageObserved || !ProveRoleStatusInspectionAllowed(io)) return false;
+        fDedicatedStageObserved=true;return true;
+    }
+    void EndDedicatedObservedStage() { fDedicatedStageObserved=false; }
+#endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
     const void* fFaultOwner=NULL;
     const void* fFaultRun=NULL;
@@ -119,7 +132,18 @@ public:
         fFaultOwner=NULL;fFaultRun=NULL;fFaultClose=false;return true;
     }
 #endif
-    bool ProveRoleMemoryReadSafe(PioneerSessionIO&,unsigned,unsigned) const { return false; }
+    bool ProveRoleMemoryReadSafe(PioneerSessionIO& io,unsigned core,unsigned which) const {
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        return which<=PioneerQwen35::DataflowRolePhysicalExtraCode
+            && core<PioneerQwen35::DataflowBarrierWorkers && io.runtimeCore==core
+            && ProveRoleDedicatedObservedStage(io) && io.DataflowPanelMappingStable()
+            && PioneerQwen35WithSelectedClock(io,core,[&]() {
+                return io.ResetRead()==0x47800 && io.ResetRead()==0x47800;
+            });
+#else
+        (void)io;(void)core;(void)which;return false;
+#endif
+    }
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
     bool ProveRoleStatusInspectionAllowed(PioneerSessionIO& io) const {
         return ProveExclusiveRewrite(io) && fContext->qwen35DataflowService
@@ -133,9 +157,22 @@ public:
             && io.DataflowPanelMappingStable() && ProveRoleStatusInspectionAllowed(io);
     }
 #endif
-    bool ProveRoleMemoryWriteSafe(PioneerSessionIO&,unsigned,unsigned,unsigned,unsigned) const { return false; }
+    bool ProveRoleMemoryWriteSafe(PioneerSessionIO& io,unsigned core,unsigned which,unsigned offset,unsigned bytes) const {
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        return which<=PioneerQwen35::DataflowRolePhysicalExtraCode
+            && PioneerQwen35::DataflowRolePhysicalWriteRange(which,offset,bytes)
+            && ProveRoleMemoryReadSafe(io,core,which);
+#else
+        (void)io;(void)core;(void)which;(void)offset;(void)bytes;return false;
+#endif
+    }
     bool ProveRoleControlWriteSafe(PioneerSessionIO&,unsigned,uint32_t,uint32_t) const { return false; }
     bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO&,unsigned) const { return false; }
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    bool ProveRoleDedicatedObservedStage(PioneerSessionIO& io) const {
+        return fDedicatedStageObserved && ProveRoleStatusInspectionAllowed(io);
+    }
+#endif
     // This admits fixed status reads only. The adapter must separately prove
     // the fleet is held, verify the selected route, and inspect both hardware
     // reset-PC override registers; this method does not assert their values.
@@ -230,6 +267,9 @@ public:
 #endif
             ;
         if (fContext->io.qwen35BorrowedRoleScope==this) fContext->io.qwen35BorrowedRoleScope=NULL;
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        fDedicatedStageObserved=false;
+#endif
         fAttached=false;
         if (!valid) sColdRecoveryRequired=true;
         return valid;
@@ -422,9 +462,9 @@ PioneerQwen35RoleHaikuWritableViewsCompileWitness(PioneerQwen35RoleHaikuWritable
     if (action==3) return owner.Close();
     return false;
 }
-// Type-check the real recovery owner against the borrowed session, selected
-// routes and fixed Haiku mappings. The scope denies all fleet/memory proofs,
-// so this static witness cannot capture, write or release anything.
+// Type-check the recovery owner against the borrowed session, selected routes
+// and fixed Haiku mappings. Dedicated observed staging is separate from the
+// snapshot proof; the non-loadable witness cannot release a physical role.
 __attribute__((used)) static bool
 PioneerQwen35RoleFleetPciCompileWitness(PioneerSessionIO& io,
     PioneerQwen35RoleBorrowedScopeWitness& scope,
