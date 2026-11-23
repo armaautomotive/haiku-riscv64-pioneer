@@ -785,6 +785,11 @@ if [ "$variant" = 60 ]; then
 		role_image="$output/qwen35-shared-role-images"
 		sh "$project/tools/pioneer/build_qwen35_shared_role_images.sh" "$build" "$role_image"
 		set -- "$@" -I"$role_image"
+		if [ "${PIONEER_QWEN35_SNAPSHOT_TAKEOVER_COMPILE_ONLY:-0}" = 1 ]; then
+			local_restore_image="$output/qwen35-local-restore-images"
+			sh "$project/tools/pioneer/build_qwen35_local_restore_images.sh" "$build" "$local_restore_image"
+			set -- "$@" -I"$local_restore_image"
+		fi
 	fi
 fi
 if [ -n "${PIONEER_Q35_PROJECTION_INCLUDE:-}" ]; then

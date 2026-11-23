@@ -7,6 +7,9 @@
 #endif
 #include "PioneerQwen35DataflowFleetInspection.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleStartOrder.h"
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+#include "PioneerQwen35LocalRestoreImages.h"
+#endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 #include "../../../../../tools/pioneer/PioneerQwen35ExclusiveRoleFleet.h"
 #include "../../../../../tools/pioneer/PioneerQwen35ExclusiveRoleStop.h"
@@ -109,6 +112,36 @@ public:
         && !fTakeover.ResetRequired()
 #endif
         ; }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    // Explicit compile-only opt-in. The concrete scope and PCI adapter still
+    // deny the lifetime proof and release authority, so these operations do
+    // not authorize a physical restore or a fallback to host private RAM.
+    bool SelectCoreLocalRestore() {
+        return !fCaptureAttempted && fOwner.SelectCoreLocalRestoreMode();
+    }
+    __attribute__((noinline)) bool StageCoreLocalRestore(unsigned core) {
+        auto* scope=Scope();
+        if (!scope || !fViews.Opened() || !fOwner.CoreLocalRestoreMode()) return false;
+        Adapter io(fContext.io,*scope,fViews);
+        using namespace PioneerQwen35;
+        return fOwner.StageCoreLocalRestore(core,DataflowLocalRestoreReaderShimWords,
+            sizeof(DataflowLocalRestoreReaderShimWords)/sizeof(uint32_t),
+            DataflowLocalRestoreWriterShimWords,
+            sizeof(DataflowLocalRestoreWriterShimWords)/sizeof(uint32_t),io);
+    }
+    __attribute__((noinline)) bool BeginCoreLocalRestoreRelease(unsigned core) {
+        auto* scope=Scope();
+        if (!scope || !fViews.Opened() || !fOwner.CoreLocalRestoreMode()) return false;
+        Adapter io(fContext.io,*scope,fViews);
+        return fOwner.BeginCoreLocalRestoreRelease(core,io);
+    }
+    __attribute__((noinline)) bool MarkCoreLocalRestoreComplete(unsigned core) {
+        auto* scope=Scope();
+        if (!scope || !fViews.Opened() || !fOwner.CoreLocalRestoreMode()) return false;
+        Adapter io(fContext.io,*scope,fViews);
+        return fOwner.MarkCoreRestoredByCore(core,io);
+    }
+#endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     bool TakeoverResetRequired() const { return fTakeover.ResetRequired(); }
 #endif
@@ -451,6 +484,24 @@ public:
 #endif
     }
 };
+
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+// Force the non-loadable snapshot build to compile each actual binding path.
+// Nothing calls this function in the driver; it creates no hardware control.
+static __attribute__((used,noinline)) bool
+PioneerQ35CoreLocalBindingCompileWitness(PioneerQwen35SharedRoleBinding* binding,
+    unsigned operation,unsigned core)
+{
+    if (!binding) return false;
+    switch (operation) {
+        case 0: return binding->SelectCoreLocalRestore();
+        case 1: return binding->StageCoreLocalRestore(core);
+        case 2: return binding->BeginCoreLocalRestoreRelease(core);
+        case 3: return binding->MarkCoreLocalRestoreComplete(core);
+        default: return false;
+    }
+}
+#endif
 
 static bool PioneerQ35SharedRoleCopiesCaptured(const PioneerQwen35SharedRoleBinding* binding,unsigned core) {
     return binding && binding->StacklessCopiesCaptured(core);

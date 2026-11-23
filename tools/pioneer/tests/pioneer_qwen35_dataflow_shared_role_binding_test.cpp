@@ -96,6 +96,25 @@ static void ExerciseResetRetirement(PioneerSessionIO& io)
 }
 #endif
 
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
+static void ExerciseCoreLocalBinding(PioneerSessionIO& io)
+{
+    auto* context=io.qwen35DataflowContext;
+    context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
+    auto*& binding=context->qwen35SharedRoleBinding;
+    assert(binding && gLocked && binding->SelectCoreLocalRestore());
+    assert(!binding->SelectCoreLocalRestore());
+    ResetMaps();gAllowWrite=true;
+    assert(PioneerQ35SharedRoleBindingTestAccess::OpenViews(*binding));
+    const unsigned resetWrites=io.sharedResetWrites;
+    assert(!binding->StageCoreLocalRestore(0) && !binding->BeginCoreLocalRestoreRelease(0)
+        && !binding->MarkCoreLocalRestoreComplete(0));
+    assert(io.sharedResetWrites==resetWrites);
+    assert(binding->FinalizeBeforeResume() && PioneerQ35DestroySharedRoleBinding(binding));
+    binding=nullptr;gAllowWrite=false;
+}
+#endif
+
 static void ExerciseBinding(PioneerSessionIO& io)
 {
     auto* context=io.qwen35DataflowContext;
@@ -559,6 +578,10 @@ int main()
 #endif
 #ifdef TEST_SHARED_POST_RESET
     gBorrowedScopeHook=ExerciseResetRetirement;
+    assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+#endif
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
+    gBorrowedScopeHook=ExerciseCoreLocalBinding;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
 #endif
     service.capturePending=false;
