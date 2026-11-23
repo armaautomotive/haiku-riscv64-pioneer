@@ -261,6 +261,16 @@ public:
     // insufficient. This proof is not yet implemented.
     bool ProveRoleRuntimeSafe(PioneerSessionIO&,unsigned) const { return false; }
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    // Admission for bounded runtime observations in this non-loadable
+    // witness. Callers use it in their runtime decisions; it does not prove
+    // firmware exclusion, NoC quiescence, or physical recovery.
+    bool CanInspectDedicatedRuntime(PioneerSessionIO& io,unsigned core) const {
+        auto* service=fContext?fContext->qwen35DataflowService:NULL;
+        return core<PioneerQwen35::DataflowBarrierWorkers && service
+            && ProveExclusiveRewrite(io) && !RetainedFaultAuditActive(io)
+            && io.SharedRoleFirmwareMatches()
+            && (service->SharedRoleCapturePending() || service->Ready() || service->GraphRunning());
+    }
     // This stronger, lifetime-spanning guarantee must cover the interval
     // from the prior completion audit through the next command publication,
     // including other agents and firmware, even across separate ioctls.

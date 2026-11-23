@@ -371,6 +371,56 @@ static void ExerciseReleaseBinding(PioneerSessionIO& io,unsigned failCore)
             assert(!PioneerQ35SharedRoleBindingTestAccess::Attempted(*binding,core));
     }
     assert(!io.qwen35BorrowedRoleScope->ProveRoleDedicatedObservedStage(io));
+    if (failCore==DataflowBarrierWorkers) {
+        // Model the worker-written startup receipts and program counters. The
+        // actual binding must inspect each tile's staged image and readiness.
+        io.computePc=DataflowServiceEntryAddress+4;
+        io.rolePc[DataflowRoleReader]=DataflowRoleReaderCodeAddress+4;
+        io.rolePc[DataflowRoleWriter]=DataflowRoleWriterCodeAddress+4;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            auto& role=io.roleBoxes[core];role={};
+            role.magic=DataflowRoleMailboxMagic;role.version=DataflowRoleMailboxVersion;
+            assert(DataflowRoleMailboxPublishStarted(role,DataflowRoleReader)
+                && DataflowRoleMailboxPublishStarted(role,DataflowRoleWriter));
+            auto& worker=io.workerBoxes[core];worker={};
+            worker.magic=DataflowWorkerMailboxMagic;worker.version=DataflowWorkerMailboxVersion;
+            worker.logicalCore=core;worker.state=DataflowWorkerReady;
+        }
+        DataflowWorkerSnapshot snapshot{};
+        assert(io.ReadWorkerSnapshot(7,snapshot));
+        io.roleBoxes[7].started[DataflowRoleWriter]=0;
+        assert(!io.SharedCoreReady(7,snapshot));
+        assert(DataflowRoleMailboxPublishStarted(io.roleBoxes[7],DataflowRoleWriter));
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            assert(io.ReadWorkerSnapshot(core,snapshot) && io.SharedCoreReady(core,snapshot));
+        }
+        // A warm graph may have advanced independent worker/role sequences.
+        // Startup image inspection is cached, but readiness still validates
+        // each fresh mailbox, route, reset, PC and service/firmware state.
+        auto& role=io.roleBoxes[0];
+        assert(DataflowRoleMailboxIssue(role,1));
+        for (unsigned r=0;r<DataflowRoleCount;r++)
+            assert(DataflowRoleMailboxBegin(role,r,1) && DataflowRoleMailboxComplete(role,r,1,true));
+        assert(DataflowRoleMailboxAcknowledge(role,1,true,true));
+        auto& worker=io.workerBoxes[0];
+        worker.commandSequence=worker.acknowledgedSequence=worker.completedSequence=3;
+        assert(io.ReadWorkerSnapshot(0,snapshot));
+        context->qwen35DataflowService->capturePending=false;
+        assert(io.SharedCoreReady(0,snapshot));
+        io.firmwareMatches=false;assert(!io.SharedCoreReady(0,snapshot));io.firmwareMatches=true;
+        io.queueBoxes[0][0].produced=1;assert(!io.SharedCoreReady(0,snapshot));
+        io.queueBoxes[0][0].produced=0;
+        io.rolePc[DataflowRoleWriter]=DataflowExclusiveWriterParkAddress;
+        assert(!io.SharedCoreReady(0,snapshot));
+        io.rolePc[DataflowRoleWriter]=DataflowRoleWriterCodeAddress+4;
+        context->qwen35DataflowService->ready=false;
+        assert(!io.SharedCoreReady(0,snapshot));
+        context->qwen35DataflowService->graphRunning=true;
+        assert(io.SharedCoreReady(0,snapshot));
+        context->qwen35DataflowService->graphRunning=false;
+        context->qwen35DataflowService->ready=true;
+        context->qwen35DataflowService->capturePending=true;
+    }
     // Close is no longer in the capture phase. A held tile can still be
     // inspected through the actual scope; a running tile or changed firmware
     // cannot satisfy the held audit.

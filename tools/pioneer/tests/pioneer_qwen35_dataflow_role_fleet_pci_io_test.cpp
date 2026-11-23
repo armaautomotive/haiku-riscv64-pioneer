@@ -24,6 +24,9 @@ struct FleetPciTestScope {
     bool dedicatedRelease=false;
     bool dedicatedObservedStage=false;
     bool dedicatedHeldStatus=true;
+    bool CanInspectDedicatedRuntime(PioneerSessionIO&,unsigned core) const {
+        return runtime && core<DataflowBarrierWorkers;
+    }
     bool ProveRoleDedicatedObservedStage(PioneerSessionIO&) const { return dedicatedObservedStage; }
     bool ProveRoleDedicatedHeldStatusAllowed(PioneerSessionIO&,unsigned core) const {
         return dedicatedHeldStatus && core<DataflowBarrierWorkers;

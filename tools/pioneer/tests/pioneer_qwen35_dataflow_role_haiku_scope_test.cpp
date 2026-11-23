@@ -44,8 +44,10 @@ struct PioneerProbeCookie { uint32_t magic=0x50313030; team_id team=11; PioneerS
 struct FakeService {
     bool ready=true;
     bool capturePending=false;
+    bool graphRunning=false;
     bool Ready() const { return ready; }
     bool SharedRoleCapturePending() const { return capturePending; }
+    bool GraphRunning() const { return graphRunning; }
 };
 struct FakeGraph { bool retained=false; const void* run=nullptr; bool closePermitted=false; unsigned ackCore=UINT32_MAX; };
 struct PioneerSessionIO {
