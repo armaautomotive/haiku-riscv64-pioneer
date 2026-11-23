@@ -44,10 +44,11 @@ enum : uint32_t {
 	PIONEER_RECOVERY_STAGE_COMPLETE=13
 };
 // The same reset ticket remains owned. These details identify a safely
-// resumable firmware poll or cleaned-up mapping allocation failure; a stage
-// alone does not imply that an arbitrary failure can be retried.
+// resumable pre-reset preparation, firmware poll or cleaned-up mapping
+// allocation failure; a stage alone does not imply that it can be retried.
 enum : uint32_t { PIONEER_RECOVERY_DETAIL_FIRMWARE_WAIT=0x46570002,
-	PIONEER_RECOVERY_DETAIL_MAPPING_WAIT=0x4d500002 };
+	PIONEER_RECOVERY_DETAIL_MAPPING_WAIT=0x4d500002,
+	PIONEER_RECOVERY_DETAIL_PREPARE_WAIT=0x50520002 };
 struct tt_pioneer_recovery_run {
 	uint32_t version,reserved[3];
 	uint64_t expected_tag,expected_generation;

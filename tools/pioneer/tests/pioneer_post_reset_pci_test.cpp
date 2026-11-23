@@ -105,6 +105,15 @@ int main()
 	lost.command[0]=lost.command[1]=0x406;lost.droppedWrite=lost.writes+1;
 	assert(!PioneerPreResetDisableMaster(lost) && lost.command[0]==0x406
 		&& lost.command[1]==0x406);
+	lost.droppedWrite=0;
+	assert(PioneerPreResetDisableMaster(lost) && lost.command[0]==0x402 && lost.command[1]==0x402);
+	DisableMasterIO rootLost;assert(BlackholePioneerMmioBegin(rootLost,saved,transaction));
+	rootLost.command[0]=rootLost.command[1]=0x406;rootLost.droppedWrite=rootLost.writes+2;
+	assert(!PioneerPreResetDisableMaster(rootLost) && rootLost.command[0]==0x402
+		&& rootLost.command[1]==0x406);
+	rootLost.droppedWrite=0;
+	assert(PioneerPreResetDisableMaster(rootLost) && rootLost.command[0]==0x402
+		&& rootLost.command[1]==0x402);
 	PayloadIO payload;payload.command[0]=payload.command[1]=0x402;
 	PioneerPciePayloadSnapshot snapshot{};
 	assert(PioneerPciePayloadRead(payload,snapshot) && snapshot.valid && snapshot.capability==0x70);

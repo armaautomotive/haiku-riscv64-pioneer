@@ -27,6 +27,7 @@ using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uin
 constexpr int B_OK=0,B_BAD_VALUE=-1,B_NOT_ALLOWED=-2,B_BUSY=-3,B_DEV_NOT_READY=-4,B_NO_MEMORY=-5;
 static unsigned failStage=0,abortCount=0,completeCount=0,contextDeleted=0,cookieDeleted=0;
 static bool failPayloadRead=false,failPayloadRestore=false,failFirmwareQueue=false,failDbi=false;
+static unsigned payloadReads=0,payloadDriftAt=0;
 static bool firmwareNotReady=false;
 static bool retryableMappingFailure=false;
 static bool ticketPending=false,invalidTicket=false,guardV2Missing=false;
@@ -111,7 +112,11 @@ struct PioneerSessionIO {
 	}
 };
 static bool PioneerPreResetDisableMaster(PioneerSessionIO&) { return Step(PIONEER_RECOVERY_STAGE_DISABLE_MASTER); }
-static bool PioneerPciePayloadRead(PioneerSessionIO&,PioneerPciePayloadSnapshot&) {return !failPayloadRead;}
+static bool PioneerPciePayloadRead(PioneerSessionIO&,PioneerPciePayloadSnapshot& payload) {
+	if (failPayloadRead) return false;
+	if (++payloadReads==payloadDriftAt) payload.control^=0x20;
+	return true;
+}
 static bool PioneerPciePayloadRestore(PioneerSessionIO&,const PioneerPciePayloadSnapshot&) {return !failPayloadRestore;}
 template<class IO> static bool BlackholeAsicReset(IO&,unsigned,BlackholeAsicResetResult& r) {
 	r.stage=7;
@@ -164,6 +169,7 @@ struct PioneerStoreContext {
 	PioneerPostResetMapping* recoveryMapping=nullptr;bool recoveryAttempted=false,dispatchOwnerRetained=true;
 	PioneerDriverRecoveryProof recoveryFinishProof{};uint64 recoveryFinishTicket=0;bool recoveryFinishPending=false;
 	PioneerPciePayloadSnapshot recoveryPayload{};bool recoveryFinishNeedsAudit=false;
+	uint64 recoveryPrepareTicket=0;bool recoveryPreparePending=false;
 	BlackholeAsicResetResult recoveryResetResult{};uint64 recoveryResetTicket=0;bool recoveryResetPending=false;
 	uint64 recoveryFirmwareTicket=0;bool recoveryFirmwarePending=false;
 	uint64 recoveryMappingTicket=0;bool recoveryMappingPending=false;
@@ -230,6 +236,7 @@ static tt_pioneer_recovery_run Request(){tt_pioneer_recovery_run r={};r.version=
 static void Setup() {
 	failStage=abortCount=completeCount=contextDeleted=cookieDeleted=0;trace.clear();
 	failPayloadRead=failPayloadRestore=failFirmwareQueue=failDbi=false;
+	payloadReads=payloadDriftAt=0;
 	firmwareNotReady=retryableMappingFailure=false;
 	ticketPending=invalidTicket=guardV2Missing=false;
 	validateCalls=invalidateOnValidate=0;
@@ -258,6 +265,33 @@ int main(){
 		&& unavailable.operation_status==B_DEV_NOT_READY && trace.empty() && sRuntimeOwner
 		&& !sRuntimeOwner->context->recoveryAttempted && sColdRecoveryRequired
 		&& !ticketPending && !abortCount && !completeCount);
+	Cleanup();
+	Setup();failStage=PIONEER_RECOVERY_STAGE_DISABLE_MASTER;auto prepare=Request();
+	assert(Qwen35RecoveryRun(&inspector,&prepare,sizeof(prepare))==B_OK
+		&& prepare.operation_status==B_DEV_NOT_READY && prepare.detail==PIONEER_RECOVERY_DETAIL_PREPARE_WAIT
+		&& sRuntimeOwner->context->recoveryPreparePending && ticketPending && !abortCount);
+	prepare=Request();assert(Qwen35RecoveryRun(&inspector,&prepare,sizeof(prepare))==B_OK
+		&& prepare.operation_status==B_DEV_NOT_READY && sRuntimeOwner->context->recoveryPreparePending);
+	assert(!std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET));
+	failStage=0;prepare=Request();
+	assert(Qwen35RecoveryRun(&inspector,&prepare,sizeof(prepare))==B_OK && prepare.operation_status==B_OK
+		&& !sRuntimeOwner && !sColdRecoveryRequired && !abortCount && completeCount==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
+	Setup();payloadDriftAt=2;prepare=Request();
+	assert(Qwen35RecoveryRun(&inspector,&prepare,sizeof(prepare))==B_OK
+		&& prepare.operation_status==B_DEV_NOT_READY && prepare.detail==PIONEER_RECOVERY_DETAIL_PREPARE_WAIT
+		&& sRuntimeOwner->context->recoveryPreparePending && !abortCount && ticketPending
+		&& !std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET));
+	prepare=Request();assert(Qwen35RecoveryRun(&inspector,&prepare,sizeof(prepare))==B_OK
+		&& prepare.operation_status==B_OK && !sRuntimeOwner && !sColdRecoveryRequired
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
+	Setup();invalidateOnValidate=1;prepare=Request();
+	assert(Qwen35RecoveryRun(&inspector,&prepare,sizeof(prepare))==B_OK
+		&& prepare.operation_status==B_DEV_NOT_READY && sRuntimeOwner->context->recoveryPreparePending
+		&& ticketPending && !abortCount && !std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET));
+	const auto invalidPrepareTrace=trace;prepare=Request();
+	assert(Qwen35RecoveryRun(&inspector,&prepare,sizeof(prepare))==B_OK
+		&& prepare.operation_status==B_DEV_NOT_READY && trace==invalidPrepareTrace && sColdRecoveryRequired);
 	Cleanup();
 	Setup();resetTimeout=true;auto r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
@@ -370,7 +404,7 @@ int main(){
 		&& trace==traceBefore && sRuntimeOwner && sColdRecoveryRequired && ticketPending
 		&& sharedRoleReleases==1 && !graphReleases && !completeCount);
 	Cleanup();
-	Setup();invalidateOnValidate=3;r=Request();
+	Setup();invalidateOnValidate=4;r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
 		&& sRuntimeOwner && sColdRecoveryRequired && ticketPending && sharedRoleReleases==1
 		&& !sRuntimeOwner->context->qwen35SharedRoleBinding && !graphReleases && !completeCount);
@@ -389,7 +423,9 @@ int main(){
 	for(unsigned stage=1;stage<=12;stage++) {
 		Setup();failStage=stage;r=Request();
 		assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status!=B_OK && r.stage==stage);
-		assert(sColdRecoveryRequired && sReloadGeneration==3 && abortCount==1);
+		assert(sColdRecoveryRequired && sReloadGeneration==3 && abortCount==(stage==1?0U:1U));
+		if (stage==1) assert(ticketPending && sRuntimeOwner->context->recoveryPreparePending
+			&& r.detail==PIONEER_RECOVERY_DETAIL_PREPARE_WAIT);
 		if(stage<12) assert(sRuntimeOwner && !contextDeleted && !cookieDeleted && !completeCount);
 		else assert(sRuntimeOwner && !contextDeleted && !cookieDeleted && completeCount==1);
 		Cleanup();
@@ -397,7 +433,16 @@ int main(){
 	Setup();failPayloadRead=true;r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
 		&& r.stage==PIONEER_RECOVERY_STAGE_DISABLE_MASTER && trace.size()==1
-		&& sRuntimeOwner && sColdRecoveryRequired && abortCount==1);
+		&& r.detail==PIONEER_RECOVERY_DETAIL_PREPARE_WAIT
+		&& sRuntimeOwner && sColdRecoveryRequired && !abortCount && ticketPending
+		&& sRuntimeOwner->context->recoveryPreparePending);
+	const auto prepareTrace=trace;invalidTicket=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& trace==prepareTrace && ticketPending && sColdRecoveryRequired);
+	invalidTicket=false;failPayloadRead=false;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && !sColdRecoveryRequired && !abortCount && completeCount==1
+		&& std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET)==1);
 	Cleanup();Setup();failPayloadRestore=true;r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
 		&& r.stage==PIONEER_RECOVERY_STAGE_PCI_RESTORE && trace.size()==3
@@ -415,7 +460,8 @@ int main(){
 	Cleanup();Setup();sRuntimeOwner->context->recoveryDbi.mps=0x40;r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
 		&& r.stage==PIONEER_RECOVERY_STAGE_DISABLE_MASTER && trace.size()==1
-		&& sRuntimeOwner && sColdRecoveryRequired && abortCount==1);
+		&& r.detail==PIONEER_RECOVERY_DETAIL_PREPARE_WAIT && sRuntimeOwner && sColdRecoveryRequired
+		&& sRuntimeOwner->context->recoveryPreparePending && !abortCount && ticketPending);
 	Cleanup();
 	Setup();sRuntimeOwner->finalFreeRetained=false;r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_BUSY && trace.empty());

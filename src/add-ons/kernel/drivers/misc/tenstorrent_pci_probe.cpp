@@ -3942,6 +3942,8 @@ struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	PioneerRecoveryDbiSnapshot recoveryDbi={};
 	PioneerPciePayloadSnapshot recoveryPayload={};
+	uint64 recoveryPrepareTicket=0;
+	bool recoveryPreparePending=false;
 	BlackholeAsicResetResult recoveryResetResult={};
 	uint64 recoveryResetTicket=0;
 	bool recoveryResetPending=false;
@@ -11291,26 +11293,30 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	PioneerProbeCookie* owner=sRuntimeOwner;
 	PioneerStoreContext* context=owner->context;
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+	if (context->recoveryPreparePending && (context->recoveryFinishPending
+		|| context->recoveryResetPending || context->recoveryFirmwarePending || context->recoveryMappingPending
+		|| !context->recoveryAttempted || !context->recoveryMapping || !context->recoveryPrepareTicket))
+		return B_NOT_ALLOWED;
 	if (context->recoveryResetPending && (context->recoveryFinishPending
-		|| context->recoveryFirmwarePending || context->recoveryMappingPending || !context->recoveryAttempted
+		|| context->recoveryPreparePending || context->recoveryFirmwarePending || context->recoveryMappingPending || !context->recoveryAttempted
 		|| !context->recoveryMapping || !context->recoveryPayload.valid))
 		return B_NOT_ALLOWED;
 	if (context->recoveryFirmwarePending && (context->recoveryFinishPending
-		|| context->recoveryResetPending || context->recoveryMappingPending || !context->recoveryAttempted
+		|| context->recoveryPreparePending || context->recoveryResetPending || context->recoveryMappingPending || !context->recoveryAttempted
 		|| !context->recoveryMapping || !context->recoveryPayload.valid || !context->recoveryFirmwareTicket))
 		return B_NOT_ALLOWED;
 	if (context->recoveryMappingPending && (context->recoveryFinishPending
-		|| context->recoveryResetPending || context->recoveryFirmwarePending || !context->recoveryAttempted
+		|| context->recoveryPreparePending || context->recoveryResetPending || context->recoveryFirmwarePending || !context->recoveryAttempted
 		|| !context->recoveryMapping || !context->recoveryPayload.valid || !context->recoveryMappingTicket))
 		return B_NOT_ALLOWED;
 #endif
 	if ((context->recoveryAttempted
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
-		&& !context->recoveryFinishPending && !context->recoveryResetPending && !context->recoveryFirmwarePending && !context->recoveryMappingPending
+		&& !context->recoveryFinishPending && !context->recoveryPreparePending && !context->recoveryResetPending && !context->recoveryFirmwarePending && !context->recoveryMappingPending
 #endif
 		) || (context->recoveryMapping
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
-		&& !context->recoveryResetPending && !context->recoveryFirmwarePending && !context->recoveryMappingPending
+		&& !context->recoveryPreparePending && !context->recoveryResetPending && !context->recoveryFirmwarePending && !context->recoveryMappingPending
 #endif
 		)
 		|| !context->transaction.config_attempted || !context->transaction.map_attempted)
@@ -11344,6 +11350,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 		status=B_BAD_VALUE;
 	else if (context->recoveryFinishPending) {
 		ticket=context->recoveryFinishTicket;
+		status=ticket?guard->validate(ticket):B_BAD_VALUE;
+	} else if (context->recoveryPreparePending) {
+		ticket=context->recoveryPrepareTicket;
 		status=ticket?guard->validate(ticket):B_BAD_VALUE;
 	} else if (context->recoveryResetPending) {
 		ticket=context->recoveryResetTicket;
@@ -11394,20 +11403,33 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	} else
 #endif
 	{
-		context->recoveryMapping=new(std::nothrow) PioneerPostResetMapping(context->profile);
-		if (!context->recoveryMapping) return fail(B_NO_MEMORY);
-		context->recoveryAttempted=true;
+		if (!context->recoveryMapping) {
+			context->recoveryMapping=new(std::nothrow) PioneerPostResetMapping(context->profile);
+			if (!context->recoveryMapping) return fail(B_NO_MEMORY);
+			context->recoveryAttempted=true;
+		}
 		r.stage=PIONEER_RECOVERY_STAGE_DISABLE_MASTER;
-		if (!PioneerPreResetDisableMaster(context->io)) return fail(B_DEV_NOT_READY);
-		if (!PioneerPciePayloadRead(context->io,payload)
-			|| !PioneerPciePayloadRead(context->io,payloadCheck)
-			|| payload.capability!=payloadCheck.capability || payload.version!=payloadCheck.version
-			|| payload.supported!=payloadCheck.supported || payload.control!=payloadCheck.control)
-			return fail(B_DEV_NOT_READY);
+		bool prepared=PioneerPreResetDisableMaster(context->io)
+			&& PioneerPciePayloadRead(context->io,payload)
+			&& PioneerPciePayloadRead(context->io,payloadCheck)
+			&& payload.capability==payloadCheck.capability && payload.version==payloadCheck.version
+			&& payload.supported==payloadCheck.supported && payload.control==payloadCheck.control;
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
-		if ((payload.control&PIONEER_RECOVERY_DBI_MPS_MASK)!=context->recoveryDbi.mps)
-			return fail(B_DEV_NOT_READY);
+		prepared=prepared && (payload.control&PIONEER_RECOVERY_DBI_MPS_MASK)==context->recoveryDbi.mps;
+		// No reset marker or trigger has been issued yet. The PCI helper
+		// checks identity and accepts only its idempotent master-disable
+		// transition; preserve the ticket and retry those checks from scratch.
+		context->recoveryPreparePending=true;context->recoveryPrepareTicket=ticket;
+		if (!prepared) {
+			r.detail=PIONEER_RECOVERY_DETAIL_PREPARE_WAIT;
+			put_module(guardName);return B_DEV_NOT_READY;
+		}
+		status=guard->validate(ticket);
+		if (status!=B_OK) { put_module(guardName);return status; }
+		context->recoveryPreparePending=false;context->recoveryPrepareTicket=0;
 		context->recoveryPayload=payload;
+#else
+		if (!prepared) return fail(B_DEV_NOT_READY);
 #endif
 		r.stage=PIONEER_RECOVERY_STAGE_ASIC_RESET;
 		if (!BlackholeAsicReset(resetIo,100,reset)) {
