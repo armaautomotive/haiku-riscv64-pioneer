@@ -86,6 +86,16 @@ int main()
         assert(views.WriteWords(3,DataflowRolePhysicalBriscRam,0x1ff8,words,8,guard));
         assert(views.WriteWords(3,DataflowRolePhysicalNcriscRam,0x1ff8,words,8,guard));
         assert(views.Matches(3,DataflowRolePhysicalExtraCode,extraTail,words,2,guard));
+        uint32_t copied[2]{};
+        assert(views.CopyWords(3,DataflowRolePhysicalExtraCode,extraTail,copied,2,guard));
+        assert(copied[0]==words[0] && copied[1]==words[1]);
+        assert(!views.CopyWords(3,DataflowRolePhysicalBriscRam,0,copied,1,guard));
+        assert(!views.CopyWords(3,DataflowRolePhysicalExtraCode,extraTail+4,copied,2,guard));
+        assert(!views.CopyWords(3,DataflowRolePhysicalExtraCode,extraTail,nullptr,2,guard));
+        guard.read=false; assert(!views.CopyWords(3,DataflowRolePhysicalExtraCode,extraTail,copied,2,guard));
+        guard.read=true; platform.driftAfterReads=platform.reads+1;
+        assert(!views.CopyWords(3,DataflowRolePhysicalExtraCode,extraTail,copied,2,guard));
+        assert(!guard.route); guard.route=true; platform.driftAfterReads=0;
         uint32_t mismatch[]={words[0],words[1]^1};
         assert(!views.Matches(3,DataflowRolePhysicalExtraCode,extraTail,mismatch,2,guard));
         assert(!views.Matches(3,DataflowRolePhysicalBriscRam,0x1ff8,words,2,guard));

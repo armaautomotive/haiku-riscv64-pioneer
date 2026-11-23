@@ -444,6 +444,25 @@ public:
             && second.writerReady==DataflowRoleSnapshotWriterReady && !second.release
             && fScope.ProveRoleStartupHandoffSafe(fIO,core) && SelectForStop(core);
     }
+    // Read role-local snapshots only through their owned L1 copy windows.
+    // The real scope does not yet authorize this as an original snapshot.
+    bool StacklessCopiesSafe(unsigned core) {
+        return fScope.ProveRoleStacklessSnapshotSafe(fIO,core)
+            && StartupHandoffWriteAllowed(core)
+            && fScope.ProveRoleImageInspectionAllowed(fIO,core)
+            && fScope.ProveRoleStacklessSnapshotSafe(fIO,core);
+    }
+    bool ReadStacklessRamCopy(unsigned core,unsigned role,unsigned offset,uint32_t* output,unsigned bytes) {
+        using namespace PioneerQwen35;
+        if (role>=DataflowRoleCount || !output || !bytes || (offset&3) || (bytes&3)
+            || offset>DataflowRoleLocalRamBytes || bytes>DataflowRoleLocalRamBytes-offset
+            || !fViews.Opened() || !StacklessCopiesSafe(core)) return false;
+        const unsigned base=role==DataflowRoleReader?DataflowRoleReaderRamCopy:DataflowRoleWriterRamCopy;
+        ImageReadGuard guard(*this);
+        return fViews.CopyWords(core,DataflowRolePhysicalExtraCode,
+                base-DataflowRoleExtraL1Address+offset,output,bytes/4,guard)
+            && StacklessCopiesSafe(core);
+    }
     bool CompletedForAcknowledgement(unsigned core,unsigned textWords,unsigned dispatchWords) {
         using namespace PioneerQwen35;
         if (!RuntimeStable(core,textWords,dispatchWords)) return false;

@@ -30,6 +30,7 @@ class DataflowRoleLocalRamOwner {
     Phase fPhase=Empty;
     unsigned fCore=DataflowBarrierWorkers;
     uint32_t* fSnapshot=nullptr;
+    bool fFromStacklessCopy=false;
     template<class IO> bool Stable(IO& io) const {
         return io.AllRolesHeld(fCore) && io.LocalRamStable(fCore);
     }
@@ -81,10 +82,51 @@ public:
         if (!Stable(io)) return false;
         fSnapshot=storage; fPhase=Captured; return true;
     }
+    // Adopt the two role-produced L1 copies while both shims are waiting
+    // before their first private-stack store. IO must independently prove
+    // their images, receipts, reset-preservation, route and exclusive writer
+    // ownership for the entire operation. This method does not read private
+    // RAM through the NoC and does not itself permit a role release.
+    template<class IO> bool CaptureStackless(unsigned core,uint32_t* storage,unsigned words,IO& io) {
+        if (fPhase!=Empty || core>=DataflowBarrierWorkers || !storage || words!=TotalWords
+            || !io.StacklessCopiesSafe(core)) return false;
+        uint32_t repeated[ChunkWords];
+        for (unsigned role=0;role<DataflowRoleCount;role++) {
+            for (unsigned offset=0;offset<DataflowRoleLocalRamWords;offset+=ChunkWords) {
+                const unsigned count=DataflowRoleLocalRamWords-offset<ChunkWords
+                    ?DataflowRoleLocalRamWords-offset:ChunkWords;
+                uint32_t* dest=storage+role*DataflowRoleLocalRamWords+offset;
+                if (!io.StacklessCopiesSafe(core)
+                    || !io.ReadStacklessRamCopy(core,role,offset*4,dest,count*4)
+                    || !io.ReadStacklessRamCopy(core,role,offset*4,repeated,count*4)) return false;
+                for (unsigned i=0;i<count;i++) if (dest[i]!=repeated[i]) return false;
+            }
+        }
+        // Detect changes to an earlier chunk while later chunks were read.
+        for (unsigned role=0;role<DataflowRoleCount;role++) {
+            for (unsigned offset=0;offset<DataflowRoleLocalRamWords;offset+=ChunkWords) {
+                const unsigned count=DataflowRoleLocalRamWords-offset<ChunkWords
+                    ?DataflowRoleLocalRamWords-offset:ChunkWords;
+                if (!io.StacklessCopiesSafe(core)
+                    || !io.ReadStacklessRamCopy(core,role,offset*4,repeated,count*4)) return false;
+                for (unsigned i=0;i<count;i++)
+                    if (repeated[i]!=storage[role*DataflowRoleLocalRamWords+offset+i]) return false;
+            }
+        }
+        if (!io.StacklessCopiesSafe(core)) return false;
+        fCore=core; fSnapshot=storage; fFromStacklessCopy=true; fPhase=Captured; return true;
+    }
+    // The retained copy must be marked dirty before any attempted stack
+    // release, even if a later proof fails or the write is uncertain.
+    template<class IO> bool MarkMayRunStackless(IO& io) {
+        if (fPhase!=Captured || !fFromStacklessCopy || !fSnapshot) return false;
+        fPhase=Dirty;
+        return io.StacklessCopiesSafe(fCore);
+    }
     // This changes only the software ledger. The future fleet owner must call
     // it before ANY release attempt, including one whose result is uncertain.
     template<class IO> bool MarkMayRun(IO& io) {
-        if (fPhase!=Captured) return false;
+        if (fPhase!=Captured || fFromStacklessCopy) return false;
         if (!Stable(io)) { fPhase=Dirty; return false; }
         fPhase=Dirty; return true;
     }

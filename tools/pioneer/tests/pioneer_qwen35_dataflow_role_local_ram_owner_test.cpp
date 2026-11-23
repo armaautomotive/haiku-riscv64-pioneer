@@ -8,7 +8,7 @@ struct RamIO {
     std::vector<uint32_t> ram;
     bool held=true,stable=true,corruptEnabled=false;
     int failWrite=-1,corruptAt=-1;
-    unsigned writes=0;
+    unsigned writes=0,reads=0;
     RamIO():ram(DataflowRoleLocalRamOwner::RequiredWords()) {
         for (unsigned i=0;i<ram.size();i++) ram[i]=i^0xabc13579U;
     }
@@ -16,6 +16,7 @@ struct RamIO {
     bool LocalRamStable(unsigned core) const { return core==9 && stable; }
     bool ReadRam(unsigned core,unsigned role,uint32_t address,uint32_t* output,unsigned bytes) {
         assert(AllRolesHeld(core) && LocalRamStable(core) && output && DataflowRoleLocalRamRange(role,address,bytes));
+        ++reads;
         const uint32_t base=role==DataflowRoleReader?DataflowRoleBriscLocalRam:DataflowRoleNcriscLocalRam;
         const unsigned offset=role*DataflowRoleLocalRamWords+(address-base)/4;
         for (unsigned i=0;i<bytes/4;i++) output[i]=ram[offset+i];
@@ -29,6 +30,25 @@ struct RamIO {
         if (int(writes)==failWrite) { ram[offset]=input[0]; return false; }
         for (unsigned i=0;i<bytes/4;i++) ram[offset+i]=input[i];
         if (corruptEnabled && int(writes)==corruptAt) { ram[0]^=1; corruptEnabled=false; }
+        return true;
+    }
+};
+struct StacklessRamIO : RamIO {
+    std::vector<uint32_t> copies=ram;
+    bool safe=true;
+    unsigned copyReads=0,failCopyAt=UINT32_MAX,corruptAtRead=UINT32_MAX;
+    mutable unsigned safeChecks=0,failSafeAt=UINT32_MAX;
+    bool StacklessCopiesSafe(unsigned core) const {
+        return core==9 && safe && safeChecks++!=failSafeAt;
+    }
+    bool ReadStacklessRamCopy(unsigned core,unsigned role,unsigned offset,uint32_t* output,unsigned bytes) {
+        if (core!=9 || role>=DataflowRoleCount || !output || !bytes || (offset&3) || (bytes&3)
+            || offset>DataflowRoleLocalRamBytes || bytes>DataflowRoleLocalRamBytes-offset) return false;
+        const unsigned call=copyReads++;
+        if (call==failCopyAt) return false;
+        if (call==corruptAtRead) copies[0]^=1;
+        const unsigned first=role*DataflowRoleLocalRamWords+offset/4;
+        for (unsigned i=0;i<bytes/4;i++) output[i]=copies[first+i];
         return true;
     }
 };
@@ -55,6 +75,36 @@ int main()
         io.ram[0]^=1;
         assert(!owner.VerifyOriginal(io) && owner.RestorationRequired());
         assert(owner.Restore(io) && io.ram==original);
+    }
+    {
+        StacklessRamIO io; const auto original=io.ram; DataflowRoleLocalRamOwner owner;
+        io.held=false; io.stable=false;
+        assert(!owner.CaptureStackless(9,snapshot.data(),snapshot.size()-1,io));
+        io.failCopyAt=1;
+        assert(!owner.CaptureStackless(9,snapshot.data(),snapshot.size(),io));
+        assert(!owner.OriginalWords(DataflowRoleReader) && !io.reads);
+        io.copyReads=0; io.failCopyAt=UINT32_MAX; io.corruptAtRead=2;
+        assert(!owner.CaptureStackless(9,snapshot.data(),snapshot.size(),io));
+        assert(!owner.OriginalWords(DataflowRoleWriter) && !io.reads);
+        io.copies=original; io.copyReads=0; io.corruptAtRead=UINT32_MAX;
+        io.safeChecks=0; io.failSafeAt=4;
+        assert(!owner.CaptureStackless(9,snapshot.data(),snapshot.size(),io) && !io.reads);
+        io.safeChecks=0; io.failSafeAt=UINT32_MAX;
+        assert(owner.CaptureStackless(9,snapshot.data(),snapshot.size(),io) && !io.reads);
+        assert(snapshot==original && owner.OriginalWords(DataflowRoleReader)==snapshot.data());
+        assert(owner.MarkMayRunStackless(io) && owner.RestorationRequired());
+        io.ram.assign(io.ram.size(),0);
+        io.held=true; io.stable=true;
+        assert(owner.Restore(io) && io.ram==original);
+    }
+    {
+        StacklessRamIO io; DataflowRoleLocalRamOwner owner;
+        assert(owner.CaptureStackless(9,snapshot.data(),snapshot.size(),io));
+        assert(!owner.MarkMayRun(io) && !owner.RestorationRequired());
+        io.safe=false;
+        assert(!owner.MarkMayRunStackless(io) && owner.RestorationRequired());
+        assert(!owner.MarkMayRunStackless(io));
+        assert(owner.Restore(io));
     }
     {
         RamIO io; const auto original=io.ram; DataflowRoleLocalRamOwner owner;

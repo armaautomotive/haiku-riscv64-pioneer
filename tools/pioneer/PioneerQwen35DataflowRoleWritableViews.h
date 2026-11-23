@@ -99,6 +99,28 @@ public:
         }
         return true;
     }
+    // Copy fixed L1 image data in bounded chunks. A failed call can partially
+    // fill output; the owner must not publish it as a valid snapshot.
+    template<class Guard> bool CopyWords(unsigned core,unsigned which,unsigned offset,
+        uint32_t* output,unsigned words,Guard& guard) {
+        if (!fOpen || !output || !words || words>UINT32_MAX/4 || core>=DataflowBarrierWorkers
+            || which>DataflowRolePhysicalExtraCode || fArea[which]<0 || !fView[which]
+            || (offset&3) || offset>fBytes[which] || words*4>fBytes[which]-offset
+            || !DataflowRolePhysicalReadAllowed(which,offset)
+            || !DataflowRolePhysicalReadAllowed(which,offset+(words-1)*4)) return false;
+        for (unsigned first=0;first<words;) {
+            const unsigned count=words-first<64?words-first:64;
+            const unsigned start=offset+first*4,end=start+(count-1)*4;
+            if (!Route(core,guard) || !guard.ProveReadAllowed(core,which,start)
+                || !guard.ProveReadAllowed(core,which,end) || !Route(core,guard)) return false;
+            for (unsigned i=0;i<count;i++)
+                output[first+i]=fPlatform.ReadWord(fView[which]+start/4+i);
+            if (!guard.ProveReadAllowed(core,which,start) || !guard.ProveReadAllowed(core,which,end)
+                || !Route(core,guard)) return false;
+            first+=count;
+        }
+        return true;
+    }
     template<class Guard> bool WriteWords(unsigned core,unsigned which,unsigned offset,
         const uint32_t* input,unsigned bytes,Guard& guard) {
         if (!fOpen || !input || core>=DataflowBarrierWorkers || which>=DataflowRolePhysicalControl

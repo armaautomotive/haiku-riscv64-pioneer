@@ -150,6 +150,10 @@ public:
     // Requires stable exclusive ownership of the handoff, RAM copies and
     // live images, plus recovery if the release write may still be posted.
     bool ProveRoleStartupHandoffSafe(PioneerSessionIO&,unsigned) const { return false; }
+    // Requires the verified pre-stack shim images, preservation of both
+    // private RAMs across release, and exclusion of every conflicting writer
+    // or release for the full snapshot. Receipts and reads alone do not.
+    bool ProveRoleStacklessSnapshotSafe(PioneerSessionIO&,unsigned) const { return false; }
     // Must fence this tile's particular attempted stack-release write and
     // exclude all later writes to the handoff for the recovery transaction.
     bool ProveRoleStackReleaseWriteDrained(PioneerSessionIO&,unsigned) const { return false; }

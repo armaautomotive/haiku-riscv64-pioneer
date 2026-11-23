@@ -12,6 +12,7 @@ struct FleetPciTestScope {
     bool runtime=false;
     bool stackCancel=false,stackCancelled=false;
     bool stackReleaseDrained=false;
+    bool stacklessSnapshot=false;
     mutable unsigned stackDrainChecks=0;
     unsigned stackDrainFailAt=UINT32_MAX;
     bool imageInspection=false;
@@ -26,6 +27,7 @@ struct FleetPciTestScope {
     bool ProveRoleBootRoutingInspectionAllowed(PioneerSessionIO&,unsigned) const { return held && routing; }
     bool ProveRoleLocalRamStable(PioneerSessionIO&,unsigned) const { return held && stable; }
     bool ProveRoleStartupHandoffSafe(PioneerSessionIO&,unsigned) const { return runtime; }
+    bool ProveRoleStacklessSnapshotSafe(PioneerSessionIO&,unsigned) const { return stacklessSnapshot; }
     bool ProveRoleStackReleaseWriteDrained(PioneerSessionIO&,unsigned) const {
         return stackReleaseDrained && stackDrainChecks++!=stackDrainFailAt;
     }
@@ -429,6 +431,25 @@ int main()
         }
         for (unsigned core:{0U,60U,119U})
             assert(io.InspectRunningRoleRamCopies(core,readerRam.data(),writerRam.data()));
+        {
+            DataflowRoleLocalRamOwner captured;
+            std::vector<uint32_t> snapshot(DataflowRoleLocalRamOwner::RequiredWords());
+            assert(!captured.CaptureStackless(11,snapshot.data(),snapshot.size(),io));
+            scope.stacklessSnapshot=true;
+            assert(captured.CaptureStackless(11,snapshot.data(),snapshot.size(),io));
+            for (unsigned i=0;i<DataflowRoleLocalRamWords;i++) {
+                assert(snapshot[i]==readerRam[i]);
+                assert(snapshot[DataflowRoleLocalRamWords+i]==writerRam[i]);
+            }
+            assert(captured.MarkMayRunStackless(io) && captured.RestorationRequired());
+            uint32_t invalid=0;
+            assert(!io.ReadStacklessRamCopy(11,DataflowRoleCount,0,&invalid,4));
+            assert(!io.ReadStacklessRamCopy(11,DataflowRoleReader,DataflowRoleLocalRamBytes-4,&invalid,8));
+            handoff.release=DataflowRoleSnapshotRelease;
+            assert(!io.StacklessCopiesSafe(11));
+            handoff.release=0;
+            scope.stacklessSnapshot=false;
+        }
         gMemory[DataflowRolePhysicalExtraCode][readerCopy+123]^=1;
         assert(!io.InspectRunningRoleRamCopies(11,readerRam.data(),writerRam.data()));
         gMemory[DataflowRolePhysicalExtraCode][readerCopy+123]^=1;
