@@ -61,6 +61,12 @@ public:
     bool QualificationOwnerAbandonAllowed(const PioneerQ35ProjectionQualificationOwner&) const {
         return permitted && context && !context->qwen35DataflowService;
     }
+    bool QualificationOwnerAbandonCapturedAllowed(const PioneerQ35ProjectionQualificationOwner& holder,
+        const PioneerQ35ProjectionScratch& scratch,
+        const PioneerQwen35::DataflowProjectionQualificationService& qualification) const {
+        return permitted && context && holder.Owns(scratch) && scratch.IsCaptured()
+            && qualification.IsUnstarted() && !context->qwen35DataflowService;
+    }
     bool QualificationOwnerAbandonRestoredAllowed(const PioneerQ35ProjectionQualificationOwner& holder,
         const PioneerQ35ProjectionScratch& scratch,
         const PioneerQwen35::DataflowProjectionQualificationService& qualification) const {

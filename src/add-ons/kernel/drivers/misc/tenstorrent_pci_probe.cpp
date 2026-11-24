@@ -4700,6 +4700,7 @@ public:
 		if (qwen35QualificationInternalActive || !qwen35QualificationOwner.Active()) return false;
 		QualificationInternalScope admission(qwen35QualificationInternalActive);
 		return qwen35QualificationOwner.AbandonUnclaimed(scope,banks)
+			|| qwen35QualificationOwner.AbandonCapturedUnmodified(scope,banks,baseline.baseline.baseline.baseline.dram)
 			|| qwen35QualificationOwner.AbandonRestoredUnrun(scope,banks,baseline.baseline.baseline.baseline.dram);
 	}
 // PIONEER_Q35_PROJECTION_ABANDON_END

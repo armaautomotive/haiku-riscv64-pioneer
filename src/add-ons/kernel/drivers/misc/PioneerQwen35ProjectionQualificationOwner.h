@@ -65,6 +65,15 @@ public:
             || !scope.QualificationOwnerAbandonAllowed(*this)) return false;
         retired=true;return true;
     }
+    // Snapshot completed but staging never began, so the claimed bank pages
+    // remain unchanged. Keep the owner alive until bank-context destruction.
+    template<class Scope> bool AbandonCapturedUnmodified(Scope& scope,const PioneerResidentBanks& banks,
+        const tt_dram_samples_result& dram) {
+        if (!Active() || retained || !scratch || !qualification || !scratch->IsCaptured()
+            || !qualification->IsUnstarted() || !scratch->MatchesBankClaimOwner(banks,dram)
+            || !scope.QualificationOwnerAbandonCapturedAllowed(*this,*scratch,*qualification)) return false;
+        retired=true;return true;
+    }
     // A staged diagnostic may be cancelled before any command begins, after
     // every overwritten scratch page has been restored and rechecked.
     template<class Scope> bool AbandonRestoredUnrun(Scope& scope,const PioneerResidentBanks& banks,

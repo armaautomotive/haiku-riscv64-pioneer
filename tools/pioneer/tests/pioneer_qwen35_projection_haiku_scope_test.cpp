@@ -128,6 +128,24 @@ int main() {
     }
     {
         PioneerStoreContext context;PioneerQwen35RoleBorrowedScopeWitness borrowed;
+        borrowed.held=true;context.io.qwen35BorrowedRoleScope=&borrowed; // simulated proof only
+        PioneerQ35ProjectionQualificationScope scope(context);
+        assert(scope.QualificationOwnerAllocationAllowed(context) && context.qwen35QualificationOwner.Allocate());
+        for (unsigned n=0;n<Fixture::ScratchPages;n++) {
+            auto& page=context.io.memory[context.io.Key(18|(12<<6),Fixture::ScratchAddress+n*4096)];
+            for (unsigned i=0;i<1024;i++) page[i]=0x75000000U^(n*65537U+i*13U);
+        }
+        assert(context.DataflowQualificationScratchOperation(PioneerQ35ProjectionQualificationOwner::Capture,scope));
+        assert(context.qwen35QualificationOwner.Scratch()->IsCaptured());
+        assert(context.AbandonDataflowQualification(scope) && context.qwen35QualificationOwner.Retired()
+            && !context.qwen35QualificationInternalActive && context.banks.Q35StreamClaimed());
+        for (unsigned n=0;n<Fixture::ScratchPages;n++) {
+            const auto& page=context.io.memory.at(context.io.Key(18|(12<<6),Fixture::ScratchAddress+n*4096));
+            for (unsigned i=0;i<1024;i++) assert(page[i]==(0x75000000U^(n*65537U+i*13U)));
+        }
+    }
+    {
+        PioneerStoreContext context;PioneerQwen35RoleBorrowedScopeWitness borrowed;
         borrowed.held=true; // simulated fleet proof; production still denies it
         context.io.qwen35BorrowedRoleScope=&borrowed;
         PioneerQ35ProjectionQualificationScope scope(context);

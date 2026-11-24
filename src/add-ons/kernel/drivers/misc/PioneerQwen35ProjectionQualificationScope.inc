@@ -158,6 +158,12 @@ public:
         return &holder==&c.qwen35QualificationOwner && Identity() && c.qwen35QualificationInternalActive
             && !c.qwen35DataflowService && !c.banks.Q35StreamClaimed() && !c.Unsafe();
     }
+    bool QualificationOwnerAbandonCapturedAllowed(const PioneerQ35ProjectionQualificationOwner& holder,
+        const PioneerQ35ProjectionScratch& scratch,
+        const PioneerQwen35::DataflowProjectionQualificationService& qualification) const {
+        return &holder==&c.qwen35QualificationOwner && holder.Owns(scratch) && qualification.IsUnstarted()
+            && scratch.IsCaptured() && !c.qwen35DataflowService && TransferReady(&scratch);
+    }
     bool QualificationOwnerAbandonRestoredAllowed(const PioneerQ35ProjectionQualificationOwner& holder,
         const PioneerQ35ProjectionScratch& scratch,
         const PioneerQwen35::DataflowProjectionQualificationService& qualification) const {
