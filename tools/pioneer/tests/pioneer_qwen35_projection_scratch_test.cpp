@@ -148,8 +148,11 @@ int main()
             && failure.page==0 && !failure.write && !failure.capturedPages && !failure.dirtyPages
             && failure.leasePending && failure.leaseRecoveryRequired && failure.transfer.phase==1
             && failure.transfer.requests==1 && !failure.transfer.completed && !failure.transfer.wrote_device);
+        const uint32_t expected[]={Fixture::ScratchAddress,0,18|(12<<6),0x17f000,0,1|(2<<6),0,0,4096,0};
+        assert(failure.trace.issued && !failure.trace.write && failure.trace.step==0);
+        for (unsigned w=0;w<10;w++) assert(failure.trace.command[w]==expected[w]);
     }
-    for (unsigned failedStep=1;failedStep<=2;failedStep++) {
+    for (unsigned failedStep=1;failedStep<=3;failedStep++) {
         auto owner=std::make_unique<PioneerQ35ProjectionScratch>();
         auto device=std::make_unique<ScratchDevice<>>();
         assert(device->Capture(*owner));
@@ -163,7 +166,15 @@ int main()
             && failure.leasePending && failure.leaseRecoveryRequired
             && failure.transfer.phase==failedStep && failure.transfer.requests==failedStep
             && failure.transfer.completed==failedStep-1 && failure.transfer.polls[failedStep-1]==256
-            && failure.transfer.wrote_device==unsigned(failedStep==2));
+            && failure.transfer.wrote_device==unsigned(failedStep>=2));
+        const uint32_t fromHost[]={uint32_t(device->host.physical),uint32_t(device->host.physical>>32),
+            19|(24<<6),0x17e000,0,1|(2<<6),0,0,4096,0};
+        const uint32_t toGddr[]={0x17e000,0,1|(2<<6),Fixture::ScratchAddress,0,18|(12<<6),0,0x212,4096,0};
+        const uint32_t fromGddr[]={Fixture::ScratchAddress,0,18|(12<<6),0x17f000,0,1|(2<<6),0,0,4096,0};
+        const uint32_t* expected=failedStep==1?fromHost:failedStep==2?toGddr:fromGddr;
+        assert(failure.trace.issued && failure.trace.step==failedStep-1
+            && failure.trace.write==bool(failedStep==2));
+        for (unsigned w=0;w<10;w++) assert(failure.trace.command[w]==expected[w]);
         assert(!device->Restore(*owner) && device->banks.Q35StreamClaimed());
     }
     {
@@ -175,7 +186,8 @@ int main()
         assert(failure.kind==PioneerQ35ScratchFailureAdmission && failure.phase==PioneerQ35ScratchStaging
             && failure.page==0 && failure.write==1
             && failure.capturedPages==Fixture::ScratchPages && failure.dirtyPages==1
-            && !failure.leasePending && !failure.leaseRecoveryRequired && !failure.transfer.requests);
+            && !failure.leasePending && !failure.leaseRecoveryRequired && !failure.transfer.requests
+            && !failure.trace.issued);
     }
     {
         auto owner=std::make_unique<PioneerQ35ProjectionScratch>();

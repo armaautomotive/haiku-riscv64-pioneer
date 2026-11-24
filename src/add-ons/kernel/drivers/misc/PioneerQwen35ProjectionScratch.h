@@ -24,6 +24,7 @@ struct PioneerQ35ScratchFailure {
     unsigned kind=0,phase=0,bank=0,page=0,offset=0,write=0,capturedPages=0,dirtyPages=0;
     bool leasePending=false,leaseRecoveryRequired=false;
     tt_resident_store_result transfer{};
+    PioneerResidentStoreTrace trace{};
 };
 
 // Heap-owned by the exclusive diagnostic session until its entire bank
@@ -49,12 +50,13 @@ class PioneerQ35ProjectionScratch {
     PioneerQ35ScratchFailure failure{};
 
     void RecordFailure(unsigned kind,unsigned index,bool write,const PioneerResidentLease& lease,
-        const tt_resident_store_result* result=nullptr) {
+        const tt_resident_store_result* result=nullptr,const PioneerResidentStoreTrace* trace=nullptr) {
         failure.kind=kind;failure.phase=unsigned(phase);failure.bank=bank;failure.page=index;
         failure.offset=index<Fixture::ScratchPages?firstOffset+index*Fixture::PageBytes:0;
         failure.write=write;failure.capturedPages=capturedPages;failure.dirtyPages=dirtyPages;
         failure.leasePending=lease.pending;failure.leaseRecoveryRequired=lease.recovery_required;
         if (result) failure.transfer=*result;
+        if (trace) failure.trace=*trace;
     }
 
     template<class IO,class Scope>
@@ -67,14 +69,14 @@ class PioneerQ35ProjectionScratch {
             RecordFailure(PioneerQ35ScratchFailureAdmission,index,write,lease);
             phase=Failed;scope.RetainScratch(this);return false;
         }
-        tt_resident_store_result result{};
+        tt_resident_store_result result{};PioneerResidentStoreTrace trace{};
         const bool okay=PioneerResidentStorePage(io,dram,noc,host,lease,
             PioneerResidentBanks::Capacity,firstOffset+index*Fixture::PageBytes,
-            write,words,result,&banks,bank,this);
+            write,words,result,&banks,bank,this,&trace);
         if (!okay) {
             // A failed transfer can leave a posted operation. Never retry or
             // free the claim/snapshot under this transaction's own authority.
-            RecordFailure(PioneerQ35ScratchFailureTransfer,index,write,lease,&result);
+            RecordFailure(PioneerQ35ScratchFailureTransfer,index,write,lease,&result,&trace);
             transferFailed=true;phase=Failed;scope.RetainScratch(this);
         }
         return okay;

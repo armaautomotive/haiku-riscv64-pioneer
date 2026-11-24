@@ -9,6 +9,15 @@ struct tt_resident_store_result {
 	uint32_t version,state,phase,requests,completed,recovery_required,mismatches,wrote_device;
 	uint32_t before[3][4],after[3][4],polls[3];
 };
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+// Private diagnostic evidence, not part of the resident-store ioctl ABI.
+// A recorded doorbell may still be posted; this is not a completion proof.
+struct PioneerResidentStoreTrace {
+	uint32_t command[10]{};
+	unsigned step=0;
+	bool issued=false,write=false;
+};
+#endif
 struct PioneerResidentLease {
 	uint32_t* saved=nullptr;
 	uint32_t tlb[2][3]={},config=0;
@@ -89,13 +98,26 @@ bool PioneerResidentLeaseEnd(IO& io,const tt_compute_noc_result& noc,PioneerResi
 }
 template<class IO>
 bool PioneerResidentStoreCommand(IO& io,PioneerResidentLease& lease,const uint32_t* command,
-	bool write,unsigned step,tt_resident_store_result& r)
+	bool write,unsigned step,tt_resident_store_result& r
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	,PioneerResidentStoreTrace* trace=nullptr
+#endif
+	)
 {
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	if (trace) *trace={};
+#endif
 	if (step>=3 || !BlackholeResidentIdle(io)) return false;
 	for (unsigned w=0;w<10;w++) io.ResidentNocWrite(w*4,command[w]);
 	for (unsigned w=0;w<10;w++) if (io.ResidentNocRead(w*4)!=command[w]) return false;
 	for (unsigned w=0;w<4;w++) r.before[step][w]=io.ResidentNocRead(write?BlackholeHostWriteCounter(w):0x208+w*4);
 	lease.pending=true; r.requests++; r.phase=step+1;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	if (trace) {
+		for (unsigned w=0;w<10;w++) trace->command[w]=command[w];
+		trace->step=step;trace->write=write;trace->issued=true;
+	}
+#endif
 	io.ResidentNocWrite(0x40,1);
 	for (unsigned attempt=0;attempt<256;attempt++) {
 		r.polls[step]++;
@@ -117,11 +139,14 @@ bool PioneerResidentStorePage(IO& io,const tt_dram_samples_result& baseline,cons
 	bool upload,uint32_t* data,tt_resident_store_result& r,
 	const PioneerResidentBanks* banks=nullptr,unsigned bank=0
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
-	,const void* q35StreamOwner=nullptr
+	,const void* q35StreamOwner=nullptr,PioneerResidentStoreTrace* trace=nullptr
 #endif
 	)
 {
 	r={}; r.version=1;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	if (trace) *trace={};
+#endif
 	uint32_t address=0,route=0,index=0;
 	if (banks) {
 		if (capacity!=PioneerResidentBanks::Capacity) return false;
@@ -156,7 +181,11 @@ bool PioneerResidentStorePage(IO& io,const tt_dram_samples_result& baseline,cons
 			io.HostPciWrite(1,4,2,0x406); if (io.HostPciRead(1,4,2)!=0x406) break;
 			io.HostPciWrite(0,4,2,0x406); if (!BlackholeHostReadPciQuiet(io,0x406)) break;
 			const uint32_t fromHost[]={uint32_t(host.physical),uint32_t(host.physical>>32),19|(24<<6),0x17e000,0,1|(2<<6),0,0,4096,0};
-			if (!PioneerResidentStoreCommand(io,lease,fromHost,false,0,r)) break;
+			if (!PioneerResidentStoreCommand(io,lease,fromHost,false,0,r
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+				,trace
+#endif
+				)) break;
 			// Host DMA is finished before any GDDR transaction. BME must be
 			// proved off, even though later commands remain device-local.
 			io.HostPciWrite(0,4,2,0x402); io.HostPciWrite(1,4,2,0x402);
@@ -169,7 +198,11 @@ bool PioneerResidentStorePage(IO& io,const tt_dram_samples_result& baseline,cons
 			}
 			const uint32_t toGddr[]={0x17e000,0,1|(2<<6),address,0,route,0,0x212,4096,0};
 			r.wrote_device=1;
-			if (!PioneerResidentStoreCommand(io,lease,toGddr,true,1,r)) break;
+			if (!PioneerResidentStoreCommand(io,lease,toGddr,true,1,r
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+				,trace
+#endif
+				)) break;
 			if (!BlackholeResidentSourceStable(io,noc,lease.config|0x10000)
 				|| !BlackholeDramSourceStable(io,baseline) || !BlackholeHostReadMapStable(io,host)) {
 				r.state=TT_STORE_CHANGED; lease.recovery_required=true; break;
@@ -177,7 +210,11 @@ bool PioneerResidentStorePage(IO& io,const tt_dram_samples_result& baseline,cons
 		}
 		// Return to the initiating NIU, never to a different DRAM NIU.
 		const uint32_t fromGddr[]={address,0,route,0x17f000,0,1|(2<<6),0,0,4096,0};
-		if (!PioneerResidentStoreCommand(io,lease,fromGddr,false,upload?2:0,r)) break;
+		if (!PioneerResidentStoreCommand(io,lease,fromGddr,false,upload?2:0,r
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+			,trace
+#endif
+			)) break;
 		if (!BlackholeResidentSourceStable(io,noc,lease.config|0x10000)
 			|| !BlackholeDramSourceStable(io,baseline) || !BlackholeHostReadMapStable(io,host)
 			|| !BlackholeResidentIdle(io) || !BlackholeHostReadPciQuiet(io,0x402)) {
