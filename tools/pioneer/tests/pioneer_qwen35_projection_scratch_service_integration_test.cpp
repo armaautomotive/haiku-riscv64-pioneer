@@ -12,6 +12,7 @@ struct CombinedScope : ScratchScope {
     ScratchDevice<>& device;
     DataflowServiceOwner* service=nullptr;
     PioneerQ35ProjectionQualificationOwner* holder=nullptr;
+    bool executionAllowed=true;
     explicit CombinedScope(ScratchDevice<>& d):device(d) {}
     bool QualificationLeaseMatches(const PioneerQ35ProjectionScratch& s,unsigned bank,unsigned address,
         unsigned bytes,const unsigned (&routes)[2][Banks]) const {
@@ -24,7 +25,7 @@ struct CombinedScope : ScratchScope {
     }
     bool QualificationExecutionSafe(const PioneerQ35ProjectionScratch& s,
         const DataflowProjectionProgram& p) const {
-        return allowed && owner==&s && (s.IsStaged() || s.IsRunning()) && p.Valid()
+        return allowed && executionAllowed && owner==&s && (s.IsStaged() || s.IsRunning()) && p.Valid()
             && s.MatchesBankClaimOwner(device.banks,device.dram);
     }
     bool AuditQualification(ProjectionServiceIO& io,const DataflowProjectionProgram& p,unsigned seq,
@@ -43,6 +44,11 @@ struct CombinedScope : ScratchScope {
     void RetainQualification(const void*,const void* s) {
         assert(s==owner);retained=true;if (holder) holder->Retain();
     }
+    template<class Context>
+    bool QualificationRunAllowed(const PioneerQ35ProjectionQualificationOwner& h,
+        const PioneerQ35ProjectionScratch& s,const DataflowProjectionQualificationService&,const Context& c) const {
+        return allowed && c.qwen35QualificationInternalActive && h.Owns(s);
+    }
     bool QualificationOwnerRetirementAllowed(const PioneerQ35ProjectionQualificationOwner& holder,
         const PioneerQ35ProjectionScratch& s,const DataflowProjectionQualificationService& q) const {
         return allowed && stopped && !retained && service && service->Closed()
@@ -51,6 +57,22 @@ struct CombinedScope : ScratchScope {
     bool QualificationOwnerAbandonAllowed(const PioneerQ35ProjectionQualificationOwner&) const {
         return allowed && !retained;
     }
+    bool QualificationOwnerAbandonRestoredAllowed(const PioneerQ35ProjectionQualificationOwner& holder,
+        const PioneerQ35ProjectionScratch& s,const DataflowProjectionQualificationService& q) const {
+        return allowed && !retained && holder.Owns(s) && s.IsRestored() && q.IsUnstarted()
+            && (!service || service->Closed());
+    }
+};
+
+struct QualificationContext {
+    PioneerQ35ProjectionQualificationOwner& qwen35QualificationOwner;
+    bool qwen35QualificationInternalActive=false;
+    DataflowServiceOwner* qwen35DataflowService;
+    ProjectionServiceIO& io;
+    QualificationContext(PioneerQ35ProjectionQualificationOwner& h,DataflowServiceOwner& s,ProjectionServiceIO& i)
+        :qwen35QualificationOwner(h),qwen35DataflowService(&s),io(i) {}
+#include "pioneer_q35_projection_internal_scope.inc"
+#include "pioneer_q35_projection_run.inc"
 };
 
 int main()
@@ -90,7 +112,13 @@ int main()
     for (unsigned i=0;i<80;i++) dispatch[i]=0x20000000U+i;
     const DataflowServiceImageView image={DataflowServiceBootWord,code,96,dispatch,80};
     assert(service->Install(image,*io)==DataflowServiceComplete);
-    assert(qualification->Run(*service,*io,*scratch,scope)==DataflowServiceComplete
+    QualificationContext context(*holder,*service,*io);
+    scope.executionAllowed=false;
+    assert(context.RunDataflowQualification(scope)==DataflowServiceInvalidState
+        && holder->Active() && !holder->Retained() && scratch->IsStaged() && service->Ready()
+        && !context.qwen35QualificationInternalActive);
+    scope.executionAllowed=true;
+    assert(context.RunDataflowQualification(scope)==DataflowServiceComplete
         && qualification->IsAudited() && scratch->IsRunning());
     assert(!scratch->Restore(device->io,scope,device->dram,device->noc,device->host,device->lease,device->banks));
     // Model the device writer placing its results in the claimed bank.
@@ -106,6 +134,7 @@ int main()
     assert(scratch->VerifyOutput(device->io,scope,device->dram,device->noc,device->host,device->lease,device->banks));
     assert(scratch->Restore(device->io,scope,device->dram,device->noc,device->host,device->lease,device->banks)
         && scratch->IsRestored() && !scope.retained);
+    assert(!holder->AbandonRestoredUnrun(scope,device->banks,device->dram)); // this run was published
     assert(holder->Retire(scope,device->banks,device->dram) && holder->Retired() && !holder->Active()
         && device->banks.Q35StreamClaimed());
     for (unsigned n=0;n<Fixture::ScratchPages;n++) {

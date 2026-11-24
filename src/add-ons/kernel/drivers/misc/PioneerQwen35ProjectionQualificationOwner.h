@@ -18,6 +18,7 @@ class PioneerQ35ProjectionQualificationOwner {
     uint32_t* snapshot=nullptr;
     bool attempted=false,active=false,retired=false,retained=false;
 public:
+    enum ScratchOperation : unsigned { Capture=0,Stage=1,Verify=2,Restore=3 };
     PioneerQ35ProjectionQualificationOwner()=default;
     PioneerQ35ProjectionQualificationOwner(const PioneerQ35ProjectionQualificationOwner&)=delete;
     PioneerQ35ProjectionQualificationOwner& operator=(const PioneerQ35ProjectionQualificationOwner&)=delete;
@@ -62,6 +63,15 @@ public:
     template<class Scope> bool AbandonUnclaimed(Scope& scope,const PioneerResidentBanks& banks) {
         if (!Active() || retained || !scratch || !scratch->IsEmpty() || banks.Q35StreamClaimed()
             || !scope.QualificationOwnerAbandonAllowed(*this)) return false;
+        retired=true;return true;
+    }
+    // A staged diagnostic may be cancelled before any command begins, after
+    // every overwritten scratch page has been restored and rechecked.
+    template<class Scope> bool AbandonRestoredUnrun(Scope& scope,const PioneerResidentBanks& banks,
+        const tt_dram_samples_result& dram) {
+        if (!Active() || retained || !scratch || !qualification || !scratch->IsRestored()
+            || !qualification->IsUnstarted() || !scratch->MatchesBankClaimOwner(banks,dram)
+            || !scope.QualificationOwnerAbandonRestoredAllowed(*this,*scratch,*qualification)) return false;
         retired=true;return true;
     }
 };

@@ -828,9 +828,23 @@ awk '/PIONEER_Q35_PROJECTION_OWNER_UNSAFE_GUARD_BEGIN/ {copying=1;next} /PIONEER
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_owner_unsafe_guard.inc"
 awk '/PIONEER_Q35_PROJECTION_OWNER_RESET_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_OWNER_RESET_GUARD_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_owner_reset_guard.inc"
+awk '/PIONEER_Q35_PROJECTION_INTERNAL_SCOPE_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_INTERNAL_SCOPE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_internal_scope.inc"
+awk '/PIONEER_Q35_PROJECTION_SCRATCH_OPERATION_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_SCRATCH_OPERATION_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_scratch_operation.inc"
+awk '/PIONEER_Q35_PROJECTION_ABANDON_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_ABANDON_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_abandon.inc"
+awk '/PIONEER_Q35_PROJECTION_RUN_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_RUN_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_run.inc"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     -I"$temporary" "$directory/pioneer_qwen35_projection_owner_end_guard_test.cpp" -o "$temporary/projection-owner-end-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-owner-end-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -I"$temporary" "$directory/pioneer_qwen35_projection_scratch_context_test.cpp" -o "$temporary/projection-scratch-context-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-scratch-context-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -I"$temporary" "$directory/pioneer_qwen35_projection_haiku_scope_test.cpp" -o "$temporary/projection-haiku-scope-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-haiku-scope-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     -I"$directory/role_haiku_stubs" -I"$temporary/shared-role-images" -I"$temporary/shared-graph-service" -I"$temporary" \
     "$directory/pioneer_qwen35_role_stage_control_test.cpp" -o "$temporary/role-stage-control-test"
@@ -1120,7 +1134,7 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -pthread \
 	-o "$temporary/projection-qualification-service-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-qualification-service-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -pthread \
-	-fsanitize=address,undefined "$directory/pioneer_qwen35_projection_scratch_service_integration_test.cpp" \
+	-fsanitize=address,undefined -I"$temporary" "$directory/pioneer_qwen35_projection_scratch_service_integration_test.cpp" \
 	-o "$temporary/projection-scratch-service-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-scratch-service-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \

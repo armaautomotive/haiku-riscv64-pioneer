@@ -4563,6 +4563,7 @@ struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 private:
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
+// PIONEER_Q35_PROJECTION_INTERNAL_SCOPE_BEGIN
 	struct QualificationInternalScope {
 		bool& active;
 		explicit QualificationInternalScope(bool& flag):active(flag) { active=true; }
@@ -4570,6 +4571,7 @@ private:
 		QualificationInternalScope(const QualificationInternalScope&)=delete;
 		QualificationInternalScope& operator=(const QualificationInternalScope&)=delete;
 	};
+// PIONEER_Q35_PROJECTION_INTERNAL_SCOPE_END
 #endif
 	PioneerQwen35::DataflowServiceResult InstallDataflowServiceResources() {
 		if (qwen35DataflowMemory || qwen35DataflowService
@@ -4634,6 +4636,29 @@ public:
 			|| !scope.QualificationOwnerAllocationAllowed(*this)) return false;
 		return qwen35QualificationOwner.Allocate();
 	}
+// PIONEER_Q35_PROJECTION_SCRATCH_OPERATION_BEGIN
+	template<class Scope>
+	bool DataflowQualificationScratchOperation(unsigned operation,Scope& scope) {
+		auto* scratch=qwen35QualificationOwner.Scratch();
+		auto* saved=qwen35QualificationOwner.Snapshot();
+		if (qwen35QualificationInternalActive || qwen35QualificationOwner.Retained()
+			|| !scratch || !saved || operation>PioneerQ35ProjectionQualificationOwner::Restore) return false;
+		QualificationInternalScope admission(qwen35QualificationInternalActive);
+		if (!scope.QualificationScratchOperationAllowed(qwen35QualificationOwner,*scratch,operation,*this))
+			return false;
+		auto& dram=baseline.baseline.baseline.baseline.dram;
+		auto& noc=baseline.baseline.baseline.noc;
+		using Fixture=PioneerQwen35::DataflowProjectionQualification;
+		if (operation==PioneerQ35ProjectionQualificationOwner::Capture)
+			return scratch->Capture(io,scope,dram,noc,host,lease,banks,0,Fixture::ScratchOffset,
+				initialized,PioneerResidentBanks::Pages,saved,PioneerQ35ProjectionScratch::SavedWords);
+		if (operation==PioneerQ35ProjectionQualificationOwner::Stage)
+			return scratch->Stage(io,scope,dram,noc,host,lease,banks);
+		if (operation==PioneerQ35ProjectionQualificationOwner::Verify)
+			return scratch->VerifyOutput(io,scope,dram,noc,host,lease,banks);
+		return scratch->Restore(io,scope,dram,noc,host,lease,banks);
+	}
+// PIONEER_Q35_PROJECTION_SCRATCH_OPERATION_END
 	template<class Scratch,class Scope>
 	bool PrepareDataflowQualificationRoutes(Scratch& scratch,Scope& scope,uint32_t& stage,uint32_t& core) {
 		stage=0;core=0xff;
@@ -4646,6 +4671,38 @@ public:
 		return scope.QualificationPrepareRoutesAllowed(scratch,*this)
 			&& io.SessionIdle() && io.ProveFleetRoutes(stage,core);
 	}
+	template<class Scope>
+	bool BindDataflowQualification(Scope& scope) {
+		auto* scratch=qwen35QualificationOwner.Scratch();
+		auto* qualification=qwen35QualificationOwner.Qualification();
+		if (qwen35QualificationInternalActive || qwen35QualificationOwner.Retained()
+			|| !scratch || !qualification || !qwen35DataflowRoutesAudited) return false;
+		QualificationInternalScope admission(qwen35QualificationInternalActive);
+		using Fixture=PioneerQwen35::DataflowProjectionQualification;
+		return qualification->Bind(*scratch,scope,0,Fixture::ScratchAddress,qwen35DataflowRoutes);
+	}
+	template<class Scope>
+	bool MarkDataflowQualificationStopped(Scope& scope) {
+		auto* scratch=qwen35QualificationOwner.Scratch();
+		if (qwen35QualificationInternalActive || qwen35QualificationOwner.Retained() || !scratch) return false;
+		QualificationInternalScope admission(qwen35QualificationInternalActive);
+		return scratch->MarkStopped(scope);
+	}
+	template<class Scope>
+	bool RetireDataflowQualification(Scope& scope) {
+		if (qwen35QualificationInternalActive || !qwen35QualificationOwner.Active()) return false;
+		QualificationInternalScope admission(qwen35QualificationInternalActive);
+		return qwen35QualificationOwner.Retire(scope,banks,baseline.baseline.baseline.baseline.dram);
+	}
+// PIONEER_Q35_PROJECTION_ABANDON_BEGIN
+	template<class Scope>
+	bool AbandonDataflowQualification(Scope& scope) {
+		if (qwen35QualificationInternalActive || !qwen35QualificationOwner.Active()) return false;
+		QualificationInternalScope admission(qwen35QualificationInternalActive);
+		return qwen35QualificationOwner.AbandonUnclaimed(scope,banks)
+			|| qwen35QualificationOwner.AbandonRestoredUnrun(scope,banks,baseline.baseline.baseline.baseline.dram);
+	}
+// PIONEER_Q35_PROJECTION_ABANDON_END
 	template<class Scratch,class Scope>
 	PioneerQwen35::DataflowServiceResult InstallDataflowQualification(Scratch& scratch,Scope& scope) {
 		auto& dram=baseline.baseline.baseline.baseline.dram;
@@ -4655,9 +4712,14 @@ public:
 			|| !banks.Q35StreamOwnerMatches(dram,&scratch,PioneerQwen35::DataflowCoreCount))
 			return PioneerQwen35::DataflowServiceInvalidState;
 		QualificationInternalScope admission(qwen35QualificationInternalActive);
-		return scope.QualificationInstallationAllowed(scratch,*this)
-			?InstallDataflowServiceResources():PioneerQwen35::DataflowServiceInvalidState;
+		if (!scope.QualificationInstallationAllowed(scratch,*this))
+			return PioneerQwen35::DataflowServiceInvalidState;
+		const auto result=InstallDataflowServiceResources();
+		if (result!=PioneerQwen35::DataflowServiceComplete
+			&& qwen35DataflowService && qwen35DataflowService->Started()) qwen35QualificationOwner.Retain();
+		return result;
 	}
+// PIONEER_Q35_PROJECTION_RUN_BEGIN
 	template<class Scope>
 	PioneerQwen35::DataflowServiceResult RunDataflowQualification(Scope& scope) {
 		auto* scratch=qwen35QualificationOwner.Scratch();
@@ -4671,9 +4733,14 @@ public:
 				return result;
 			result=qualification->Run(*qwen35DataflowService,io,*scratch,scope);
 		}
-		if (result!=PioneerQwen35::DataflowServiceComplete) qwen35QualificationOwner.Retain();
+		// A rejected preflight has not published a command or changed scratch;
+		// preserve the clean abort path. Anything after Begin remains retained.
+		if (result!=PioneerQwen35::DataflowServiceComplete
+			&& !(qualification->IsUnstarted() && scratch->IsStaged() && qwen35DataflowService->Ready()))
+			qwen35QualificationOwner.Retain();
 		return result;
 	}
+// PIONEER_Q35_PROJECTION_RUN_END
 	template<class Scope>
 	PioneerQwen35::DataflowServiceResult CloseDataflowQualification(Scope& scope) {
 		auto* scratch=qwen35QualificationOwner.Scratch();
@@ -4733,6 +4800,9 @@ public:
 #include "PioneerQwen35DataflowDriverBinding.inc"
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 #include "PioneerQwen35DataflowRoleHaikuScopeWitness.inc"
+#if defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) && defined(PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY)
+#include "PioneerQwen35ProjectionQualificationScope.inc"
+#endif
 #include "PioneerQwen35ProjectionScratchCompileWitness.inc"
 #endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS

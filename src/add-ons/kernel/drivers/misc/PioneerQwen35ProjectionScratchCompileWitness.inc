@@ -26,6 +26,11 @@ public:
     bool QualificationOwnerAllocationAllowed(const PioneerStoreContext& requested) const {
         return permitted && context==&requested;
     }
+    bool QualificationScratchOperationAllowed(const PioneerQ35ProjectionQualificationOwner& holder,
+        const PioneerQ35ProjectionScratch& scratch,unsigned operation,const PioneerStoreContext& requested) const {
+        return permitted && context==&requested && holder.Owns(scratch)
+            && operation<=PioneerQ35ProjectionQualificationOwner::Restore;
+    }
     bool QualificationPrepareRoutesAllowed(const PioneerQ35ProjectionScratch& scratch,
         const PioneerStoreContext& requested) const {
         using Fixture=PioneerQwen35::DataflowProjectionQualification;
@@ -56,6 +61,12 @@ public:
     bool QualificationOwnerAbandonAllowed(const PioneerQ35ProjectionQualificationOwner&) const {
         return permitted && context && !context->qwen35DataflowService;
     }
+    bool QualificationOwnerAbandonRestoredAllowed(const PioneerQ35ProjectionQualificationOwner& holder,
+        const PioneerQ35ProjectionScratch& scratch,
+        const PioneerQwen35::DataflowProjectionQualificationService& qualification) const {
+        return permitted && context && holder.Owns(scratch) && scratch.IsRestored()
+            && qualification.IsUnstarted() && !context->qwen35DataflowService;
+    }
     bool QualificationLeaseMatches(const PioneerQ35ProjectionScratch& scratch,unsigned bank,
         unsigned address,unsigned bytes,const unsigned (&routes)[2][PioneerQwen35::Banks]) const {
         return permitted && context && scratch.MatchesStagedLease(bank,address,bytes)
@@ -77,29 +88,21 @@ public:
     }
 };
 
-static __attribute__((used,noinline)) bool
-PioneerQ35ProjectionScratchCompileWitness(PioneerStoreContext& context,
-    PioneerQ35ProjectionScratchCompileScope& scope,unsigned action)
+template<class Scope> static bool
+PioneerQ35ProjectionScratchCompileWitnessImpl(PioneerStoreContext& context,Scope& scope,unsigned action)
 {
-    scope.context=&context;
     if (action==10) return context.AllocateDataflowQualification(scope);
     auto* scratch=context.qwen35QualificationOwner.Scratch();
     auto* qualification=context.qwen35QualificationOwner.Qualification();
     auto* saved=context.qwen35QualificationOwner.Snapshot();
     if (!scratch || !qualification || !saved) return false;
-    auto& dram=context.baseline.baseline.baseline.baseline.dram;
-    auto& noc=context.baseline.baseline.baseline.noc;
-    if (action==0) return scratch->Capture(context.io,scope,dram,noc,context.host,context.lease,
-        context.banks,0,PioneerQwen35::DataflowProjectionQualification::ScratchOffset,
-        context.initialized,PioneerResidentBanks::Pages,saved,PioneerQ35ProjectionScratch::SavedWords);
-    if (action==1) return scratch->Stage(context.io,scope,dram,noc,context.host,context.lease,context.banks);
+    if (action==0) return context.DataflowQualificationScratchOperation(PioneerQ35ProjectionQualificationOwner::Capture,scope);
+    if (action==1) return context.DataflowQualificationScratchOperation(PioneerQ35ProjectionQualificationOwner::Stage,scope);
     if (action==2) return scratch->MarkRunning(scope);
-    if (action==3) return scratch->MarkStopped(scope);
-    if (action==4) return scratch->VerifyOutput(context.io,scope,dram,noc,context.host,context.lease,context.banks);
-    if (action==5) return scratch->Restore(context.io,scope,dram,noc,context.host,context.lease,context.banks);
-    if (action==6) return qualification->Bind(*scratch,scope,0,
-        PioneerQwen35::DataflowProjectionQualification::ScratchAddress,
-        context.qwen35DataflowRoutes);
+    if (action==3) return context.MarkDataflowQualificationStopped(scope);
+    if (action==4) return context.DataflowQualificationScratchOperation(PioneerQ35ProjectionQualificationOwner::Verify,scope);
+    if (action==5) return context.DataflowQualificationScratchOperation(PioneerQ35ProjectionQualificationOwner::Restore,scope);
+    if (action==6) return context.BindDataflowQualification(scope);
     if (action==7) return context.RunDataflowQualification(scope)==PioneerQwen35::DataflowServiceComplete;
     if (action==8) {
         uint32_t stage=0,core=0;
@@ -108,7 +111,23 @@ PioneerQ35ProjectionScratchCompileWitness(PioneerStoreContext& context,
     if (action==9) return context.InstallDataflowQualification(*scratch,scope)
         ==PioneerQwen35::DataflowServiceComplete;
     if (action==11) return context.CloseDataflowQualification(scope)==PioneerQwen35::DataflowServiceClosed;
-    if (action==12) return context.qwen35QualificationOwner.Retire(scope,context.banks,dram);
-    if (action==13) return context.qwen35QualificationOwner.AbandonUnclaimed(scope,context.banks);
+    if (action==12) return context.RetireDataflowQualification(scope);
+    if (action==13) return context.AbandonDataflowQualification(scope);
     return false;
 }
+
+static __attribute__((used,noinline)) bool
+PioneerQ35ProjectionScratchCompileWitness(PioneerStoreContext& context,
+    PioneerQ35ProjectionScratchCompileScope& scope,unsigned action)
+{
+    scope.context=&context;
+    return PioneerQ35ProjectionScratchCompileWitnessImpl(context,scope,action);
+}
+#if defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) && defined(PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY)
+static __attribute__((used,noinline)) bool
+PioneerQ35ProjectionScratchHaikuScopeCompileWitness(PioneerStoreContext& context,
+    PioneerQ35ProjectionQualificationScope& scope,unsigned action)
+{
+    return PioneerQ35ProjectionScratchCompileWitnessImpl(context,scope,action);
+}
+#endif

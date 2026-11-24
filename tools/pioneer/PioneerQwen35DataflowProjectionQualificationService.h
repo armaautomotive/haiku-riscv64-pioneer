@@ -60,6 +60,7 @@ public:
     DataflowProjectionQualificationService& operator=(const DataflowProjectionQualificationService&)=delete;
     bool IsAudited() const { return phase==Audited; }
     bool IsFailed() const { return phase==Failed; }
+    bool IsUnstarted() const { return phase==Empty || phase==Bound; }
     const DataflowProjectionProgram* Program() const { return phase==Empty?nullptr:&program; }
 
     template<class Scratch,class Scope>
