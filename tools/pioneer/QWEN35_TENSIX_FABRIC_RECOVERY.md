@@ -1,0 +1,48 @@
+# Qwen3.5: candidate Tensix-fabric recovery
+
+The pinned Tenstorrent system-firmware v18.5.0 source includes a Tensix reset
+sequence in [`app/smc/pytest/e2e_smoke.py`](https://github.com/tenstorrent/tt-system-firmware/blob/80b056af360a58730756467d5cc8df8db789640d/app/smc/pytest/e2e_smoke.py),
+`tensix_reset_sequence`. It is a candidate for recovering a faulted resident
+rewrite without resetting the PCIe endpoint. It has **not** been implemented
+or tried on this Pioneer. The reported v18.5.0 firmware family is not proof
+that the installed binary matches the source.
+
+The upstream test performs these operations in order:
+
+1. Send `FORCE_AICLK` message `0x33` with 250 MHz.
+2. Write zero to each of the eight active-low Tensix RISC reset-unit words at
+   `0x80030040 + 4*i`.
+3. Send `TOGGLE_TENSIX_RESET` message `0xaf`; check the firmware response.
+4. Send `REINIT_TENSIX` message `0x20`; check the firmware response.
+5. Broadcast `0x47800` to Tensix `SOFT_RESET_0` at `0xffb121b0`.
+6. Write `0xffffffff` to the same eight RISC reset-unit words.
+7. Send `FORCE_AICLK` with zero to release the forced clock.
+
+This is a whole-fabric operation, not a per-worker reset. The pinned firmware's
+[`ReinitTensix`](https://github.com/tenstorrent/tt-system-firmware/blob/80b056af360a58730756467d5cc8df8db789640d/lib/tenstorrent/bh_arc/init.c)
+clears NoC translations and calls `NocInit`, which reprograms NoC nodes beyond
+the Tensix tiles. It also restores translation and clock-gating settings when
+configured. Existing routes and saved device state therefore cannot simply be
+assumed valid afterward. The test checks one Tensix scratch bit after the
+sequence; it does not demonstrate recovery of this driver's 120-core workload,
+its saved RAM and DRAM contents, or stable-driver reload.
+
+The last attempted recovery on the Pioneer used a different ASIC+DMC firmware
+reset and produced root PCIe error status before the first endpoint poll; see
+[`benchmarks/qwen35-firmware-trace-20261124-ae/RUN.md`](benchmarks/qwen35-firmware-trace-20261124-ae/RUN.md).
+That result does not establish whether the Tensix-only sequence succeeds or
+fails. Do not repeat the failed ASIC reset as a substitute for testing this
+candidate.
+
+Before any physical trial, connect this sequence to the real retained-owner
+recovery path rather than making another detached witness. Establish exclusive
+admission and serialization with firmware messages, PCI mappings and all NoC
+users; retain owner, snapshots and quarantine on an uncertain step; and define
+which steps can safely be resumed without reissuing a reset. Check the actual
+firmware identity and message response conventions, clock state restoration,
+all eight reset-unit words, the broadcast's harvested-core coverage, and the
+post-reset NoC/DRAM routes, host DMA, all 120 workers and stable-driver state.
+The normal idle/27B/model-hash/staged-restore preflight remains mandatory.
+A timeout, changed identity, uncertain posted write or failed audit must not be
+reported as successful recovery. Do not use this candidate until its real
+controller, failure handling and bounded trial are ready.
