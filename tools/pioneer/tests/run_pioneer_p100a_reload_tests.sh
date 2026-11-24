@@ -3,6 +3,8 @@ set -eu
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-p100a-reload.XXXXXXXX")
 source=$directory/../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp
+awk '/PIONEER_Q35_PCI_RESERVATION_RELEASE_BEGIN/ {copying=1;next} /PIONEER_Q35_PCI_RESERVATION_RELEASE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+ "$source" > "$temporary/q35_pci_reservation_release.inc"
 awk '/PIONEER_SG2042_RECOVERY_LEASE_BEGIN/ {copying=1;next} /PIONEER_SG2042_RECOVERY_LEASE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
  "$directory/../../../src/add-ons/kernel/busses/pci/ecam/ECAMPCIController.cpp" > "$temporary/sg2042_recovery_controller.inc"
 awk '/PIONEER_SG2042_CONFIG_ACCESS_BEGIN/ {copying=1;next} /PIONEER_SG2042_CONFIG_ACCESS_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
@@ -36,6 +38,9 @@ done
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I"$directory/p100a_reload_stubs" -I"$temporary" "$directory/pioneer_p100a_reload_test.cpp" -o "$temporary/test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -I"$temporary" "$directory/pioneer_qwen35_pci_reservation_release_test.cpp" -o "$temporary/q35-pci-reservation-release-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/q35-pci-reservation-release-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/blackhole_asic_reset_test.cpp" -o "$temporary/asic-reset-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/asic-reset-test"

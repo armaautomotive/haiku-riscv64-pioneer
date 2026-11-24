@@ -16,7 +16,7 @@ static bool sColdRecoveryRequired=true;
 struct Context {
     PioneerPostResetMapping* recoveryMapping=nullptr;
     Owner* recoveryFabricArcOwner=nullptr;
-    bool dispatchOwnerRetained=true;
+    bool dispatchOwnerRetained=true,q35PciReservationHeld=true,q35PciReleaseAttempted=false;
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricRecoveryTransaction.inc"
     ~Context() { delete recoveryFabricArcOwner; }
 };

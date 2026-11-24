@@ -20,7 +20,8 @@ bool RunQ35FabricRecovery(pioneer_driver_recovery_guard_v2_info* guard,uint64 ti
 {
     stage=0;
     if (!guard || !guard->validate || !ticket || !recoveryMapping || recoveryFabricArcOwner
-        || !dispatchOwnerRetained || !sColdRecoveryRequired || !sRuntimeOwner
+        || !dispatchOwnerRetained || !q35PciReservationHeld || q35PciReleaseAttempted
+        || !sColdRecoveryRequired || !sRuntimeOwner
         || sRuntimeOwner->context!=this || guard->validate(ticket)!=B_OK
         || !scope.FabricRecoveryAdmission(*this,guard,ticket)
         || guard->validate(ticket)!=B_OK) return false;
@@ -33,11 +34,13 @@ bool RunQ35FabricRecovery(pioneer_driver_recovery_guard_v2_info* guard,uint64 ti
     PioneerPostResetMapping* const mapping=recoveryMapping;
     auto valid=[&]() {
         return recoveryFabricArcOwner==owner && recoveryMapping==mapping
-            && dispatchOwnerRetained && sColdRecoveryRequired && sRuntimeOwner
+            && dispatchOwnerRetained && q35PciReservationHeld && !q35PciReleaseAttempted
+            && sColdRecoveryRequired && sRuntimeOwner
             && sRuntimeOwner->context==this && guard->validate(ticket)==B_OK
             && scope.FabricRecoveryStageAllowed(*this,*owner,guard,ticket,stage)
             && guard->validate(ticket)==B_OK && recoveryFabricArcOwner==owner
-            && recoveryMapping==mapping && dispatchOwnerRetained && sColdRecoveryRequired
+            && recoveryMapping==mapping && dispatchOwnerRetained && q35PciReservationHeld
+            && !q35PciReleaseAttempted && sColdRecoveryRequired
             && sRuntimeOwner && sRuntimeOwner->context==this;
     };
     auto step=[&](unsigned next,auto operation) {

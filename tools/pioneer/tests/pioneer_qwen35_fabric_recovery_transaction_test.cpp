@@ -61,16 +61,17 @@ static bool sColdRecoveryRequired=true;
 struct Context {
     PioneerPostResetMapping* recoveryMapping=nullptr;
     PioneerQ35FabricArcOwner<pioneer_driver_recovery_guard_v2_info>* recoveryFabricArcOwner=nullptr;
-    bool dispatchOwnerRetained=true;
+    bool dispatchOwnerRetained=true,q35PciReservationHeld=true,q35PciReleaseAttempted=false;
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricRecoveryTransaction.inc"
     ~Context() { delete recoveryFabricArcOwner; }
 };
 struct Scope {
-    bool admission=true;unsigned admissionCalls=0,deniedStage=0,deniedCall=0,loseOwnerStage=0,calls[18]{};
+    bool admission=true;unsigned admissionCalls=0,deniedStage=0,deniedCall=0,loseOwnerStage=0,losePciStage=0,calls[18]{};
     bool FabricRecoveryAdmission(Context&,pioneer_driver_recovery_guard_v2_info*,uint64) { ++admissionCalls;return admission; }
     bool FabricRecoveryStageAllowed(Context& context,const PioneerQ35FabricArcOwner<pioneer_driver_recovery_guard_v2_info>&,
         pioneer_driver_recovery_guard_v2_info*,uint64,unsigned stage) {
         assert(stage<=17);if (stage==loseOwnerStage) context.dispatchOwnerRetained=false;
+        if (stage==losePciStage) context.q35PciReservationHeld=false;
         return ++calls[stage]!=deniedCall || stage!=deniedStage;
     }
 };
@@ -127,6 +128,15 @@ int main()
         assert(!f.Run() && f.stage==3 && f.context.recoveryFabricArcOwner && trace.size()==2);
         f.context.dispatchOwnerRetained=true;
         assert(!f.Run() && trace.size()==2);
+    }
+    {
+        Fixture f;f.scope.losePciStage=3;
+        assert(!f.Run() && f.stage==3 && f.context.recoveryFabricArcOwner && trace.size()==2);
+        f.context.q35PciReservationHeld=true;assert(!f.Run() && trace.size()==2);
+    }
+    {
+        Fixture f;f.context.q35PciReleaseAttempted=true;
+        assert(!f.Run() && !f.context.recoveryFabricArcOwner && trace.empty() && !f.scope.admissionCalls);
     }
     puts("PASS retained fabric recovery transaction: exact sequencing, every stage failure, lost scope and ticket; SIMULATED ONLY");
 }

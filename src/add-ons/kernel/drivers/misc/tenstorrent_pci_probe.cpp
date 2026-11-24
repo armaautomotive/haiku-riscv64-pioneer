@@ -4186,6 +4186,7 @@ struct PioneerStoreContext {
 	// Non-loadable rewrite only. The context retains this owner and its
 	// mappings until the complete fabric recovery has been audited.
 	PioneerQ35FabricArcOwner<pioneer_driver_recovery_guard_v2_info>* recoveryFabricArcOwner=NULL;
+	bool q35PciReservationHeld=false,q35PciReleaseAttempted=false;
 #endif
 #ifdef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS
 	PioneerPostResetMapping* recoveryPreResetMapping=NULL;
@@ -5087,6 +5088,17 @@ public:
 
 #if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) \
 	&& defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+// PIONEER_Q35_PCI_RESERVATION_RELEASE_BEGIN
+// sLock held. Once unreserve is attempted its result may be uncertain; never
+// claim the PCI reservation is still held or replay this operation on failure.
+static status_t
+Qwen35ReleasePciReservation(PioneerStoreContext& context)
+{
+	if (!context.q35PciReservationHeld || context.q35PciReleaseAttempted) return B_NOT_ALLOWED;
+	context.q35PciReleaseAttempted=true;context.q35PciReservationHeld=false;
+	return sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+}
+// PIONEER_Q35_PCI_RESERVATION_RELEASE_END
 template bool PioneerStoreContext::RunQ35FabricRecovery<PioneerQ35FabricArcCompileScope>(
 	pioneer_driver_recovery_guard_v2_info*,uint64,const tt_arc_scratch_result&,tt_arc_queue_result&,
 	PioneerPostResetAuditResult&,PioneerQ35PostResetL2Result&,PioneerQ35FabricArcCompileScope&,unsigned&);
@@ -7936,7 +7948,12 @@ q38_dispatch_owned_restored:
 	if (context->io.q38HostPhaseReportAllowed && context->bankStorageOnly && clean && result.host_released && !result.cold) context->io.Q38HostPhaseReport();
 	// PIONEER_Q38_HOST_PHASE_PUBLICATION_END
 #endif
+#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) \
+	&& defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+	if (Qwen35ReleasePciReservation(*context)!=B_OK) { RetainQ38DispatchOwner(*context,result);return; }
+#else
 	sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+#endif
 	cookie->context=NULL; sRuntimeOwner=NULL;
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
 	sQ38LocalDeltaOwner=NULL;
@@ -8142,6 +8159,10 @@ BeginResidentSession(PioneerProbeCookie* cookie,uint64 capacity,tt_resident_sess
 	// PIONEER_Q35_BANK_PREALLOC_TEST_END
 	status_t status=sPCI->reserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
 	if (status!=B_OK) { delete context; return status; }
+#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) \
+	&& defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+	context->q35PciReservationHeld=true;
+#endif
 	if (sDeviceManager==NULL) status=get_module(B_DEVICE_MANAGER_MODULE_NAME,(module_info**)&sDeviceManager);
 	if (status==B_OK) status=GetPioneerPciProfile(sDeviceManager,sCard,context->profile);
 	context->profile.status=status;
@@ -12017,7 +12038,11 @@ Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* contex
 		if (status!=B_OK) return retain(status);
 	}
 	r.stage=PIONEER_RECOVERY_STAGE_UNRESERVE;
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+	status=Qwen35ReleasePciReservation(*context);
+#else
 	status=sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+#endif
 	if (status!=B_OK) return abandon(status);
 	// All device/host mappings, retained graph resources and the PCI
 	// reservation are gone. Keep the inert context and cookie until the
