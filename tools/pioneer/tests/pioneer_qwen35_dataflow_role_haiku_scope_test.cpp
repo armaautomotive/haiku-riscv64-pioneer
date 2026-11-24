@@ -79,6 +79,9 @@ struct PioneerSessionIO {
     bool hdmaSourceStable=true,dropHdmaRestore=false,failNextSelection=false;
     bool firmwareMatches=false;
     unsigned selectCalls=0,tlbWrites=0,hdmaReads=0,hdmaChangeAt=UINT32_MAX;
+#ifdef PIONEER_QWEN35_RISC_RESET_SAMPLE_QUALIFY
+    unsigned riscDropWriteAt=UINT32_MAX;
+#endif
     uint32_t slot0[3]{},slot1[3]{},hdmaWords[4]{};
     uint32_t reset=0x47800,nocDoorbell[2][4]{},nocOutstanding[2][32]{};
     uint32_t nocConfig[2]{},nocAvailable[2]{},nocOverflow[2]{};
@@ -171,10 +174,19 @@ struct PioneerSessionIO {
             for (unsigned i=0;i<3;i++) slot1[i]=DramTlbRead(1,i);
             tlbOverride=true;
         }
-        ++tlbWrites; slot1[word]=value;
+        ++tlbWrites;
+#ifdef PIONEER_QWEN35_RISC_RESET_SAMPLE_QUALIFY
+        if (tlbWrites==riscDropWriteAt) return;
+#endif
+        slot1[word]=value;
     }
     bool SharedArcResetMapped() const { return simulateArc; }
     uint32_t SharedArcL2CpuResetRead() { assert(simulateArc && tlbOverride); return 0x0f; }
+#ifdef PIONEER_QWEN35_RISC_RESET_SAMPLE_QUALIFY
+    uint32_t SharedArcRiscResetRead(unsigned word) {
+        assert(simulateArc && tlbOverride && word<8);return UINT32_MAX-word;
+    }
+#endif
     uint32_t ScratchRead(unsigned word) { assert(simulateArc && tlbOverride && word==2); return 5; }
     uint32_t ResetRead() const {
         if ((nocConfig[0] | nocConfig[1]) & (1U<<12)) ++resetReadsClockDisabled;
@@ -499,6 +511,9 @@ struct PioneerStoreContext {
 #ifdef TEST_FLEET_INSPECTION_CONTROL
     bool initialized=true,dispatchOwnerRetained=false,q38DispatchRoutes=false,qwen35DedicatedFleet=false;
     bool qwen35FleetInspectionAttempted=false,qwen35FleetInspectionPassed=false;
+#ifdef PIONEER_QWEN35_RISC_RESET_SAMPLE_QUALIFY
+    bool qwen35RiscResetSampleAttempted=false;
+#endif
     unsigned uploadedPages=0;
     FakeInspectionDispatch dispatch;
     FakeInspectionDispatch* q38Dispatch=nullptr;

@@ -95,4 +95,5 @@ int main()
     }
     assert(!PioneerQwen35L2CpuRiscsHeld(UINT32_MAX));
     std::puts("PASS bounded L2CPU reset sampling and TLB restoration; SIMULATED ONLY");
+    return 0;
 }

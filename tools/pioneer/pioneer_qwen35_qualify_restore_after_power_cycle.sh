@@ -74,6 +74,9 @@ case "$stage" in
 	/boot/home/pioneer-q35-recovery-qualify-20261123-trace)
 		candidateTag=2026112400030022
 		candidateSHA=19d22e32d4665ffc1dd9ac367284e09daa7505e3b3b12e073c74f3437e5c6d45 ;;
+	/boot/home/pioneer-q35-risc-sample-20261124-af)
+		candidateTag=2026112400030023
+		candidateSHA=ef3ec14e432cd71f0c58b5c30ca4c56c4fc67fd32dc74b41ac0e37973918b893 ;;
 	/boot/home/pioneer-q35-fleet-inspect-20261123-l)
 		candidateTag=2026112300030003
 		candidateSHA=ed99af51ccb5b6c63a6463aea98ff08588226a58afdec846985cf04efecc5844 ;;
@@ -142,11 +145,11 @@ case "$(cat "$stage/state")" in
 	# A hung client cannot write the retained marker. The trace and fleet
 	# trials admit their running marker only after the candidate-generation
 	# and host-health checks below establish a fresh post-power-cycle boot.
-	QUALIFICATION_RUNNING) [ "$stage" = /boot/home/pioneer-q35-recovery-qualify-20261123-trace ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ab ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ac ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ad ] || fail state ;;
+	QUALIFICATION_RUNNING) [ "$stage" = /boot/home/pioneer-q35-recovery-qualify-20261123-trace ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ab ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ac ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ad ] || [ "$stage" = /boot/home/pioneer-q35-risc-sample-20261124-af ] || fail state ;;
 	# The trace trial records this before swapping drivers. A power loss
 	# between the swap and client start may leave the candidate installed.
 	# The candidate hash and fresh-boot generation checks below still apply.
-	RESTORE_REQUIRED) [ "$stage" = /boot/home/pioneer-q35-recovery-qualify-20261123-trace ] || fail state ;;
+	RESTORE_REQUIRED) [ "$stage" = /boot/home/pioneer-q35-recovery-qualify-20261123-trace ] || [ "$stage" = /boot/home/pioneer-q35-risc-sample-20261124-af ] || fail state ;;
 	*) fail state ;;
 esac
 test -L "$device" && [ "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe ] || fail device_link

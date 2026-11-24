@@ -8,6 +8,10 @@
 #endif
 #include "PioneerQwen35FleetInspectionProtocol.h"
 #include "PioneerQwen35DataflowFleetInspection.h"
+#ifdef PIONEER_QWEN35_RISC_RESET_SAMPLE_QUALIFY
+#include "PioneerQwen35RiscResetProtocol.h"
+#include "PioneerQwen35RiscResetSample.h"
+#endif
 
 // Constructed only inside the locked control call. This permits sampling,
 // not role-memory writes, reset release, firmware exclusion, or inference.
@@ -203,3 +207,42 @@ Qwen35FleetInspectionControl(PioneerProbeCookie* cookie,void* data,size_t length
     status=user_memcpy(data,&r,sizeof(r));
     release_sem(sLock);return status;
 }
+
+#ifdef PIONEER_QWEN35_RISC_RESET_SAMPLE_QUALIFY
+// A single fixed, read-only ARC reset-unit sample following successful held
+// fleet inspection. No user-supplied address, firmware command or reset is
+// accepted. An uncertain temporary route retains the entire session.
+static status_t
+Qwen35RiscResetSampleControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+    if (!cookie || !data || length!=sizeof(tt_q35_risc_reset_sample)) return B_BAD_VALUE;
+    thread_info info={};status_t status=get_thread_info(find_thread(NULL),&info);
+    if (status!=B_OK) return status;
+    if (info.team!=cookie->team) return B_NOT_ALLOWED;
+    tt_q35_risc_reset_sample r={};status=user_memcpy(&r,data,sizeof(r));
+    if (status!=B_OK || !PioneerQ35RiscResetSampleRequest(r)) return status!=B_OK?status:B_BAD_VALUE;
+    status=acquire_sem(sLock);if (status!=B_OK) return status;
+    PioneerStoreContext* c=cookie->context;
+    if (r.expected_tag!=PIONEER_DRIVER_BUILD_TAG || r.expected_generation!=sReloadGeneration)
+        r.operation_status=B_BAD_VALUE;
+    else if (!c || !c->qwen35FleetInspectionPassed || c->qwen35RiscResetSampleAttempted
+        || c->uploadedPages || c->Unsafe()) r.operation_status=B_NOT_ALLOWED;
+    else {
+        PioneerQ35FleetInspectionScope scope(cookie,c);
+        if (!scope.ProveRoleStatusInspectionAllowed(c->io)) r.operation_status=B_NOT_ALLOWED;
+        else {
+            c->qwen35RiscResetSampleAttempted=true;
+            PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQ35FleetInspectionScope> route(c->io,scope);
+            bool restoreFailed=false;
+            const bool sampled=PioneerQ35SampleRiscResetWords(c->io,scope,route,r.words,restoreFailed);
+            r.sampled=sampled;r.restore_failed=restoreFailed;
+            r.operation_status=sampled?B_OK:B_DEV_NOT_READY;
+            if (restoreFailed) {
+                tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);
+            }
+        }
+    }
+    r.build_tag=PIONEER_DRIVER_BUILD_TAG;r.generation=sReloadGeneration;
+    status=user_memcpy(data,&r,sizeof(r));release_sem(sLock);return status;
+}
+#endif

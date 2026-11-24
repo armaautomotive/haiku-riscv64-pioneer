@@ -9,6 +9,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerRecoveryProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FleetInspectionProtocol.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35RiscResetProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35RoleStageProtocol.h"
 #ifdef PIONEER_QWEN35_SPAN_QUALIFY
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
@@ -21,6 +22,9 @@ static int Q38BankControl(void*,uint32_t,void*,size_t) { return 2; }
 static int Q38SpanControl(void*,uint32_t,void*,size_t) { return 10; }
 #elif defined(PIONEER_QWEN35_FLEET_INSPECTION_QUALIFY)
 static int Qwen35FleetInspectionControl(void*,void*,size_t) { return 8; }
+#ifdef PIONEER_QWEN35_RISC_RESET_SAMPLE_QUALIFY
+static int Qwen35RiscResetSampleControl(void*,void*,size_t) { return 11; }
+#endif
 #ifdef PIONEER_QWEN35_ROLE_STAGE_QUALIFY
 static int Qwen35RoleStageControl(void*,void*,size_t) { return 9; }
 #endif
@@ -47,6 +51,9 @@ int main() {
             || op==TT_PCI_PROBE_Q38_SPAN_END) expected=10;
 #elif defined(PIONEER_QWEN35_FLEET_INSPECTION_QUALIFY)
         if (op==TT_PCI_PROBE_Q35_FLEET_INSPECT) expected=8;
+#ifdef PIONEER_QWEN35_RISC_RESET_SAMPLE_QUALIFY
+        if (op==TT_PCI_PROBE_Q35_RISC_RESET_SAMPLE) expected=11;
+#endif
 #ifdef PIONEER_QWEN35_ROLE_STAGE_QUALIFY
         if (op==TT_PCI_PROBE_Q35_ROLE_STAGE_QUALIFY) expected=9;
 #endif

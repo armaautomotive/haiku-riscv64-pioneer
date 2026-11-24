@@ -67,6 +67,9 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  "$directory/pioneer_qwen35_fabric_arc_owner_test.cpp" -o "$temporary/q35-fabric-arc-owner-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/q35-fabric-arc-owner-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_qwen35_risc_reset_sample_test.cpp" -o "$temporary/q35-risc-reset-sample-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/q35-risc-reset-sample-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_firmware_reset_test.cpp" -o "$temporary/firmware-reset-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/firmware-reset-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
@@ -108,11 +111,19 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  -DPIONEER_QWEN35_FLEET_INSPECTION_QUALIFY -I"$temporary" "$directory/pioneer_qwen35_recovery_qualification_routing_test.cpp" -o "$temporary/fleet-inspection-routing-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fleet-inspection-routing-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DPIONEER_QWEN35_FLEET_INSPECTION_QUALIFY -DPIONEER_QWEN35_RISC_RESET_SAMPLE_QUALIFY \
+ -I"$temporary" "$directory/pioneer_qwen35_recovery_qualification_routing_test.cpp" -o "$temporary/risc-reset-sample-routing-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/risc-reset-sample-routing-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -DPIONEER_QWEN35_FLEET_INSPECTION_QUALIFY -DPIONEER_QWEN35_ROLE_STAGE_QUALIFY -I"$temporary" "$directory/pioneer_qwen35_recovery_qualification_routing_test.cpp" -o "$temporary/role-stage-routing-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-stage-routing-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I"$directory/role_haiku_stubs" "$directory/pioneer_qwen35_fleet_inspection_control_test.cpp" -o "$temporary/fleet-inspection-control-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fleet-inspection-control-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DPIONEER_QWEN35_RISC_RESET_SAMPLE_QUALIFY -I"$directory/role_haiku_stubs" \
+ "$directory/pioneer_qwen35_fleet_inspection_control_test.cpp" -o "$temporary/risc-reset-sample-control-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/risc-reset-sample-control-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_qwen35_active_root_lease_test.cpp" -o "$temporary/active-root-lease-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/active-root-lease-test"
@@ -158,4 +169,5 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/recovery-disabled-test"
 python3 "$directory/pioneer_qwen35_fleet_inspection_qualify_script_test.py"
 PYTHONDONTWRITEBYTECODE=1 python3 "$directory/pioneer_qwen35_recovery_trace_qualify_test.py"
+PYTHONDONTWRITEBYTECODE=1 python3 "$directory/pioneer_qwen35_risc_sample_qualify_test.py"
 printf 'Offline reload guard evidence retained at %s\n' "$temporary"

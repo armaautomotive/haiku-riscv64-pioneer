@@ -7,7 +7,9 @@
 #define PIONEER_QWEN35_RECOVERY_QUALIFY 1
 #define PIONEER_QWEN35_DEDICATED_FLEET_WITNESS 1
 #define PIONEER_QWEN35_FLEET_INSPECTION_QUALIFY 1
-#ifdef TEST_ROLE_STAGE_QUALIFY
+#ifdef PIONEER_QWEN35_RISC_RESET_SAMPLE_QUALIFY
+#define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026112400030023)
+#elif defined(TEST_ROLE_STAGE_QUALIFY)
 #define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026112300030005)
 #else
 #define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026112300030004)
@@ -57,6 +59,32 @@ struct Fixture {
 int main()
 {
     (void)&Qwen35DataflowGenerate;
+#ifdef PIONEER_QWEN35_RISC_RESET_SAMPLE_QUALIFY
+    {
+        Fixture f;tt_q35_risc_reset_sample r{};r.version=1;r.expected_tag=PIONEER_DRIVER_BUILD_TAG;r.expected_generation=42;
+        assert(Qwen35RiscResetSampleControl(&f.cookie,&r,sizeof(r))==B_OK && r.operation_status==B_NOT_ALLOWED);
+        assert(f.Run()==B_OK && f.request.operation_status==B_OK);gCopies=0;
+        r={};r.version=1;r.expected_tag=PIONEER_DRIVER_BUILD_TAG;r.expected_generation=42;
+        assert(Qwen35RiscResetSampleControl(&f.cookie,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+            && r.sampled && !r.restore_failed && r.build_tag==PIONEER_DRIVER_BUILD_TAG && r.generation==42);
+        for (unsigned i=0;i<8;i++) assert(r.words[i]==UINT32_MAX-i);
+        assert(!gRetains && !sColdRecoveryRequired);
+        r={};r.version=1;r.expected_tag=PIONEER_DRIVER_BUILD_TAG;r.expected_generation=42;gCopies=0;
+        assert(Qwen35RiscResetSampleControl(&f.cookie,&r,sizeof(r))==B_OK && r.operation_status==B_NOT_ALLOWED);
+    }
+    {
+        Fixture f;assert(f.Run()==B_OK && f.request.operation_status==B_OK);gCopies=0;
+        f.context.io.riscDropWriteAt=f.context.io.tlbWrites+1;
+        tt_q35_risc_reset_sample r{};r.version=1;r.expected_tag=PIONEER_DRIVER_BUILD_TAG;r.expected_generation=42;
+        assert(Qwen35RiscResetSampleControl(&f.cookie,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+            && !r.sampled && r.restore_failed);
+        assert(f.context.dispatchOwnerRetained && sColdRecoveryRequired && gRetains==1);
+        const unsigned writes=f.context.io.tlbWrites;
+        r={};r.version=1;r.expected_tag=PIONEER_DRIVER_BUILD_TAG;r.expected_generation=42;gCopies=0;
+        assert(Qwen35RiscResetSampleControl(&f.cookie,&r,sizeof(r))==B_OK && r.operation_status==B_NOT_ALLOWED);
+        assert(f.context.io.tlbWrites==writes && gRetains==1);
+    }
+#endif
     {
         Fixture f;assert(f.Run()==B_OK && f.request.operation_status==B_OK);
         assert(f.request.stage==TT_Q35_FLEET_INSPECTION_COMPLETE && f.request.failed_core==120

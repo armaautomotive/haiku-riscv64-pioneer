@@ -14,6 +14,7 @@ GRAPH_TRIAL_TAG = '2026112100020168'
 RECOVERY_QUALIFICATION_TAG = '2026112300030001'
 FIRMWARE_RECOVERY_QUALIFICATION_TAG = '2026112400030022'
 FLEET_INSPECTION_QUALIFICATION_TAG = '2026112300030004'
+RISC_RESET_SAMPLE_QUALIFICATION_TAG = '2026112400030023'
 ROLE_STAGE_QUALIFICATION_TAG = '2026112300030005'
 ROLE_PRESTACK_QUALIFICATION_TAG = '2026112300030010'
 ROLE_LOCAL_RESTORE_QUALIFICATION_TAG = '2026112300030011'
@@ -436,6 +437,8 @@ def main():
                         help='build the restricted idle-session firmware reset qualification driver')
     parser.add_argument('--build-fleet-inspection-qualification', action='store_true',
                         help='build the restricted held-fleet inspection driver without reset or inference')
+    parser.add_argument('--build-risc-reset-sample-qualification', action='store_true',
+                        help='build the restricted read-only RISC reset-unit observation driver')
     parser.add_argument('--build-role-stage-qualification', action='store_true',
                         help='build the restricted held-role image staging and restoration driver')
     parser.add_argument('--build-role-prestack-qualification', action='store_true',
@@ -463,6 +466,10 @@ def main():
             parser.error('span qualification selects its own restricted build flags')
         args.build_recovery_qualification = True
         args.compile_supported_span_prototype = True
+    if args.build_risc_reset_sample_qualification:
+        if args.build_fleet_inspection_qualification:
+            parser.error('reset sample selects its own fleet inspection')
+        args.build_fleet_inspection_qualification = True
     if args.build_role_fleet_service_qualification:
         if args.build_role_service_qualification or args.build_role_service_fault_qualification:
             parser.error('fleet service qualification selects its own service qualification')
@@ -539,6 +546,7 @@ def main():
                                                else ROLE_LOCAL_RESTORE_QUALIFICATION_TAG if args.build_role_local_restore_qualification
                                                else ROLE_PRESTACK_QUALIFICATION_TAG if args.build_role_prestack_qualification
                                                else ROLE_STAGE_QUALIFICATION_TAG if args.build_role_stage_qualification
+                                               else RISC_RESET_SAMPLE_QUALIFICATION_TAG if args.build_risc_reset_sample_qualification
                                                else FLEET_INSPECTION_QUALIFICATION_TAG if args.build_fleet_inspection_qualification
                                                else FIRMWARE_RECOVERY_QUALIFICATION_TAG if args.build_firmware_recovery_qualification
                                                else RECOVERY_QUALIFICATION_TAG if args.build_recovery_qualification
@@ -570,6 +578,8 @@ def main():
         driver_env['PIONEER_QWEN35_FIRMWARE_RESET_QUALIFY'] = '1'
     if args.build_fleet_inspection_qualification:
         driver_env['PIONEER_QWEN35_FLEET_INSPECTION_QUALIFY'] = '1'
+    if args.build_risc_reset_sample_qualification:
+        driver_env['PIONEER_QWEN35_RISC_RESET_SAMPLE_QUALIFY'] = '1'
     if args.build_role_stage_qualification:
         driver_env['PIONEER_QWEN35_ROLE_STAGE_QUALIFY'] = '1'
     if args.build_role_prestack_qualification:
