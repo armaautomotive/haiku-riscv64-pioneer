@@ -897,6 +897,21 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
     -I"$temporary" "$directory/pioneer_qwen35_unmodified_reset_finish_test.cpp" -o "$temporary/unmodified-reset-finish-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/unmodified-reset-finish-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    "$directory/pioneer_qwen35_projection_reset_restore_test.cpp" -o "$temporary/projection-reset-restore-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-reset-restore-test"
+if ${CXX:-c++} -x c++ -std=c++17 -E -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+    -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS \
+    -DPIONEER_QWEN35_RECOVERY_QUALIFY \
+    "$root/src/add-ons/kernel/drivers/misc/PioneerQwen35ProjectionResetRecovery.h" \
+    >"$temporary/reset-restore-guard.out" 2>"$temporary/reset-restore-guard.err"; then
+    echo 'loadable qualification accepted reset scratch restore witness' >&2
+    exit 1
+fi
+if ! grep -q 'Projection reset restore is restricted to the non-loadable snapshot witness' "$temporary/reset-restore-guard.err"; then
+    echo 'reset scratch restore rejection did not come from its qualification guard' >&2
+    exit 1
+fi
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     -I"$temporary" "$directory/pioneer_qwen35_projection_scratch_context_test.cpp" -o "$temporary/projection-scratch-context-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-scratch-context-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \

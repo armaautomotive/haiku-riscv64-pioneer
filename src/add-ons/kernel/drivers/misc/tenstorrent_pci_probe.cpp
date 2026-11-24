@@ -4996,6 +4996,9 @@ public:
 #include "PioneerQwen35ProjectionQualificationScope.inc"
 #endif
 #include "PioneerQwen35ProjectionScratchCompileWitness.inc"
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+#include "PioneerQwen35ProjectionResetRecoveryCompileWitness.inc"
+#endif
 #endif
 #endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS

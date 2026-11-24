@@ -121,6 +121,18 @@ public:
 	}
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 	bool Q35StreamClaimed() const { return q35StreamOwner!=nullptr; }
+	// Software identity only, including a quarantined claim. This grants no
+	// bank access and is used to retain the exact owner during reset recovery.
+	bool Q35StreamClaimIdentity(const void* owner,unsigned count) const {
+		return owner && owner==q35StreamOwner && count==120 && q35StreamCount==count;
+	}
+	bool Q35StreamClaimMatches(const void* owner,const PioneerQ35StreamBankRange* ranges,unsigned count) const {
+		if (!ranges || !Q35StreamClaimIdentity(owner,count)) return false;
+		for (unsigned i=0;i<count;i++)
+			if (q35StreamRanges[i].bank!=ranges[i].bank || q35StreamRanges[i].offset!=ranges[i].offset
+				|| q35StreamRanges[i].bytes!=ranges[i].bytes) return false;
+		return true;
+	}
 	// Checks identity and the immutable reservation count without implying
 	// that an unsealed stream is ready to execute. Caller holds the bank lock.
 	bool Q35StreamOwnerMatches(const tt_dram_samples_result& baseline,const void* owner,unsigned count) const {

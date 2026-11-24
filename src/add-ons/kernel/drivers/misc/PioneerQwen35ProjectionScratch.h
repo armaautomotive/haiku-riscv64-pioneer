@@ -40,7 +40,9 @@ struct PioneerQ35ScratchObservation {
 // RetainScratch must retain the owner and snapshots and quarantine the
 // session when a transfer or its authorization becomes uncertain.
 // This is not authority to start a worker or an inference fallback.
+class PioneerQ35ProjectionResetRecovery;
 class PioneerQ35ProjectionScratch {
+    friend class PioneerQ35ProjectionResetRecovery;
     using Fixture=PioneerQwen35::DataflowProjectionQualification;
     enum Phase { Empty=PioneerQ35ScratchEmpty, Capturing=PioneerQ35ScratchCapturing,
         Captured=PioneerQ35ScratchCaptured, Staging=PioneerQ35ScratchStaging, Staged=PioneerQ35ScratchStaged,
