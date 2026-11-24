@@ -754,7 +754,11 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
             assert(scope.ProveExclusiveRewrite(context->io));
             context->qwen35DataflowService->ready=true;
             assert(!scope.ProveRoleMemoryReadSafe(context->io,0,0));
+            assert(!scope.ProveRoleMemoryReadSafe(context->io,0,DataflowRolePhysicalBriscRam)
+                && !scope.ProveRoleMemoryReadSafe(context->io,0,DataflowRolePhysicalNcriscRam));
             assert(!scope.ProveRoleMemoryWriteSafe(context->io,0,0,0,4));
+            assert(!scope.ProveRoleMemoryWriteSafe(context->io,0,DataflowRolePhysicalBriscRam,0,4)
+                && !scope.ProveRoleMemoryWriteSafe(context->io,0,DataflowRolePhysicalNcriscRam,0,4));
             assert(!scope.ProveRoleControlWriteSafe(context->io,0,0,0x3c0));
             assert(!scope.ProveRoleStackCancelSafe(context->io,0));
             assert(!scope.ProveRoleStackCancelledSafe(context->io,0));

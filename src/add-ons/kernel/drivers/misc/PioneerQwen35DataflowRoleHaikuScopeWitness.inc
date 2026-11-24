@@ -158,7 +158,20 @@ public:
                 return io.ResetRead()==0x47800 && io.ResetRead()==0x47800;
             });
 #else
-        (void)io;(void)core;(void)which;return false;
+        // The snapshot path may inspect only held-role images and boot words.
+        // In particular this does not authorize the host private-RAM reads
+        // that failed in the earlier physical qualification. The independent
+        // fleet proof still denies access until real ownership is provided.
+        return which<=PioneerQwen35::DataflowRolePhysicalExtraCode
+            && core<PioneerQwen35::DataflowBarrierWorkers && io.runtimeCore==core
+            && io.DataflowPanelMappingStable() && ProveExclusiveRewrite(io)
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+            && io.SharedRoleFirmwareMatches()
+#endif
+            && ProveRoleFleetHeldAndQuiet(io,core)
+            && PioneerQwen35WithSelectedClock(io,core,[&]() {
+                return io.ResetRead()==0x47800 && io.ResetRead()==0x47800;
+            }) && ProveRoleFleetHeldAndQuiet(io,core);
 #endif
     }
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
@@ -180,7 +193,9 @@ public:
             && PioneerQwen35::DataflowRolePhysicalWriteRange(which,offset,bytes)
             && ProveRoleMemoryReadSafe(io,core,which);
 #else
-        (void)io;(void)core;(void)which;(void)offset;(void)bytes;return false;
+        return which<=PioneerQwen35::DataflowRolePhysicalExtraCode
+            && PioneerQwen35::DataflowRolePhysicalWriteRange(which,offset,bytes)
+            && ProveRoleMemoryReadSafe(io,core,which);
 #endif
     }
     bool ProveRoleControlWriteSafe(PioneerSessionIO&,unsigned,uint32_t,uint32_t) const { return false; }
