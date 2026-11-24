@@ -139,10 +139,14 @@ test -d "$stage/.qualification-once" && test ! -L "$stage/.qualification-once" |
 [ "$(cat "$lock/owner")" = "$stage" ] || fail lock_owner
 case "$(cat "$stage/state")" in
 	QUALIFICATION_FAILED_RETAIN_FOR_INSPECTION) ;;
-	# A hung client cannot write the retained marker. Only the fleet stage
-	# admits its last running marker, and the candidate-generation and host
-	# health checks below still require the fresh post-power-cycle boot.
+	# A hung client cannot write the retained marker. The trace and fleet
+	# trials admit their running marker only after the candidate-generation
+	# and host-health checks below establish a fresh post-power-cycle boot.
 	QUALIFICATION_RUNNING) [ "$stage" = /boot/home/pioneer-q35-recovery-qualify-20261123-trace ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ab ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ac ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ad ] || fail state ;;
+	# The trace trial records this before swapping drivers. A power loss
+	# between the swap and client start may leave the candidate installed.
+	# The candidate hash and fresh-boot generation checks below still apply.
+	RESTORE_REQUIRED) [ "$stage" = /boot/home/pioneer-q35-recovery-qualify-20261123-trace ] || fail state ;;
 	*) fail state ;;
 esac
 test -L "$device" && [ "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe ] || fail device_link

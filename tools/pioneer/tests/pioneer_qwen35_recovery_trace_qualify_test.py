@@ -60,7 +60,7 @@ print(h,p)
             assert not (home/'.pioneer-q35-dataflow-exclusive').exists()
             return
         assert prepared.returncode==0,(prepared.stdout,prepared.stderr)
-        result=run('--run',**({'MOCK_FAIL':'1'} if outcome=='failure' else
+        result=run('--run',**({'MOCK_FAIL':'1'} if outcome in ('failure','interrupted') else
                               {'MOCK_REJECT':'1'} if outcome=='reject' else {}))
         if outcome=='success':
             assert result.returncode==0,(result.stdout,result.stderr)
@@ -74,6 +74,8 @@ print(h,p)
         assert result.returncode and installed.read_text()=='candidate'
         assert (stage/'state').read_text().strip()=='QUALIFICATION_FAILED_RETAIN_FOR_INSPECTION'
         assert (home/'.pioneer-q35-dataflow-exclusive').is_dir()
+        if outcome=='interrupted':
+            (stage/'state').write_text('RESTORE_REQUIRED\n')
         state.write_text(json.dumps(dict(driver=60,tag=TAG,generation=1,quiesced=False,cold=False,active=False)))
         restore=common.RESTORE.read_text().replace('/boot/home',str(home)).replace('0:1:600:',f'{os.getuid()}:1:600:')
         restore=restore.replace('= 0:1 ]',f'= {os.getuid()}:1 ]').replace('= 0:700 ]',f'= {os.getuid()}:700 ]')
@@ -87,6 +89,6 @@ print(h,p)
         assert installed.read_text()=='stable' and not (home/'.pioneer-q35-dataflow-exclusive').exists()
 
 
-for outcome in ('success','reject','failure','hash'):
+for outcome in ('success','reject','failure','interrupted','hash'):
     exercise(outcome)
 print('PASS fixed recovery trace trial, model hash gate and post-boot restore; SIMULATED HOST ONLY')
