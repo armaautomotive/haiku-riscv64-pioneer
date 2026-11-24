@@ -24,6 +24,9 @@ static bool PioneerQ35SharedRoleCopiesCaptured(const PioneerQwen35SharedRoleBind
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 static bool PioneerQ35SharedRoleResetTransition(const PioneerQwen35SharedRoleBinding*,unsigned,uint32_t,uint32_t);
 static bool PioneerQ35SharedRoleSnapshotHoldTransition(const PioneerQwen35SharedRoleBinding*,unsigned,bool);
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+static bool PioneerQ35SharedRoleProjectionInFlightLedger(const PioneerQwen35SharedRoleBinding*);
+#endif
 static bool PioneerQ35SharedRoleSavedRamSources(const PioneerQwen35SharedRoleBinding*,unsigned,
     const uint32_t*&,const uint32_t*&,bool&);
 #endif
@@ -471,10 +474,30 @@ public:
     // cores when used during clean close; mailbox/PC samples alone are
     // insufficient. This proof is not yet implemented.
     bool ProveRoleRuntimeSafe(PioneerSessionIO&,unsigned) const { return false; }
-    // The physical in-flight proof must bind the exact diagnostic and fleet
-    // while allowing its own traffic. An idle/quiet observation cannot supply
-    // that guarantee; until implemented, publication remains denied.
-    bool ProveRoleProjectionInFlightSafe(PioneerSessionIO&,const void*,const void*) const { return false; }
+    // Bounded admission for this locked, non-loadable diagnostic. The exact
+    // program, scratch and PCI claim are checked by its caller. The selected
+    // root's reset, clock and both NoC routes may be sampled while its own
+    // traffic is active; this does not assert that external firmware can
+    // never change state or establish general fault recovery.
+    bool ProveRoleProjectionInFlightSafe(PioneerSessionIO& io,const void* scratch,const void* program) const {
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
+    && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+        auto valid=[&]() {
+            return scratch && program && fContext && fContext->qwen35DataflowService
+                && fContext->qwen35DataflowService->Ready() && !fContext->qwen35DataflowService->GraphRunning()
+                && CanInspectSnapshotRuntime(io,0) && io.runtimeCore==0
+                && PioneerQ35SharedRoleProjectionInFlightLedger(fContext->qwen35SharedRoleBinding);
+        };
+        if (!valid()) return false;
+        PioneerQwen35RoleRouteGuard<PioneerSessionIO,const PioneerQwen35RoleBorrowedScopeWitness> route(io,*this);
+        return route.ProveSelectedRoute(0)
+            && PioneerQwen35WithSelectedClock(io,0,[&]() {
+                return io.ResetRead()==0x6000 && io.ResetRead()==0x6000;
+            }) && route.ProveSelectedRoute(0) && valid();
+#else
+        (void)io;(void)scratch;(void)program;return false;
+#endif
+    }
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     // Admission for bounded runtime observations in this non-loadable
     // witness. Callers use it in their runtime decisions; it does not prove

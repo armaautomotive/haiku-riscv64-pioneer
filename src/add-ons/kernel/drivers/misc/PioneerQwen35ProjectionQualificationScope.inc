@@ -166,18 +166,23 @@ public:
     bool QualificationExecutionSafe(const PioneerQ35ProjectionScratch& scratch,
         const PioneerQwen35::DataflowProjectionProgram& program) const { return RuntimeReady(scratch,program); }
     // A worker can execute as soon as its command is published; demanding
-    // an idle fleet here would reject valid concurrent NoC traffic. This
-    // proof covers the exact in-flight owner and must permit only its
-    // authorized traffic. It is separate from the pre-publication audit and
-    // from the terminal all-worker receipt/queue/NoC audit below.
+    // an idle fleet here would reject valid concurrent NoC traffic. Check
+    // the exact in-flight owner and permit active traffic. These bounded
+    // checks do not identify every traffic source or exclude firmware writes.
+    // Pre-publication and terminal fleet audits remain separate.
     bool QualificationProjectionInFlightSafe(const PioneerQ35ProjectionScratch& scratch,
         const PioneerQwen35::DataflowProjectionProgram& program) const {
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE)
         auto* scope=Borrowed();
         auto* qualification=c.qwen35QualificationOwner.Qualification();
         return scope && qualification && qualification->IsRunning() && qualification->Program()==&program
             && c.qwen35QualificationOwner.Owns(scratch) && scratch.IsRunning() && RuntimeIdentity(scratch,program)
+            && c.q35PciReservationHeld && !c.q35PciReleaseAttempted
             && c.io.runtimeCore==0 && c.io.DataflowPanelMappingStable()
             && scope->ProveRoleProjectionInFlightSafe(c.io,&scratch,&program);
+#else
+        (void)scratch;(void)program;return false;
+#endif
     }
     // Called only after a successful per-core operation under this same
     // locked owner. The next fleet check and scratch transfer require root.

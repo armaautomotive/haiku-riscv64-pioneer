@@ -73,6 +73,25 @@ public:
         return core<PioneerQwen35::DataflowBarrierWorkers && fRuntimeObservationCore==core
             && fContext.qwen35SharedRoleBinding==this && fViews.Opened();
     }
+    // Host ledger only: every core was confirmed started with its stackless
+    // copies and running images observed, and no stop or hold has begun.
+    // It does not by itself prove live hardware state or firmware exclusion.
+    bool ProjectionInFlightLedger() const {
+        if (fContext.qwen35SharedRoleBinding!=this || !fViews.Opened() || !fAutoRestoreOnStop
+            || !fOwner.AutoRestoreMode() || !fOwner.ComputeLocalRamPreservationSelected()
+            || !fCodeSnapshot || !fRamSnapshot || !fCaptureAttempted || !fReleaseAuthorized
+            || fSnapshotFleetParked) return false;
+        for (unsigned core=0;core<PioneerQwen35::DataflowBarrierWorkers;core++) {
+            if (!fReleaseAttempted[core] || !fReleaseConfirmed[core] || fReleaseHeld[core]
+                || !fStackReleaseSubmitted[core] || !fStackReleaseAttempted[core]
+                || fStackReleaseWriting[core] || !fStackReleaseConfirmed[core]
+                || !fRunningImagesObserved[core] || fStackCancelAttempted[core]
+                || fStopAttempted[core] || fComputeStopAttempted[core] || fHoldAttempted[core]
+                || fAutoRestoreParked[core] || fAutoCancelParked[core] || fAutoRestoreRecorded[core]
+                || fCoreRestoreReleaseWrites[core] || fCoreRestoreHoldWrites[core]) return false;
+        }
+        return true;
+    }
     bool SavedRamSources(unsigned core,const uint32_t*& reader,const uint32_t*& writer,bool& captured) const {
         reader=writer=nullptr;captured=false;
         if (fContext.qwen35SharedRoleBinding!=this || !fViews.Opened()
@@ -720,6 +739,14 @@ PioneerQ35SharedRoleSnapshotHoldTransition(const PioneerQwen35SharedRoleBinding*
     (void)binding;(void)core;(void)attempted;return false;
 #endif
 }
+
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+static bool
+PioneerQ35SharedRoleProjectionInFlightLedger(const PioneerQwen35SharedRoleBinding* binding)
+{
+    return binding && binding->ProjectionInFlightLedger();
+}
+#endif
 
 static bool
 PioneerQ35SharedRoleResetTransition(const PioneerQwen35SharedRoleBinding* binding,

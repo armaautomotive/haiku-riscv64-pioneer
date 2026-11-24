@@ -123,6 +123,73 @@ struct PioneerQ35SharedRoleBindingTestAccess {
         assert(!scope->CanInspectSnapshotRuntime(b.fContext.io,core));
         b.fContext.io.firmwareMatches=firmware;
     }
+    static void ExerciseProjectionInFlight(PioneerQwen35SharedRoleBinding& b) {
+        auto* scope=b.Scope();assert(scope);
+        auto& io=b.fContext.io;
+        const unsigned oldCore=io.runtimeCore,oldReset=io.reset;
+        const bool oldFirmware=io.firmwareMatches;
+        auto* service=b.fContext.qwen35DataflowService;
+        const bool oldReady=service->ready;
+        assert(!PioneerQ35SharedRoleProjectionInFlightLedger(&b));
+        b.fCaptureAttempted=true;b.fReleaseAuthorized=true;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            b.fReleaseAttempted[core]=b.fReleaseConfirmed[core]=true;
+            b.fStackReleaseSubmitted[core]=b.fStackReleaseAttempted[core]=true;
+            b.fStackReleaseConfirmed[core]=b.fRunningImagesObserved[core]=true;
+        }
+        assert(PioneerQ35SharedRoleProjectionInFlightLedger(&b));
+        io.runtimeCore=0;io.reset=0x6000;io.firmwareMatches=true;service->ready=true;
+        int scratch=1,program=2;
+        assert(scope->ProveRoleProjectionInFlightSafe(io,&scratch,&program));
+        // The owned workload can have NoC requests in flight. Admission does
+        // not mistake its nonempty queues for a failed idle-fleet audit.
+        io.nocDoorbell[0][0]=1;io.nocOutstanding[1][3]=1;
+        assert(scope->ProveRoleProjectionInFlightSafe(io,&scratch,&program));
+        io.nocDoorbell[0][0]=io.nocOutstanding[1][3]=0;
+        assert(!scope->ProveRoleProjectionInFlightSafe(io,nullptr,&program)
+            && !scope->ProveRoleProjectionInFlightSafe(io,&scratch,nullptr));
+        io.reset=0x47800;assert(!scope->ProveRoleProjectionInFlightSafe(io,&scratch,&program));io.reset=0x6000;
+        const unsigned disabledReads=io.resetReadsClockDisabled;
+        io.nocConfig[1]=1U<<12;
+        assert(!scope->ProveRoleProjectionInFlightSafe(io,&scratch,&program)
+            && io.resetReadsClockDisabled==disabledReads);
+        io.nocConfig[1]=0;
+        io.slot0[0]=io.DramTlbRead(0,0)^1U;io.tlb0Override=true;
+        assert(!scope->ProveRoleProjectionInFlightSafe(io,&scratch,&program));io.tlb0Override=false;
+        io.firmwareMatches=false;assert(!scope->ProveRoleProjectionInFlightSafe(io,&scratch,&program));io.firmwareMatches=true;
+        service->ready=false;assert(!scope->ProveRoleProjectionInFlightSafe(io,&scratch,&program));service->ready=true;
+        service->graphRunning=true;assert(!scope->ProveRoleProjectionInFlightSafe(io,&scratch,&program));service->graphRunning=false;
+        io.runtimeCore=1;assert(!scope->ProveRoleProjectionInFlightSafe(io,&scratch,&program));io.runtimeCore=0;
+        io.mapping=false;assert(!scope->ProveRoleProjectionInFlightSafe(io,&scratch,&program));io.mapping=true;
+        b.fCaptureAttempted=false;assert(!PioneerQ35SharedRoleProjectionInFlightLedger(&b));b.fCaptureAttempted=true;
+        b.fSnapshotFleetParked=true;assert(!PioneerQ35SharedRoleProjectionInFlightLedger(&b));b.fSnapshotFleetParked=false;
+        b.fAutoRestoreOnStop=false;assert(!PioneerQ35SharedRoleProjectionInFlightLedger(&b));b.fAutoRestoreOnStop=true;
+        for (unsigned core: {0U,37U,119U}) {
+            bool* required[]={&b.fReleaseAttempted[core],&b.fReleaseConfirmed[core],
+                &b.fStackReleaseSubmitted[core],&b.fStackReleaseAttempted[core],
+                &b.fStackReleaseConfirmed[core],&b.fRunningImagesObserved[core]};
+            for (auto* flag:required) {
+                *flag=false;assert(!PioneerQ35SharedRoleProjectionInFlightLedger(&b));*flag=true;
+            }
+            bool* prohibited[]={&b.fReleaseHeld[core],&b.fStackReleaseWriting[core],
+                &b.fStackCancelAttempted[core],&b.fStopAttempted[core],&b.fComputeStopAttempted[core],
+                &b.fHoldAttempted[core],&b.fAutoRestoreParked[core],&b.fAutoCancelParked[core],
+                &b.fAutoRestoreRecorded[core],&b.fCoreRestoreReleaseWrites[core],&b.fCoreRestoreHoldWrites[core]};
+            for (auto* flag:prohibited) {
+                *flag=true;assert(!PioneerQ35SharedRoleProjectionInFlightLedger(&b));*flag=false;
+            }
+        }
+        b.fContext.qwen35SharedRoleBinding=nullptr;
+        assert(!PioneerQ35SharedRoleProjectionInFlightLedger(&b));b.fContext.qwen35SharedRoleBinding=&b;
+        b.fReleaseAuthorized=false;assert(!PioneerQ35SharedRoleProjectionInFlightLedger(&b));
+        b.fCaptureAttempted=false;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            b.fReleaseAttempted[core]=b.fReleaseConfirmed[core]=false;
+            b.fStackReleaseSubmitted[core]=b.fStackReleaseAttempted[core]=false;
+            b.fStackReleaseConfirmed[core]=b.fRunningImagesObserved[core]=false;
+        }
+        io.runtimeCore=oldCore;io.reset=oldReset;io.firmwareMatches=oldFirmware;service->ready=oldReady;
+    }
     static void ExerciseUnstartedRamSources(PioneerQwen35SharedRoleBinding& b) {
         const uint32_t* reader=reinterpret_cast<const uint32_t*>(1);
         const uint32_t* writer=reinterpret_cast<const uint32_t*>(1);bool captured=true;
@@ -214,6 +281,7 @@ static void ExerciseAutoRestoreImageBinding(PioneerSessionIO& io)
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     PioneerQ35SharedRoleBindingTestAccess::ExerciseSnapshotHoldLedger(*binding);
     PioneerQ35SharedRoleBindingTestAccess::ExerciseSnapshotRuntimeObservation(*binding);
+    PioneerQ35SharedRoleBindingTestAccess::ExerciseProjectionInFlight(*binding);
     PioneerQ35SharedRoleBindingTestAccess::ExerciseUnstartedRamSources(*binding);
 #endif
     const unsigned resetWrites=io.sharedResetWrites;
