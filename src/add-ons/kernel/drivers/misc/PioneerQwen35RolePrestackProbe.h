@@ -9,7 +9,7 @@
 #endif
 #if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) && defined(_KERNEL_MODE) \
     && (!defined(PIONEER_QWEN35_RECOVERY_QUALIFY) || !defined(PIONEER_DRIVER_BUILD_TAG) \
-        || PIONEER_DRIVER_BUILD_TAG != 0x2026112300030020ULL || defined(PIONEER_QWEN35_ROLE_FAULT_QUALIFY))
+        || PIONEER_DRIVER_BUILD_TAG != 0x2026112300030021ULL || defined(PIONEER_QWEN35_ROLE_FAULT_QUALIFY))
 #error Fleet service startup requires its restricted qualification build
 #endif
 #if defined(PIONEER_QWEN35_ROLE_FAULT_QUALIFY) && defined(_KERNEL_MODE) \
