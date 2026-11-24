@@ -14,7 +14,7 @@ the empty session cleanly, and the wrapper restored stable driver55 at
 generation4 without a reboot. Independent postflight found `cold0`,
 `active_owner0`, no Q35 lock or inference process, and the expected stable
 driver and guard hashes. See the receipts and `wrapper.log`. The tag is
-consumed. A full post-run hash of both model files is in progress.
+consumed. The full post-run hashes of both model files also match; see `post-model-hashes.txt`.
 
 This is an observation of the reset-unit baseline on this particular card.
 It does not prove fleet ownership, authorize any reset writes, establish
