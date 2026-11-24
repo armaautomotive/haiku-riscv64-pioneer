@@ -178,7 +178,7 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
         return true;
     }
     bool QueuesCleared(unsigned core) { return QueuesSettled(core,true); }
-#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
     bool CleanStopWorkerIdle(unsigned core) {
         PioneerQwen35::DataflowWorkerMailbox worker{};
         return ReadStableWorkerMailbox(core,worker)
@@ -370,7 +370,7 @@ public:
         using namespace PioneerQwen35;
         if (core>=DataflowBarrierWorkers || attempted || token || !fScope.ProveExclusiveRewrite(fIO)
             || !fScope.ProveRoleStopSafe(fIO,core,fault) || !SelectForStop(core)) return false;
-#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
         if (!fault && !CleanStopWorkerIdle(core)) return false;
 #endif
         DataflowRoleMailbox snapshot{};
@@ -378,7 +378,7 @@ public:
         const bool valid=fault?DataflowRoleMailboxRequestFaultStop(snapshot,true,true,true)
             :DataflowRoleMailboxRequestStop(snapshot);
         if (!valid || !fScope.ProveRoleStopSafe(fIO,core,fault)
-#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
             || (!fault && !CleanStopWorkerIdle(core))
 #endif
             || !fGuard.ProveSelectedRoute(core)

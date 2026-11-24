@@ -382,7 +382,7 @@ public:
         return !fault && (CanObserveDedicatedCleanStop(io,core) || CanObserveSnapshotCleanStop(io,core));
     }
     bool ProveRolePostStopSafe(PioneerSessionIO& io,unsigned core) const {
-        return CanObserveDedicatedCleanStop(io,core);
+        return CanObserveDedicatedCleanStop(io,core) || CanObserveSnapshotCleanStop(io,core);
     }
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
     // A parked receipt is an observation, not lifetime exclusion of a later
@@ -394,10 +394,10 @@ public:
     bool ProveRoleAutoRestoreRetirementSafe(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*,bool) const { return false; }
 #endif
     bool ProveComputeStopSafe(PioneerSessionIO& io,unsigned core) const {
-        return CanObserveDedicatedCleanStop(io,core);
+        return CanObserveDedicatedCleanStop(io,core) || CanObserveSnapshotCleanStop(io,core);
     }
     bool ProveComputePostStopSafe(PioneerSessionIO& io,unsigned core) const {
-        return CanObserveDedicatedCleanStop(io,core);
+        return CanObserveDedicatedCleanStop(io,core) || CanObserveSnapshotCleanStop(io,core);
     }
     bool ProveRoleHoldSafe(PioneerSessionIO& io,unsigned core) const {
         return CanObserveDedicatedCleanStop(io,core);
@@ -406,7 +406,8 @@ public:
         return CanObserveDedicatedCleanStop(io,core);
     }
     // Must independently establish the owned role/compute images, routes,
-    // NoC quiescence and session/graph state; mailbox/PC samples alone are
+    // NoC quiescence and session/graph state, including partially stopped
+    // cores when used during clean close; mailbox/PC samples alone are
     // insufficient. This proof is not yet implemented.
     bool ProveRoleRuntimeSafe(PioneerSessionIO&,unsigned) const { return false; }
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS

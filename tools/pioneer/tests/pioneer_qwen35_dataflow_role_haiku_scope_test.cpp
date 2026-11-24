@@ -768,7 +768,10 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
             context->qwen35DataflowService->cleanStopPending=true;
             context->io.firmwareMatches=true;
             assert(!scope.CanObserveSnapshotCleanStop(context->io,0)
-                && !scope.ProveRoleStopSafe(context->io,0,false)); // runtime proof is still denied
+                && !scope.ProveRoleStopSafe(context->io,0,false)
+                && !scope.ProveRolePostStopSafe(context->io,0)
+                && !scope.ProveComputeStopSafe(context->io,0)
+                && !scope.ProveComputePostStopSafe(context->io,0)); // runtime proof is still denied
             context->qwen35DataflowService->cleanStopPending=false;
 #endif
             assert(!scope.ProveRoleStackCancelSafe(context->io,0));
