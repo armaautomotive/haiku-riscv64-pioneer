@@ -15,7 +15,7 @@ driver/guard hashes, no lock or diagnostic process, and model metadata.
 The physical test validates the supported-counter preload for seven fixed
 4 KiB spans and clean teardown. It does not validate larger spans, the full
 model, general fault recovery, Tensix projection, inference, or throughput.
-Full post-run model hashes are running. Tag0017 is consumed. Driver SHA-256
+Both full [post-run model hashes](post-model-hashes.txt) matched their pinned values. Tag0017 is consumed. Driver SHA-256
 `dde75fc1700b9c542ffc6b21aef8d6920d7ce27603ce984fe041782b21732011`;
 client SHA-256
 `696c41afab92c7808fe0a34ff4aa7ffeb3e4028e2149032a1479d2c80c803676`.
