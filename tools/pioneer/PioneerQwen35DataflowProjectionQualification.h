@@ -32,10 +32,15 @@ public:
     static unsigned Quant(unsigned row,unsigned block) {
         return block<6 ? 1+((row>>(block*2))&3) : 1;
     }
-    // Every 32-value group has a nonzero, changing Q4_K minimum. The
-    // encoded quant is increased by the same amount, so the decoded weight
-    // remains Quant(row,block) and the exact row oracle stays distinctive.
-    static unsigned Minimum(unsigned group) { return 1+(group%4); }
+    // Every 32-value group has a nonzero, changing Q4_K minimum. Alternate
+    // positive and negative weights within every core's output group, so a
+    // dropped sign or absolute-value result cannot pass qualification.
+    static unsigned Minimum(unsigned group) { return 5+(group%4); }
+    static bool Negative(unsigned row) { return (row&1U)!=0; }
+    static int SignedQuant(unsigned row,unsigned block) {
+        const int magnitude=int(Quant(row,block));
+        return Negative(row)?-magnitude:magnitude;
+    }
     static unsigned ExpectedInteger(unsigned row) {
         if (row>=Rows) return 0;
         unsigned sum=0;
@@ -44,14 +49,15 @@ public:
         // Each block contains 144 positive and 112 negative activations.
         return sum*32U*127U;
     }
-    // Every expected result is an exactly representable positive FP32 integer.
+    // Every expected result is an exactly representable signed FP32 integer.
     // Integer-only bit construction also permits use in a kernel diagnostic.
     static uint32_t ExpectedBits(unsigned row) {
         const uint32_t value=ExpectedInteger(row);
         if (!value || value>=0x01000000U) return 0;
         unsigned exponent=0;
         for (uint32_t v=value;v>>=1;) exponent++;
-        return ((exponent+127U)<<23)|((value<<(23U-exponent))&0x007fffffU);
+        return (Negative(row)?0x80000000U:0U)
+            |((exponent+127U)<<23)|((value<<(23U-exponent))&0x007fffffU);
     }
     static bool OutputMatches(unsigned row,uint32_t actualBits) {
         const uint32_t expected=ExpectedBits(row);
@@ -72,7 +78,9 @@ public:
             else if (field>=12 && field<16) output[n]=uint8_t(1U|(Minimum(field-8)<<4));
             else if (field>=16) {
                 const unsigned firstGroup=((field-16)/32)*2;
-                output[n]=uint8_t((q+Minimum(firstGroup))|((q+Minimum(firstGroup+1))<<4));
+                const unsigned low=Negative(row)?Minimum(firstGroup)-q:Minimum(firstGroup)+q;
+                const unsigned high=Negative(row)?Minimum(firstGroup+1)-q:Minimum(firstGroup+1)+q;
+                output[n]=uint8_t(low|(high<<4));
             } else output[n]=0;
         }
         return true;

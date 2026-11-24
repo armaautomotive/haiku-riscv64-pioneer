@@ -72,7 +72,7 @@ struct Reader {
 // this test binary; the driver compute path has no CPU fallback.
 struct MatrixSimulation {
     enum { TensixMatrixEngine=1 };
-    SimMemory& memory;float sum[16]{};bool omitMinimum=false;
+    SimMemory& memory;float sum[16]{};bool omitMinimum=false,dropOutputSign=false;
     bool Bind(const DataflowCoreInvocation& p) { return p.Valid() && p.type==12; }
     bool TensixBeginOutput(unsigned type) {
         if (type!=12) return false;
@@ -110,6 +110,7 @@ struct MatrixSimulation {
     }
     bool TensixFinishOutput(uint8_t* out,unsigned bytes) {
         if (!out || bytes!=sizeof(sum)) return false;
+        if (dropOutputSign) for (float& value:sum) value=std::fabs(value);
         std::memcpy(out,sum,bytes);return true;
     }
 };
@@ -163,14 +164,15 @@ int main()
             const unsigned tile=(group*Fixture::Blocks+block)*Fixture::TileBytes;
             for (unsigned byte=0;byte<144;byte++) raw[byte]=memory.weights[tile+byte*16+lane];
             assert(PioneerDecodeQ4K(raw,decoded));
-            for (float value:decoded) assert(value==float(Fixture::Quant(row,block)));
+            for (float value:decoded) assert(value==float(Fixture::SignedQuant(row,block)));
             sum+=Fixture::Quant(row,block)*(block<6 ? (1U<<(block*2)) : 1U);
         }
         assert(Fixture::ExpectedInteger(row)==sum*32U*127U);
         if (row) assert(Fixture::ExpectedInteger(row)>Fixture::ExpectedInteger(row-1));
-        const float expected=float(Fixture::ExpectedInteger(row));uint32_t bits=0;
+        const float expected=(Fixture::Negative(row)?-1.0f:1.0f)*float(Fixture::ExpectedInteger(row));uint32_t bits=0;
         std::memcpy(&bits,&expected,sizeof(bits));
-        assert(Fixture::OutputMatches(row,bits) && !Fixture::OutputMatches(row,bits^1));
+        assert(Fixture::OutputMatches(row,bits) && !Fixture::OutputMatches(row,bits^1)
+            && !Fixture::OutputMatches(row,bits^0x80000000U));
     }
     assert(!Fixture::OutputMatches(Fixture::Rows,0));
 
@@ -203,16 +205,18 @@ int main()
         uint32_t bits=0;std::memcpy(&bits,memory.output.data()+row*4,4);
         assert(Fixture::OutputMatches(row,bits));
     }
-    // Dropping the Q4_K minimum correction must be caught by the same
-    // fixed fixture, even though every queue and worker otherwise succeeds.
-    {
+    // Both omitted affine correction and lost output signs must be detected
+    // even though every queue and worker otherwise reports success.
+    for (unsigned injected=0;injected<2;injected++) {
         DataflowCoreInvocation invocation{};assert(DataflowProgramBuilder::BindCore(*program,0,invocation));
         DataflowQueueControl controls[DataflowCircularBufferCount]{};
         std::vector<uint32_t> local((DataflowLocalBufferEnd-DataflowWeightBufferAddress)/4);
         std::vector<uint32_t> cache(DataflowActivationCacheBytes/4);
         DataflowQueueView queues[DataflowCircularBufferCount]{};
         assert(DataflowBindQueues(invocation,controls,reinterpret_cast<uint8_t*>(local.data()),queues));
-        Reader reader{memory};MatrixSimulation compute{memory};compute.omitMinimum=true;Writer writer{memory};
+        Reader reader{memory};MatrixSimulation compute{memory};
+        compute.omitMinimum=injected==0;compute.dropOutputSign=injected==1;
+        Writer writer{memory};
         bool readOkay=false,computeOkay=false,writeOkay=false;
         std::thread a([&] { readOkay=PioneerQwen35SharedActivationReader(invocation,queues[0],queues[1],
             reinterpret_cast<uint8_t*>(cache.data()),reader); });
@@ -222,7 +226,7 @@ int main()
         a.join();b.join();c.join();assert(readOkay && computeOkay && writeOkay);
         for (unsigned row=0;row<16;row++) {
             uint32_t bits=0;std::memcpy(&bits,memory.output.data()+row*4,4);
-            assert(!Fixture::OutputMatches(row,bits));
+            assert(Fixture::OutputMatches(row,bits)==(injected==1 && !Fixture::Negative(row)));
         }
     }
     std::puts("PASS fixed Q4_K projection partitions and exact results for 120 simulated workers; NO HARDWARE");
