@@ -74,7 +74,7 @@ struct PioneerSessionIO {
 #endif
     unsigned runtimeCore=0; bool fleetEnabled=true,mapping=true;
     bool simulateArc=false,tlbOverride=false,simulateHdma=false,tlb0Override=false;
-    bool hdmaSourceStable=true,dropHdmaRestore=false;
+    bool hdmaSourceStable=true,dropHdmaRestore=false,failNextSelection=false;
     bool firmwareMatches=false;
     unsigned selectCalls=0,tlbWrites=0,hdmaReads=0,hdmaChangeAt=UINT32_MAX;
     uint32_t slot0[3]{},slot1[3]{},hdmaWords[4]{};
@@ -108,6 +108,9 @@ struct PioneerSessionIO {
     uint32_t computePc=0;
     bool SelectRuntimeCore(unsigned core) {
         if (core>=DataflowBarrierWorkers) return false;
+        if (failNextSelection) {
+            failNextSelection=false; ++selectCalls; tlb0Override=true; return false;
+        }
 #if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
         SelectRoleTestWindows(runtimeCore,core);
 #ifdef TEST_ROLE_STAGE_QUALIFY

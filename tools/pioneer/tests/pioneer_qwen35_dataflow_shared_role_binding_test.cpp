@@ -361,6 +361,11 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
     io.simulateHdma=false;
     assert(!PioneerQwen35SampleHostDma(io,*scope,route,restoreFailed) && !restoreFailed);
     assert(!io.selectCalls && !io.tlbWrites);
+    io.simulateHdma=true;io.failNextSelection=true;
+    assert(!PioneerQwen35SampleHostDma(io,*scope,route,restoreFailed) && restoreFailed);
+    assert(io.selectCalls==1 && io.tlb0Override && !io.hdmaReads && !io.tlbWrites);
+    assert(io.SelectRuntimeCore(7) && route.ProveSelectedRoute(7));
+    io.selectCalls=0;
     io.simulateHdma=true; io.hdmaSourceStable=false;
     assert(!PioneerQwen35SampleHostDma(io,*scope,route,restoreFailed) && !restoreFailed);
     assert(io.runtimeCore==7 && !io.tlbWrites && !io.hdmaReads);

@@ -147,7 +147,10 @@ int main()
         if (kind==1) io.resetBadCore=23;
         if (kind==2) io.failSelection=23;
         assert(!PioneerQwen35SampleHeldFleet(io,scope,guard,failed,restore));
-        assert(failed==23 && !restore && io.runtimeCore==7 && io.route==7);
+        if (kind==2)
+            assert(failed==23 && restore && io.route==UINT32_MAX && io.selections==24);
+        else
+            assert(failed==23 && !restore && io.runtimeCore==7 && io.route==7);
     }
     {
         FakeIO io; Scope scope; Guard guard{io}; unsigned failed=0; bool restore=false;

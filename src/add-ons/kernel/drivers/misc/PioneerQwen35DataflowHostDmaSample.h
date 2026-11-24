@@ -23,7 +23,12 @@ bool PioneerQwen35SampleHostDma(IO& io,Scope& scope,Guard& guard,bool& restoreFa
     if (original!=0) {
         changedRoute=true;
         if (!io.SelectRuntimeCore(0) || !io.DataflowPanelMappingStable()
-            || !guard.ProveSelectedRoute(0)) goto restore;
+            || !guard.ProveSelectedRoute(0)) {
+            // The selection may have changed only one TLB, or the selected
+            // route may no longer match its readback. Never overwrite that
+            // uncertain state with a second selection in this transaction.
+            restoreFailed=true;return false;
+        }
     }
     if (!PioneerQwen35SampleSelectedHeldTile(io,scope,guard,0)
         || !io.SharedHostDmaPciSourceStable()) goto restore;

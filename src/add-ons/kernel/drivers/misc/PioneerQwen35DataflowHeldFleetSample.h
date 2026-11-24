@@ -53,8 +53,13 @@ bool PioneerQwen35SampleHeldFleet(IO& io,Scope& scope,Guard& guard,
             if (!scope.ProveRoleStatusInspectionAllowed(io)) { okay=false; break; }
             // Selection may partially program the two TLBs even on failure.
             touched=true;
-            if (!io.SelectRuntimeCore(core) || !io.DataflowPanelMappingStable()
-                || !PioneerQwen35SampleSelectedHeldTile(io,scope,guard,core)) {
+            // A failed selection can leave either TLB partly programmed. Do
+            // not issue another selection over an unconfirmed write; retain
+            // the session so recovery can deal with the uncertain route.
+            if (!io.SelectRuntimeCore(core) || !io.DataflowPanelMappingStable()) {
+                restoreFailed=true;return false;
+            }
+            if (!PioneerQwen35SampleSelectedHeldTile(io,scope,guard,core)) {
                 okay=false; break;
             }
             io.Pause();
