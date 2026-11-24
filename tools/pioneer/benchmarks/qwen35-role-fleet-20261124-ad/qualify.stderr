@@ -1,0 +1,3 @@
+P100A_Q35_FLEET_INSPECTION replied=1 status=0 stage=4 core=120 l2cpu=0x0000000f restore_failed=0 prepared=120
+P100A_Q35_ROLE_STAGE replied=1 status=0 stage=13 captured=1 staged=1 restored=1 mappings_closed=1
+P100A_Q35_FLEET_INSPECTION clean_end=1
