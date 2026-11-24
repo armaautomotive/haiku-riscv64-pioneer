@@ -72,7 +72,7 @@ struct Reader {
 // this test binary; the driver compute path has no CPU fallback.
 struct MatrixSimulation {
     enum { TensixMatrixEngine=1 };
-    SimMemory& memory;float sum[16]{};
+    SimMemory& memory;float sum[16]{};bool omitMinimum=false;
     bool Bind(const DataflowCoreInvocation& p) { return p.Valid() && p.type==12; }
     bool TensixBeginOutput(unsigned type) {
         if (type!=12) return false;
@@ -90,18 +90,20 @@ struct MatrixSimulation {
             PioneerQ38Panel decoded{};
             if (!PioneerQ38UnpackPanel(type,weights,Fixture::TileBytes,panel,&decoded)) return false;
             for (unsigned row=0;row<16;row++) {
-                int dot=0;
+                int dot=0,activationSum=0;
                 for (unsigned lane=0;lane<16;lane++) {
                     const unsigned at=lane*16+row;
                     const uint16_t weight=uint16_t(decoded.operand[at/2]>>((at%2)*16));
                     const unsigned ai=panel*16+lane;
                     const uint16_t activation=uint16_t(packed.operand[ai/2]>>((ai%2)*16));
-                    dot+=Operand(weight)*Operand(activation);
+                    const int activationValue=Operand(activation);
+                    dot+=Operand(weight)*activationValue;activationSum+=activationValue;
                 }
                 const float coefficient=PioneerAttentionFloat(decoded.coefficient[row]);
                 const float minimum=PioneerAttentionFloat(decoded.minimum[row]);
-                if (minimum!=0) return false;
-                sum[row]+=float(dot)*coefficient*inputScale;
+                if (minimum!=-float(Fixture::Minimum(panel/2))) return false;
+                sum[row]+=float(dot)*coefficient*inputScale
+                    +(omitMinimum?0.0f:float(activationSum)*minimum*inputScale);
             }
         }
         memory.matmuls++;return true;
@@ -200,6 +202,28 @@ int main()
     for (unsigned row=0;row<Fixture::Rows;row++) {
         uint32_t bits=0;std::memcpy(&bits,memory.output.data()+row*4,4);
         assert(Fixture::OutputMatches(row,bits));
+    }
+    // Dropping the Q4_K minimum correction must be caught by the same
+    // fixed fixture, even though every queue and worker otherwise succeeds.
+    {
+        DataflowCoreInvocation invocation{};assert(DataflowProgramBuilder::BindCore(*program,0,invocation));
+        DataflowQueueControl controls[DataflowCircularBufferCount]{};
+        std::vector<uint32_t> local((DataflowLocalBufferEnd-DataflowWeightBufferAddress)/4);
+        std::vector<uint32_t> cache(DataflowActivationCacheBytes/4);
+        DataflowQueueView queues[DataflowCircularBufferCount]{};
+        assert(DataflowBindQueues(invocation,controls,reinterpret_cast<uint8_t*>(local.data()),queues));
+        Reader reader{memory};MatrixSimulation compute{memory};compute.omitMinimum=true;Writer writer{memory};
+        bool readOkay=false,computeOkay=false,writeOkay=false;
+        std::thread a([&] { readOkay=PioneerQwen35SharedActivationReader(invocation,queues[0],queues[1],
+            reinterpret_cast<uint8_t*>(cache.data()),reader); });
+        std::thread b([&] { computeOkay=PioneerQwen35SharedActivationCompute(invocation,queues[0],queues[1],
+            queues[2],reinterpret_cast<uint8_t*>(cache.data()),compute); });
+        std::thread c([&] { writeOkay=PioneerQwen35SharedActivationWriter(invocation,queues[2],writer); });
+        a.join();b.join();c.join();assert(readOkay && computeOkay && writeOkay);
+        for (unsigned row=0;row<16;row++) {
+            uint32_t bits=0;std::memcpy(&bits,memory.output.data()+row*4,4);
+            assert(!Fixture::OutputMatches(row,bits));
+        }
     }
     std::puts("PASS fixed Q4_K projection partitions and exact results for 120 simulated workers; NO HARDWARE");
     return 0;

@@ -32,6 +32,10 @@ public:
     static unsigned Quant(unsigned row,unsigned block) {
         return block<6 ? 1+((row>>(block*2))&3) : 1;
     }
+    // Every 32-value group has a nonzero, changing Q4_K minimum. The
+    // encoded quant is increased by the same amount, so the decoded weight
+    // remains Quant(row,block) and the exact row oracle stays distinctive.
+    static unsigned Minimum(unsigned group) { return 1+(group%4); }
     static unsigned ExpectedInteger(unsigned row) {
         if (row>=Rows) return 0;
         unsigned sum=0;
@@ -62,8 +66,14 @@ public:
             const unsigned at=offset+n,tile=at/TileBytes,inTile=at%TileBytes;
             const unsigned group=tile/Blocks,block=tile%Blocks,row=group*16+inTile%16;
             const unsigned field=inTile/16,q=Quant(row,block);
-            output[n]=field==1?0x3cU:(field>=4 && field<8)?1U
-                :(field>=12 && field<16)?1U:field>=16?uint8_t(q|(q<<4)):0U;
+            if (field==1 || field==3) output[n]=0x3cU; // d = dmin = 1
+            else if (field>=4 && field<8) output[n]=1U;
+            else if (field>=8 && field<12) output[n]=uint8_t(Minimum(field-8));
+            else if (field>=12 && field<16) output[n]=uint8_t(1U|(Minimum(field-8)<<4));
+            else if (field>=16) {
+                const unsigned firstGroup=((field-16)/32)*2;
+                output[n]=uint8_t((q+Minimum(firstGroup))|((q+Minimum(firstGroup+1))<<4));
+            } else output[n]=0;
         }
         return true;
     }
