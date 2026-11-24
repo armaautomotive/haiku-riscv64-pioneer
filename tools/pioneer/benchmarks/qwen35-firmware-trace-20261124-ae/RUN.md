@@ -39,5 +39,11 @@ read-only check. The staged restore script verified fresh boot and restored
 stable55 generation2. Independent CPU-only status was `cold0 active_owner0`;
 the exclusive lock was absent and no inference or diagnostic remained.
 The installed stable driver and guard hashes matched their pinned values.
-The two post-recovery full model hashes are running in sessions 19644 (4B) and
-5847 (27B); do not claim postflight hash success until both return.
+Both post-recovery full model hashes matched their pinned values; see
+`post-model-hashes.txt`.
+
+For interpretation, Linux's [PCI register definitions](https://github.com/torvalds/linux/blob/master/include/uapi/linux/pci_regs.h)
+label uncorrectable-status bit 0 as undefined; they identify Data Link
+Protocol Error with a different bit. The observed `0x00000001` alone cannot
+be named as a specific PCIe failure. Continue investigation without clearing
+or ignoring the error.
