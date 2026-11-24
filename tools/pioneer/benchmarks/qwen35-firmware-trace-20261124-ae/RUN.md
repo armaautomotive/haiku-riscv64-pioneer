@@ -24,8 +24,8 @@ Status remained `0x8081`; no AER acknowledgement or status clearing was
 attempted. See `qualify.stderr` for raw samples.
 
 A single authorized seven-second OFF press was completed at approximately
-12:37:17 UTC. A restart and stable-driver restoration are in progress; see
-the current session notes for their outcome. This is not a projection,
+12:37:17 UTC; the subsequent boot and restoration are described below.
+This is not a projection,
 model-output, no-reboot recovery or throughput qualification. The tag is
 consumed and must not be installed or run again.
 
