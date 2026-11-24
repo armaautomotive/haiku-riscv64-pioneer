@@ -193,6 +193,7 @@ struct PioneerSessionIO {
 #ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
     bool requireAllServicesBeforeStop=false;
     unsigned dropPrestackReleaseCore=UINT32_MAX;
+    unsigned failPrestackHandoffReadCore=UINT32_MAX,prestackHandoffReads=0;
 #endif
 #ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
     uint32_t faultInvocationWord=0xabcddcbaU;
@@ -431,7 +432,13 @@ struct PioneerSessionIO {
             return value;
         }
 #endif
-        if (address==DataflowRoleSnapshotHandoffAddress) return roleHandoffs[runtimeCore].readerReady;
+        if (address==DataflowRoleSnapshotHandoffAddress) {
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+            if (runtimeCore==failPrestackHandoffReadCore && ++prestackHandoffReads==2)
+                return roleHandoffs[runtimeCore].readerReady^1U;
+#endif
+            return roleHandoffs[runtimeCore].readerReady;
+        }
         if (address==DataflowRoleSnapshotHandoffAddress+4) return roleHandoffs[runtimeCore].writerReady;
         if (address==DataflowRoleMailboxAddress+offsetof(DataflowRoleMailbox,stopRequest))
             return roleBoxes[runtimeCore].stopRequest;

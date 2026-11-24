@@ -51,10 +51,24 @@ public:
     PioneerQ35RoleStageQualification(const PioneerQ35RoleStageQualification&)=delete;
     PioneerQ35RoleStageQualification& operator=(const PioneerQ35RoleStageQualification&)=delete;
 #ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
-    bool FleetPrestackUntouched() const {
+    static bool FleetPrestackReadOnlyFailure(const PioneerQwen35RolePrestackState& state) {
+        return state.attempted && !state.mailboxInitAttempts && !state.handoffZeroAttempts
+            && !state.preserveAttempted && !state.releaseAttempted && !state.serviceReleaseAttempted
+            && !state.cancelAttempted && !state.holdAttempted;
+    }
+    bool FleetPrestackReadyForRollback() const {
         if (!fleetPrestack) return false;
-        for (unsigned core=0;core<PioneerQwen35::DataflowBarrierWorkers;core++)
-            if (fleetPrestack[core].attempted) return false;
+        unsigned phase=0; // completed prefix, at most one read-only failure, untouched suffix
+        for (unsigned core=0;core<PioneerQwen35::DataflowBarrierWorkers;core++) {
+            const auto& state=fleetPrestack[core];
+            if (!state.attempted) { if (state.complete) return false;phase=2;continue; }
+            if (state.complete) {
+                if (phase || !state.serviceStopped || !state.copiesVerified || !state.mailboxRestored) return false;
+            } else {
+                if (phase || !FleetPrestackReadOnlyFailure(state)) return false;
+                phase=1;
+            }
+        }
         return true;
     }
 #endif
@@ -180,11 +194,29 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
 #ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
                     if (okay && r.version==6) {
                         r.stage=9;PioneerQ35RoleStageProgress(r.stage);
+                        unsigned started=0;
                         for (unsigned core=0;okay && core<DataflowBarrierWorkers;core++) {
                             PioneerQwen35RolePrestackProbe<PioneerSessionIO,PioneerQ35FleetInspectionScope,
                                 DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>,decltype(adapter)>
                                 worker(c->io,scope,owner->views,adapter,owner->fleetPrestack[core],core);
                             okay=worker.StartFleetService(65536);
+                            if (okay) ++started;
+                            else if (PioneerQ35RoleStageQualification::FleetPrestackReadOnlyFailure(owner->fleetPrestack[core])
+                                && owner->views.ImageWritesConfirmed() && !c->Unsafe()
+                                && scope.ProveRoleDedicatedObservedStage(c->io)) {
+                                // This core has made no write or release attempt.
+                                // Stop each already-started pair once; the common
+                                // rollback below restores images only if every
+                                // completed pair and the entire held fleet verify.
+                                for (unsigned end=started;end;end--) {
+                                    const unsigned previous=end-1;
+                                    PioneerQwen35RolePrestackProbe<PioneerSessionIO,PioneerQ35FleetInspectionScope,
+                                        DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>,decltype(adapter)>
+                                        prior(c->io,scope,owner->views,adapter,owner->fleetPrestack[previous],previous);
+                                    if (!prior.StopFleetService(DataflowServiceProbeReaderParkAddress,
+                                            DataflowServiceProbeWriterParkAddress,65536)) break;
+                                }
+                            }
 #ifdef _KERNEL_MODE
                             if (!okay) dprintf("P100A_Q35_FLEET_SERVICE_FAILURE phase=start core=%u\n",core);
 #endif
@@ -280,16 +312,27 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
                         && (r.version==1
 #ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
-                            || (r.version==6 && owner->FleetPrestackUntouched())
+                            || (r.version==6 && owner->FleetPrestackReadyForRollback())
 #endif
                             )
 #endif
                         && owner->views.Opened() && owner->views.ImageWritesConfirmed() && !c->Unsafe()
                         && scope.ProveRoleDedicatedObservedStage(c->io)) {
-                        const bool restored=owner->images.RestorationRequired()
+                        bool restored=owner->images.RestorationRequired()
                             ?owner->images.RestoreAll(adapter)
                             :owner->images.ImagesRestored()
                                 && owner->images.VerifyOriginalAll(adapter);
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+                        if (restored && r.version==6) {
+                            for (unsigned core=0;restored && core<DataflowBarrierWorkers;core++) {
+                                if (!owner->fleetPrestack[core].complete) continue;
+                                PioneerQwen35RolePrestackProbe<PioneerSessionIO,PioneerQ35FleetInspectionScope,
+                                    DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>,decltype(adapter)>
+                                    worker(c->io,scope,owner->views,adapter,owner->fleetPrestack[core],core);
+                                restored=worker.VerifyAfterImages();
+                            }
+                        }
+#endif
                         if (restored) {
                             r.restored=1;
                             r.mappings_closed=owner->views.Close() && !owner->views.HasMappings();

@@ -87,6 +87,50 @@ int main()
     gFailStageWriteOnce=false;gPerCoreRoleWindows=false;gAllowWrite=false;
     for (auto& windows:gRoleTileWindows) windows.clear();
     }
+    for (unsigned stopFailure=0;stopFailure<2;stopFailure++) {
+    Fixture f;assert(f.Run()==B_OK && f.request.operation_status==B_OK);
+    ResetMaps();gAllowWrite=true;gPerCoreRoleWindows=true;
+    gRoleWindowCore=gRoleSelectedCore=f.context.io.runtimeCore;
+    f.context.io.perCoreReset=true;
+    for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+        f.context.io.tileReset[core]=0x47800;
+        f.context.io.roleHandoffs[core]={0x1000+core,0x2000+core,0x3000+core};
+    }
+    for (unsigned noc=0;noc<2;noc++) f.context.io.nocAvailable[noc]=0x10101010U;
+    f.context.io.simulateService=true;f.context.io.failPrestackHandoffReadCore=7;
+    f.context.io.dropServiceStop=stopFailure;
+    auto r=Request();r.version=6;
+    assert(Qwen35RoleStageControl(&f.cookie,&r,sizeof(r))==B_OK);
+    assert(r.operation_status==B_DEV_NOT_READY && r.stage==9 && r.captured && r.staged
+        && f.context.io.sharedResetWrites==7 && f.context.io.serviceStarts==7);
+    if (!stopFailure) {
+        assert(r.restored && r.mappings_closed && f.context.io.serviceStops==7
+            && f.context.io.holdWrites==7 && !f.context.qwen35RoleStageQualification
+            && !f.context.dispatchOwnerRetained && !sColdRecoveryRequired && !gRetains);
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            const auto handoff=f.context.io.roleHandoffs[core];
+            assert(handoff.readerReady==0x1000+core && handoff.writerReady==0x2000+core
+                && handoff.release==0x3000+core);
+            assert(f.context.io.SelectRuntimeCore(core) && f.context.io.reset==0x47800);
+        }
+        assert(f.context.io.SelectRuntimeCore(0));
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++)
+            for (unsigned which=0;which<=DataflowRolePhysicalControl;which++)
+                for (uint32_t word:gRoleTileWindows[core][which])
+                    assert(word==RoleWindowInitial(core,which));
+    } else {
+        assert(!r.restored && !r.mappings_closed && f.context.io.serviceStops==1
+            && !f.context.io.holdWrites && f.context.qwen35RoleStageQualification
+            && f.context.dispatchOwnerRetained && sColdRecoveryRequired && gRetains==1);
+        auto* owner=f.context.qwen35RoleStageQualification;
+        assert(owner->fleetPrestack[6].serviceStopAttempted && !owner->fleetPrestack[6].complete
+            && owner->fleetPrestack[7].attempted && !owner->fleetPrestack[7].releaseAttempted);
+        assert(acquire_sem(sLock)==B_OK && owner->views.Close() && release_sem(sLock)==B_OK);
+        delete owner;f.context.qwen35RoleStageQualification=nullptr;
+    }
+    gPerCoreRoleWindows=false;gAllowWrite=false;sColdRecoveryRequired=false;
+    for (auto& windows:gRoleTileWindows) windows.clear();
+    }
     {
     Fixture f;assert(f.Run()==B_OK && f.request.operation_status==B_OK);
     ResetMaps();gAllowWrite=true;gPerCoreRoleWindows=true;
