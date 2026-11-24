@@ -151,4 +151,5 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  -DTEST_RECOVERY_DISABLED -I"$temporary" "$directory/pioneer_qwen35_recovery_run_test.cpp" -o "$temporary/recovery-disabled-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/recovery-disabled-test"
 python3 "$directory/pioneer_qwen35_fleet_inspection_qualify_script_test.py"
+PYTHONDONTWRITEBYTECODE=1 python3 "$directory/pioneer_qwen35_recovery_trace_qualify_test.py"
 printf 'Offline reload guard evidence retained at %s\n' "$temporary"

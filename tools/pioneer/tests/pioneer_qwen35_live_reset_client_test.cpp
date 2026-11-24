@@ -8,7 +8,12 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeAsicReset.h"
 constexpr int B_OK=0,B_DEV_NOT_READY=-5,TT_QWEN35_DATAFLOW_DRIVER=60;
 static unsigned mode=0,statusCalls=0,resetCalls=0,delays=0;
-static bool forceMode=false,qualificationMode=false,firmwareQualification=false;
+static bool forceMode=false,qualificationMode=false;
+static unsigned firmwareQualification=0;
+static uint64_t ExpectedTag() {
+    return qualificationMode?(firmwareQualification==2?UINT64_C(0x2026112400030022)
+        :firmwareQualification?UINT64_C(0x2026112300030002):UINT64_C(0x2026112300030001)):0x123;
+}
 static bool Call(int fd,uint32_t operation,void* output,size_t bytes) {
     assert(fd==10);
     if (operation==TT_PCI_PROBE_RELOAD_STATUS) {
@@ -17,7 +22,7 @@ static bool Call(int fd,uint32_t operation,void* output,size_t bytes) {
         assert(r.version==1 && !r.expected_tag && !r.expected_generation);
         const bool first=statusCalls++==0;
         r.driver=TT_QWEN35_DATAFLOW_DRIVER;
-		r.build_tag=qualificationMode?(firmwareQualification?UINT64_C(0x2026112300030002):UINT64_C(0x2026112300030001)):0x123;
+		r.build_tag=ExpectedTag();
 		if (mode==19 && first) r.build_tag+=2;
         r.generation=first?3:4;
         r.cold=first && !forceMode;r.active_owner=first;r.open_count=1;
@@ -30,7 +35,7 @@ static bool Call(int fd,uint32_t operation,void* output,size_t bytes) {
         :forceMode && !resetCalls?TT_PCI_PROBE_RECOVERY_FORCE:TT_PCI_PROBE_RECOVERY_RUN)
         && bytes==sizeof(tt_pioneer_recovery_run));
     auto& r=*static_cast<tt_pioneer_recovery_run*>(output);
-    assert(r.version==1 && r.expected_tag==(qualificationMode?(firmwareQualification?UINT64_C(0x2026112300030002):UINT64_C(0x2026112300030001)):0x123)
+    assert(r.version==1 && r.expected_tag==ExpectedTag()
         && r.expected_generation==3);
     const unsigned attempt=resetCalls++;
     if (mode==3 || mode==4) return false; // response was lost
@@ -57,7 +62,7 @@ static bool Call(int fd,uint32_t operation,void* output,size_t bytes) {
         return true;
     }
     r.operation_status=B_OK;r.stage=PIONEER_RECOVERY_STAGE_COMPLETE;
-    r.build_tag=qualificationMode?(firmwareQualification?UINT64_C(0x2026112300030002):UINT64_C(0x2026112300030001)):0x123;
+    r.build_tag=ExpectedTag();
     r.new_generation=mode==6?5:4;return true;
 }
 static int snooze(int delay) { assert(delay==1000000);++delays;return B_OK; }
@@ -80,7 +85,7 @@ int main() {
         if (mode==18) assert(resetCalls==1 && !delays);
     }
     forceMode=qualificationMode=true;
-    for (unsigned fw=0;fw<2;fw++) for (mode=16;mode<=19;mode++) {
+    for (unsigned fw=0;fw<3;fw++) for (mode=16;mode<=19;mode++) {
 		firmwareQualification=fw;
         statusCalls=resetCalls=delays=0;
         const bool success=ResetStoppedRewrite(10,true,true);
