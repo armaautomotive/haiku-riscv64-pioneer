@@ -282,6 +282,7 @@ done
 python3 "$directory/pioneer_qwen35_role_service_probe_test.py" "$temporary/role-service-probe-images"
 python3 "$directory/pioneer_qwen35_role_fault_image_test.py" "$temporary/role-service-probe-images"
 python3 "$directory/pioneer_qwen35_role_service_guard_test.py" "$build"
+PYTHONDONTWRITEBYTECODE=1 python3 "$directory/pioneer_qwen35_firmware_trace_guard_test.py" "$build"
 for witness in copy_aware core_release core_restore_stage core_restore_handoff core_retirement; do
     "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -ffreestanding \
         -fno-exceptions -fno-rtti -fno-stack-protector -mcmodel=medany -fpic -D_KERNEL_MODE \
