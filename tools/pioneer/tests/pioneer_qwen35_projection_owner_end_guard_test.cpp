@@ -20,6 +20,7 @@ struct Context {
     void* qwen35DataflowAuthority=nullptr;void* qwen35DataflowProgramScratch=nullptr;void* qwen35GraphOwner=nullptr;
     bool qwen35QualificationInternalActive=false;
     void* recoveryFreshSession=nullptr;
+    void* recoveryFabricArcOwner=nullptr;
     unsigned retained=0;
 };
 struct Result { unsigned retained=0; };
@@ -32,6 +33,7 @@ static bool Unsafe(Context& c) {
     auto& qwen35QualificationOwner=c.qwen35QualificationOwner;
     const bool qwen35QualificationInternalActive=c.qwen35QualificationInternalActive;
     auto* recoveryFreshSession=c.recoveryFreshSession;
+    auto* recoveryFabricArcOwner=c.recoveryFabricArcOwner;
 #include "pioneer_q35_projection_owner_unsafe_guard.inc"
     return false;
 }
@@ -70,6 +72,11 @@ int main() {
     }
     {
         Context c;Result result;bool clean=true;c.recoveryFreshSession=&c;
+        assert(Unsafe(c) && Reset(&c)==B_NOT_ALLOWED && !End(c,result,clean)
+            && !clean && c.retained==1 && result.retained==1);
+    }
+    {
+        Context c;Result result;bool clean=true;c.recoveryFabricArcOwner=&c;
         assert(Unsafe(c) && Reset(&c)==B_NOT_ALLOWED && !End(c,result,clean)
             && !clean && c.retained==1 && result.retained==1);
     }

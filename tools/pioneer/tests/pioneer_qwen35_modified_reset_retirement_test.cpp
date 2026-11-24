@@ -18,6 +18,7 @@ struct ResetContext {
     void *qwen35DataflowService=nullptr,*qwen35DataflowMemory=nullptr,*qwen35DataflowAuthority=nullptr;
     void *qwen35DataflowProgramScratch=nullptr,*qwen35GraphOwner=nullptr,*qwen35SharedRoleBinding=nullptr;
     void* recoveryFreshSession=nullptr;
+    void* recoveryFabricArcOwner=nullptr;
     struct { void* qwen35BorrowedRoleScope=nullptr; } io;
     ResetContext(PioneerQ35ProjectionQualificationOwner& owner,PioneerResidentBanks& b,
         PioneerResidentLease& l,tt_dram_samples_result& d):qwen35QualificationOwner(owner),banks(b),lease(l),baseline{{{{d}}}} {}
@@ -79,6 +80,8 @@ int main() {
     assert(ResetAllowed(&context)==B_NOT_ALLOWED);
     context.recoveryFreshSession=&context;assert(ResetAllowed(&context)==B_NOT_ALLOWED);
     context.recoveryFreshSession=nullptr;
+    context.recoveryFabricArcOwner=&context;assert(ResetAllowed(&context)==B_NOT_ALLOWED);
+    context.recoveryFabricArcOwner=nullptr;
     auto bad=proof;bad.flags^=PIONEER_RECOVERY_PROOF_NOC_IDLE;
     assert(!owner->RetireModifiedAfterReset(bad,37,receipt,old->banks,fresh->banks,session,scope));
     assert(!owner->RetireModifiedAfterReset(proof,38,receipt,old->banks,fresh->banks,session,scope));

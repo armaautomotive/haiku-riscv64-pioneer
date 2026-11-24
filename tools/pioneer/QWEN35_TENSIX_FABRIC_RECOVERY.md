@@ -5,7 +5,8 @@ sequence in [`app/smc/pytest/e2e_smoke.py`](https://github.com/tenstorrent/tt-sy
 `tensix_reset_sequence`. It is a candidate for recovering a faulted resident
 rewrite without resetting the PCIe endpoint. It has **not** been implemented
 or tried on this Pioneer. A fixed-command queue mode has been implemented and
-simulated, but is not connected to the retained recovery controller. The reported
+simulated. A context-owned, phase-ordered queue adapter retains its mappings,
+but no live recovery controller constructs it yet. The reported
 v18.5.0 firmware family is not proof
 that the installed binary matches the source.
 

@@ -4060,6 +4060,24 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 #include "PioneerFirmwareResetTransport.inc"
 #include "PioneerFirmwareRecoveryOwner.h"
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+#include "PioneerQwen35FabricArcOwner.h"
+// Instantiate the real mapping adapter in this non-loadable build. This
+// compile scope grants no physical access; a real locked scope is required
+// before the retained owner can be constructed by the recovery operation.
+using PioneerQ35FabricArcCompileOwner=PioneerQ35FabricArcOwner<pioneer_driver_recovery_guard_v2_info>;
+struct PioneerQ35FabricArcCompileScope {
+	bool FabricArcAllowed(const PioneerQ35FabricArcCompileOwner&,const PioneerPostResetMapping&,
+		uint64,PioneerQ35FabricArcCompileOwner::Phase) { return false; }
+	bool FabricArcPhaseReady(const PioneerQ35FabricArcCompileOwner&,const PioneerPostResetMapping&,
+		uint64,PioneerQ35FabricArcCompileOwner::Phase) { return false; }
+};
+template bool PioneerQ35FabricArcCompileOwner::Open<PioneerQ35FabricArcCompileScope>(
+	pioneer_driver_recovery_guard_v2_info*,PioneerQ35FabricArcCompileScope&);
+template bool PioneerQ35FabricArcCompileOwner::SendNext<PioneerQ35FabricArcCompileScope>(
+	pioneer_driver_recovery_guard_v2_info*,PioneerQ35FabricArcCompileScope&,
+	const tt_arc_scratch_result&,tt_arc_queue_result&);
+#endif
 #if (defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && !defined(PIONEER_QWEN35_RECOVERY_QUALIFY)) \
 	|| defined(PIONEER_QWEN35_FIRMWARE_RESET_QUALIFY)
 #define PIONEER_QWEN35_FIRMWARE_RESET_WITNESS 1
@@ -4129,6 +4147,11 @@ struct PioneerStoreContext {
 	PioneerPostResetMapping* recoveryMapping=NULL;
 	bool recoveryAttempted=false;
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+	// Non-loadable rewrite only. The context retains this owner and its
+	// mappings until the complete fabric recovery has been audited.
+	PioneerQ35FabricArcOwner<pioneer_driver_recovery_guard_v2_info>* recoveryFabricArcOwner=NULL;
+#endif
 #ifdef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS
 	PioneerPostResetMapping* recoveryPreResetMapping=NULL;
 	PioneerFirmwareRecoveryOwner<PioneerSessionIO,pioneer_driver_recovery_guard_v2_info>* recoveryFirmwareResetOwner=NULL;
@@ -4367,6 +4390,8 @@ struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_INPLACE_RECOVERY
 	#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
 		if (recoveryFreshSession) sColdRecoveryRequired=true; // retained; never destroy an uncertain session
+		if (recoveryFabricArcOwner) sColdRecoveryRequired=true;
+		delete recoveryFabricArcOwner; // no device IO or mapping cleanup
 	#endif
 	#ifdef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS
 		if (recoveryPreResetMapping
@@ -4483,7 +4508,7 @@ struct PioneerStoreContext {
 		// locked internal calls explicitly bracket their own checked admission.
 		if (qwen35QualificationOwner.Active() && !qwen35QualificationInternalActive) return true;
 #if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
-		if (recoveryFreshSession) return true;
+		if (recoveryFreshSession || recoveryFabricArcOwner) return true;
 #endif
 #endif
 // PIONEER_Q35_PROJECTION_OWNER_UNSAFE_GUARD_END
@@ -5232,7 +5257,7 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 		clean=false;RetainQ38DispatchOwner(c,result);return false;
 	}
 #if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
-	if (c.recoveryFreshSession) {
+	if (c.recoveryFreshSession || c.recoveryFabricArcOwner) {
 		clean=false;RetainQ38DispatchOwner(c,result);return false;
 	}
 #endif
@@ -11904,7 +11929,7 @@ Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* contex
 	// Fresh transfer mappings and their bank claim must be explicitly closed
 	// before this generic path may retire the old owner or PCI reservation.
 // PIONEER_Q35_FRESH_RECOVERY_FINISH_GUARD_BEGIN
-	if (context->recoveryFreshSession) return retain(B_DEV_NOT_READY);
+	if (context->recoveryFreshSession || context->recoveryFabricArcOwner) return retain(B_DEV_NOT_READY);
 // PIONEER_Q35_FRESH_RECOVERY_FINISH_GUARD_END
 #endif
 // PIONEER_Q35_PROJECTION_RESET_FINISH_BEGIN
@@ -12010,7 +12035,7 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	// A never-staged claim has not written scratch. Modified or uncertain
 	// transactions still retain their snapshots and cannot use generic reset.
 #if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
-	if (context->recoveryFreshSession) return B_NOT_ALLOWED;
+	if (context->recoveryFreshSession || context->recoveryFabricArcOwner) return B_NOT_ALLOWED;
 #endif
 	if (context->qwen35QualificationOwner.Active()
 		&& (context->qwen35QualificationInternalActive || context->qwen35DataflowService

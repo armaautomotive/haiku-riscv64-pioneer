@@ -22,6 +22,7 @@ struct FabricQueue : StrictQueue {
 };
 using Queue=PioneerQ38ArcQueue<FabricQueue,false,false,true>;
 
+#ifndef PIONEER_Q35_FABRIC_QUEUE_MODEL_ONLY
 int main()
 {
     const auto arc=FabricQueue::Arc();const auto health=FabricQueue::Health();
@@ -81,3 +82,4 @@ int main()
     assert(!appQueue.Message(arc,health,r,0xaf) && !app.io);
     puts("PASS Q35 fixed fabric ARC messages, arguments, wraparound and uncertain-failure retention; SIMULATED ONLY");
 }
+#endif
