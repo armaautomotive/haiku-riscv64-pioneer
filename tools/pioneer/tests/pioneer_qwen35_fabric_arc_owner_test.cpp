@@ -128,6 +128,8 @@ static void PioneerWrite32(volatile uint32* p,uint32 value) {
 }
 static int snooze(int) { device->Pause();return B_OK; }
 struct Profile { uint64 bar0_host_start=0x100000000ULL; };
+struct PioneerPostResetAuditResult {};
+struct PioneerQ35PostResetL2Result {};
 struct PioneerPostResetMapping {
     Profile profile;bool ready=true,firmwareReady=true,topologyReady=true,savedValid=true;
     bool queueAttempted=false,queueUnsafe=false,dmaModified=false;
@@ -148,6 +150,14 @@ struct PioneerPostResetMapping {
     bool SourceStable() { ++sourceReads;return pciReady; }
     uint32 TlbRead(unsigned w) { return device->TlbRead(w); }
     void TlbWrite(unsigned w,uint32 value) { device->TlbWrite(w,value); }
+    bool Audit(PioneerPostResetAuditResult&) {
+        fleetAudited=true;dmaAudited=false;selected=119;
+        for (unsigned word=0;word<3;word++) device->tlb[word]=BlackholeDramFixedTlbWord(0xffa00000U,
+            PioneerWorkerX(selected),PioneerWorkerY(selected),true,word);
+        return true;
+    }
+    bool AuditQ35L2CpuHeld(PioneerQ35PostResetL2Result&) { return fleetAudited; }
+    bool AuditHostDma() { return dmaAudited=fleetAudited; }
 };
 struct Guard { int (*validate)(uint64); };
 static int Validate(uint64 ticket) { return ticket==123 && ticketValid?B_OK:-1; }
@@ -467,4 +477,5 @@ int main() {
         const unsigned before=fault.io;assert(!o.CheckClock(&guard,s,arc,result) && fault.io==before);
     }
     puts("PASS retained Q35 fabric ARC owner: fixed phases, scoped ticket, real mapping adapter and fault retention; SIMULATED ONLY");
+    return 0;
 }

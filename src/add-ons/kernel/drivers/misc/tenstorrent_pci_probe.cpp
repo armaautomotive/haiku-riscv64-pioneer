@@ -4079,6 +4079,10 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // before the retained owner can be constructed by the recovery operation.
 using PioneerQ35FabricArcCompileOwner=PioneerQ35FabricArcOwner<pioneer_driver_recovery_guard_v2_info>;
 struct PioneerQ35FabricArcCompileScope {
+	template<class Context> bool FabricRecoveryAdmission(Context&,
+		pioneer_driver_recovery_guard_v2_info*,uint64) { return false; }
+	template<class Context> bool FabricRecoveryStageAllowed(Context&,
+		const PioneerQ35FabricArcCompileOwner&,pioneer_driver_recovery_guard_v2_info*,uint64,unsigned) { return false; }
 	bool FabricArcAllowed(const PioneerQ35FabricArcCompileOwner&,const PioneerPostResetMapping&,
 		uint64,PioneerQ35FabricArcCompileOwner::Phase) { return false; }
 	bool FabricArcPhaseReady(const PioneerQ35FabricArcCompileOwner&,const PioneerPostResetMapping&,
@@ -5064,6 +5068,10 @@ public:
 		return result;
 	}
 #endif
+#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) \
+	&& defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+#include "PioneerQwen35FabricRecoveryTransaction.inc"
+#endif
 	void Snapshot(tt_resident_session_result& r) {
 		r={}; r.version=1; r.state=TT_RESIDENT_SESSION_READY; r.active=1; r.bytes=bytes;
 		r.host_ready=host.state==TT_HOST_PAGE_READY; r.host_address_bits=host.address_bits;
@@ -5076,6 +5084,13 @@ public:
 		r.cold=sColdRecoveryRequired;
 	}
 };
+
+#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) \
+	&& defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+template bool PioneerStoreContext::RunQ35FabricRecovery<PioneerQ35FabricArcCompileScope>(
+	pioneer_driver_recovery_guard_v2_info*,uint64,const tt_arc_scratch_result&,tt_arc_queue_result&,
+	PioneerPostResetAuditResult&,PioneerQ35PostResetL2Result&,PioneerQ35FabricArcCompileScope&,unsigned&);
+#endif
 
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 #include "PioneerQwen35DataflowDriverBinding.inc"
