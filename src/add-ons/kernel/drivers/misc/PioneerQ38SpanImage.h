@@ -4,9 +4,9 @@
 #include <stdint.h>
 #if defined(PIONEER_QWEN35_SUPPORTED_SPAN)
 #if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH) \
-    || !defined(PIONEER_Q38_SPAN_FAST) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY) \
+    || !defined(PIONEER_Q38_SPAN_FAST) || (defined(PIONEER_QWEN35_RECOVERY_QUALIFY) && !defined(PIONEER_QWEN35_SPAN_QUALIFY)) \
     || defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL)
-#error The Q35 supported-counter span image is restricted to the non-loadable rewrite witness
+#error The Q35 supported-counter span image requires the rewrite witness or restricted qualification
 #endif
 #include "PioneerQwen35SupportedSpanImage.h"
 #elif defined(PIONEER_Q38_SPAN_FAST)

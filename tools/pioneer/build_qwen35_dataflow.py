@@ -19,6 +19,7 @@ ROLE_PRESTACK_QUALIFICATION_TAG = '2026112300030010'
 ROLE_LOCAL_RESTORE_QUALIFICATION_TAG = '2026112300030011'
 ROLE_SERVICE_QUALIFICATION_TAG = '2026112300030012'
 ROLE_SERVICE_FAULT_QUALIFICATION_TAG = '2026112300030013'
+SPAN_QUALIFICATION_TAG = '2026112300030014'
 
 
 def verify_snapshot_witness_refuses_load(build, driver):
@@ -36,7 +37,8 @@ def verify_snapshot_witness_refuses_load(build, driver):
 
 
 def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_recovery=False,
-                               fleet_inspection=False, role_stage=False, role_prestack=False):
+                               fleet_inspection=False, role_stage=False, role_prestack=False,
+                               span_qualification=False):
     usage_file = driver_directory / 'tenstorrent_pci_probe.su'
     entries = []
     for line in usage_file.read_text().splitlines():
@@ -48,6 +50,24 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
         except ValueError:
             continue
         entries.append((fields[0], frame, fields[-1]))
+
+    if span_qualification:
+        markers = ('Q38Span', 'Qwen35Span', 'Q38BankControl', 'ResidentSession',
+                   'PioneerResidentLease', 'PioneerBulkUpload', 'PioneerWideOutput',
+                   'BlackholeDramAllCoresHeld', 'ProbeControl')
+        selected = [(name, frame, kind) for name, frame, kind in entries
+                    if any(marker in name for marker in markers)]
+        for required in ('Q38SpanControl(', 'PioneerQ38SpanUpload(', 'Q38BankControl(', 'ProbeControl('):
+            if not any(required in name for name, _, _ in selected):
+                raise RuntimeError('missing span qualification stack frame: ' + required)
+        if any(kind != 'static' for _, _, kind in selected):
+            raise RuntimeError('unbounded span qualification stack frame')
+        bound = sum(frame for _, frame, _ in selected) + 4096
+        if bound > 18432:
+            raise RuntimeError(f'span qualification stack envelope is {bound} bytes')
+        print(f'qwen35_span_qualification_stack_envelope_bytes={bound}/18432 '
+              '(sum of selected frames plus 4096-byte allowance; not a whole-program proof)')
+        return
 
     if fleet_inspection:
         markers = ('Qwen35FleetInspection', 'PioneerQ35FleetInspectionScope',
@@ -396,6 +416,8 @@ def main():
                         help='build the dedicated graph qualification driver without ASIC reset')
     parser.add_argument('--build-recovery-qualification', action='store_true',
                         help='build the restricted idle-session ASIC recovery qualification driver')
+    parser.add_argument('--build-span-qualification', action='store_true',
+                        help='build the restricted supported-counter preload qualification driver')
     parser.add_argument('--build-firmware-recovery-qualification', action='store_true',
                         help='build the restricted idle-session firmware reset qualification driver')
     parser.add_argument('--build-fleet-inspection-qualification', action='store_true',
@@ -411,6 +433,15 @@ def main():
     parser.add_argument('--build-role-service-fault-qualification', action='store_true',
                         help='build the restricted one-core resident role fault/stop/restore driver')
     args = parser.parse_args()
+    if args.build_span_qualification:
+        if (args.build_recovery_qualification or args.build_firmware_recovery_qualification
+                or args.build_fleet_inspection_qualification or args.build_role_stage_qualification
+                or args.build_role_prestack_qualification or args.build_role_local_restore_qualification
+                or args.build_role_service_qualification or args.build_role_service_fault_qualification
+                or args.compile_supported_span_prototype):
+            parser.error('span qualification selects its own restricted build flags')
+        args.build_recovery_qualification = True
+        args.compile_supported_span_prototype = True
     if args.build_role_service_fault_qualification:
         if args.build_role_service_qualification:
             parser.error('fault qualification selects its own service qualification')
@@ -462,7 +493,8 @@ def main():
             or args.compile_exclusive_takeover_prototype):
         parser.error('snapshot takeover requires shared-role owner and excludes destructive takeover')
     if args.compile_supported_span_prototype and (not args.compile_device_dispatch_prototype
-            or args.build_recovery_qualification or args.build_device_dispatch_trial):
+            or (args.build_recovery_qualification and not args.build_span_qualification)
+            or args.build_device_dispatch_trial):
         parser.error('supported span requires the non-loadable device dispatch prototype')
 
     build = args.haiku_build.resolve(strict=True)
@@ -474,7 +506,8 @@ def main():
     driver = output / 'driver'
     driver_env = dict(env, PIONEER_Q38_PANEL_DRIVER='15',
                       PIONEER_DRIVER_RELOAD='1',
-                      PIONEER_DRIVER_BUILD_TAG=(ROLE_SERVICE_FAULT_QUALIFICATION_TAG if args.build_role_service_fault_qualification
+                      PIONEER_DRIVER_BUILD_TAG=(SPAN_QUALIFICATION_TAG if args.build_span_qualification
+                                               else ROLE_SERVICE_FAULT_QUALIFICATION_TAG if args.build_role_service_fault_qualification
                                                else ROLE_SERVICE_QUALIFICATION_TAG if args.build_role_service_qualification
                                                else ROLE_LOCAL_RESTORE_QUALIFICATION_TAG if args.build_role_local_restore_qualification
                                                else ROLE_PRESTACK_QUALIFICATION_TAG if args.build_role_prestack_qualification
@@ -500,6 +533,8 @@ def main():
         driver_env['PIONEER_QWEN35_SNAPSHOT_TAKEOVER_COMPILE_ONLY'] = '1'
     if args.compile_supported_span_prototype:
         driver_env['PIONEER_QWEN35_SUPPORTED_SPAN_COMPILE_ONLY'] = '1'
+    if args.build_span_qualification:
+        driver_env['PIONEER_QWEN35_SPAN_QUALIFY'] = '1'
     if args.build_recovery_qualification:
         driver_env['PIONEER_QWEN35_RECOVERY_QUALIFY'] = '1'
     if args.build_firmware_recovery_qualification:
@@ -524,7 +559,7 @@ def main():
                                args.build_firmware_recovery_qualification or
                                (args.compile_recovery_prototype and not args.compile_device_dispatch_prototype),
                                args.build_fleet_inspection_qualification, args.build_role_stage_qualification,
-                               args.build_role_prestack_qualification)
+                               args.build_role_prestack_qualification, args.build_span_qualification)
     if args.compile_snapshot_takeover_prototype:
         verify_snapshot_witness_refuses_load(build, driver / 'tenstorrent_pci_probe-driver60')
 
@@ -553,6 +588,17 @@ def main():
         HERE / 'pioneer_qwen35_dataflow.cpp',
         HERE / 'PioneerModelWeightCache.cpp', '-o', client],
         check=True, env=env)
+
+    if args.build_span_qualification:
+        span_client = output / 'pioneer-q35-span-qualification'
+        subprocess.run([
+            cxx, '-std=c++17', '-O2', '-Wall', '-Wextra', '-Werror', *includes,
+            '-B' + str(release / 'system/glue') + '/',
+            '-L' + str(release / 'system/libroot'), *libraries,
+            HERE / 'pioneer_qwen35_span_qualification.cpp', '-o', span_client],
+            check=True, env=env)
+        print('span_client_sha256=' + hashlib.sha256(span_client.read_bytes()).hexdigest())
+        print('span_client=' + str(span_client))
 
     driver_image = driver / 'tenstorrent_pci_probe-driver60'
     print('driver_sha256=' + hashlib.sha256(driver_image.read_bytes()).hexdigest())
