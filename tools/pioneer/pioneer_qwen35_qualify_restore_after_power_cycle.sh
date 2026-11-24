@@ -119,13 +119,23 @@ case "$stage" in
 	/boot/home/pioneer-q35-model-preload-20261124-aa)
 		candidateTag=2026112300030018
 		candidateSHA=0dcabe55d701e1288ad97fb3a8ac61500b9d1b09b804582c36303de644973109 ;;
+	/boot/home/pioneer-q35-role-fleet-20261124-ab)
+		candidateTag=2026112300030019
+		candidateSHA=df25adf3c02ad8fe30a01233ea84797e1b6ad6dec21d9123c57b0a1be0d944e4 ;;
 	*) exit 2;;
 esac
 test -d "$stage" && test ! -L "$stage" && [ "$(stat -c '%u:%a' "$stage")" = 0:700 ] || fail stage
 test -d "$lock" && test ! -L "$lock" && [ "$(stat -c '%u:%a' "$lock")" = 0:700 ] || fail lock
 test -d "$stage/.qualification-once" && test ! -L "$stage/.qualification-once" || fail trial_marker
 [ "$(cat "$lock/owner")" = "$stage" ] || fail lock_owner
-test "$(cat "$stage/state")" = QUALIFICATION_FAILED_RETAIN_FOR_INSPECTION || fail state
+case "$(cat "$stage/state")" in
+	QUALIFICATION_FAILED_RETAIN_FOR_INSPECTION) ;;
+	# A hung client cannot write the retained marker. Only the fleet stage
+	# admits its last running marker, and the candidate-generation and host
+	# health checks below still require the fresh post-power-cycle boot.
+	QUALIFICATION_RUNNING) [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ab ] || fail state ;;
+	*) fail state ;;
+esac
 test -L "$device" && [ "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe ] || fail device_link
 exact "$admin" "$adminSHA" && exact "$guard" "$guardSHA" || fail trusted_helpers
 exact "$stable" "$stableSHA" && exact "$stage/restore.incoming" "$stableSHA" || fail stable_backup

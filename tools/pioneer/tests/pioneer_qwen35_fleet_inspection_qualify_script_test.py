@@ -32,7 +32,8 @@ def run_case(case, variant='l'):
                     'x':'e0cd6d579fbb2622ec37dc70567c55602b2e5dabd2ec85afafcc51c920213949',
                     'y':'2c43af6bbe0e709ae20c03f4e48e3d0fb33a13f39e53662537e14a530b4b6475',
                     'z':'dde75fc1700b9c542ffc6b21aef8d6920d7ce27603ce984fe041782b21732011',
-                    'A':'0dcabe55d701e1288ad97fb3a8ac61500b9d1b09b804582c36303de644973109'}
+                    'A':'0dcabe55d701e1288ad97fb3a8ac61500b9d1b09b804582c36303de644973109',
+                    'B':'df25adf3c02ad8fe30a01233ea84797e1b6ad6dec21d9123c57b0a1be0d944e4'}
         clients={'l':CLIENT,'m':'4e890c6ed33ebeeebb07b6259e78343b722b9de36579e3e8635dbcbdbefad3dd',
                  'n':'ef76ebfa01d675dd43449f9aa8b7b128477f8962a3ecd093975af1c666d85e1d',
                  'o':'a914af54a1cac088aeed7558f422c425fd6536600dcf96f047ae4adc1b8cf216',
@@ -47,8 +48,9 @@ def run_case(case, variant='l'):
                  'x':'731efea4edb6381e969397856d8303e0915cc00c94524fa874ab940cad105447',
                  'y':'696c41afab92c7808fe0a34ff4aa7ffeb3e4028e2149032a1479d2c80c803676',
                  'z':'696c41afab92c7808fe0a34ff4aa7ffeb3e4028e2149032a1479d2c80c803676',
-                 'A':'dfb25a19e906bf7031e5dbb22ce093edff12b5cd672cd2dcbd2f09d2ce016842'}
-        tags={'l':'2026112300030003','m':'2026112300030004','n':'2026112300030005','o':'2026112300030006','p':'2026112300030007','q':'2026112300030008','r':'2026112300030009','s':'2026112300030010','t':'2026112300030011','u':'2026112300030012','v':'2026112300030013','w':'2026112300030014','x':'2026112300030015','y':'2026112300030016','z':'2026112300030017','A':'2026112300030018'}
+                 'A':'dfb25a19e906bf7031e5dbb22ce093edff12b5cd672cd2dcbd2f09d2ce016842',
+                 'B':'069bc9a37aa36c193b6b337a3ef73e475f41d2ee8a692b13900d24a735a67089'}
+        tags={'l':'2026112300030003','m':'2026112300030004','n':'2026112300030005','o':'2026112300030006','p':'2026112300030007','q':'2026112300030008','r':'2026112300030009','s':'2026112300030010','t':'2026112300030011','u':'2026112300030012','v':'2026112300030013','w':'2026112300030014','x':'2026112300030015','y':'2026112300030016','z':'2026112300030017','A':'2026112300030018','B':'2026112300030019'}
         scripts={'l':SCRIPT,'m':common.ROOT/'tools/pioneer/pioneer_qwen35_fleet_inspection_qualify_m.sh',
                  'n':common.ROOT/'tools/pioneer/pioneer_qwen35_role_stage_qualify.sh',
                  'o':common.ROOT/'tools/pioneer/pioneer_qwen35_role_prestack_qualify.sh',
@@ -63,9 +65,10 @@ def run_case(case, variant='l'):
                  'x':common.ROOT/'tools/pioneer/pioneer_qwen35_span_qualify_x.sh',
                  'y':common.ROOT/'tools/pioneer/pioneer_qwen35_span_qualify_y.sh',
                  'z':common.ROOT/'tools/pioneer/pioneer_qwen35_span_qualify_z.sh',
-                 'A':common.ROOT/'tools/pioneer/pioneer_qwen35_model_preload_qualify_aa.sh'}
+                 'A':common.ROOT/'tools/pioneer/pioneer_qwen35_model_preload_qualify_aa.sh',
+                 'B':common.ROOT/'tools/pioneer/pioneer_qwen35_role_fleet_qualify_ab.sh'}
         candidate,client,tag,script=candidates[variant],clients[variant],tags[variant],scripts[variant]
-        stage=home/('pioneer-q35-model-preload-20261124-aa' if variant=='A' else (('pioneer-q35-supported-span-20261124-' if variant in ('y','z')
+        stage=home/('pioneer-q35-role-fleet-20261124-ab' if variant=='B' else 'pioneer-q35-model-preload-20261124-aa' if variant=='A' else (('pioneer-q35-supported-span-20261124-' if variant in ('y','z')
                      else 'pioneer-q35-supported-span-20261123-' if variant in ('w','x')
                      else 'pioneer-q35-role-fault-20261123-' if variant=='v'
                      else 'pioneer-q35-role-service-20261123-' if variant=='u'
@@ -82,7 +85,8 @@ def run_case(case, variant='l'):
         admin.write_text(admin.read_text().replace("'2026112300030015')", "'2026112300030015','2026112300030016')"))
         admin.write_text(admin.read_text().replace("'2026112300030016')", "'2026112300030016','2026112300030017')"))
         admin.write_text(admin.read_text().replace("'2026112300030017')", "'2026112300030017','2026112300030018')"))
-        if variant in ('t','u','v','w','x','y','z','A'):
+        admin.write_text(admin.read_text().replace("'2026112300030018')", "'2026112300030018','2026112300030019')"))
+        if variant in ('t','u','v','w','x','y','z','A','B'):
             # The production wrapper hashes both pinned models. Keep the fake
             # sparse fixtures cheap, while still testing a mismatched hash.
             common.put(root/'bin/sha256sum', '''#!/usr/bin/env python3
@@ -99,10 +103,10 @@ print(h,p)
         common.put(stage/'client', '''#!/usr/bin/env python3
 import json, os, sys
 role=os.environ['MOCK_ROLE']
-assert sys.argv[1:]==(['--qualify-model-preload',os.environ['MOCK_MODEL4']] if role=='7' else ['--qualify-supported-span'] if role=='6' else ['--qualify-role-service-fault'] if role=='5' else ['--qualify-role-service'] if role=='4' else ['--qualify-role-local-restore'] if role=='3' else ['--qualify-role-prestack'] if role=='2' else ['--qualify-held-role-stage'] if role=='1' else ['--inspect-held-fleet'])
+assert sys.argv[1:]==(['--qualify-role-fleet-service'] if role=='8' else ['--qualify-model-preload',os.environ['MOCK_MODEL4']] if role=='7' else ['--qualify-supported-span'] if role=='6' else ['--qualify-role-service-fault'] if role=='5' else ['--qualify-role-service'] if role=='4' else ['--qualify-role-local-restore'] if role=='3' else ['--qualify-role-prestack'] if role=='2' else ['--qualify-held-role-stage'] if role=='1' else ['--inspect-held-fleet'])
 p=os.environ['MOCK_STATE'];s=json.load(open(p));assert s['driver']==60
 case=os.environ['MOCK_CASE']
-if case=='retained':
+if case in ('retained','retained_running'):
  s['cold']=True;s['active']=True;json.dump(s,open(p,'w'));raise SystemExit(1)
 if case=='invalid': print('invalid receipt',file=sys.stderr);raise SystemExit(0)
 if case=='clean_failure':
@@ -112,7 +116,7 @@ if role=='7':
 if role=='6':
  print('P100A_Q35_SUPPORTED_SPAN banks=7 pages=7 host_exact=1 clean_end=1;NO_INFERENCE');raise SystemExit(0)
 print('P100A_Q35_FLEET_INSPECTION replied=1 status=0 stage=4 core=120 l2cpu=0x0000000f restore_failed=0 prepared=120',file=sys.stderr)
-if role!='0': print('P100A_Q35_ROLE_STAGE replied=1 status=0 stage='+('12' if role=='5' else '11' if role=='4' else '10' if role=='3' else '9' if role=='2' else '8')+' captured=1 staged=1 restored=1 mappings_closed=1',file=sys.stderr)
+if role!='0': print('P100A_Q35_ROLE_STAGE replied=1 status=0 stage='+('13' if role=='8' else '12' if role=='5' else '11' if role=='4' else '10' if role=='3' else '9' if role=='2' else '8')+' captured=1 staged=1 restored=1 mappings_closed=1',file=sys.stderr)
 print('P100A_Q35_FLEET_INSPECTION clean_end=1',file=sys.stderr)
 ''')
         state=Path(env['MOCK_STATE'])
@@ -129,23 +133,30 @@ print('P100A_Q35_FLEET_INSPECTION clean_end=1',file=sys.stderr)
         wrapper=root/'inspect.sh';common.put(wrapper,source)
         run_env=dict(env,MOCK_CASE=case,MOCK_BAD_MODEL='1' if case=='bad_model' else '0',
                      MOCK_MODEL4=str(home/'pioneer-qwen35-4b-225/Qwen3.5-4B-Q4_K_M.gguf'),
-                     MOCK_ROLE='7' if variant=='A' else '6' if variant in ('w','x','y','z') else '5' if variant=='v' else '4' if variant=='u' else '3' if variant=='t' else '2' if variant in ('o','p','q','r','s') else '1' if variant=='n' else '0')
+                     MOCK_ROLE='8' if variant=='B' else '7' if variant=='A' else '6' if variant in ('w','x','y','z') else '5' if variant=='v' else '4' if variant=='u' else '3' if variant=='t' else '2' if variant in ('o','p','q','r','s') else '1' if variant=='n' else '0')
         result=subprocess.run(['bash',str(wrapper),'2'],env=run_env,
                               stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
         lock=home/'.pioneer-q35-dataflow-exclusive'
-        if case=='retained':
+        if case in ('retained','retained_running'):
             assert result.returncode!=0 and installed.read_text()=='candidate' and lock.is_dir(), result.stderr
             assert (stage/'state').read_text().strip()=='QUALIFICATION_FAILED_RETAIN_FOR_INSPECTION'
             assert subprocess.run(['bash',str(wrapper),'2'],env=dict(run_env,MOCK_CASE='success'),
                                   stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode!=0
-            state.write_text(json.dumps(dict(driver=60,tag=tag,generation=1,
-                                             quiesced=False,cold=False,active=False)))
+            if case=='retained_running':
+                (stage/'state').write_text('QUALIFICATION_RUNNING\n')
             restore=common.RESTORE.read_text().replace('/boot/home',str(home)).replace('0:1:600:',f'{os.getuid()}:1:600:')
             restore=restore.replace('= 0:1 ]',f'= {os.getuid()}:1 ]').replace('= 0:700 ]',f'= {os.getuid()}:700 ]')
             for old,path in ((common.OLD_DRIVER,stage/'restore.incoming'),(common.NEW_GUARD,guard),
                              (common.ADMIN,admin),(candidate,stage/'candidate')):
                 restore=restore.replace(old,hashlib.sha256(path.read_bytes()).hexdigest())
             recovery=root/'restore.sh';common.put(recovery,restore)
+            if case=='retained_running':
+                # Running marker alone cannot stand in for a fresh boot.
+                premature=subprocess.run(['bash',str(recovery),str(stage)],env=env,
+                                         stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+                assert premature.returncode!=0 and installed.read_text()=='candidate' and lock.is_dir()
+            state.write_text(json.dumps(dict(driver=60,tag=tag,generation=1,
+                                             quiesced=False,cold=False,active=False)))
             restored=subprocess.run(['bash',str(recovery),str(stage)],env=env,
                                     stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
             assert restored.returncode==0,restored.stderr
@@ -156,16 +167,18 @@ print('P100A_Q35_FLEET_INSPECTION clean_end=1',file=sys.stderr)
         else:
             assert (result.returncode==0)==(case=='success'),(result.stdout,result.stderr)
             assert installed.read_text()=='stable' and not lock.exists(),result.stderr
-            prefix='MODEL_PRELOAD' if variant=='A' else 'SUPPORTED_SPAN' if variant in ('w','x','y','z') else 'ROLE_SERVICE_FAULT' if variant=='v' else 'ROLE_SERVICE' if variant=='u' else 'ROLE_LOCAL_RESTORE' if variant=='t' else 'ROLE_PRESTACK' if variant in ('o','p','q','r','s') else 'ROLE_STAGE' if variant=='n' else 'FLEET_INSPECTION'
+            prefix='ROLE_FLEET_SERVICE' if variant=='B' else 'MODEL_PRELOAD' if variant=='A' else 'SUPPORTED_SPAN' if variant in ('w','x','y','z') else 'ROLE_SERVICE_FAULT' if variant=='v' else 'ROLE_SERVICE' if variant=='u' else 'ROLE_LOCAL_RESTORE' if variant=='t' else 'ROLE_PRESTACK' if variant in ('o','p','q','r','s') else 'ROLE_STAGE' if variant=='n' else 'FLEET_INSPECTION'
             expected=prefix+('_PASSED_STABLE_RESTORED' if case=='success' else '_FAILED_STABLE_RESTORED')
             assert (stage/'state').read_text().strip()==expected
 
 
-variants=tuple(os.environ.get('Q35_TEST_VARIANTS','lmnopqrstuvwxyzA'))
+variants=tuple(os.environ.get('Q35_TEST_VARIANTS','lmnopqrstuvwxyzAB'))
 for variant in variants:
     for scenario in ('success','clean_failure','invalid','retained','busy'):
         run_case(scenario,variant)
 for scenario in ('bad_model','busy_27b'):
-    for variant in (v for v in variants if v in ('t','u','v','w','x','y','z','A')):
+    for variant in (v for v in variants if v in ('t','u','v','w','x','y','z','A','B')):
         run_case(scenario,variant)
+if 'B' in variants:
+    run_case('retained_running','B')
 print('PASS one-shot fleet inspection, clean restore, busy preflight and retained recovery; SIMULATED HOST ONLY')

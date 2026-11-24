@@ -876,7 +876,7 @@ if ${CXX:-c++} -x c++ -std=c++17 -E -D_KERNEL_MODE -DPIONEER_QWEN35_ROLE_FLEET_S
     echo 'unqualified fleet service accepted a kernel build' >&2
     exit 1
 fi
-if ! grep -q 'Fleet service startup is not yet qualified for a loadable driver' "$temporary/fleet-service-guard.err"; then
+if ! grep -q 'Fleet service startup requires its restricted qualification build' "$temporary/fleet-service-guard.err"; then
     echo 'fleet service kernel rejection did not come from its qualification guard' >&2
     exit 1
 fi

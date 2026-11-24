@@ -19,6 +19,7 @@ ROLE_PRESTACK_QUALIFICATION_TAG = '2026112300030010'
 ROLE_LOCAL_RESTORE_QUALIFICATION_TAG = '2026112300030011'
 ROLE_SERVICE_QUALIFICATION_TAG = '2026112300030012'
 ROLE_SERVICE_FAULT_QUALIFICATION_TAG = '2026112300030013'
+ROLE_FLEET_SERVICE_QUALIFICATION_TAG = '2026112300030019'
 SPAN_QUALIFICATION_TAG = '2026112300030017'
 MODEL_PRELOAD_QUALIFICATION_TAG = '2026112300030018'
 
@@ -445,6 +446,8 @@ def main():
                         help='build the restricted one-core resident role startup/stop/restore driver')
     parser.add_argument('--build-role-service-fault-qualification', action='store_true',
                         help='build the restricted one-core resident role fault/stop/restore driver')
+    parser.add_argument('--build-role-fleet-service-qualification', action='store_true',
+                        help='build the restricted 120-core resident role startup/stop/restore driver')
     args = parser.parse_args()
     if args.build_model_preload_qualification:
         if args.build_span_qualification:
@@ -455,10 +458,15 @@ def main():
                 or args.build_fleet_inspection_qualification or args.build_role_stage_qualification
                 or args.build_role_prestack_qualification or args.build_role_local_restore_qualification
                 or args.build_role_service_qualification or args.build_role_service_fault_qualification
+                or args.build_role_fleet_service_qualification
                 or args.compile_supported_span_prototype):
             parser.error('span qualification selects its own restricted build flags')
         args.build_recovery_qualification = True
         args.compile_supported_span_prototype = True
+    if args.build_role_fleet_service_qualification:
+        if args.build_role_service_qualification or args.build_role_service_fault_qualification:
+            parser.error('fleet service qualification selects its own service qualification')
+        args.build_role_service_qualification = True
     if args.build_role_service_fault_qualification:
         if args.build_role_service_qualification:
             parser.error('fault qualification selects its own service qualification')
@@ -525,6 +533,7 @@ def main():
                       PIONEER_DRIVER_RELOAD='1',
                       PIONEER_DRIVER_BUILD_TAG=(MODEL_PRELOAD_QUALIFICATION_TAG if args.build_model_preload_qualification
                                                else SPAN_QUALIFICATION_TAG if args.build_span_qualification
+                                               else ROLE_FLEET_SERVICE_QUALIFICATION_TAG if args.build_role_fleet_service_qualification
                                                else ROLE_SERVICE_FAULT_QUALIFICATION_TAG if args.build_role_service_fault_qualification
                                                else ROLE_SERVICE_QUALIFICATION_TAG if args.build_role_service_qualification
                                                else ROLE_LOCAL_RESTORE_QUALIFICATION_TAG if args.build_role_local_restore_qualification
@@ -571,6 +580,8 @@ def main():
         driver_env['PIONEER_QWEN35_ROLE_SERVICE_QUALIFY'] = '1'
     if args.build_role_service_fault_qualification:
         driver_env['PIONEER_QWEN35_ROLE_FAULT_QUALIFY'] = '1'
+    if args.build_role_fleet_service_qualification:
+        driver_env['PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY'] = '1'
     if args.build_device_dispatch_trial:
         driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL'] = '1'
     subprocess.run(['sh', HERE / 'build_qwen38_banks_driver.sh', build, driver],

@@ -112,7 +112,7 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         && owner->views.Open(c->io.profile.bar0_host_start,c->io.profile.bar0_host_end,route);
                     PioneerQwen35RoleFleetPciIO<PioneerSessionIO,PioneerQ35FleetInspectionScope,
                         DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>> adapter(c->io,scope,owner->views);
-#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+#if defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY) && !defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY)
                     PioneerQwen35RolePrestackProbe<PioneerSessionIO,PioneerQ35FleetInspectionScope,
                         DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>,decltype(adapter)>
                         prestack(c->io,scope,owner->views,adapter,owner->prestack);
@@ -127,16 +127,16 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         r.stage=5;PioneerQ35RoleStageProgress(r.stage);
                         okay=scope.EnableStageWrites(c->io);
                         if (okay) {
-#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
-#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
 #ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
                             if (r.version==6) okay=owner->images.StageAll(DataflowServiceProbeReaderCodeWords,
                                 sizeof(DataflowServiceProbeReaderCodeWords)/sizeof(uint32_t),
                                 DataflowServiceProbeWriterCodeWords,sizeof(DataflowServiceProbeWriterCodeWords)/sizeof(uint32_t),
                                 DataflowServiceProbeReaderShimWords,sizeof(DataflowServiceProbeReaderShimWords)/sizeof(uint32_t),
                                 DataflowServiceProbeWriterShimWords,sizeof(DataflowServiceProbeWriterShimWords)/sizeof(uint32_t),adapter);
-                            else
-#endif
+                            else okay=false;
+#else
+#ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
                             if (r.version==4 || r.version==5) okay=owner->images.StageOne(0,DataflowServiceProbeReaderCodeWords,
                                 sizeof(DataflowServiceProbeReaderCodeWords)/sizeof(uint32_t),
                                 DataflowServiceProbeWriterCodeWords,sizeof(DataflowServiceProbeWriterCodeWords)/sizeof(uint32_t),
@@ -164,6 +164,7 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                                 DataflowSharedWriterCodeWords,sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t),
                                 DataflowSharedReaderShimWords,sizeof(DataflowSharedReaderShimWords)/sizeof(uint32_t),
                                 DataflowSharedWriterShimWords,sizeof(DataflowSharedWriterShimWords)/sizeof(uint32_t),adapter);
+#endif
                         }
                         r.staged=okay;
                     }
@@ -203,6 +204,7 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         }
                     }
 #endif
+#ifndef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
                     if (okay && (r.version==2
 #ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
                             || r.version==3
@@ -229,6 +231,7 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         okay=prestack.Run(DataflowSharedReaderParkAddress,DataflowSharedWriterParkAddress,65536);
                     }
 #endif
+#endif
                     if (okay) {
                         r.stage=6;PioneerQ35RoleStageProgress(r.stage);
                         okay=owner->images.RestoreAll(adapter);r.restored=okay;
@@ -244,6 +247,7 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         }
                     }
 #endif
+#ifndef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
                     if (okay && (r.version==2
 #ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
                             || r.version==3
@@ -252,6 +256,7 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                             || r.version==4 || r.version==5
 #endif
                         )) okay=prestack.VerifyAfterImages();
+#endif
 #endif
                     if (okay) {
                         r.stage=7;PioneerQ35RoleStageProgress(r.stage);

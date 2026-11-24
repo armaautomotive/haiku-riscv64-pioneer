@@ -7,8 +7,10 @@
 #if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) && !defined(PIONEER_QWEN35_ROLE_SERVICE_QUALIFY)
 #error Fleet role qualification requires the resident service images
 #endif
-#if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) && defined(_KERNEL_MODE)
-#error Fleet service startup is not yet qualified for a loadable driver
+#if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) && defined(_KERNEL_MODE) \
+    && (!defined(PIONEER_QWEN35_RECOVERY_QUALIFY) || !defined(PIONEER_DRIVER_BUILD_TAG) \
+        || PIONEER_DRIVER_BUILD_TAG != 0x2026112300030019ULL || defined(PIONEER_QWEN35_ROLE_FAULT_QUALIFY))
+#error Fleet service startup requires its restricted qualification build
 #endif
 #if defined(PIONEER_QWEN35_ROLE_FAULT_QUALIFY) && defined(_KERNEL_MODE) \
     && (!defined(PIONEER_QWEN35_ROLE_SERVICE_QUALIFY) || !defined(PIONEER_DRIVER_BUILD_TAG) \
@@ -486,6 +488,7 @@ public:
     bool Attempted() const { return fState.attempted; }
     bool Complete() const { return fState.complete; }
 
+#ifndef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
     __attribute__((noinline)) bool Run(uint32_t readerPark,uint32_t writerPark,unsigned polls,
         bool localRestoreProbe=false,bool serviceProbe=false
 #ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
@@ -534,6 +537,7 @@ public:
 #endif
             );
     }
+#endif
 #ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
     // Start once, retain the captured state while other workers start, and
     // stop separately after the owner has audited the complete fleet.
