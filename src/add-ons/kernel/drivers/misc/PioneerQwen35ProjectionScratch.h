@@ -144,6 +144,9 @@ public:
             for (unsigned w=0;w<10;w++) if (io.ResidentNocRead(w*4)!=trace.command[w]) return false;
             const uint32_t expected[4]={1,64,1,1};
             for (unsigned w=0;w<4;w++) {
+                // The private read path deliberately never samples the
+                // unsupported Blackhole read-data-word counter at 0x20c.
+                if (!trace.write && w==1) continue;
                 const uint32_t current=io.ResidentNocRead(trace.write?BlackholeHostWriteCounter(w):0x208+w*4);
                 if (uint32_t(current-r.before[trace.step][w])!=expected[w]
                     || (pass && current!=first[w])) return false;

@@ -7,8 +7,14 @@
 #include <vector>
 using namespace PioneerQwen35;
 
+struct BlackholeStreamBanksMock : BanksMock {
+	uint32_t ResidentNocRead(uint32_t offset) {
+		assert(offset!=0x20c);
+		return BanksMock::ResidentNocRead(offset);
+	}
+};
 struct Storage {
-	BanksMock raw;tt_dram_samples_result baseline=BankProof(raw);
+	BlackholeStreamBanksMock raw;tt_dram_samples_result baseline=BankProof(raw);
 	tt_compute_noc_result noc=raw.Compute();tt_host_page_result host{};PioneerResidentLease lease;
 	PioneerResidentBanks banks;std::vector<uint8_t> initialized=std::vector<uint8_t>(PioneerResidentBanks::Pages,0);
 	bool quarantined=false;unsigned writes=0;
@@ -97,6 +103,7 @@ int main() {
 	assert(storage.raw.requests==priorRequests);
 	assert(PioneerResidentStorePage(storage.raw,storage.baseline,storage.noc,storage.host,storage.lease,
 		PioneerResidentBanks::Capacity,first.address-BankBase,false,transfer,result,&storage.banks,first.bank,sink.get()));
+	assert(!result.before[0][1] && !result.after[0][1]); // unsupported counter was not read
 	for (unsigned core=0;core<DataflowCoreCount;core++) {
 		const auto& r=plan.lease[core];
 		assert(storage.banks.Q35StreamPage(storage.baseline,sink.get(),r.bank,r.address-BankBase,false,address,route,index));

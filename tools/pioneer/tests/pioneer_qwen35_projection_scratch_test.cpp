@@ -35,7 +35,15 @@ struct ScratchScope {
     void RetainScratch(const void* p) { assert(p==owner);retained=true; }
 };
 
-struct CrossCorruptBanksMock : BanksMock {
+// The rewrite must not read Blackhole's unsupported RD_DATA_WORD counter.
+struct BlackholeScratchBanksMock : BanksMock {
+    uint32_t ResidentNocRead(uint32_t offset) {
+        assert(offset!=0x20c);
+        return BanksMock::ResidentNocRead(offset);
+    }
+};
+
+struct CrossCorruptBanksMock : BlackholeScratchBanksMock {
     bool corruptDuringRestore=false;
     void ResidentNocWrite(uint32_t offset,uint32_t value) {
         BanksMock::ResidentNocWrite(offset,value);
@@ -47,7 +55,18 @@ struct CrossCorruptBanksMock : BanksMock {
     }
 };
 
-template<class Raw=BanksMock> struct ScratchDevice {
+// The request was accepted and its doorbell cleared, but no read response
+// arrived. A quiet-looking initiator is not evidence of completed data.
+struct AcceptedOnlyBanksMock : BlackholeScratchBanksMock {
+    void ResidentNocWrite(uint32_t offset,uint32_t value) {
+        BanksMock::ResidentNocWrite(offset,value);
+        if (offset==0x40 && value==1 && failRequest==doorbells) {
+            pending=false;done=true;accepted++;counters[3]++;
+        }
+    }
+};
+
+template<class Raw=BlackholeScratchBanksMock> struct ScratchDevice {
     Raw io;tt_dram_samples_result dram=BankProof(io);tt_compute_noc_result noc=io.Compute();
     tt_host_page_result host{};PioneerResidentLease lease;PioneerResidentBanks banks;
     std::vector<uint8_t> initialized=std::vector<uint8_t>(PioneerResidentBanks::Pages,0);
@@ -190,8 +209,20 @@ int main()
             && failure.transfer.requests==1 && !failure.transfer.completed && !failure.transfer.wrote_device);
         const uint32_t expected[]={Fixture::ScratchAddress,0,18|(12<<6),0x17f000,0,1|(2<<6),0,0,4096,0};
         assert(failure.trace.issued && !failure.trace.write && failure.trace.step==0);
+        assert(!failure.transfer.before[0][1] && !failure.transfer.after[0][1]);
         for (unsigned w=0;w<10;w++) assert(failure.trace.command[w]==expected[w]);
         CheckLateObservation(*owner,*device);
+    }
+    {
+        auto owner=std::make_unique<PioneerQ35ProjectionScratch>();
+        auto device=std::make_unique<ScratchDevice<AcceptedOnlyBanksMock>>();
+        device->io.failRequest=device->io.doorbells+1;
+        assert(!device->Capture(*owner) && owner->FailedTransfer() && device->scope.retained);
+        const auto& failure=owner->Failure();
+        assert(failure.transfer.state==TT_STORE_TIMEOUT && failure.transfer.requests==1
+            && !failure.transfer.completed && failure.leasePending
+            && failure.transfer.after[0][0]==failure.transfer.before[0][0]
+            && uint32_t(failure.transfer.after[0][2]-failure.transfer.before[0][2])==1);
     }
     for (unsigned failedStep=1;failedStep<=3;failedStep++) {
         auto owner=std::make_unique<PioneerQ35ProjectionScratch>();
@@ -215,6 +246,8 @@ int main()
         const uint32_t* expected=failedStep==1?fromHost:failedStep==2?toGddr:fromGddr;
         assert(failure.trace.issued && failure.trace.step==failedStep-1
             && failure.trace.write==bool(failedStep==2));
+        if (failedStep!=2) assert(!failure.transfer.before[failedStep-1][1]
+            && !failure.transfer.after[failedStep-1][1]);
         for (unsigned w=0;w<10;w++) assert(failure.trace.command[w]==expected[w]);
         CheckLateObservation(*owner,*device);
         assert(!device->Restore(*owner) && device->banks.Q35StreamClaimed());
