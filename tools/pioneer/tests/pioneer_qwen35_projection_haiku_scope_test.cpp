@@ -49,6 +49,7 @@ public:
         return preparation && io.selected==c && c!=deniedPreparationCore;
     }
     bool ProveRoleRuntimeSafe(PioneerSessionIO& io,unsigned c) const { return runtime && io.selected==c; }
+    bool ProveRoleProjectionInFlightSafe(PioneerSessionIO&,const void*,const void*) const { return false; }
     bool ProveRoleAutoRestoreCompletionSafe(PioneerSessionIO& io,unsigned c) const { return restored && io.selected==c; }
 };
 template<class Work> static bool PioneerQwen35WithSelectedClock(PioneerSessionIO&,unsigned,Work work) { return work(); }

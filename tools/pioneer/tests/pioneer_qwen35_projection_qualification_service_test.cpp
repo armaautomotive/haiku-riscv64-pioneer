@@ -6,6 +6,15 @@
 #include "../PioneerQwen35DataflowProjectionQualificationService.h"
 
 struct QualificationScope;
+struct QualificationTestIO : ProjectionServiceIO {
+    bool failAfterWrite=false;
+    unsigned publishCalls=0;
+    bool PublishCommand(unsigned core,unsigned sequence) {
+        ++publishCalls;
+        const bool okay=ProjectionServiceIO::PublishCommand(core,sequence);
+        return okay && !(failAfterWrite && core==0);
+    }
+};
 struct QualificationScratch {
     bool staged=true,running=false;
     bool IsStaged() const { return staged; }
@@ -17,8 +26,9 @@ struct QualificationScratch {
 struct QualificationScope {
     QualificationScratch* expected=nullptr;
     ProjectionServiceIO* io=nullptr;
-    bool safe=true,retained=false,failAudit=false,failAfterPublish=false;
-    unsigned audits=0;
+    bool safe=true,retained=false,failAudit=false,failAfterPublish=false,failBeforePublish=false;
+    unsigned failAfterCore=UINT32_MAX;
+    unsigned audits=0;mutable unsigned inFlightChecks=0;
     bool QualificationLeaseMatches(const QualificationScratch& s,unsigned bank,unsigned address,unsigned bytes,
         const unsigned (&routes)[2][Banks]) const {
         return safe && &s==expected && bank==0 && address==BankBase && bytes==Fixture::ScratchBytes
@@ -26,7 +36,13 @@ struct QualificationScope {
     }
     bool QualificationExecutionSafe(const QualificationScratch& s,const DataflowProjectionProgram& p) const {
         return safe && &s==expected && (s.staged || s.running) && p.Valid()
-            && (!failAfterPublish || (io && !io->mailbox[0].commandSequence));
+            && io && !io->mailbox[0].commandSequence;
+    }
+    bool QualificationProjectionInFlightSafe(const QualificationScratch& s,const DataflowProjectionProgram& p) const {
+        ++inFlightChecks;
+        return safe && !failBeforePublish && &s==expected && s.running && p.Valid()
+            && (!failAfterPublish || (io && !io->mailbox[0].commandSequence))
+            && (failAfterCore>=DataflowCoreCount || (io && !io->mailbox[failAfterCore].commandSequence));
     }
     bool QualificationRestoreRuntimeRoute(const QualificationScratch& s,const DataflowProjectionProgram& p,
         ProjectionServiceIO& actual) const {
@@ -62,8 +78,8 @@ int main()
     for (unsigned i=0;i<96;i++) code[i]=0x10000000U+i;
     for (unsigned i=0;i<80;i++) dispatch[i]=0x20000000U+i;
     const DataflowServiceImageView image={DataflowServiceBootWord,code,96,dispatch,80};
-    for (unsigned failure=0;failure<4;failure++) {
-        auto io=std::make_unique<ProjectionServiceIO>();
+    for (unsigned failure=0;failure<7;failure++) {
+        auto io=std::make_unique<QualificationTestIO>();
         auto service=std::make_unique<DataflowServiceOwner>();
         auto qualification=std::make_unique<DataflowProjectionQualificationService>();
         QualificationScratch scratch;QualificationScope scope;scope.expected=&scratch;scope.io=io.get();
@@ -81,15 +97,23 @@ int main()
         if (failure==1) io->failWorkerCore=37;
         if (failure==2) scope.failAudit=true;
         if (failure==3) scope.failAfterPublish=true;
+        if (failure==4) scope.failBeforePublish=true;
+        if (failure==5) scope.failAfterCore=37;
+        if (failure==6) io->failAfterWrite=true;
         const auto result=qualification->Run(*service,*io,scratch,scope);
         if (failure) {
             assert(result==DataflowServiceProjectionFailed && qualification->IsFailed()
                 && service->Faulted() && scratch.running && scope.retained
                 && scope.audits==(failure==2?1U:0U));
             if (failure==3) assert(io->mailbox[0].commandSequence==1 && !io->mailbox[1].commandSequence);
+            if (failure==4) assert(!io->mailbox[0].commandSequence && scope.inFlightChecks==1);
+            if (failure==5) assert(io->mailbox[37].commandSequence==1 && !io->mailbox[38].commandSequence);
+            if (failure==6) assert(io->mailbox[0].commandSequence==1
+                && !io->mailbox[1].commandSequence && io->publishCalls==1);
         } else {
             assert(result==DataflowServiceComplete && qualification->IsAudited()
-                && service->Ready() && scratch.running && scope.audits==1 && !scope.retained);
+                && service->Ready() && scratch.running && scope.audits==1 && !scope.retained
+                && scope.inFlightChecks>DataflowCoreCount);
             for (unsigned row=0;row<Fixture::Rows;row++) {
                 uint32_t bits=0;std::memcpy(&bits,io->memory.output.data()+row*4,4);
                 assert(Fixture::OutputMatches(row,bits));

@@ -30,6 +30,9 @@ struct RoutedScope {
     bool QualificationExecutionSafe(const RoutedScratch& s,const DataflowProjectionProgram& p) const {
         return !retained && io && io->route==0 && &s==owner && (s.staged || s.running) && p.Valid();
     }
+    bool QualificationProjectionInFlightSafe(const RoutedScratch& s,const DataflowProjectionProgram& p) const {
+        return !retained && io && io->route==0 && &s==owner && s.running && p.Valid();
+    }
     bool QualificationRestoreRuntimeRoute(const RoutedScratch& s,const DataflowProjectionProgram& p,RoutedIO& actual) {
         ++restores;
         if (retained || &actual!=io || &s!=owner || !p.Valid() || actual.route==failRestore) return false;

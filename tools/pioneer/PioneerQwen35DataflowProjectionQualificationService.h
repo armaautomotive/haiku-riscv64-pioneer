@@ -22,8 +22,11 @@ class DataflowProjectionQualificationService {
 
     template<class IO,class Scope,class Scratch> struct Adapter {
         DataflowProjectionQualificationService& owner;IO& io;Scope& scope;Scratch& scratch;
+        bool publicationAttempted=false;
         bool Safe() { return owner.scratchIdentity==&scratch
-            && scope.QualificationExecutionSafe(scratch,owner.program); }
+            && (publicationAttempted
+                ?scope.QualificationProjectionInFlightSafe(scratch,owner.program)
+                :scope.QualificationExecutionSafe(scratch,owner.program)); }
         bool AfterIO(bool okay) {
             // A successful per-core access can leave a nonzero route selected.
             // An unsuccessful access may have left a partial route write, so
@@ -44,7 +47,14 @@ class DataflowProjectionQualificationService {
         bool CoreReady(unsigned c,const DataflowWorkerSnapshot& s) { return Safe() && AfterIO(io.CoreReady(c,s)); }
         bool WriteInvocation(unsigned c,const DataflowCoreInvocation& v) { return Safe() && AfterIO(io.WriteInvocation(c,v)); }
         bool InvocationMatches(unsigned c,const DataflowCoreInvocation& v) { return Safe() && AfterIO(io.InvocationMatches(c,v)); }
-        bool PublishCommand(unsigned c,unsigned sequence) { return Safe() && AfterIO(io.PublishCommand(c,sequence)); }
+        bool PublishCommand(unsigned c,unsigned sequence) {
+            // A successful publication makes a worker runnable immediately.
+            // Switch before attempting the write: even a failed call can
+            // have published it, so an idle-fleet proof is no longer valid.
+            if (!publicationAttempted && !Safe()) return false;
+            publicationAttempted=true;
+            return Safe() && AfterIO(io.PublishCommand(c,sequence));
+        }
         bool WaitForCompletion(unsigned c,unsigned sequence,DataflowWorkerSnapshot& s) {
             return Safe() && AfterIO(io.WaitForCompletion(c,sequence,s));
         }
@@ -67,6 +77,7 @@ public:
     DataflowProjectionQualificationService& operator=(const DataflowProjectionQualificationService&)=delete;
     bool IsAudited() const { return phase==Audited; }
     bool IsFailed() const { return phase==Failed; }
+    bool IsRunning() const { return phase==Running; }
     bool IsUnstarted() const { return phase==Empty || phase==Bound; }
     const DataflowProjectionProgram* Program() const { return phase==Empty?nullptr:&program; }
 

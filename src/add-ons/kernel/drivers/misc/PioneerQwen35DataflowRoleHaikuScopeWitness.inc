@@ -471,6 +471,10 @@ public:
     // cores when used during clean close; mailbox/PC samples alone are
     // insufficient. This proof is not yet implemented.
     bool ProveRoleRuntimeSafe(PioneerSessionIO&,unsigned) const { return false; }
+    // The physical in-flight proof must bind the exact diagnostic and fleet
+    // while allowing its own traffic. An idle/quiet observation cannot supply
+    // that guarantee; until implemented, publication remains denied.
+    bool ProveRoleProjectionInFlightSafe(PioneerSessionIO&,const void*,const void*) const { return false; }
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     // Admission for bounded runtime observations in this non-loadable
     // witness. Callers use it in their runtime decisions; it does not prove

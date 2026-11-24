@@ -142,6 +142,11 @@ public:
         return permitted && context && (scratch.IsStaged() || scratch.IsRunning()) && program.Valid()
             && scratch.MatchesBankClaimOwner(context->banks,context->baseline.baseline.baseline.baseline.dram);
     }
+    bool QualificationProjectionInFlightSafe(const PioneerQ35ProjectionScratch& scratch,
+        const PioneerQwen35::DataflowProjectionProgram& program) const {
+        return permitted && context && scratch.IsRunning() && program.Valid()
+            && scratch.MatchesBankClaimOwner(context->banks,context->baseline.baseline.baseline.baseline.dram);
+    }
     bool QualificationRestoreRuntimeRoute(const PioneerQ35ProjectionScratch& scratch,
         const PioneerQwen35::DataflowProjectionProgram& program,PioneerSessionIO& io) const {
         return permitted && context && &io==&context->io && (scratch.IsStaged() || scratch.IsRunning())

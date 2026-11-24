@@ -67,13 +67,19 @@ class PioneerQ35ProjectionQualificationScope {
             && c.lease.ready && !c.lease.pending && !c.lease.recovery_required
             && c.host.state==TT_HOST_PAGE_READY && !c.host.released && HeldAndQuiet();
     }
-    bool RuntimeReady(const PioneerQ35ProjectionScratch& scratch,
+    bool RuntimeIdentity(const PioneerQ35ProjectionScratch& scratch,
         const PioneerQwen35::DataflowProjectionProgram& program) const {
         auto* scope=Borrowed();
         if (!scope || !Identity() || !Owned(&scratch) || !c.qwen35QualificationInternalActive
             || !c.qwen35DataflowService || !c.qwen35DataflowService->Ready() || c.Unsafe(true)
             || !program.Valid() || !(scratch.IsStaged() || scratch.IsRunning())
             || !scratch.MatchesBankClaimOwner(c.banks,c.baseline.baseline.baseline.baseline.dram)) return false;
+        return true;
+    }
+    bool RuntimeReady(const PioneerQ35ProjectionScratch& scratch,
+        const PioneerQwen35::DataflowProjectionProgram& program) const {
+        auto* scope=Borrowed();
+        if (!scope || !RuntimeIdentity(scratch,program)) return false;
         return CheckFleet(scope,[&](unsigned core) { return scope->ProveRoleRuntimeSafe(c.io,core); },false);
     }
     void Retain(const void* candidate) const {
@@ -159,6 +165,20 @@ public:
     }
     bool QualificationExecutionSafe(const PioneerQ35ProjectionScratch& scratch,
         const PioneerQwen35::DataflowProjectionProgram& program) const { return RuntimeReady(scratch,program); }
+    // A worker can execute as soon as its command is published; demanding
+    // an idle fleet here would reject valid concurrent NoC traffic. This
+    // proof covers the exact in-flight owner and must permit only its
+    // authorized traffic. It is separate from the pre-publication audit and
+    // from the terminal all-worker receipt/queue/NoC audit below.
+    bool QualificationProjectionInFlightSafe(const PioneerQ35ProjectionScratch& scratch,
+        const PioneerQwen35::DataflowProjectionProgram& program) const {
+        auto* scope=Borrowed();
+        auto* qualification=c.qwen35QualificationOwner.Qualification();
+        return scope && qualification && qualification->IsRunning() && qualification->Program()==&program
+            && c.qwen35QualificationOwner.Owns(scratch) && scratch.IsRunning() && RuntimeIdentity(scratch,program)
+            && c.io.runtimeCore==0 && c.io.DataflowPanelMappingStable()
+            && scope->ProveRoleProjectionInFlightSafe(c.io,&scratch,&program);
+    }
     // Called only after a successful per-core operation under this same
     // locked owner. The next fleet check and scratch transfer require root.
     // This does not establish the still-missing runtime or firmware proof.
