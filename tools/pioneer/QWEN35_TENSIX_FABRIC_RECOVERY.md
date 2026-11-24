@@ -3,10 +3,10 @@
 The pinned Tenstorrent system-firmware v18.5.0 source includes a Tensix reset
 sequence in [`app/smc/pytest/e2e_smoke.py`](https://github.com/tenstorrent/tt-system-firmware/blob/80b056af360a58730756467d5cc8df8db789640d/app/smc/pytest/e2e_smoke.py),
 `tensix_reset_sequence`. It is a candidate for recovering a faulted resident
-rewrite without resetting the PCIe endpoint. It has **not** been implemented
-or tried on this Pioneer. A fixed-command queue mode has been implemented and
-simulated. A context-owned, phase-ordered queue adapter retains its mappings,
-but no live recovery controller constructs it yet. The reported
+rewrite without resetting the PCIe endpoint. The complete sequence has **not**
+been implemented or tried on this Pioneer. A context-owned queue adapter and
+the eight RISC reset-unit writes have been implemented and simulated, but no
+live recovery controller constructs the owner yet. The reported
 v18.5.0 firmware family is not proof
 that the installed binary matches the source.
 

@@ -4071,12 +4071,20 @@ struct PioneerQ35FabricArcCompileScope {
 		uint64,PioneerQ35FabricArcCompileOwner::Phase) { return false; }
 	bool FabricArcPhaseReady(const PioneerQ35FabricArcCompileOwner&,const PioneerPostResetMapping&,
 		uint64,PioneerQ35FabricArcCompileOwner::Phase) { return false; }
+	bool FabricResetUnitAllowed(const PioneerQ35FabricArcCompileOwner&,const PioneerPostResetMapping&,
+		uint64,PioneerQ35FabricArcCompileOwner::Phase,bool) { return false; }
+	bool FabricTilesHeld(const PioneerQ35FabricArcCompileOwner&,const PioneerPostResetMapping&,
+		uint64) { return false; }
 };
 template bool PioneerQ35FabricArcCompileOwner::Open<PioneerQ35FabricArcCompileScope>(
 	pioneer_driver_recovery_guard_v2_info*,PioneerQ35FabricArcCompileScope&);
 template bool PioneerQ35FabricArcCompileOwner::SendNext<PioneerQ35FabricArcCompileScope>(
 	pioneer_driver_recovery_guard_v2_info*,PioneerQ35FabricArcCompileScope&,
 	const tt_arc_scratch_result&,tt_arc_queue_result&);
+template bool PioneerQ35FabricArcCompileOwner::SetRiscReset<PioneerQ35FabricArcCompileScope>(
+	pioneer_driver_recovery_guard_v2_info*,PioneerQ35FabricArcCompileScope&,bool);
+template bool PioneerQ35FabricArcCompileOwner::ConfirmTilesHeld<PioneerQ35FabricArcCompileScope>(
+	pioneer_driver_recovery_guard_v2_info*,PioneerQ35FabricArcCompileScope&);
 #endif
 #if (defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && !defined(PIONEER_QWEN35_RECOVERY_QUALIFY)) \
 	|| defined(PIONEER_QWEN35_FIRMWARE_RESET_QUALIFY)
