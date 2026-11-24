@@ -15,8 +15,12 @@ struct Lease {
 struct IO {
     unsigned selected=120,selects=0,maps=0,prepares=0,restores=0,audits=0;
     unsigned failSelect=120,failPrepare=120,failAudit=120,failRestore=120;
+    bool failFinalRootSelect=false,failFinalRootAudit=false;
     bool fleetEnabled=false;
-    bool SelectRuntimeCore(unsigned core) { selected=core;++selects;return core!=failSelect; }
+    bool SelectRuntimeCore(unsigned core) {
+        selected=core;++selects;
+        return core!=failSelect && !(failFinalRootSelect && core==0 && selects>1);
+    }
     bool MapQ38Panel() { ++maps;return true; }
     bool MapRuntime() { return true; }
 };
@@ -26,7 +30,8 @@ static bool PioneerQwen35DedicatedPeerLeaseBegin(IO& io,const Dram&,unsigned cor
 }
 static bool PioneerQ38DispatchSources(IO& io,const Dram&,Banks&,Node& n,unsigned reset) {
     assert(reset==0x47800 && io.selected<120);++io.audits;
-    return n.Store().ready && io.selected!=io.failAudit;
+    return n.Store().ready && io.selected!=io.failAudit
+        && !(io.failFinalRootAudit && io.selected==0 && io.audits>120);
 }
 static bool PioneerQwen35DedicatedPeerLeaseEnd(IO& io,unsigned&,MockStore& s) {
     assert(io.audits>=120 && s.ready);++io.restores;
@@ -44,12 +49,20 @@ int main() {
         IO io;Banks banks;Lease lease;lease.worker[0].store.ready=true;
         assert(PioneerQwen35DedicatedFleetPrepare(io,dram,banks,lease));
         assert(lease.prepared==120 && !lease.booted && !lease.bootAttempted && !lease.unsafe);
-        assert(io.prepares==119 && io.audits==120 && !io.restores);
+        assert(io.prepares==119 && io.audits==121 && io.selected==0 && !io.restores);
         for (const auto& n:lease.worker) assert(!n.image.saved && !n.image.ready && !n.image.running);
         io.audits=0;
         assert(PioneerQwen35DedicatedFleetClose(io,dram,banks,lease));
         assert(lease.closed && io.audits==120 && io.restores==119 && io.selected==0 && !banks.quarantined);
         assert(!PioneerQwen35DedicatedFleetClose(io,dram,banks,lease));
+    }
+    for (unsigned failure=0;failure<2;failure++) {
+        IO io;Banks banks;Lease lease;lease.worker[0].store.ready=true;
+        io.failFinalRootSelect=failure==0;io.failFinalRootAudit=failure==1;
+        assert(!PioneerQwen35DedicatedFleetPrepare(io,dram,banks,lease));
+        assert(lease.prepared==120 && lease.unsafe && banks.quarantined && !io.restores);
+        const unsigned selects=io.selects;
+        assert(!PioneerQwen35DedicatedFleetPrepare(io,dram,banks,lease) && io.selects==selects);
     }
     {
         IO io;Banks banks;Lease lease;lease.worker[0].store.ready=true;io.failPrepare=37;

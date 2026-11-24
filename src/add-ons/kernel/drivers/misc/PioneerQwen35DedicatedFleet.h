@@ -19,6 +19,12 @@ bool PioneerQwen35DedicatedFleetPrepare(IO& io,const Dram& dram,Banks& banks,Lea
 			|| !PioneerQ38DispatchSources(io,dram,banks,node,0x47800))
 			return PioneerQ38DispatchQuarantine(lease,banks);
 	}
+	// Preparation ends on worker 119. Scratch transfers and the projection
+	// scope begin on worker zero; leave that route selected and re-audit its
+	// held sources. A failed route change may be partial, so retain the fleet.
+	if (!io.SelectRuntimeCore(0)
+		|| !PioneerQ38DispatchSources(io,dram,banks,lease.worker[0],0x47800))
+		return PioneerQ38DispatchQuarantine(lease,banks);
 	return true;
 }
 

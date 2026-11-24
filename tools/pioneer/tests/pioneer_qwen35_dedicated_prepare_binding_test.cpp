@@ -34,7 +34,7 @@ int main() {
         assert(context.qwen35DedicatedFleet && context.q38DispatchRoutes
             && context.q38Dispatch && context.q38Dispatch->prepared==120
             && !context.q38Dispatch->booted && !context.q38Dispatch->bootAttempted
-            && context.io.prepares==119 && context.io.audits==120);
+            && context.io.prepares==119 && context.io.audits==121 && context.io.selected==0);
         const unsigned selects=context.io.selects;
         assert(PrepareQ38Dispatch(context) && context.io.selects==selects);
     }
