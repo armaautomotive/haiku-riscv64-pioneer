@@ -11,7 +11,8 @@ struct ResetScope {
     const uint32_t* snapshot=nullptr;
     const tt_compute_noc_result* noc=nullptr;const tt_host_page_result* host=nullptr;PioneerResidentLease* lease=nullptr;
     bool allowed=true,retained=false,complete=true,quarantineAtComplete=false;
-    unsigned calls=0,failAt=UINT32_MAX,quarantineAt=UINT32_MAX;
+    unsigned calls=0,failAt=UINT32_MAX,quarantineAt=UINT32_MAX,changeRouteAt=UINT32_MAX,doorbellsAtRouteChange=0;
+    tt_dram_samples_result* oldDram=nullptr;
     template<class IO> bool RecoveryAdmissionAllowed(PioneerQ35ProjectionScratch& scratch,IO&,
         const PioneerResidentBanks& oldOwner,const tt_dram_samples_result&,PioneerResidentBanks& newOwner,
         const tt_dram_samples_result&,const tt_compute_noc_result& actualNoc,const tt_host_page_result& actualHost,
@@ -22,11 +23,12 @@ struct ResetScope {
             && saved==snapshot && words==PioneerQ35ProjectionScratch::SavedWords
             && initialized && pages==PioneerResidentBanks::Pages;
     }
-    template<class IO> bool RecoveryTransferAllowed(PioneerQ35ProjectionScratch& scratch,IO&,
+    template<class IO> bool RecoveryTransferAllowed(PioneerQ35ProjectionScratch& scratch,IO& io,
         const PioneerResidentBanks& oldOwner,PioneerResidentBanks& newOwner,const tt_compute_noc_result& actualNoc,
         const tt_host_page_result& actualHost,PioneerResidentLease& actualLease,uint64_t ticket,
         const uint32_t* saved,unsigned bank,unsigned offset,bool) {
         ++calls;if (calls==quarantineAt) newOwner.Quarantine();
+        if (calls==changeRouteAt) { assert(oldDram);oldDram->source[0]^=1;doorbellsAtRouteChange=io.doorbells; }
         return calls!=failAt && allowed && &scratch==owner && &oldOwner==oldBanks && &newOwner==newBanks
             && &actualNoc==noc && &actualHost==host && &actualLease==lease && ticket==expectedTicket && saved==snapshot && bank==0
             && offset>=Fixture::ScratchOffset && offset<Fixture::ScratchOffset+Fixture::ScratchBytes;
@@ -53,7 +55,7 @@ static bool Restore(PioneerQ35ProjectionResetRecovery& recovery,PioneerQ35Projec
 int main() {
     (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;
     constexpr uint64_t ticket=37;
-    for (unsigned scenario=0;scenario<7;scenario++) {
+    for (unsigned scenario=0;scenario<8;scenario++) {
         auto scratch=std::make_unique<PioneerQ35ProjectionScratch>();
         auto oldDevice=std::make_unique<ScratchDevice<>>();
         auto fresh=std::make_unique<ScratchDevice<>>();
@@ -71,8 +73,17 @@ int main() {
         assert(!oldDevice->banks.Q35StreamClaimMatches(scratch.get(),ranges,PioneerQwen35::DataflowCoreCount));
         ResetScope scope;scope.owner=scratch.get();scope.expectedTicket=ticket;
         scope.oldBanks=&oldDevice->banks;scope.newBanks=&fresh->banks;scope.snapshot=oldDevice->snapshot.data();
+        scope.oldDram=&oldDevice->dram;
         scope.noc=&fresh->noc;scope.host=&fresh->host;scope.lease=&fresh->lease;
         auto proof=ResetProof(ticket);
+        auto wrongOldDram=oldDevice->dram;
+        assert(!recovery->Restore(*scratch,ticket,proof,fresh->io,scope,oldDevice->banks,wrongOldDram,
+            fresh->banks,fresh->dram,fresh->noc,fresh->host,fresh->lease,
+            fresh->initialized.data(),fresh->initialized.size()) && !recovery->Faulted());
+        fresh->dram.source[0]^=1;
+        assert(!Restore(*recovery,*scratch,ticket,proof,*oldDevice,*fresh,scope)
+            && !recovery->Faulted() && !fresh->banks.Q35StreamClaimed());
+        fresh->dram.source[0]^=1;
         auto bad=proof;bad.flags^=PIONEER_RECOVERY_PROOF_NOC_IDLE;
         assert(!Restore(*recovery,*scratch,ticket,bad,*oldDevice,*fresh,scope)
             && !recovery->Faulted() && !fresh->banks.Q35StreamClaimed() && !scope.retained);
@@ -94,6 +105,7 @@ int main() {
         if (scenario==4) fresh->initialized[Fixture::ScratchOffset/4096]=1;
         if (scenario==5) scope.quarantineAt=4;
         if (scenario==6) scope.quarantineAtComplete=true;
+        if (scenario==7) scope.changeRouteAt=4;
         const bool okay=Restore(*recovery,*scratch,ticket,proof,*oldDevice,*fresh,scope);
         if (!scenario) {
             assert(okay && !scope.retained && fresh->banks.Q35StreamClaimed()
@@ -113,6 +125,8 @@ int main() {
             if (scenario==1) assert(recovery->FailedPage()==3 && recovery->FailedWrite());
             if (scenario==2) assert(recovery->FailedPage()==0 && recovery->FailedWrite()
                 && fresh->lease.recovery_required);
+            if (scenario==7) assert(recovery->FailedPage()==3 && recovery->FailedWrite()
+                && fresh->io.doorbells==scope.doorbellsAtRouteChange);
             const unsigned calls=scope.calls;
             assert(!Restore(*recovery,*scratch,ticket,proof,*oldDevice,*fresh,scope) && scope.calls==calls);
         }

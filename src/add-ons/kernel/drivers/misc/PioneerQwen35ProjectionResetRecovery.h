@@ -54,6 +54,7 @@ public:
         if (phase!=PhaseFresh || !ticket || !proof.ReadyToRetireOneOwner()
             || proof.reset_generation!=ticket || proof.firmware_generation!=ticket
             || &oldBanks==&newBanks
+            || !oldBanks.Q35RecoveryRoutesMatch(oldDram,newBanks,newDram)
             || !oldBanks.Q35StreamClaimMatches(&scratch,scratch.ranges,PioneerQwen35::DataflowCoreCount)
             || !scratch.saved || scratch.capturedPages!=Fixture::ScratchPages || !scratch.dirtyPages
             || scratch.dirtyPages>Fixture::ScratchPages || scratch.bank!=0 || scratch.firstOffset!=Fixture::ScratchOffset
@@ -74,10 +75,12 @@ public:
                 const bool write=pass==0;const unsigned offset=scratch.firstOffset+n*Fixture::PageBytes;
                 failedPage=n;failedWrite=write;
                 if (!oldBanks.Q35StreamClaimMatches(&scratch,scratch.ranges,PioneerQwen35::DataflowCoreCount)
+                    || !oldBanks.Q35RecoveryRoutesMatch(oldDram,newBanks,newDram)
                     || !newBanks.Q35StreamClaimMatches(&scratch,scratch.ranges,PioneerQwen35::DataflowCoreCount)
                     || !newBanks.Matches(newDram)
                     || !scope.RecoveryTransferAllowed(scratch,io,oldBanks,newBanks,noc,host,lease,ticket,scratch.saved,
-                        scratch.bank,offset,write)) {
+                        scratch.bank,offset,write)
+                    || !oldBanks.Q35RecoveryRoutesMatch(oldDram,newBanks,newDram)) {
                     return Retain(scope,scratch,oldBanks,newBanks);
                 }
                 if (write) memcpy(page,scratch.saved+n*(Fixture::PageBytes/4),Fixture::PageBytes);
@@ -91,10 +94,12 @@ public:
             }
         }
         if (!oldBanks.Q35StreamClaimMatches(&scratch,scratch.ranges,PioneerQwen35::DataflowCoreCount)
+            || !oldBanks.Q35RecoveryRoutesMatch(oldDram,newBanks,newDram)
             || !newBanks.Q35StreamClaimMatches(&scratch,scratch.ranges,PioneerQwen35::DataflowCoreCount)
             || !newBanks.Matches(newDram) || !lease.ready || lease.pending || lease.recovery_required
             || !scope.RecoveryCompleteAllowed(scratch,io,oldBanks,newBanks,noc,host,lease,ticket,scratch.saved)
             || !oldBanks.Q35StreamClaimMatches(&scratch,scratch.ranges,PioneerQwen35::DataflowCoreCount)
+            || !oldBanks.Q35RecoveryRoutesMatch(oldDram,newBanks,newDram)
             || !newBanks.Q35StreamClaimMatches(&scratch,scratch.ranges,PioneerQwen35::DataflowCoreCount)
             || !newBanks.Matches(newDram) || !lease.ready || lease.pending || lease.recovery_required) {
             return Retain(scope,scratch,oldBanks,newBanks);

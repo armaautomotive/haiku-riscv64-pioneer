@@ -133,6 +133,21 @@ public:
 				|| q35StreamRanges[i].bytes!=ranges[i].bytes) return false;
 		return true;
 	}
+	// Compare the saved route authority with a newly bound post-reset bank.
+	// The old owner may be quarantined: this is metadata validation only and
+	// does not grant access or prove that the PCI device is the same card.
+	bool Q35RecoveryRoutesMatch(const tt_dram_samples_result& oldBaseline,
+		const PioneerResidentBanks& fresh,const tt_dram_samples_result& freshBaseline) const {
+		if (&fresh==this || bound!=&oldBaseline || !Proof(oldBaseline)
+			|| !fresh.Matches(freshBaseline)) return false;
+		for (unsigned w=0;w<TT_DRAM_SOURCE_WORDS;w++)
+			if (source[w]!=oldBaseline.source[w] || source[w]!=freshBaseline.source[w]) return false;
+		for (unsigned b=0;b<TT_DRAM_BANKS;b++) {
+			const uint32_t route=oldBaseline.translated[b][0]|(oldBaseline.translated[b][1]<<6);
+			if (routes[b]!=route || routes[b]!=fresh.routes[b]) return false;
+		}
+		return true;
+	}
 	// Checks identity and the immutable reservation count without implying
 	// that an unsealed stream is ready to execute. Caller holds the bank lock.
 	bool Q35StreamOwnerMatches(const tt_dram_samples_result& baseline,const void* owner,unsigned count) const {
