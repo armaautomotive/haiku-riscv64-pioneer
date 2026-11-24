@@ -25,6 +25,8 @@ awk '/PIONEER_QWEN35_QUALIFY_CLIENT_BEGIN/ {copying=1;next} /PIONEER_QWEN35_QUAL
  "$directory/../pioneer_qwen35_dataflow.cpp" > "$temporary/pioneer_qualify_client.inc"
 awk '/PIONEER_QWEN35_FLEET_INSPECTION_CLIENT_BEGIN/ {copying=1;next} /PIONEER_QWEN35_FLEET_INSPECTION_CLIENT_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
  "$directory/../pioneer_qwen35_dataflow.cpp" > "$temporary/pioneer_fleet_inspection_client.inc"
+awk '/PIONEER_QWEN35_PROJECTION_CLIENT_BEGIN/ {copying=1;next} /PIONEER_QWEN35_PROJECTION_CLIENT_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+ "$directory/../pioneer_qwen35_dataflow.cpp" > "$temporary/pioneer_projection_client.inc"
 for pair in CLOSE:close END:end; do
  section=${pair%%:*}; name=${pair#*:}
  awk -v begin="PIONEER_QWEN35_${section}_CLIENT_BEGIN" -v end="PIONEER_QWEN35_${section}_CLIENT_END" \
@@ -84,6 +86,9 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exc
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I"$temporary" "$directory/pioneer_qwen35_exclusive_client_test.cpp" -o "$temporary/exclusive-client-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/exclusive-client-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -I"$temporary" "$directory/pioneer_qwen35_projection_client_test.cpp" -o "$temporary/projection-client-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-client-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I"$temporary" "$directory/pioneer_qwen35_live_reset_client_test.cpp" -o "$temporary/live-reset-client-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/live-reset-client-test"

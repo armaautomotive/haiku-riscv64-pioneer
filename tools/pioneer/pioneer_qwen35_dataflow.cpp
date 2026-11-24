@@ -22,6 +22,7 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerRecoveryProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQwen35FleetInspectionProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQwen35RoleStageProtocol.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQwen35ProjectionQualificationProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/BlackholeAsicReset.h"
 #include "../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.h"
 #include "PioneerModelWeightCache.h"
@@ -908,9 +909,88 @@ static bool QualifyHeldFleet(bool stageRoles=false,bool prestack=false,bool loca
 }
 // PIONEER_QWEN35_FLEET_INSPECTION_CLIENT_END
 
+// PIONEER_QWEN35_PROJECTION_CLIENT_BEGIN
+// Run only the driver's fixed diagnostic, with the caller's exact candidate
+// identity. A lost or incomplete projection reply is never treated as clean.
+static bool QualifyFixedProjection(uint64_t expectedTag,uint64_t expectedGeneration)
+{
+	if (!expectedTag || !expectedGeneration) return false;
+	const int fd=OpenExclusiveDataflowDriver();
+	if (fd<0) return false;
+	tt_pioneer_driver_reload initial{};initial.version=1;
+	bool okay=Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&initial,sizeof(initial))
+		&& initial.driver==TT_QWEN35_DATAFLOW_DRIVER && initial.build_tag==expectedTag
+		&& initial.generation==expectedGeneration && !initial.cold && !initial.quiesced
+		&& !initial.active_owner && initial.open_count==1 && initial.guard_version==1;
+	bool attemptedBegin=false,attemptedProjection=false,replied=false,cleanReply=false;
+	tt_q35_projection_qualification result{};result.version=1;
+	result.expected_tag=expectedTag;result.expected_generation=expectedGeneration;
+	if (okay) {
+		tt_q38_bank_session begin{};begin.version=TT_Q38_BANK_PROTOCOL;
+		attemptedBegin=true;
+		okay=Call(fd,TT_PCI_PROBE_Q38_BANK_BEGIN,&begin,sizeof(begin))
+			&& begin.result.state==TT_RESIDENT_SESSION_READY && begin.result.active
+			&& begin.result.host_ready && !begin.result.cold && !begin.result.uploaded_pages;
+		if (okay) {
+			attemptedProjection=true;
+			replied=Call(fd,TT_PCI_PROBE_Q35_PROJECTION_QUALIFY,&result,sizeof(result));
+			const bool identity=replied && result.version==1 && !result.reserved
+				&& result.expected_tag==expectedTag && result.expected_generation==expectedGeneration
+				&& result.build_tag==expectedTag && result.generation==expectedGeneration;
+			cleanReply=identity && result.cleanup_complete==1 && result.stage==15
+				&& result.output_verified<=1;
+			okay=cleanReply && result.operation_status==B_OK && result.stage==15
+				&& result.output_verified==1;
+			fprintf(stderr,"P100A_Q35_FIXED_PROJECTION replied=%u status=%ld stage=%u "
+				"route_stage=%u route_core=%u output_verified=%u cleanup_complete=%u\n",
+				unsigned(replied),long(result.operation_status),result.stage,result.route_stage,
+				result.route_core,result.output_verified,result.cleanup_complete);
+		}
+	}
+	bool ended=false;
+	if (attemptedBegin && (!attemptedProjection || cleanReply)) {
+		tt_pioneer_driver_reload current{};current.version=1;
+		const bool known=Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&current,sizeof(current))
+			&& current.driver==TT_QWEN35_DATAFLOW_DRIVER && current.build_tag==expectedTag
+			&& current.generation==expectedGeneration && !current.cold && !current.quiesced
+			&& current.active_owner && current.open_count==1 && current.guard_version==1;
+		if (known) {
+			tt_q38_bank_session end{};end.version=TT_Q38_BANK_PROTOCOL;
+			ended=Call(fd,TT_PCI_PROBE_Q38_BANK_END,&end,sizeof(end))
+				&& end.result.state==TT_RESIDENT_SESSION_CLOSED && !end.result.active
+				&& end.result.pci_restored && end.result.host_released && !end.result.cold;
+		}
+	}
+	if (attemptedBegin) fprintf(stderr,"P100A_Q35_FIXED_PROJECTION bank_end_clean=%u\n",unsigned(ended));
+	const bool closed=close(fd)==0;
+	return okay && ended && closed;
+}
+static bool ParseProjectionIdentity(const char* tagText,const char* generationText,
+	uint64_t& tag,uint64_t& generation)
+{
+	// Build tags are printed as exactly sixteen hexadecimal digits; reject
+	// signs, prefixes, overflow, whitespace and zero before opening the driver.
+	if (!tagText || strlen(tagText)!=16 || !generationText || !*generationText) return false;
+	for (const char* p=tagText;*p;p++)
+		if (!((*p>='0' && *p<='9') || (*p>='a' && *p<='f') || (*p>='A' && *p<='F'))) return false;
+	for (const char* p=generationText;*p;p++) if (*p<'0' || *p>'9') return false;
+	char* end=nullptr;errno=0;
+	const unsigned long long parsedTag=strtoull(tagText,&end,16);
+	if (errno || *end || !parsedTag) return false;
+	errno=0;const unsigned long long parsedGeneration=strtoull(generationText,&end,10);
+	if (errno || *end || !parsedGeneration) return false;
+	tag=parsedTag;generation=parsedGeneration;return true;
+}
+// PIONEER_QWEN35_PROJECTION_CLIENT_END
+
 int main(int argc,char** argv)
 {
 	setvbuf(stdout,nullptr,_IOLBF,0);
+	if (argc==4 && strcmp(argv[1],"--qualify-fixed-projection")==0) {
+		uint64_t tag=0,generation=0;
+		if (!ParseProjectionIdentity(argv[2],argv[3],tag,generation)) return 2;
+		return QualifyFixedProjection(tag,generation)?0:1;
+	}
 	if (argc==3 && strcmp(argv[1],"--qualify-model-preload")==0)
 		return QualifyModelPreload(argv[2])?0:1;
 	if (argc==2 && strcmp(argv[1],"--inspect-held-fleet")==0)
