@@ -90,7 +90,7 @@ static int map_physical_memory(const char*,uint64_t addr,size_t size,int address
 	else return -1;
 	return int(call);
 }
-static int delete_area(int a) { unmapCalls++;return a==failUnmap?-1:B_OK; }
+static int delete_area(int a) { TrackAccess();unmapCalls++;return a==failUnmap?-1:B_OK; }
 static uint32 PioneerRead32(const volatile uint32* p) {
 	TrackAccess();
 	if(p==nocPage+0x44/4) {

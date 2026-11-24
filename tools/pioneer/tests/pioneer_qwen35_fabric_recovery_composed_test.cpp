@@ -21,13 +21,13 @@ struct Context {
     ~Context() { delete recoveryFabricArcOwner; }
 };
 struct TransactionScope : Scope {
-    unsigned deniedStage=0,deniedCall=1,stageCalls[17]{};
+    unsigned deniedStage=0,deniedCall=1,stageCalls[18]{};
     bool FabricRecoveryAdmission(Context& context,Guard* guard,uint64 ticket) {
         return guard && ticket==123 && context.recoveryMapping==mapping && allowed;
     }
     bool FabricRecoveryStageAllowed(Context& context,const Owner& owner,Guard*,uint64 ticket,unsigned stage) {
         if (!expected) expected=const_cast<Owner*>(&owner);
-        assert(stage<=16);const unsigned call=++stageCalls[stage];
+        assert(stage<=17);const unsigned call=++stageCalls[stage];
         return (stage!=deniedStage || call!=deniedCall) && context.recoveryFabricArcOwner==&owner
             && context.recoveryMapping==mapping && ticket==123 && allowed;
     }
@@ -47,7 +47,7 @@ struct TransactionFixture {
 int main()
 {
     {
-        TransactionFixture f;assert(f.Run() && f.stage==16 && f.context.recoveryFabricArcOwner
+        TransactionFixture f;assert(f.Run() && f.stage==17 && f.context.recoveryFabricArcOwner && f.mapping.q35CloseComplete
             && f.context.recoveryFabricArcOwner->CurrentPhase()==Owner::Retired
             && sColdRecoveryRequired && !f.mapping.queueUnsafe && deleteCount==4 && f.queue.notifications==7);
         for (unsigned core=0;core<120;core++) assert(tileReset[core]==0x47800);

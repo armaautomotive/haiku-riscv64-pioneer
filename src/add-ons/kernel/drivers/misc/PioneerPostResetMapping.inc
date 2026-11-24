@@ -34,6 +34,9 @@ struct PioneerPostResetMapping : ConfigIO {
 	uint32 firmwareDiagnostic=0,dbiDiagnostic=0,dmaDiagnostic=0;
 	bool queueAttempted=false,queueReady=false,queueUnsafe=false;
 	bool fleetAudited=false,dmaAudited=false;
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+	bool q35CloseAttempted=false,q35CloseComplete=false;
+#endif
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	area_id dbiArea=-1;
 	volatile uint32* dbi=NULL;
@@ -536,7 +539,84 @@ struct PioneerPostResetMapping : ConfigIO {
 		if (dmaAudited) dmaDiagnostic=0;
 		return dmaAudited;
 	}
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+	// Called only after the fabric owner has retired its private mappings.
+	// A partial restore or unmap is one-shot: the context and remaining areas
+	// stay retained, and neither this method nor ordinary Close may replay it.
+	template<class Check> bool CloseQ35Guarded(Check& check) {
+		if (q35CloseAttempted || q35CloseComplete || !ready || !firmwareReady || !topologyReady
+			|| !savedValid || !fleetAudited || !dmaAudited || queueUnsafe
+			|| queueArea>=B_OK || queueMsiArea>=B_OK || queueView || queueMsi
+			|| selected>=PIONEER_POST_RESET_CORES || !tlb || !node || !reset || !noc || !hdma || !scratch || !csm
+			|| !check()) return false;
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+		if (dbiUnsafe) return false;
+#endif
+		for (unsigned i=0;i<7;i++) {
+			if (areas[i]<B_OK) return false;
+			for (unsigned j=0;j<i;j++) if (areas[i]==areas[j]) return false;
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+			if (dbiArea>=B_OK && areas[i]==dbiArea) return false;
+#endif
+		}
+		q35CloseAttempted=true;
+		bool lost=false;
+		auto allowed=[&]() { if (lost || !check()) { lost=true;return false; } return true; };
+		if (!SourceStableQ35(allowed)) return false;
+		const unsigned x=PioneerWorkerX(selected),y=PioneerWorkerY(selected);
+		for (unsigned i=0;i<3;i++) {
+			if (dmaModified) {
+				if (!allowed()) return false;
+				const uint32 value=PioneerRead32(tlb-3+i);
+				if (!allowed() || value!=BlackholeHostDbiTlbWord(i)) return false;
+			}
+			if (modified) {
+				if (!allowed()) return false;
+				const uint32 value=PioneerRead32(tlb+i);
+				if (!allowed() || value!=BlackholeDramFixedTlbWord(0xffa00000,x,y,true,i)) return false;
+			}
+		}
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+		if (dbiArea>=B_OK) {
+			if (!allowed() || delete_area(dbiArea)!=B_OK) return false;
+			dbiArea=-1;dbi=NULL;if (!allowed()) return false;
+		}
+#endif
+		if (dmaModified) {
+			for (unsigned i=0;i<3;i++) {
+				if (!allowed()) return false;
+				PioneerWrite32(tlb-3+i,dmaSaved[i]);
+				if (!allowed()) return false;
+				const uint32 value=PioneerRead32(tlb-3+i);
+				if (!allowed() || value!=dmaSaved[i]) return false;
+			}
+			dmaModified=false;
+		}
+		if (modified) {
+			for (unsigned i=0;i<3;i++) {
+				if (!allowed()) return false;
+				PioneerWrite32(tlb+i,saved[i]);
+				if (!allowed()) return false;
+				const uint32 value=PioneerRead32(tlb+i);
+				if (!allowed() || value!=saved[i]) return false;
+			}
+			modified=false;
+		}
+		ready=false;selected=PIONEER_POST_RESET_CORES;
+		for (unsigned i=0;i<7;i++) if (areas[i]>=B_OK) {
+			if (!allowed() || delete_area(areas[i])!=B_OK) return false;
+			areas[i]=-1;
+			if (i==0) tlb=NULL;else if (i==1) node=NULL;else if (i==2) reset=NULL;
+			else if (i==3) noc=NULL;else if (i==4) hdma=NULL;else if (i==5) scratch=NULL;else csm=NULL;
+			if (!allowed()) return false;
+		}
+		q35CloseComplete=true;return true;
+	}
+#endif
 	bool Close() {
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+		if (q35CloseAttempted && !q35CloseComplete) return false;
+#endif
 		if (queueUnsafe) return false;
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 		if (dbiUnsafe) return false;

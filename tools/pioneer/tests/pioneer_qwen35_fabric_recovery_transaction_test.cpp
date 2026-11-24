@@ -24,6 +24,7 @@ static int Validate(uint64 ticket) {
 }
 struct pioneer_driver_recovery_guard_v2_info { int (*validate)(uint64); };
 struct PioneerPostResetMapping {
+    bool q35CloseComplete=false;
     bool Audit(PioneerPostResetAuditResult&) { return Step(12); }
     template<class Check> bool AuditQ35Fabric(PioneerPostResetAuditResult& result,Check&) { return Audit(result); }
     bool AuditQ35L2CpuHeld(PioneerQ35PostResetL2Result&) { return Step(13); }
@@ -32,6 +33,7 @@ struct PioneerPostResetMapping {
     }
     bool AuditHostDma() { return Step(14); }
     template<class Check> bool AuditQ35HostDmaGuarded(Check&) { return AuditHostDma(); }
+    template<class Check> bool CloseQ35Guarded(Check&) { return q35CloseComplete=Step(16); }
 };
 template<class Guard> class PioneerQ35FabricArcOwner {
 public:
@@ -64,11 +66,11 @@ struct Context {
     ~Context() { delete recoveryFabricArcOwner; }
 };
 struct Scope {
-    bool admission=true;unsigned admissionCalls=0,deniedStage=0,deniedCall=0,loseOwnerStage=0,calls[17]{};
+    bool admission=true;unsigned admissionCalls=0,deniedStage=0,deniedCall=0,loseOwnerStage=0,calls[18]{};
     bool FabricRecoveryAdmission(Context&,pioneer_driver_recovery_guard_v2_info*,uint64) { ++admissionCalls;return admission; }
     bool FabricRecoveryStageAllowed(Context& context,const PioneerQ35FabricArcOwner<pioneer_driver_recovery_guard_v2_info>&,
         pioneer_driver_recovery_guard_v2_info*,uint64,unsigned stage) {
-        assert(stage<=16);if (stage==loseOwnerStage) context.dispatchOwnerRetained=false;
+        assert(stage<=17);if (stage==loseOwnerStage) context.dispatchOwnerRetained=false;
         return ++calls[stage]!=deniedCall || stage!=deniedStage;
     }
 };
@@ -89,23 +91,23 @@ struct Fixture {
 int main()
 {
     {
-        Fixture f;assert(f.Run() && f.stage==16 && f.context.recoveryFabricArcOwner
+        Fixture f;assert(f.Run() && f.stage==17 && f.context.recoveryFabricArcOwner && f.mapping.q35CloseComplete
             && f.context.recoveryFabricArcOwner->CurrentPhase()==PioneerQ35FabricArcOwner<pioneer_driver_recovery_guard_v2_info>::Retired
             && sColdRecoveryRequired && f.context.recoveryMapping==&f.mapping);
-        for (unsigned i=1;i<=15;i++) assert(trace[i-1]==i);
-        assert(trace.size()==15 && !f.Run() && trace.size()==15);
+        for (unsigned i=1;i<=16;i++) assert(trace[i-1]==i);
+        assert(trace.size()==16 && !f.Run() && trace.size()==16);
     }
-    for (unsigned failure=1;failure<=15;failure++) {
+    for (unsigned failure=1;failure<=16;failure++) {
         Fixture f;failOperation=failure;
         assert(!f.Run() && f.stage==failure && f.context.recoveryFabricArcOwner && sColdRecoveryRequired);
         assert(trace.size()==failure && trace.back()==failure);
         assert(!f.Run() && trace.size()==failure);
     }
-    for (unsigned stage=1;stage<=16;stage++) for (unsigned call=1;call<=2;call++) {
-        if (stage==16 && call==2) continue;
+    for (unsigned stage=1;stage<=17;stage++) for (unsigned call=1;call<=2;call++) {
+        if (stage==17 && call==2) continue;
         Fixture f;f.scope.deniedStage=stage;f.scope.deniedCall=call;
         assert(!f.Run() && f.stage==stage && f.context.recoveryFabricArcOwner && sColdRecoveryRequired);
-        const unsigned expected=stage==16?15:stage-1+(call==2);
+        const unsigned expected=stage==17?16:stage-1+(call==2);
         assert(trace.size()==expected && !f.Run() && trace.size()==expected);
     }
     {

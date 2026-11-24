@@ -134,7 +134,7 @@ struct PioneerQ35PostResetL2Result {};
 struct PioneerPostResetMapping {
     Profile profile;bool ready=true,firmwareReady=true,topologyReady=true,savedValid=true;
     bool queueAttempted=false,queueUnsafe=false,dmaModified=false;
-    bool fleetAudited=false,dmaAudited=false;
+    bool fleetAudited=false,dmaAudited=false,q35CloseComplete=false;
     unsigned selected=120;
     area_id areas[7]={20,21,22,23,24,25,26};
     area_id queueArea=-1,queueMsiArea=-1;
@@ -169,6 +169,10 @@ struct PioneerPostResetMapping {
     bool AuditHostDma() { return dmaAudited=fleetAudited; }
     template<class Check> bool AuditQ35HostDmaGuarded(Check& check) {
         return check() && AuditHostDma() && check();
+    }
+    template<class Check> bool CloseQ35Guarded(Check& check) {
+        if (!check()) return false;
+        q35CloseComplete=true;return check();
     }
 };
 struct Guard { int (*validate)(uint64); };
