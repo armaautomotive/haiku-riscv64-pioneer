@@ -4733,6 +4733,7 @@ public:
 		return scratch->ObserveLateTransfer(io,scope,baseline.baseline.baseline.baseline.dram,
 			baseline.baseline.baseline.noc,host,lease,observation);
 	}
+// PIONEER_Q35_PROJECTION_ROUTE_PREPARE_BEGIN
 	template<class Scratch,class Scope>
 	bool PrepareDataflowQualificationRoutes(Scratch& scratch,Scope& scope,uint32_t& stage,uint32_t& core) {
 		stage=0;core=0xff;
@@ -4742,9 +4743,17 @@ public:
 			|| qwen35DataflowMemory || qwen35DataflowService || !scratch.IsStaged()
 			|| !banks.Q35StreamOwnerMatches(dram,&scratch,PioneerQwen35::DataflowCoreCount)) return false;
 		QualificationInternalScope admission(qwen35QualificationInternalActive);
-		return scope.QualificationPrepareRoutesAllowed(scratch,*this)
-			&& io.SessionIdle() && io.ProveFleetRoutes(stage,core);
+		if (!scope.QualificationPrepareRoutesAllowed(scratch,*this) || !io.SessionIdle()) return false;
+		// The fleet audit leaves a nonzero selected core. Scratch transfers
+		// require worker zero; a failed audit or route restoration may have
+		// left a partial mapping, so retain the owner instead of retrying.
+		if (!io.ProveFleetRoutes(stage,core) || !io.SelectRuntimeCore(0)
+			|| !io.DataflowPanelMappingStable()) {
+			scope.RetainScratch(&scratch);return false;
+		}
+		return true;
 	}
+// PIONEER_Q35_PROJECTION_ROUTE_PREPARE_END
 	template<class Scope>
 	bool BindDataflowQualification(Scope& scope) {
 		auto* scratch=qwen35QualificationOwner.Scratch();

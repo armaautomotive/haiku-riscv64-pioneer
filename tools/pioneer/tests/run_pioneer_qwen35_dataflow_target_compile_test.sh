@@ -850,6 +850,11 @@ awk '/PIONEER_Q35_PROJECTION_OWNER_RESET_GUARD_BEGIN/ {copying=1;next} /PIONEER_
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_owner_reset_guard.inc"
 awk '/PIONEER_Q35_PROJECTION_INTERNAL_SCOPE_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_INTERNAL_SCOPE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_internal_scope.inc"
+awk '/PIONEER_Q35_PROJECTION_ROUTE_PREPARE_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_ROUTE_PREPARE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_route_prepare.inc"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -I"$temporary" "$directory/pioneer_qwen35_projection_route_prepare_test.cpp" -o "$temporary/projection-route-prepare-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-route-prepare-test"
 awk '/PIONEER_Q35_PROJECTION_SCRATCH_OPERATION_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_SCRATCH_OPERATION_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_scratch_operation.inc"
 awk '/PIONEER_Q35_PROJECTION_ABANDON_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_ABANDON_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
