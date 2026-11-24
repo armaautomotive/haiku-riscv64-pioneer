@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 // Exercise the actual Haiku diagnostic scope over simulated session, bank and
 // fleet proofs. Enabling a fake proof here does not enable it on the Pioneer.
-#define PIONEER_QWEN35_PROJECTION_SCRATCH_MOCK_ONLY 1
-#include "pioneer_qwen35_projection_scratch_test.cpp"
-#include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35ProjectionQualificationOwner.h"
 #define PIONEER_QWEN35_RECOVERY_COMPILE_ONLY 1
 #define PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS 1
 #define PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY 1
 #define PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS 1
+#define PIONEER_QWEN35_PROJECTION_SCRATCH_MOCK_ONLY 1
+#include "pioneer_qwen35_projection_scratch_test.cpp"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35ProjectionQualificationOwner.h"
 
 static unsigned sOpenCookies=1;
 static bool sColdRecoveryRequired=false,sReloadQuiesced=false,sBankStorageOnly=true;
@@ -99,6 +99,12 @@ int main() {
         context.io.firmware=true;assert(scope.QualificationOwnerAllocationAllowed(context));
         assert(context.qwen35QualificationOwner.Allocate());
         auto* scratch=context.qwen35QualificationOwner.Scratch();assert(scratch);
+        auto* qualification=context.qwen35QualificationOwner.Qualification();assert(qualification);
+        assert(!scope.QualificationOwnerPrepareRetirementAllowed(context.qwen35QualificationOwner,*scratch,*qualification));
+        PioneerQwen35::DataflowServiceOwner unstartedService;
+        assert(!scope.QualificationHoldAllowed(scratch,unstartedService)
+            && !scope.QualificationHeldAllowed(scratch,unstartedService)
+            && !scope.QualificationResumeAllowed(scratch,unstartedService));
         assert(!context.DataflowQualificationScratchOperation(PioneerQ35ProjectionQualificationOwner::Capture,scope)
             && !context.qwen35QualificationInternalActive && scratch->IsEmpty()
             && !context.banks.Q35StreamClaimed());

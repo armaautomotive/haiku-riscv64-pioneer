@@ -4465,6 +4465,7 @@ struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		if (PioneerQ35GraphOwnerRetained(qwen35GraphOwner) && !controlledQ35Fault) return true;
 #endif
+// PIONEER_Q35_PROJECTION_SERVICE_UNSAFE_GUARD_BEGIN
 		if (qwen35DataflowService && qwen35DataflowService->Started()
 			&& !qwen35DataflowService->Closed()
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
@@ -4472,7 +4473,12 @@ struct PioneerStoreContext {
 				|| qwen35DataflowService->GraphRunning()))
 			&& !(controlledQ35Fault && qwen35DataflowService->Faulted())
 #endif
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+			&& !(qwen35QualificationInternalActive && qwen35QualificationOwner.Active()
+				&& !qwen35QualificationOwner.Retained() && qwen35DataflowService->ScratchHeld())
+#endif
 			) return true;
+// PIONEER_Q35_PROJECTION_SERVICE_UNSAFE_GUARD_END
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
   if(q38TokenNative && (q38TokenNative->Unsafe() || (!controlledToken && !q38TokenNative->Closed())))return true;
@@ -4810,6 +4816,7 @@ public:
 		return result;
 	}
 // PIONEER_Q35_PROJECTION_RUN_END
+// PIONEER_Q35_PROJECTION_CLOSE_BEGIN
 	template<class Scope>
 	PioneerQwen35::DataflowServiceResult CloseDataflowQualification(Scope& scope) {
 		auto* scratch=qwen35QualificationOwner.Scratch();
@@ -4821,11 +4828,24 @@ public:
 			QualificationInternalScope admission(qwen35QualificationInternalActive);
 			if (!scope.QualificationCloseAllowed(qwen35QualificationOwner,*scratch,*qualification,*this))
 				return result;
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+			result=qwen35DataflowService->CloseForScratch(io,scratch,scope);
+#else
 			result=CloseDataflowRewrite();
+#endif
 		}
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+		// A denied preflight has changed nothing; any failed hold retains the
+		// owner. Held success keeps the binding and snapshots alive.
+		if (result!=PioneerQwen35::DataflowServiceScratchHeld
+			&& !(result==PioneerQwen35::DataflowServiceInvalidState && qwen35DataflowService->Ready()))
+			qwen35QualificationOwner.Retain();
+#else
 		if (result!=PioneerQwen35::DataflowServiceClosed) qwen35QualificationOwner.Retain();
+#endif
 		return result;
 	}
+// PIONEER_Q35_PROJECTION_CLOSE_END
 #endif
 	PioneerQwen35::DataflowServiceResult CloseDataflowRewrite() {
 		if (!qwen35DataflowService) return PioneerQwen35::DataflowServiceInvalidState;

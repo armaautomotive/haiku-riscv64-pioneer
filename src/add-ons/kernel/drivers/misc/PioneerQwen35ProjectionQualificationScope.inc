@@ -59,7 +59,11 @@ class PioneerQ35ProjectionQualificationScope {
     }
     bool TransferReady(const void* candidate) const {
         return Identity() && Owned(candidate) && c.qwen35QualificationInternalActive
-            && (!c.qwen35DataflowService || c.qwen35DataflowService->Closed()) && !c.Unsafe()
+            && (!c.qwen35DataflowService || c.qwen35DataflowService->Closed()
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+                || c.qwen35DataflowService->ScratchHeld()
+#endif
+                ) && !c.Unsafe()
             && c.lease.ready && !c.lease.pending && !c.lease.recovery_required
             && c.host.state==TT_HOST_PAGE_READY && !c.host.released && HeldAndQuiet();
     }
@@ -170,11 +174,24 @@ public:
         return &requested==&c && &holder==&c.qwen35QualificationOwner && q.Program()
             && RuntimeReady(scratch,*q.Program());
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    bool QualificationHoldAllowed(const void* p,const PioneerQwen35::DataflowServiceOwner& service) const {
+        auto* scratch=c.qwen35QualificationOwner.Scratch();
+        auto* qualification=c.qwen35QualificationOwner.Qualification();
+        return scratch && p==scratch && &service==c.qwen35DataflowService
+            && qualification && qualification->IsAudited() && qualification->Program()
+            && scratch->IsRunning() && RuntimeReady(*scratch,*qualification->Program());
+    }
+    // These require lifetime-spanning held-fleet/NoC and scratch-retirement
+    // proofs, which are not yet established by the real Haiku scope.
+    bool QualificationHeldAllowed(const void*,const PioneerQwen35::DataflowServiceOwner&) const { return false; }
+    bool QualificationResumeAllowed(const void*,const PioneerQwen35::DataflowServiceOwner&) const { return false; }
+#endif
     bool ScratchStopped(const void* p) const {
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
         auto* scope=Borrowed();
         if (!scope || !Identity() || !Owned(p) || !c.qwen35QualificationInternalActive
-            || !c.qwen35DataflowService || !c.qwen35DataflowService->Closed()) return false;
+            || !c.qwen35DataflowService || !c.qwen35DataflowService->ScratchHeld()) return false;
         return CheckFleet(scope,[&](unsigned core) {
             return scope->ProveRoleAutoRestoreCompletionSafe(c.io,core);
         },false);

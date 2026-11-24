@@ -831,6 +831,16 @@ awk '/PIONEER_Q35_PROJECTION_OWNER_END_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q3
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_owner_end_guard.inc"
 awk '/PIONEER_Q35_PROJECTION_OWNER_UNSAFE_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_OWNER_UNSAFE_GUARD_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_owner_unsafe_guard.inc"
+awk '/PIONEER_Q35_PROJECTION_SERVICE_UNSAFE_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_SERVICE_UNSAFE_GUARD_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_service_unsafe_guard.inc"
+for snapshot_hold in 0 1; do
+    hold_flag=
+    [ "$snapshot_hold" = 0 ] || hold_flag=-DTEST_SNAPSHOT_SCRATCH_HOLD
+    ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+        $hold_flag -I"$temporary" "$directory/pioneer_qwen35_projection_service_unsafe_guard_test.cpp" \
+        -o "$temporary/projection-service-unsafe-$snapshot_hold"
+    ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-service-unsafe-$snapshot_hold"
+done
 awk '/PIONEER_Q35_PROJECTION_OWNER_RESET_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_OWNER_RESET_GUARD_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_owner_reset_guard.inc"
 awk '/PIONEER_Q35_PROJECTION_INTERNAL_SCOPE_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_INTERNAL_SCOPE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
@@ -841,6 +851,8 @@ awk '/PIONEER_Q35_PROJECTION_ABANDON_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJEC
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_abandon.inc"
 awk '/PIONEER_Q35_PROJECTION_RUN_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_RUN_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_run.inc"
+awk '/PIONEER_Q35_PROJECTION_CLOSE_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_CLOSE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_close.inc"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     -I"$temporary" "$directory/pioneer_qwen35_projection_owner_end_guard_test.cpp" -o "$temporary/projection-owner-end-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-owner-end-test"

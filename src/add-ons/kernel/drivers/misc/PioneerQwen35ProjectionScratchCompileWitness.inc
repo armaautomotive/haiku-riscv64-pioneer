@@ -79,6 +79,18 @@ public:
         const PioneerStoreContext& requested) const {
         return permitted && context==&requested && holder.Owns(scratch);
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    bool QualificationHoldAllowed(const void* p,const PioneerQwen35::DataflowServiceOwner& service) const {
+        return permitted && context && p==context->qwen35QualificationOwner.Scratch()
+            && &service==context->qwen35DataflowService;
+    }
+    bool QualificationHeldAllowed(const void* p,const PioneerQwen35::DataflowServiceOwner& service) const {
+        return QualificationHoldAllowed(p,service) && service.ScratchHeld();
+    }
+    bool QualificationResumeAllowed(const void* p,const PioneerQwen35::DataflowServiceOwner& service) const {
+        return QualificationHeldAllowed(p,service) && context->qwen35QualificationOwner.RetirementPrepared();
+    }
+#endif
     bool QualificationOwnerRetirementAllowed(const PioneerQ35ProjectionQualificationOwner& holder,
         const PioneerQ35ProjectionScratch& scratch,
         const PioneerQwen35::DataflowProjectionQualificationService&) const {
@@ -151,7 +163,12 @@ PioneerQ35ProjectionScratchCompileWitnessImpl(PioneerStoreContext& context,Scope
     }
     if (action==9) return context.InstallDataflowQualification(*scratch,scope)
         ==PioneerQwen35::DataflowServiceComplete;
-    if (action==11) return context.CloseDataflowQualification(scope)==PioneerQwen35::DataflowServiceClosed;
+    if (action==11) return context.CloseDataflowQualification(scope)==
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+        PioneerQwen35::DataflowServiceScratchHeld;
+#else
+        PioneerQwen35::DataflowServiceClosed;
+#endif
     if (action==12) return context.RetireDataflowQualification(scope);
     if (action==13) return context.AbandonDataflowQualification(scope);
     if (action==14) {

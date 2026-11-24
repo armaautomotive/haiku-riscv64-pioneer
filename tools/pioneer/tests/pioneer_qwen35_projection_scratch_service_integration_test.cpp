@@ -55,6 +55,11 @@ struct CombinedScope : ScratchScope {
             && holder.Owns(s) && s.IsRestored() && q.IsAudited();
     }
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    template<class Context>
+    bool QualificationCloseAllowed(const PioneerQ35ProjectionQualificationOwner& h,
+        const PioneerQ35ProjectionScratch& s,const DataflowProjectionQualificationService& q,const Context& c) const {
+        return allowed && c.qwen35QualificationInternalActive && h.Owns(s) && q.IsAudited();
+    }
     bool QualificationHoldAllowed(const void* p,const DataflowServiceOwner& s) const {
         return allowed && !retained && service==&s && s.Ready() && p==owner
             && holder && holder->Scratch()==p && holder->Qualification()->IsAudited();
@@ -93,6 +98,9 @@ struct QualificationContext {
         :qwen35QualificationOwner(h),qwen35DataflowService(&s),io(i) {}
 #include "pioneer_q35_projection_internal_scope.inc"
 #include "pioneer_q35_projection_run.inc"
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+#include "pioneer_q35_projection_close.inc"
+#endif
 };
 
 int main()
@@ -149,7 +157,7 @@ int main()
         std::memcpy(p.data(),io->memory.output.data()+offset,remaining<4096?remaining:4096);
     }
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
-    assert(service->CloseForScratch(*io,scratch,scope)==DataflowServiceScratchHeld
+    assert(context.CloseDataflowQualification(scope)==DataflowServiceScratchHeld
         && service->ScratchHeld() && !io->resumeCount);
     assert(service->FinishScratchClose(*io,scratch,scope)==DataflowServiceInvalidState && !io->resumeCount);
     assert(!holder->PrepareRetirement(scope,device->banks,device->dram));
