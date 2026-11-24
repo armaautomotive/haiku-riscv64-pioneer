@@ -899,6 +899,32 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/unm
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     "$directory/pioneer_qwen35_projection_reset_restore_test.cpp" -o "$temporary/projection-reset-restore-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-reset-restore-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    "$directory/pioneer_qwen35_fresh_recovery_session_test.cpp" -o "$temporary/fresh-recovery-session-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fresh-recovery-session-test"
+awk '/PIONEER_Q35_FRESH_RECOVERY_FINISH_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q35_FRESH_RECOVERY_FINISH_GUARD_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_fresh_recovery_finish_guard.inc"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -I"$temporary" "$directory/pioneer_qwen35_fresh_recovery_finish_guard_test.cpp" -o "$temporary/fresh-recovery-finish-guard-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fresh-recovery-finish-guard-test"
+if ${CXX:-c++} -x c++ -std=c++17 -E -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+    -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_RUN_ENABLE \
+    -DPIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS -DPIONEER_QWEN35_RECOVERY_QUALIFY \
+    "$root/src/add-ons/kernel/drivers/misc/PioneerQwen35FreshRecoverySession.inc" \
+    >"$temporary/fresh-session-guard.out" 2>"$temporary/fresh-session-guard.err"; then
+    echo 'loadable qualification accepted fresh recovery session witness' >&2
+    exit 1
+fi
+grep -q 'Fresh Q35 reset transfer session is restricted to the non-loadable snapshot witness' "$temporary/fresh-session-guard.err"
+if ${CXX:-c++} -x c++ -std=c++17 -E -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+    -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_RUN_ENABLE \
+    -DPIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS -DPIONEER_QWEN35_FRESH_RECOVERY_TEST -D_KERNEL_MODE \
+    "$root/src/add-ons/kernel/drivers/misc/PioneerQwen35FreshRecoverySession.inc" \
+    >"$temporary/fresh-session-test-guard.out" 2>"$temporary/fresh-session-test-guard.err"; then
+    echo 'kernel build accepted simulated fresh-session disposal' >&2
+    exit 1
+fi
+grep -q 'Simulated fresh-session disposal is not permitted in a kernel build' "$temporary/fresh-session-test-guard.err"
 if ${CXX:-c++} -x c++ -std=c++17 -E -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
     -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS \
     -DPIONEER_QWEN35_RECOVERY_QUALIFY \

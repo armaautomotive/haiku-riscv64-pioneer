@@ -3,6 +3,8 @@
 // The context and retention callback are simulated; no hardware is accessed.
 #define PIONEER_QWEN35_RECOVERY_COMPILE_ONLY 1
 #define PIONEER_QWEN35_DEVICE_DISPATCH 1
+#define PIONEER_QWEN35_RECOVERY_RUN_ENABLE 1
+#define PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS 1
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35ProjectionQualificationOwner.h"
 #include <cassert>
 #include <cstdio>
@@ -17,6 +19,7 @@ struct Context {
     void* qwen35DataflowService=nullptr;void* qwen35DataflowMemory=nullptr;
     void* qwen35DataflowAuthority=nullptr;void* qwen35DataflowProgramScratch=nullptr;void* qwen35GraphOwner=nullptr;
     bool qwen35QualificationInternalActive=false;
+    void* recoveryFreshSession=nullptr;
     unsigned retained=0;
 };
 struct Result { unsigned retained=0; };
@@ -28,6 +31,7 @@ static bool End(Context& c,Result& result,bool& clean) {
 static bool Unsafe(Context& c) {
     auto& qwen35QualificationOwner=c.qwen35QualificationOwner;
     const bool qwen35QualificationInternalActive=c.qwen35QualificationInternalActive;
+    auto* recoveryFreshSession=c.recoveryFreshSession;
 #include "pioneer_q35_projection_owner_unsafe_guard.inc"
     return false;
 }
@@ -63,6 +67,11 @@ int main() {
         assert(c.qwen35QualificationOwner.Allocate()
             && c.qwen35QualificationOwner.AbandonUnclaimed(scope,c.banks));
         assert(!Unsafe(c) && Reset(&c)==0 && End(c,result,clean) && clean && !c.retained && !result.retained);
+    }
+    {
+        Context c;Result result;bool clean=true;c.recoveryFreshSession=&c;
+        assert(Unsafe(c) && Reset(&c)==B_NOT_ALLOWED && !End(c,result,clean)
+            && !clean && c.retained==1 && result.retained==1);
     }
     std::puts("PASS actual diagnostic owner session-end guard, active retention and clean abandonment; SIMULATED ONLY");
     return 0;

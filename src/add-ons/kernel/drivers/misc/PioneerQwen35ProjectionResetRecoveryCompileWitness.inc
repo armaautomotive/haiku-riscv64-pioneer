@@ -2,6 +2,24 @@
 // Type-check reset scratch restoration against the real Haiku session IO.
 // This synthetic scope grants no physical authority; the driver rejects load.
 #include "PioneerQwen35ProjectionResetRecovery.h"
+// Type-check the fresh session against the actual Haiku IO and guard. The
+// synthetic scope is never registered as an ioctl or a hardware authority.
+struct PioneerQ35FreshRecoveryCompileScope {
+    bool allowed;
+    bool FreshRecoveryAdmission(PioneerQ35FreshRecoverySession&,PioneerProbeCookie*,
+        PioneerStoreContext&,uint64) const { return allowed; }
+    bool FreshRecoveryBoundary(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
+        PioneerStoreContext&,unsigned) const { return allowed; }
+    void RetainFreshRecovery(PioneerQ35FreshRecoverySession&) { allowed=false; }
+};
+static __attribute__((used,noinline)) bool
+PioneerQ35FreshRecoveryCompileWitness(PioneerQ35FreshRecoverySession* session,
+    PioneerProbeCookie* owner,PioneerStoreContext& old,pioneer_driver_recovery_guard_v2_info* guard,bool allowed)
+{
+    if (!session) return false;
+    PioneerQ35FreshRecoveryCompileScope scope{allowed};
+    return session->Prepare(owner,old,guard,scope);
+}
 struct PioneerQ35ResetScratchCompileScope {
     bool permitted;
     bool RecoveryAdmissionAllowed(PioneerQ35ProjectionScratch&,PioneerSessionIO&,

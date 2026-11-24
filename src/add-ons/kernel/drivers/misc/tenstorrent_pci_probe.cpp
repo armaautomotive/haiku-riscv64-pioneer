@@ -4110,6 +4110,9 @@ static bool PioneerQ35SharedRoleProjectionRestored(const PioneerQwen35SharedRole
 #ifdef PIONEER_QWEN35_ROLE_STAGE_QUALIFY
 class PioneerQ35RoleStageQualification;
 #endif
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+class PioneerQ35FreshRecoverySession;
+#endif
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 #include "PioneerQwen35ProjectionQualificationOwner.h"
 #endif
@@ -4142,6 +4145,11 @@ struct PioneerStoreContext {
 	uint64 recoveryFinishTicket=0;
 	bool recoveryFinishPending=false;
 	bool recoveryFinishNeedsAudit=false;
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+	// The original retained context owns this separate post-reset transfer
+	// session. It must be explicitly retired before the original can die.
+	PioneerQ35FreshRecoverySession* recoveryFreshSession=NULL;
+#endif
 #endif
 #endif
 	PioneerQwen35DataflowPciMemory<PioneerSessionIO>* qwen35DataflowMemory=NULL;
@@ -4354,6 +4362,9 @@ struct PioneerStoreContext {
 		PioneerQ35GraphOwnerDestroy(qwen35GraphOwner);
 #endif
 #ifdef PIONEER_QWEN35_INPLACE_RECOVERY
+	#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+		if (recoveryFreshSession) sColdRecoveryRequired=true; // retained; never destroy an uncertain session
+	#endif
 	#ifdef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS
 		if (recoveryPreResetMapping
 			|| (recoveryFirmwareResetOwner && !recoveryFirmwareResetOwner->Retired())) sColdRecoveryRequired=true;
@@ -4468,6 +4479,9 @@ struct PioneerStoreContext {
 		// A diagnostic claim blocks ordinary control and context teardown. Its
 		// locked internal calls explicitly bracket their own checked admission.
 		if (qwen35QualificationOwner.Active() && !qwen35QualificationInternalActive) return true;
+#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+		if (recoveryFreshSession) return true;
+#endif
 #endif
 // PIONEER_Q35_PROJECTION_OWNER_UNSAFE_GUARD_END
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
@@ -5004,6 +5018,7 @@ public:
 #endif
 #include "PioneerQwen35ProjectionScratchCompileWitness.inc"
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+#include "PioneerQwen35FreshRecoverySession.inc"
 #include "PioneerQwen35ProjectionResetRecoveryCompileWitness.inc"
 #endif
 #endif
@@ -5205,6 +5220,11 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 		c.qwen35QualificationOwner.Retain();
 		clean=false;RetainQ38DispatchOwner(c,result);return false;
 	}
+#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+	if (c.recoveryFreshSession) {
+		clean=false;RetainQ38DispatchOwner(c,result);return false;
+	}
+#endif
 #endif
 // PIONEER_Q35_PROJECTION_OWNER_END_GUARD_END
 // PIONEER_Q35_ROLE_STAGE_END_GUARD_BEGIN
@@ -11804,6 +11824,13 @@ Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* contex
 		|| proof.reset_generation!=ticket || proof.firmware_generation!=ticket
 		|| context->recoveryMapping || !context->io.postResetDisposeComplete)
 		return abandon(B_BAD_VALUE);
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+	// Fresh transfer mappings and their bank claim must be explicitly closed
+	// before this generic path may retire the old owner or PCI reservation.
+// PIONEER_Q35_FRESH_RECOVERY_FINISH_GUARD_BEGIN
+	if (context->recoveryFreshSession) return retain(B_DEV_NOT_READY);
+// PIONEER_Q35_FRESH_RECOVERY_FINISH_GUARD_END
+#endif
 // PIONEER_Q35_PROJECTION_RESET_FINISH_BEGIN
 	status_t status=guard->validate(ticket);
 	if (status!=B_OK) return retain(status);
@@ -11906,6 +11933,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 	// A never-staged claim has not written scratch. Modified or uncertain
 	// transactions still retain their snapshots and cannot use generic reset.
+#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+	if (context->recoveryFreshSession) return B_NOT_ALLOWED;
+#endif
 	if (context->qwen35QualificationOwner.Active()
 		&& (context->qwen35QualificationInternalActive || context->qwen35DataflowService
 			|| context->qwen35DataflowMemory || context->qwen35DataflowAuthority
