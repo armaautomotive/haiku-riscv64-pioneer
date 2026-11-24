@@ -51,6 +51,9 @@ struct PioneerQwen35RolePrestackState {
     bool mailboxCaptured=false,serviceReleaseAttempted=false,serviceStarted=false;
     bool serviceStopAttempted=false,serviceStopped=false,mailboxRestored=false;
 #endif
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+    unsigned fleetAuditFailure=0;
+#endif
 #ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
     uint32_t faultSaved[1+PioneerQwen35::DataflowQueueStateBytes/4]{};
     unsigned faultWriteAttempts=0,faultRestoreAttempts=0;
@@ -539,6 +542,17 @@ public:
     }
 #endif
 #ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+    bool FleetAuditFailure(unsigned phase,uint32_t r1=0,uint32_t w1=0,uint32_t r2=0,uint32_t w2=0) {
+        fState.fleetAuditFailure=phase;
+#ifdef _KERNEL_MODE
+        // PCs are fixed device code addresses, not mailbox contents or model data.
+        dprintf("P100A_Q35_FLEET_AUDIT_DETAIL core=%u phase=%u pc=%08lx,%08lx,%08lx,%08lx\n",
+            fCore,phase,(unsigned long)r1,(unsigned long)w1,(unsigned long)r2,(unsigned long)w2);
+#else
+        (void)r1;(void)w1;(void)r2;(void)w2;
+#endif
+        return false;
+    }
     // Start once, retain the captured state while other workers start, and
     // stop separately after the owner has audited the complete fleet.
     bool StartFleetService(unsigned polls) {
@@ -551,17 +565,22 @@ public:
     bool AuditFleetService() {
         using namespace PioneerQwen35;
         if (!fState.serviceStarted || fState.serviceStopAttempted || fState.serviceStopped
-            || fState.cancelAttempted || !Select(Running)) return false;
+            || fState.cancelAttempted || !Select(Running)) return FleetAuditFailure(1);
         DataflowRoleMailbox first{},second{};
-        if (!ReadMailbox(Running,first) || !DataflowRoleMailboxStartupReady(first)) return false;
+        if (!ReadMailbox(Running,first)) return FleetAuditFailure(2);
+        if (!DataflowRoleMailboxStartupReady(first)) return FleetAuditFailure(3);
         const uint32_t r1=fIO.SharedRolePcRead(DataflowRoleReader),w1=fIO.SharedRolePcRead(DataflowRoleWriter);
         fIO.Pause();
         const uint32_t r2=fIO.SharedRolePcRead(DataflowRoleReader),w2=fIO.SharedRolePcRead(DataflowRoleWriter);
-        return r1>=DataflowRoleReaderCodeAddress && r1<DataflowRoleReaderCodeLimit
+        if (!(r1>=DataflowRoleReaderCodeAddress && r1<DataflowRoleReaderCodeLimit
             && r2>=DataflowRoleReaderCodeAddress && r2<DataflowRoleReaderCodeLimit
             && w1>=DataflowRoleWriterCodeAddress && w1<DataflowRoleWriterCodeLimit
-            && w2>=DataflowRoleWriterCodeAddress && w2<DataflowRoleWriterCodeLimit
-            && ReadMailbox(Running,second) && !memcmp(&first,&second,sizeof(first)) && Select(Running);
+            && w2>=DataflowRoleWriterCodeAddress && w2<DataflowRoleWriterCodeLimit))
+            return FleetAuditFailure(4,r1,w1,r2,w2);
+        if (!ReadMailbox(Running,second)) return FleetAuditFailure(5);
+        if (memcmp(&first,&second,sizeof(first))) return FleetAuditFailure(6);
+        if (!Select(Running)) return FleetAuditFailure(7);
+        return true;
     }
     bool StopFleetService(uint32_t readerPark,uint32_t writerPark,unsigned polls) {
         using namespace PioneerQwen35;

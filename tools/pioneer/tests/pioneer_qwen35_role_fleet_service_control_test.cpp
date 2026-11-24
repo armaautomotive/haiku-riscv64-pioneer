@@ -154,7 +154,7 @@ int main()
     gPerCoreRoleWindows=false;gAllowWrite=false;sColdRecoveryRequired=false;
     for (auto& windows:gRoleTileWindows) windows.clear();
     }
-    {
+    for (unsigned failureKind=0;failureKind<2;failureKind++) {
     Fixture f;assert(f.Run()==B_OK && f.request.operation_status==B_OK);
     ResetMaps();gAllowWrite=true;gPerCoreRoleWindows=true;
     gRoleWindowCore=gRoleSelectedCore=f.context.io.runtimeCore;
@@ -162,19 +162,27 @@ int main()
     for (unsigned core=0;core<DataflowBarrierWorkers;core++) f.context.io.tileReset[core]=0x47800;
     for (unsigned noc=0;noc<2;noc++) f.context.io.nocAvailable[noc]=0x10101010U;
     f.context.io.simulateService=true;
-    f.context.io.pauseHook=[](PioneerSessionIO* io) {
-        if (io->serviceStarts==DataflowBarrierWorkers) {
-            io->roleBoxes[7].started[DataflowRoleWriter]=0;
-            io->pauseHook=nullptr;
-        }
-    };
+    if (!failureKind) f.context.io.pauseHook=[](PioneerSessionIO* io) {
+            if (io->serviceStarts==DataflowBarrierWorkers) {
+                io->roleBoxes[7].started[DataflowRoleWriter]=0;
+                io->pauseHook=nullptr;
+            }
+        };
+    else f.context.io.pauseHook=[](PioneerSessionIO* io) {
+            if (io->serviceStarts==DataflowBarrierWorkers) {
+                io->fleetRolePc[0][DataflowRoleReader]=0;
+                io->pauseHook=nullptr;
+            }
+        };
     auto r=Request();r.version=6;
     assert(Qwen35RoleStageControl(&f.cookie,&r,sizeof(r))==B_OK);
     assert(r.operation_status==B_DEV_NOT_READY && r.stage==9 && r.captured && r.staged
         && !r.restored && !r.mappings_closed && f.context.io.serviceStarts==DataflowBarrierWorkers
         && !f.context.io.serviceStops && f.context.dispatchOwnerRetained && sColdRecoveryRequired);
     auto* owner=f.context.qwen35RoleStageQualification;
-    assert(owner && owner->fleetPrestack[7].serviceStarted && !owner->fleetPrestack[7].serviceStopped);
+    const unsigned failedCore=failureKind?0:7;
+    assert(owner && owner->fleetPrestack[failedCore].serviceStarted && !owner->fleetPrestack[failedCore].serviceStopped
+        && owner->fleetPrestack[failedCore].fleetAuditFailure==(failureKind?4U:3U));
     assert(acquire_sem(sLock)==B_OK && owner->views.Close() && release_sem(sLock)==B_OK);
     delete owner;f.context.qwen35RoleStageQualification=nullptr;
     gPerCoreRoleWindows=false;gAllowWrite=false;sColdRecoveryRequired=false;

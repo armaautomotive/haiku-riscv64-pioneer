@@ -17,8 +17,11 @@ be stopped and restored without a reboot.
 Recovery was initiated after saving the logs and confirming the staged
 recovery script and stable driver backup hashes. A single authorized OFF
 pulse was sent, the host remained unreachable after the shutdown interval,
-and a single ON pulse was sent. The staged recovery procedure must be completed
-and independently verified before further hardware work. Tag0019 is consumed.
+and a single ON pulse was sent. Haiku booted and the staged recovery script restored stable55 generation2.
+Independent postflight confirms `cold0 active_owner0`, the expected driver
+and guard hashes, no lock or diagnostic process, and expected model metadata
+(see `postflight.txt`). Full post-run model hashes are still in progress.
+Tag0019 is consumed.
 
 The TRISCs remained held. This was not model inference and measured no
 decode throughput.

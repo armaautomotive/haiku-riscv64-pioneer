@@ -1,0 +1,6 @@
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+adbc86495803654471b83330ea8f2591f0433f8d71e083d6e9f790685bc985a4  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+EXCLUSIVE_LOCK_ABSENT
+0:1:600:2740937888 /boot/home/pioneer-qwen35-4b-225/Qwen3.5-4B-Q4_K_M.gguf
+0:1:600:18973870528 /boot/home/models/Qwen3.8-27B-Q4_K_M.gguf
