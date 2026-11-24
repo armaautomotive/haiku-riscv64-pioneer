@@ -23,6 +23,16 @@
 #undef main
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35DataflowSharedRoleBinding.inc"
 
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+// The real qualification scope is the only production friend of this method.
+class PioneerQ35ProjectionQualificationScope {
+public:
+    static bool Inspect(PioneerQwen35RoleBorrowedScopeWitness& scope,PioneerSessionIO& io,bool& failed) {
+        return scope.InspectQualificationHeldFleet(io,failed);
+    }
+};
+#endif
+
 #ifdef TEST_SHARED_POST_RESET
 struct PioneerQ35SharedRoleBindingTestAccess {
     struct Guard { bool ProvePinnedBar(uint64_t,uint64_t) { return true; } };
@@ -257,6 +267,23 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
         && inspection.stage==PioneerQwen35FleetInspectionResult::Complete
         && inspection.l2cpuReset==0x0f && inspection.failedCore==DataflowBarrierWorkers
         && !inspection.restoreFailed && io.runtimeCore==7 && route.ProveSelectedRoute(7));
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    bool qualificationRestoreFailed=false;
+    assert(!PioneerQ35ProjectionQualificationScope::Inspect(*scope,io,qualificationRestoreFailed));
+    auto* savedService=context->qwen35DataflowService;
+    auto* savedBinding=context->qwen35SharedRoleBinding;
+    context->qwen35DataflowService=nullptr;context->qwen35SharedRoleBinding=nullptr;
+    assert(!scope->ProveRoleStatusInspectionAllowed(io));
+    assert(PioneerQ35ProjectionQualificationScope::Inspect(*scope,io,qualificationRestoreFailed)
+        && !qualificationRestoreFailed && io.runtimeCore==7 && route.ProveSelectedRoute(7));
+    assert(!scope->ProveRoleStatusInspectionAllowed(io));
+    io.hdmaReads=0;io.dropHdmaRestore=true;
+    assert(!PioneerQ35ProjectionQualificationScope::Inspect(*scope,io,qualificationRestoreFailed)
+        && qualificationRestoreFailed && !scope->ProveRoleStatusInspectionAllowed(io));
+    io.dropHdmaRestore=false;
+    assert(io.SelectRuntimeCore(7) && route.ProveSelectedRoute(7));
+    context->qwen35DataflowService=savedService;context->qwen35SharedRoleBinding=savedBinding;
+#endif
     io.selectCalls=io.tlbWrites=io.hdmaReads=0;
     bool restoreFailed=false;
     io.simulateHdma=false;

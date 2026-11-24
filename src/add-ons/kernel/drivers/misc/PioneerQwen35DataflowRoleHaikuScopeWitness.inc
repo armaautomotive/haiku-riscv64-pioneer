@@ -8,6 +8,10 @@
 #include "PioneerQwen35DataflowRoleHaikuMap.h"
 #include "PioneerQwen35DataflowRoleRouteGuard.h"
 #include "PioneerQwen35DataflowNocSafetySample.h"
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+#include "PioneerQwen35DataflowFleetInspection.h"
+class PioneerQ35ProjectionQualificationScope;
+#endif
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleReadOnlyViews.h"
 #ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleWritableViews.h"
@@ -32,6 +36,10 @@ class PioneerQwen35RoleBorrowedScopeWitness {
 #endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     friend class PioneerQwen35SharedRoleBinding;
+#endif
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+    friend class PioneerQ35ProjectionQualificationScope;
+    bool fQualificationInspection=false;
 #endif
     PioneerProbeCookie* fCookie;
     PioneerStoreContext* fContext;
@@ -64,6 +72,27 @@ class PioneerQwen35RoleBorrowedScopeWitness {
 #endif
     PioneerQwen35RoleBorrowedScopeWitness(PioneerProbeCookie* cookie,PioneerStoreContext* context)
         :fCookie(cookie),fContext(context) {}
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+    // The qualification scope calls this only after binding its exact staged
+    // scratch and bank lease. This is a read-only, bounded observation; it
+    // does not grant role memory, reset, firmware-exclusion or launch rights.
+    bool InspectQualificationHeldFleet(PioneerSessionIO& io,bool& restoreFailed) {
+        restoreFailed=false;
+        if (fQualificationInspection || !ProveExclusiveRewrite(io)
+            || fContext->qwen35DataflowService || fContext->qwen35SharedRoleBinding
+            || !io.SharedRoleFirmwareMatches()) return false;
+        fQualificationInspection=true;
+        PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness> route(io,*this);
+        PioneerQwen35FleetInspectionResult result;
+        const bool sampled=PioneerQwen35InspectHeldFleet(io,*this,route,result);
+        fQualificationInspection=false;
+        restoreFailed=result.restoreFailed;
+        if (sampled && (!ProveExclusiveRewrite(io) || !io.SharedRoleFirmwareMatches())) {
+            restoreFailed=true;return false;
+        }
+        return sampled;
+    }
+#endif
 public:
     PioneerQwen35RoleBorrowedScopeWitness(const PioneerQwen35RoleBorrowedScopeWitness&)=delete;
     PioneerQwen35RoleBorrowedScopeWitness& operator=(const PioneerQwen35RoleBorrowedScopeWitness&)=delete;
@@ -179,9 +208,14 @@ public:
     }
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
     bool ProveRoleStatusInspectionAllowed(PioneerSessionIO& io) const {
-        return ProveExclusiveRewrite(io) && fContext->qwen35DataflowService
-            && fContext->qwen35DataflowService->SharedRoleCapturePending()
-            && io.SharedRoleFirmwareMatches();
+        return ProveExclusiveRewrite(io) && io.SharedRoleFirmwareMatches()
+            && ((fContext->qwen35DataflowService
+                && fContext->qwen35DataflowService->SharedRoleCapturePending())
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+                || (fQualificationInspection && !fContext->qwen35DataflowService
+                    && !fContext->qwen35SharedRoleBinding)
+#endif
+                );
     }
     // Read-only image comparison during installation or a separately
     // authorized retained-fault audit. Neither admits writes or proves that

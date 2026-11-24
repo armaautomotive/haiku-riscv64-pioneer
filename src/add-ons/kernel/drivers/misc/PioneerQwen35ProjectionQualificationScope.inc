@@ -133,6 +133,16 @@ public:
         auto* scope=Borrowed();
         if (!scope || !QualificationPrepareRoutesAllowed(scratch,requested) || !c.qwen35DataflowRoutesAudited)
             return false;
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+        // Inspect all 120 held workers, L2CPU reset and host DMA while the
+        // exact scratch owner and service-free session are still retained.
+        // This observation does not replace the independent fleet proof.
+        bool restoreFailed=false;
+        if (!scope->InspectQualificationHeldFleet(c.io,restoreFailed)) {
+            if (restoreFailed) Retain(&scratch);
+            return false;
+        }
+#endif
         return CheckFleet(scope,[&](unsigned core) {
             return scope->ProveRoleStacklessFleetPreparationSafe(c.io,core);
         },false);
