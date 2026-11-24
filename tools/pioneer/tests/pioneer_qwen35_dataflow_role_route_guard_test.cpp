@@ -69,7 +69,8 @@ int main()
     assert(!guard.ProveControlWriteAllowed(7,0x15,0x3d5));
     scope.controlSafe=true;
     assert(guard.ProveControlWriteAllowed(7,0x15,0x3d5));
-    assert(!guard.ProveControlWriteAllowed(7,0x15,0x3d4));
+    assert(guard.ProveControlWriteAllowed(7,0x15,0x3d4)); // T0 local RAM preservation
+    assert(!guard.ProveControlWriteAllowed(7,0x15,0x3d7)); // T0 debug state
 #endif
     io.mapping=false; assert(!guard.ProveSelectedRoute(7)); io.mapping=true;
     io.changeTlb=true; io.tlbReads=0; assert(!guard.ProveSelectedRoute(7)); io.changeTlb=false;
