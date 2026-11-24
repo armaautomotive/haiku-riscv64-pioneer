@@ -4659,6 +4659,15 @@ public:
 		return scratch->Restore(io,scope,dram,noc,host,lease,banks);
 	}
 // PIONEER_Q35_PROJECTION_SCRATCH_OPERATION_END
+	template<class Scope>
+	bool ObserveDataflowQualificationTransfer(Scope& scope,PioneerQ35ScratchObservation& observation) {
+		observation={};
+		auto* scratch=qwen35QualificationOwner.Scratch();
+		if (qwen35QualificationInternalActive || !qwen35QualificationOwner.Retained() || !scratch) return false;
+		QualificationInternalScope admission(qwen35QualificationInternalActive);
+		return scratch->ObserveLateTransfer(io,scope,baseline.baseline.baseline.baseline.dram,
+			baseline.baseline.baseline.noc,host,lease,observation);
+	}
 	template<class Scratch,class Scope>
 	bool PrepareDataflowQualificationRoutes(Scratch& scratch,Scope& scope,uint32_t& stage,uint32_t& core) {
 		stage=0;core=0xff;

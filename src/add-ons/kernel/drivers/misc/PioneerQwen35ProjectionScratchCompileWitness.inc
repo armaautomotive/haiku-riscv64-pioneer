@@ -19,6 +19,7 @@ public:
     bool ScratchStopped(const void*) const { return permitted; }
     bool ScratchOutputAllowed(const void*) const { return permitted; }
     bool ScratchRestoreAllowed(const void*) const { return permitted; }
+    bool ScratchRetainedObservationAllowed(const void*,PioneerSessionIO&) const { return permitted; }
     void RetainScratch(const void*) {
         if (context) context->qwen35QualificationOwner.Retain();
         permitted=false;
@@ -119,6 +120,10 @@ PioneerQ35ProjectionScratchCompileWitnessImpl(PioneerStoreContext& context,Scope
     if (action==11) return context.CloseDataflowQualification(scope)==PioneerQwen35::DataflowServiceClosed;
     if (action==12) return context.RetireDataflowQualification(scope);
     if (action==13) return context.AbandonDataflowQualification(scope);
+    if (action==14) {
+        PioneerQ35ScratchObservation observation;
+        return context.ObserveDataflowQualificationTransfer(scope,observation);
+    }
     return false;
 }
 

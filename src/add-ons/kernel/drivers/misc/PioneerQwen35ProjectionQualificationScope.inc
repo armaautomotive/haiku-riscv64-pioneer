@@ -84,6 +84,20 @@ public:
     bool ScratchStageAllowed(const void* p) const { return TransferReady(p); }
     bool ScratchOutputAllowed(const void* p) const { return TransferReady(p); }
     bool ScratchRestoreAllowed(const void* p) const { return TransferReady(p); }
+    // Only the still-attached owner may inspect its quarantined transfer.
+    // This is observation authority, not a fleet ownership or recovery proof.
+    bool ScratchRetainedObservationAllowed(const void* p,PioneerSessionIO& io) const {
+        auto* scope=c.io.qwen35BorrowedRoleScope;
+        return &io==&c.io && scope && scope->ProveRetainedOwnerIdentity(io)
+            && sOpenCookies==1 && c.qwen35QualificationInternalActive
+            && c.qwen35QualificationOwner.Retained() && p==c.qwen35QualificationOwner.Scratch()
+            && c.banks.Quarantined() && c.lease.pending && c.lease.recovery_required
+            && (!c.qwen35DataflowService || c.qwen35DataflowService->Closed())
+            && c.q38Dispatch && c.q38DispatchRoutes && c.q38Dispatch->prepared==PioneerQwen35::DataflowCoreCount
+            && !c.q38Dispatch->unsafe && !c.q38Dispatch->closed && !c.q38Dispatch->rootRunning && io.runtimeCore==0
+            && io.DataflowPanelMappingStable()
+            && PioneerQwen35WithSelectedClock(io,0,[&]() { return io.ResetRead()==0x47800; });
+    }
     void RetainScratch(const void* p) { Retain(p); }
     bool QualificationPrepareRoutesAllowed(const PioneerQ35ProjectionScratch& scratch,
         const PioneerStoreContext& requested) const {

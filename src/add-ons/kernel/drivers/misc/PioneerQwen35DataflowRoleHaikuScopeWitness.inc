@@ -82,16 +82,25 @@ public:
         fThread=current; fTeam=info.team; fGeneration=sReloadGeneration;
         fContext->io.qwen35BorrowedRoleScope=this; fAttached=true; return true;
     }
-    bool ProveOwnerIdentity(PioneerSessionIO& io) const {
+private:
+    bool OwnerIdentity(PioneerSessionIO& io,bool allowRetainedCold) const {
         if (!fAttached || !fCookie || !fContext || &io!=&fContext->io
             || io.qwen35BorrowedRoleScope!=this || io.qwen35DataflowContext!=fContext
             || fThread<0 || find_thread(NULL)!=fThread || fTeam<0 || fCookie->team!=fTeam
             || fCookie->magic!=0x50313030 || fCookie->context!=fContext
-            || sRuntimeOwner!=fCookie || sQwen35ExclusiveCookie!=fCookie || sColdRecoveryRequired || sReloadQuiesced
+            || sRuntimeOwner!=fCookie || sQwen35ExclusiveCookie!=fCookie
+            || (sColdRecoveryRequired && !allowRetainedCold) || sReloadQuiesced
             || !fGeneration || sReloadGeneration!=fGeneration || !sBankStorageOnly
             || !fContext->bankStorageOnly || fContext->bytes!=PioneerResidentBanks::Total) return false;
         thread_info info={};
         return get_thread_info(fThread,&info)==B_OK && info.team==fTeam;
+    }
+public:
+    bool ProveOwnerIdentity(PioneerSessionIO& io) const { return OwnerIdentity(io,false); }
+    // Read-only inspection under the same still-attached session. This does
+    // not reopen a cold session or grant ownership of any device resource.
+    bool ProveRetainedOwnerIdentity(PioneerSessionIO& io) const {
+        return sColdRecoveryRequired && OwnerIdentity(io,true);
     }
     bool ProveExclusiveRewrite(PioneerSessionIO& io) const {
         if (!ProveOwnerIdentity(io)) return false;

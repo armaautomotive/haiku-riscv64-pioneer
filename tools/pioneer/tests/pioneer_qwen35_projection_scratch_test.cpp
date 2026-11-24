@@ -14,6 +14,8 @@ using Fixture=PioneerQwen35::DataflowProjectionQualification;
 struct ScratchScope {
     const void* owner=nullptr;
     bool allowed=true,transferAllowed=true,stopped=false,retained=false;
+    mutable unsigned observationChecks=0;
+    unsigned observationLimit=UINT32_MAX;
     bool ScratchReserveAllowed(const void* p,unsigned bank,unsigned offset,unsigned bytes) {
         if (!allowed || owner || bank!=0 || offset!=Fixture::ScratchOffset || bytes!=Fixture::ScratchBytes) return false;
         owner=p;return true;
@@ -27,6 +29,9 @@ struct ScratchScope {
     bool ScratchStopped(const void* p) const { return allowed && stopped && p==owner; }
     bool ScratchOutputAllowed(const void* p) const { return allowed && stopped && p==owner; }
     bool ScratchRestoreAllowed(const void* p) const { return allowed && p==owner; }
+    template<class IO> bool ScratchRetainedObservationAllowed(const void* p,IO&) const {
+        return ++observationChecks<=observationLimit && allowed && retained && p==owner;
+    }
     void RetainScratch(const void* p) { assert(p==owner);retained=true; }
 };
 
@@ -73,6 +78,41 @@ template<class Raw=BanksMock> struct ScratchDevice {
 };
 
 #ifndef PIONEER_QWEN35_PROJECTION_SCRATCH_MOCK_ONLY
+static void CheckLateObservation(PioneerQ35ProjectionScratch& owner,ScratchDevice<>& device)
+{
+    const auto& failure=owner.Failure();auto& io=device.io;
+    PioneerQ35ScratchObservation observed{};
+    auto observe=[&]() { return owner.ObserveLateTransfer(io,device.scope,device.dram,device.noc,
+        device.host,device.lease,observed); };
+    const unsigned writes=io.Mock::writes,requests=io.requests;
+    assert(!observe()); // The simulated doorbell is still pending.
+    io.pending=false;io.done=true;
+    const uint32_t delta[4]={1,64,1,1};
+    if (failure.trace.write) {
+        io.writeCounters[0]=failure.transfer.before[failure.trace.step][0]+delta[0];
+        io.writeCounters[1]=failure.transfer.before[failure.trace.step][1]+delta[1];
+        io.accepted=failure.transfer.before[failure.trace.step][2]+delta[2];
+        io.writeCounters[3]=failure.transfer.before[failure.trace.step][3]+delta[3];
+    } else {
+        io.counters[0]=failure.transfer.before[failure.trace.step][0]+delta[0];
+        io.counters[1]=failure.transfer.before[failure.trace.step][1]+delta[1];
+        io.accepted=failure.transfer.before[failure.trace.step][2]+delta[2];
+        io.counters[3]=failure.transfer.before[failure.trace.step][3]+delta[3];
+    }
+    assert(observe() && observed.step==failure.trace.step && observed.write==failure.trace.write);
+    io.command[3]^=1;assert(!observe());io.command[3]^=1;
+    io.accepted++;assert(!observe());io.accepted--;
+    io.active=true;assert(!observe());io.active=false;
+    io.pciePending=true;assert(!observe());io.pciePending=false;
+    device.scope.allowed=false;assert(!observe());device.scope.allowed=true;
+    device.scope.observationChecks=0;device.scope.observationLimit=2;
+    assert(!observe()); // Authority is lost between the two counter samples.
+    device.scope.observationChecks=0;device.scope.observationLimit=UINT32_MAX;
+    assert(observe() && device.lease.pending && device.lease.recovery_required
+        && device.scope.retained && io.HostReadMock::quarantined
+        && io.Mock::writes==writes && io.requests==requests && !io.PageMock::releases);
+}
+
 int main()
 {
     (void)&Input; (void)&Prepare; (void)&Upload; (void)&Close;
@@ -151,6 +191,7 @@ int main()
         const uint32_t expected[]={Fixture::ScratchAddress,0,18|(12<<6),0x17f000,0,1|(2<<6),0,0,4096,0};
         assert(failure.trace.issued && !failure.trace.write && failure.trace.step==0);
         for (unsigned w=0;w<10;w++) assert(failure.trace.command[w]==expected[w]);
+        CheckLateObservation(*owner,*device);
     }
     for (unsigned failedStep=1;failedStep<=3;failedStep++) {
         auto owner=std::make_unique<PioneerQ35ProjectionScratch>();
@@ -175,6 +216,7 @@ int main()
         assert(failure.trace.issued && failure.trace.step==failedStep-1
             && failure.trace.write==bool(failedStep==2));
         for (unsigned w=0;w<10;w++) assert(failure.trace.command[w]==expected[w]);
+        CheckLateObservation(*owner,*device);
         assert(!device->Restore(*owner) && device->banks.Q35StreamClaimed());
     }
     {

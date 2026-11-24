@@ -17,7 +17,9 @@ struct PioneerSessionIO : BanksMock {
     PioneerStoreContext* qwen35DataflowContext=nullptr;
     PioneerQwen35RoleBorrowedScopeWitness* qwen35BorrowedRoleScope=nullptr;
     bool firmware=true,selectOkay=true,idle=true;unsigned selected=0,selects=0;
+    unsigned runtimeCore=0;
     bool SharedRoleFirmwareMatches() const { return firmware; }
+    bool DataflowPanelMappingStable() const { return true; }
     bool SelectRuntimeCore(unsigned c) { selected=c;selects++;return selectOkay && c<120; }
     bool CoreIdle(unsigned c) const { return idle && c==0 && selected==0; }
 };
@@ -25,11 +27,13 @@ class PioneerQwen35RoleBorrowedScopeWitness {
 public:
     bool exclusive=true,held=false,preparation=false,runtime=false,restored=false;
     bool ProveExclusiveRewrite(PioneerSessionIO&) const { return exclusive; }
+    bool ProveRetainedOwnerIdentity(PioneerSessionIO&) const { return exclusive && sColdRecoveryRequired; }
     bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO& io,unsigned c) const { return held && io.selected==c; }
     bool ProveRoleStacklessFleetPreparationSafe(PioneerSessionIO& io,unsigned c) const { return preparation && io.selected==c; }
     bool ProveRoleRuntimeSafe(PioneerSessionIO& io,unsigned c) const { return runtime && io.selected==c; }
     bool ProveRoleAutoRestoreCompletionSafe(PioneerSessionIO& io,unsigned c) const { return restored && io.selected==c; }
 };
+template<class Work> static bool PioneerQwen35WithSelectedClock(PioneerSessionIO&,unsigned,Work work) { return work(); }
 struct FakeDispatch { unsigned prepared=120;bool unsafe=false,closed=false,rootRunning=false; };
 struct PioneerStoreContext {
     PioneerQ35ProjectionQualificationOwner qwen35QualificationOwner;
@@ -116,6 +120,19 @@ int main() {
         context.qwen35QualificationOwner.Retain();scope.RetainScratch(scratch);
         assert(context.qwen35QualificationOwner.Retained() && context.banks.Quarantined()
             && context.lease.recovery_required && context.io.HostReadMock::quarantined && sColdRecoveryRequired);
+        assert(!scope.ScratchRetainedObservationAllowed(scratch,context.io));
+        context.lease.pending=true;
+        assert(scope.ScratchRetainedObservationAllowed(scratch,context.io));
+        borrowed.exclusive=false;assert(!scope.ScratchRetainedObservationAllowed(scratch,context.io));borrowed.exclusive=true;
+        context.dispatch.unsafe=true;assert(!scope.ScratchRetainedObservationAllowed(scratch,context.io));
+        context.dispatch.unsafe=false;
+        context.dispatch.rootRunning=true;assert(!scope.ScratchRetainedObservationAllowed(scratch,context.io));
+        context.dispatch.rootRunning=false;
+        context.qwen35QualificationInternalActive=false;
+        assert(!scope.ScratchRetainedObservationAllowed(scratch,context.io));
+        context.qwen35QualificationInternalActive=true;
+        context.io.active=true;assert(!scope.ScratchRetainedObservationAllowed(scratch,context.io));context.io.active=false;
+        assert(scope.ScratchRetainedObservationAllowed(scratch,context.io));
     }
     sColdRecoveryRequired=false;
     {

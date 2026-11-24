@@ -739,6 +739,13 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
             gThread=6; assert(!scope.ProveExclusiveRewrite(context->io)); gThread=5;
             sQwen35ExclusiveCookie=nullptr; assert(!scope.ProveExclusiveRewrite(context->io));
             sQwen35ExclusiveCookie=cookie;
+            assert(!scope.ProveRetainedOwnerIdentity(context->io));
+            sColdRecoveryRequired=true;
+            assert(!scope.ProveOwnerIdentity(context->io) && !scope.ProveExclusiveRewrite(context->io)
+                && scope.ProveRetainedOwnerIdentity(context->io));
+            ++sReloadGeneration;assert(!scope.ProveRetainedOwnerIdentity(context->io));--sReloadGeneration;
+            gThread=6;assert(!scope.ProveRetainedOwnerIdentity(context->io));gThread=5;
+            sColdRecoveryRequired=false;
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
             if (mode==5 && gBorrowedScopeHook) gBorrowedScopeHook(context->io);
 #endif

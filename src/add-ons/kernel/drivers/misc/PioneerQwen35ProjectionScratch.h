@@ -26,6 +26,11 @@ struct PioneerQ35ScratchFailure {
     tt_resident_store_result transfer{};
     PioneerResidentStoreTrace trace{};
 };
+struct PioneerQ35ScratchObservation {
+    unsigned step=0;
+    bool write=false;
+    uint32_t counters[4]{};
+};
 
 // Heap-owned by the exclusive diagnostic session until its entire bank
 // context is destroyed. ReserveQ35Stream is sticky: even after successful
@@ -113,6 +118,44 @@ public:
     bool IsRestored() const { return phase==Restored; }
     bool FailedTransfer() const { return transferFailed; }
     const PioneerQ35ScratchFailure& Failure() const { return failure; }
+    // Inspect the retained command and counters twice without changing the
+    // lease, bank quarantine, host page or failure. Even a matching sample
+    // cannot prove lifetime exclusion or permit restoration/reuse.
+    template<class IO,class Scope>
+    bool ObserveLateTransfer(IO& io,Scope& scope,const tt_dram_samples_result& dram,
+        const tt_compute_noc_result& noc,const tt_host_page_result& host,
+        const PioneerResidentLease& lease,PioneerQ35ScratchObservation& observation) const {
+        observation={};
+        const auto& r=failure.transfer;const auto& trace=failure.trace;
+        if (phase!=Failed || !transferFailed || failure.kind!=PioneerQ35ScratchFailureTransfer
+            || !failure.leasePending || !failure.leaseRecoveryRequired || !lease.pending || !lease.recovery_required
+            || r.state!=TT_STORE_TIMEOUT || !r.recovery_required || !trace.issued || trace.step>=3
+            || r.phase!=trace.step+1 || r.requests!=r.completed+1 || !r.polls[trace.step]
+            || !scope.ScratchRetainedObservationAllowed(this,io)) return false;
+        uint32_t first[4]={};
+        for (unsigned pass=0;pass<2;pass++) {
+            if (!scope.ScratchRetainedObservationAllowed(this,io)
+                || !BlackholeResidentSourceStable(io,noc,lease.config|0x10000)
+                || !BlackholeDramSourceStable(io,dram) || !BlackholeHostReadMapStable(io,host)
+                || !BlackholeHostReadPciQuiet(io,0x402)) return false;
+            for (unsigned s=0;s<2;s++) for (unsigned w=0;w<3;w++)
+                if (io.DramTlbRead(s,w)!=BlackholeDramFixedTlbWord(s?0xffa00000:0,1,2,false,w)) return false;
+            if (io.ResidentNocRead(0x40) || !BlackholeResidentIdle(io)) return false;
+            for (unsigned w=0;w<10;w++) if (io.ResidentNocRead(w*4)!=trace.command[w]) return false;
+            const uint32_t expected[4]={1,64,1,1};
+            for (unsigned w=0;w<4;w++) {
+                const uint32_t current=io.ResidentNocRead(trace.write?BlackholeHostWriteCounter(w):0x208+w*4);
+                if (uint32_t(current-r.before[trace.step][w])!=expected[w]
+                    || (pass && current!=first[w])) return false;
+                first[w]=current;
+            }
+            if (!scope.ScratchRetainedObservationAllowed(this,io)) return false;
+            io.Pause();
+        }
+        observation.step=trace.step;observation.write=trace.write;
+        for (unsigned w=0;w<4;w++) observation.counters[w]=first[w];
+        return true;
+    }
     bool OutputVerified() const { return outputVerified; }
     bool MatchesStagedLease(unsigned whichBank,unsigned address,unsigned bytes) const {
         return phase==Staged && whichBank==bank && address==PioneerResidentBanks::Base+firstOffset
