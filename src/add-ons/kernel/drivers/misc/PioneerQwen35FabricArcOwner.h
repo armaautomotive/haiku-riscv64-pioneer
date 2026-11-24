@@ -8,6 +8,7 @@
 // independently prove the intervening RISC reset-unit and tile transitions.
 // A successful message is not a fabric-reset or recovery proof.
 template<class Guard> class PioneerQ35FabricArcOwner {
+    static_assert(PIONEER_POST_RESET_CORES==120,"fabric reset requires the admitted 120-worker topology");
 public:
     enum Phase { Fresh=0,ClockForced=1,RiscsHeld=2,TensixToggled=3,NocReinitialized=4,
         TilesHeld=5,RiscsReleased=6,ClockReleased=7,Failed=8 };
@@ -18,7 +19,11 @@ private:
     bool fOpenAttempted=false,fOpen=false;
     area_id fResetArea=-1;
     volatile uint32* fResetView=NULL;
+    area_id fTileArea=-1;
+    volatile uint32* fTileView=NULL;
     uint32 fResetWrites=0;
+    uint32 fTileWrites[4]={};
+    unsigned fFailedTile=120;
 
     template<class Scope> bool Allowed(Guard* guard,Scope& scope) const {
         return guard && guard->validate && fTicket && guard->validate(fTicket)==B_OK
@@ -69,6 +74,8 @@ public:
     uint64 Ticket() const { return fTicket; }
     bool Opened() const { return fOpen; }
     uint32 ResetWrites() const { return fResetWrites; }
+    uint32 TileWrites(unsigned word) const { return word<4?fTileWrites[word]:0; }
+    unsigned FailedTile() const { return fFailedTile; }
 
     template<class Scope> bool Open(Guard* guard,Scope& scope) {
         if (fOpenAttempted || fPhase!=Fresh || !Allowed(guard,scope)
@@ -98,9 +105,18 @@ public:
         if (fResetArea<B_OK || !view || fResetArea==fMapping.queueArea
             || fResetArea==fMapping.queueMsiArea) { fPhase=Failed;return false; }
         fResetView=(volatile uint32*)view;
+        view=NULL;
+        if (!Allowed(guard,scope) || !fMapping.PciReady()) { fPhase=Failed;return false; }
+        fTileArea=map_physical_memory("P100A Q35 fabric recovery tile reset",
+            fMapping.profile.bar0_host_start+0x19312000,B_PAGE_SIZE,
+            B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA,&view);
+        if (fTileArea<B_OK || !view || fTileArea==fMapping.queueArea
+            || fTileArea==fMapping.queueMsiArea || fTileArea==fResetArea) { fPhase=Failed;return false; }
+        fTileView=(volatile uint32*)view;
         for (unsigned i=0;i<7;i++) {
             if (fMapping.areas[i]<B_OK || fMapping.areas[i]==fMapping.queueArea
-                || fMapping.areas[i]==fMapping.queueMsiArea || fMapping.areas[i]==fResetArea) {
+                || fMapping.areas[i]==fMapping.queueMsiArea || fMapping.areas[i]==fResetArea
+                || fMapping.areas[i]==fTileArea) {
                 fPhase=Failed;return false;
             }
             for (unsigned j=0;j<i;j++) if (fMapping.areas[i]==fMapping.areas[j]) {
@@ -193,10 +209,62 @@ public:
         fPhase=hold?RiscsHeld:RiscsReleased;return true;
     }
 
-    template<class Scope> bool ConfirmTilesHeld(Guard* guard,Scope& scope) {
-        if (!fOpen || fPhase!=NocReinitialized || !Allowed(guard,scope)
-            || !scope.FabricTilesHeld(*this,fMapping,fTicket) || !Allowed(guard,scope)) return false;
-        fPhase=TilesHeld;return true;
+    // Unicast the upstream broadcast value to the exact 120 admitted worker
+    // routes, then independently reread every tile. The scope must establish
+    // that this list covers the installed card and that reset-unit holds,
+    // firmware, NoC and the PCI reservation remain exclusively controlled.
+    template<class Scope> bool HoldAllTiles(Guard* guard,Scope& scope) {
+        if (!fOpen || !fTileView || !fMapping.noc || fPhase!=NocReinitialized || !Allowed(guard,scope)
+            || !scope.FabricTileCoverage(*this,fMapping,fTicket)) return false;
+        auto access=[&](unsigned core) {
+            return Allowed(guard,scope) && fMapping.PciReady() && fMapping.SourceStable()
+                && scope.FabricTileCoverage(*this,fMapping,fTicket)
+                && scope.FabricTileResetAllowed(*this,fMapping,fTicket,core)
+                && Allowed(guard,scope);
+        };
+        auto fail=[&]() { fPhase=Failed;return false; };
+        uint32 saved[3]{};
+        for (unsigned i=0;i<3;i++) {
+            if (!access(0)) return fail();
+            saved[i]=fMapping.TlbRead(i);
+            if (!access(0) || fMapping.TlbRead(i)!=saved[i] || saved[i]!=fMapping.saved[i]) return fail();
+        }
+        for (unsigned w=0;w<4;w++) fTileWrites[w]=0;
+        for (unsigned pass=0;pass<2;pass++) for (unsigned core=0;core<120;core++) {
+            fFailedTile=core;
+            if (!access(core)) return fail();
+            const unsigned x=PioneerWorkerX(core),y=PioneerWorkerY(core);
+            for (unsigned i=0;i<3;i++) {
+                if (!access(core)) return fail();
+                const uint32 word=BlackholeDramFixedTlbWord(0xffa00000U,x,y,false,i);
+                fMapping.TlbWrite(i,word);
+                if (!access(core) || fMapping.TlbRead(i)!=word) return fail();
+            }
+            auto route=[&]() {
+                if (!access(core)) return false;
+                for (unsigned i=0;i<3;i++)
+                    if (fMapping.TlbRead(i)!=BlackholeDramFixedTlbWord(0xffa00000U,x,y,false,i)) return false;
+                const uint32 id=PioneerRead32(fMapping.noc+0x44/4);
+                const uint32 endpoint=PioneerRead32(fMapping.noc+0x48/4);
+                const uint32 expected=BlackholeDramSourceX(fMapping.topology.source,x)|(y<<6);
+                return (id&0xfffU)==expected && ((id>>12)&127U)==17U
+                    && ((id>>19)&127U)==12U && (endpoint&0xffffff00U)==0x10000U && access(core);
+            };
+            if (!route() || !route()) return fail();
+            if (!pass) {
+                fTileWrites[core/32]|=1U<<(core%32); // before the uncertain write
+                PioneerWrite32(fTileView+0x1b0/4,0x47800U);
+            }
+            if (!route() || PioneerRead32(fTileView+0x1b0/4)!=0x47800U
+                || !route() || PioneerRead32(fTileView+0x1b0/4)!=0x47800U) return fail();
+        }
+        for (unsigned i=0;i<3;i++) {
+            if (!access(119)) return fail();
+            fMapping.TlbWrite(i,saved[i]);
+            if (!access(119) || fMapping.TlbRead(i)!=saved[i]) return fail();
+        }
+        if (!access(119) || !scope.FabricTileCoverage(*this,fMapping,fTicket)) return fail();
+        fFailedTile=120;fPhase=TilesHeld;return true;
     }
 };
 #endif

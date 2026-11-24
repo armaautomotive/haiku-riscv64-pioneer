@@ -5,8 +5,10 @@ sequence in [`app/smc/pytest/e2e_smoke.py`](https://github.com/tenstorrent/tt-sy
 `tensix_reset_sequence`. It is a candidate for recovering a faulted resident
 rewrite without resetting the PCIe endpoint. The complete sequence has **not**
 been implemented or tried on this Pioneer. A context-owned queue adapter and
-the eight RISC reset-unit writes have been implemented and simulated, but no
-live recovery controller constructs the owner yet. The reported
+the eight RISC reset-unit writes and a 120-worker unicast soft-reset pass have
+been implemented and simulated, but no live recovery controller constructs the
+owner yet. Unicast coverage and the expected all-ones reset-unit readback remain
+unverified on the card. The reported
 v18.5.0 firmware family is not proof
 that the installed binary matches the source.
 
