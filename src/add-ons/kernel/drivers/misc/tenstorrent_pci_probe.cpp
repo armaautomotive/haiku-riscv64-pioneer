@@ -4698,14 +4698,20 @@ private:
 #endif
 		};
 		const auto result=qwen35DataflowService->Install(image,io);
+// PIONEER_Q35_INSTALL_CLEANUP_BEGIN
 		if (!qwen35DataflowService->Started()) {
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
-			if (!PioneerQ35DestroySharedRoleBinding(qwen35SharedRoleBinding)) sColdRecoveryRequired=true;
+			if (!PioneerQ35DestroySharedRoleBinding(qwen35SharedRoleBinding)) {
+				sColdRecoveryRequired=true;
+				qwen35DataflowLastResult=PioneerQwen35::DataflowServiceRestoreFailed;
+				return PioneerQwen35::DataflowServiceRestoreFailed;
+			}
 			qwen35SharedRoleBinding=NULL;
 #endif
 			delete qwen35DataflowService;qwen35DataflowService=NULL;
 			delete qwen35DataflowMemory;qwen35DataflowMemory=NULL;
 		}
+// PIONEER_Q35_INSTALL_CLEANUP_END
 		qwen35DataflowLastResult=result;
 		return result;
 	}
