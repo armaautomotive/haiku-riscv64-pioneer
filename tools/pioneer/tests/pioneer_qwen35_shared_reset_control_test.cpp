@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Compile the real scope method against controlled owner and hardware proofs.
 #define PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS 1
+#define PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS 1
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
