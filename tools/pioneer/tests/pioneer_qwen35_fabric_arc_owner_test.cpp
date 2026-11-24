@@ -17,7 +17,13 @@ static unsigned PioneerWorkerX(unsigned core) {
     const unsigned x[]={1,2,3,4,5,6,7,10,11,12,13,14};return x[core/10];
 }
 static unsigned PioneerWorkerY(unsigned core) { return 2+core%10; }
-static uint32 BlackholeDramSourceX(const uint32*,unsigned x) { return x; }
+static uint32 BlackholeDramSourceX(const uint32* source,unsigned x) {
+    if (source[15]==1 && x==2) return 1;
+    return x<=6?x:x==7?11:x+2;
+}
+static uint32 BlackholeDramSourceY(const uint32* source,unsigned y) {
+    return source[15]==2 && y==2?3:y;
+}
 static uint32 BlackholeDramFixedTlbWord(uint32 base,uint32 x,uint32 y,bool readOnly,unsigned w) {
     return w==0?base>>21:w==1?(x<<11)|(y<<17)|(x<<23)|((y&7)<<29):(y>>3)|(readOnly?0xa40:0x40);
 }
@@ -35,6 +41,9 @@ static unsigned deleteCount=0;static int failDelete=-1,loseTicketOnDelete=-1;
 static bool ticketValid=true;
 static unsigned retirementCsmReads=0;
 static int changeQueueOnRead=-1,loseTicketOnRead=-1;
+static uint32* coverageMutationSource=nullptr;
+static int mutateCoverageCore=-1;
+static unsigned ioAtCoverageMutation=0;
 static area_id deletedAreas[4]{};
 static int delete_area(area_id area) {
     const unsigned n=deleteCount++;
@@ -69,8 +78,15 @@ static uint32 PioneerRead32(const volatile uint32* p) {
     const uintptr_t nb=(uintptr_t)nocPage;
     if (a>=nb && a<nb+sizeof(nocPage)) {
         const unsigned core=SelectedCore();device->io++;
-        if (p==nocPage+0x44/4) return (PioneerWorkerX(core)^(int(core)==wrongTileId?1U:0U))
-            |(PioneerWorkerY(core)<<6)|(17U<<12)|(12U<<19);
+        if (p==nocPage+0x44/4) {
+            const unsigned x=PioneerWorkerX(core),physical=x<=6?x:x==7?11:x+2;
+            if (coverageMutationSource && int(core)==mutateCoverageCore) {
+                coverageMutationSource[15]=1;ioAtCoverageMutation=device->io;
+                coverageMutationSource=nullptr;
+            }
+            return (physical^(int(core)==wrongTileId?1U:0U))
+                |(PioneerWorkerY(core)<<6)|(17U<<12)|(12U<<19);
+        }
         if (p==nocPage+0x48/4) return 0x10000;
         const unsigned offset=unsigned(a-nb),network=offset/0x10000,reg=offset%0x10000;
         assert(network<2);
@@ -329,6 +345,34 @@ int main() {
             const unsigned before=partial.io;assert(!o.Retire(&guard,s) && partial.io==before && !deleteCount);
         } else assert(retired && o.CurrentPhase()==Owner::Retired && !m.queueUnsafe && deleteCount==4);
     }
+    // A sampled or misconfigured translation table cannot authorize a
+    // partial fleet reset, even if the external scope grants coverage.
+    for (unsigned fault=0;fault<5;fault++) {
+        FabricQueue partial(0,0,0);device=&partial;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};
+        mapCount=0;ResetUnit();assert(o.Open(&guard,s) && ForceClock(o,guard,s,arc,result)
+            && o.SetRiscReset(&guard,s,true) && o.SendNext(&guard,s,arc,result)
+            && o.SendNext(&guard,s,arc,result));
+        if (fault==0) m.topologyReady=false;
+        else if (fault==1) m.topology.source[13]|=1U<<1;
+        else if (fault==2) m.topology.source[14]|=1U<<2;
+        else m.topology.source[15]=fault-2;
+        const unsigned before=partial.io;
+        assert(!o.HoldAllTiles(&guard,s) && partial.io==before && m.queueUnsafe
+            && o.CurrentPhase()==Owner::NocReinitialized);
+        for (unsigned word=0;word<4;word++) assert(!o.TileWrites(word));
+    }
+    for (int core:{0,63,119}) {
+        FabricQueue partial(0,0,0);device=&partial;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};
+        mapCount=0;ResetUnit();assert(o.Open(&guard,s) && ForceClock(o,guard,s,arc,result)
+            && o.SetRiscReset(&guard,s,true) && o.SendNext(&guard,s,arc,result)
+            && o.SendNext(&guard,s,arc,result));
+        coverageMutationSource=m.topology.source;mutateCoverageCore=core;ioAtCoverageMutation=0;
+        assert(!o.HoldAllTiles(&guard,s) && o.CurrentPhase()==Owner::Failed && m.queueUnsafe
+            && o.FailedTile()==unsigned(core) && ioAtCoverageMutation && partial.io==ioAtCoverageMutation
+            && !(o.TileWrites(core/32)&(1U<<(core%32))));
+        const unsigned before=partial.io;assert(!o.HoldAllTiles(&guard,s) && partial.io==before);
+    }
+    coverageMutationSource=nullptr;mutateCoverageCore=-1;
     // Partial mapping and uncertain command outcomes cannot be replayed or unmapped.
     for (int failed=0;failed<4;failed++) {
         FabricQueue partial(0,0,0);device=&partial;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};

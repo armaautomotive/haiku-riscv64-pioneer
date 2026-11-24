@@ -29,6 +29,32 @@ private:
     uint32 fFinalDescriptorAddress=0,fFinalQueueBase=0;
     uint32 fFinalDescriptor[4]={},fFinalQueueHeader[8]={};
 
+    // P100 exposes twelve translated Tensix columns and ten rows. Verify
+    // that our fixed 120-worker list covers those exact logical coordinates
+    // and the pinned physical columns without aliases or harvested entries.
+    // SourceStable() separately checks the live hardware against this table.
+    bool P100WorkerCoverage() const {
+        if (!fMapping.topologyReady) return false;
+        const uint32* source=fMapping.topology.source;
+        const unsigned columns[]={1,2,3,4,5,6,7,10,11,12,13,14};
+        uint32 physical=0;
+        for (unsigned column=0;column<12;column++) {
+            const unsigned x=PioneerWorkerX(column*10);
+            if (x!=columns[column] || (source[13]&(1U<<x))) return false;
+            const unsigned translated=BlackholeDramSourceX(source,x);
+            if (translated>16 || (physical&(1U<<translated))) return false;
+            physical|=1U<<translated;
+        }
+        if (physical!=0x1f87eU) return false;
+        for (unsigned row=0;row<10;row++) {
+            const unsigned y=PioneerWorkerY(row);
+            if (y!=row+2 || (source[14]&(1U<<y)) || BlackholeDramSourceY(source,y)!=y) return false;
+            for (unsigned column=0;column<12;column++)
+                if (PioneerWorkerX(column*10+row)!=columns[column]
+                    || PioneerWorkerY(column*10+row)!=y) return false;
+        }
+        return true;
+    }
     template<class Scope> bool Allowed(Guard* guard,Scope& scope) const {
         return guard && guard->validate && fTicket && guard->validate(fTicket)==B_OK
             && scope.FabricArcAllowed(*this,fMapping,fTicket,fPhase)
@@ -263,10 +289,11 @@ public:
     // that this list covers the installed card and that reset-unit holds,
     // firmware, NoC and the PCI reservation remain exclusively controlled.
     template<class Scope> bool HoldAllTiles(Guard* guard,Scope& scope) {
-        if (!fOpen || !fTileView || !fMapping.noc || fPhase!=NocReinitialized || !Allowed(guard,scope)
+        if (!fOpen || !fTileView || !fMapping.noc || fPhase!=NocReinitialized || !P100WorkerCoverage()
+            || !Allowed(guard,scope)
             || !scope.FabricTileCoverage(*this,fMapping,fTicket)) return false;
         auto access=[&](unsigned core) {
-            return Allowed(guard,scope) && fMapping.PciReady() && fMapping.SourceStable()
+            return P100WorkerCoverage() && Allowed(guard,scope) && fMapping.PciReady() && fMapping.SourceStable()
                 && scope.FabricTileCoverage(*this,fMapping,fTicket)
                 && scope.FabricTileResetAllowed(*this,fMapping,fTicket,core)
                 && Allowed(guard,scope);
@@ -294,14 +321,18 @@ public:
                 for (unsigned i=0;i<3;i++)
                     if (fMapping.TlbRead(i)!=BlackholeDramFixedTlbWord(0xffa00000U,x,y,false,i)) return false;
                 const uint32 id=PioneerRead32(fMapping.noc+0x44/4);
+                if (!access(core)) return false;
                 const uint32 endpoint=PioneerRead32(fMapping.noc+0x48/4);
+                if (!access(core)) return false;
                 const uint32 expected=BlackholeDramSourceX(fMapping.topology.source,x)|(y<<6);
                 if ((id&0xfffU)!=expected || ((id>>12)&127U)!=17U
                     || ((id>>19)&127U)!=12U || (endpoint&0xffffff00U)!=0x10000U) return false;
                 for (unsigned network=0;network<2;network++) {
                     uint32 local=0;
-                    if (!PioneerQwen35::DataflowNocDecodeLocalRoute(PioneerRead32(fMapping.noc
-                            +(network*0x10000U+PioneerQwen35::DataflowNocLogicalIdOffset)/4),local)
+                    if (!access(core)) return false;
+                    const uint32 routeId=PioneerRead32(fMapping.noc
+                        +(network*0x10000U+PioneerQwen35::DataflowNocLogicalIdOffset)/4);
+                    if (!access(core) || !PioneerQwen35::DataflowNocDecodeLocalRoute(routeId,local)
                         || !PioneerQwen35::DataflowNocRouteMatchesWorker(local,core)) return false;
                 }
                 return access(core);
@@ -328,7 +359,7 @@ public:
             fMapping.TlbWrite(i,saved[i]);
             if (!access(119) || fMapping.TlbRead(i)!=saved[i]) return fail();
         }
-        if (!access(119) || !scope.FabricTileCoverage(*this,fMapping,fTicket)) return fail();
+        if (!access(119) || !P100WorkerCoverage() || !scope.FabricTileCoverage(*this,fMapping,fTicket)) return fail();
         fFailedTile=120;fPhase=TilesHeld;return true;
     }
 
