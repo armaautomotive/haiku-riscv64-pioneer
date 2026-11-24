@@ -13,8 +13,8 @@ stable55 generation4 without reboot. Independent postflight confirmed
 `cold0 active_owner0`, the expected stable driver and guard hashes, no
 exclusive lock or diagnostic process, and expected metadata for both model
 files. The serial phase log, client receipts, wrapper logs and postflight
-are retained here. Full post-run model hash verification is running in SSH
-session `87903`; poll it without restarting. Tag0021 is consumed.
+are retained here. Both full post-run model hashes match their pinned values
+(`post-model-hashes.txt`). Tag0021 is consumed.
 
 TRISCs remained held. This verifies resident reader/writer lifecycle and
 restoration only; it does not demonstrate matrix projections, model inference,
