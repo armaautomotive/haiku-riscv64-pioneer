@@ -61,6 +61,15 @@ int main() {
 	auto missingOwner=std::make_unique<PublisherIO>();missingOwner->owner=false;DataflowGraphPublisher missingOwnerPublisher;
 	assert(missingOwnerPublisher.Start(*plan,f->routes,token,ticket,5,10000,0,*missingOwner,scratch)==DataflowGraphPublishPreflight
 		&& !missingOwner->staged && !missingOwner->published);
+	// Both swapped bindings remain individually valid and have matching
+	// leases. Reject the wrong target before writing any earlier worker.
+	std::swap(plan->binding[118],plan->binding[119]);
+	std::swap(plan->lease[118],plan->lease[119]);
+	auto swapped=std::make_unique<PublisherIO>();DataflowGraphPublisher swappedOwner;
+	assert(swappedOwner.Start(*plan,f->routes,token,ticket,5,10000,0,*swapped,scratch)==DataflowGraphPublishPreflight
+		&& swappedOwner.FailedCore()==118 && !swappedOwner.Faulted() && !swapped->staged && !swapped->published);
+	std::swap(plan->binding[118],plan->binding[119]);
+	std::swap(plan->lease[118],plan->lease[119]);
 	auto stage=std::make_unique<PublisherIO>();stage->failStage=7;DataflowGraphPublisher stageOwner;
 	assert(stageOwner.Start(*plan,f->routes,token,ticket,5,10000,0,*stage,scratch)==DataflowGraphPublishStagingFault
 		&& stageOwner.Faulted() && stageOwner.FailedCore()==7 && !stage->published);

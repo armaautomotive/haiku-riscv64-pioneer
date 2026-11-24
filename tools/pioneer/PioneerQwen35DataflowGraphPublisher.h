@@ -64,8 +64,8 @@ public:
 			}
 			completed=snapshot.completedSequence;
 			if (plan.binding[core].epoch!=plan.epoch || plan.binding[core].count!=plan.count
-				|| !DataflowGraphRunBuild(plan.binding[core],plan.lease[core],routes,
-					token,ticket,trigger,pollLimit,slot,scratch)) {
+				|| !DataflowGraphRunInputsValid(plan.binding[core],plan.lease[core],routes,
+					token,ticket,trigger,pollLimit,slot,core)) {
 				failedCore=core;return DataflowGraphPublishPreflight;
 			}
 		}

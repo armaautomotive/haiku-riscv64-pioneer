@@ -108,18 +108,26 @@ inline uint32_t DataflowGraphRunChecksum(const DataflowGraphRunDescriptor& d) {
 	}
 	return hash;
 }
+// Validate the inputs before staging any worker descriptor. This avoids
+// constructing and hashing a throwaway 512-byte record in the preflight
+// pass. The caller supplies the actual target core, not a core number taken
+// from the binding itself.
+inline bool DataflowGraphRunInputsValid(const DataflowStreamBinding& binding,const Range& lease,
+	const unsigned (&routes)[2][Banks],const DataflowDynamicTokenContext& token,
+	const DataflowGraphRunTicket& ticket,unsigned trigger,unsigned pollLimit,unsigned inputSlot,unsigned core) {
+	return core<DataflowCoreCount && binding.core==core && trigger && trigger<=DataflowWorkerSequenceLimit
+		&& pollLimit && pollLimit<=DataflowGraphRunMaxPolls && inputSlot<ActivationBuffers
+		&& ticket.epoch && ticket.firstSequence && ticket.firstSequence<=DataflowWorkerSequenceLimit
+		&& (binding.count==DataflowGraphPromptSteps || binding.count==DataflowGraphDecodeSteps)
+		&& (ticket.count==DataflowGraphPromptSteps || ticket.count==DataflowGraphDecodeSteps)
+		&& ticket.count<=binding.count
+		&& ticket.count-1<=DataflowWorkerSequenceLimit-ticket.firstSequence
+		&& token.Valid() && DataflowStreamBindingMatches(binding,lease,routes,core);
+}
 inline bool DataflowGraphRunValid(const DataflowGraphRunDescriptor& d,unsigned core) {
 	if (d.magic!=DataflowGraphRunMagic || d.version!=DataflowGraphRunVersion
-		|| core>=DataflowCoreCount || d.core!=core || !d.triggerSequence
-		|| d.triggerSequence>DataflowWorkerSequenceLimit || !d.pollLimit
-		|| d.pollLimit>DataflowGraphRunMaxPolls || d.inputSlot>=ActivationBuffers
-		|| !d.ticket.epoch || !d.ticket.firstSequence
-		|| d.ticket.firstSequence>DataflowWorkerSequenceLimit
-		|| (d.binding.count!=DataflowGraphPromptSteps && d.binding.count!=DataflowGraphDecodeSteps)
-		|| (d.ticket.count!=DataflowGraphPromptSteps && d.ticket.count!=DataflowGraphDecodeSteps)
-		|| d.ticket.count>d.binding.count
-		|| d.ticket.count-1>DataflowWorkerSequenceLimit-d.ticket.firstSequence
-		|| !d.token.Valid() || !DataflowStreamBindingMatches(d.binding,d.lease,d.routes,core)
+		|| d.core!=core || !DataflowGraphRunInputsValid(d.binding,d.lease,d.routes,d.token,
+			d.ticket,d.triggerSequence,d.pollLimit,d.inputSlot,core)
 		|| d.checksum!=DataflowGraphRunChecksum(d)) return false;
 	for (unsigned word:d.reserved) if (word) return false;
 	return true;
