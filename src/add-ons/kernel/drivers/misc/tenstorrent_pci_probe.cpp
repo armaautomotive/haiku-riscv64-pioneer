@@ -271,6 +271,9 @@
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowGenerationSequence.h"
 #include "../../../../../tools/pioneer/PioneerQwen35ManifestValidation.h"
 #include "PioneerQwen35DataflowModelProtocol.h"
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+#include "PioneerQwen35ProjectionQualificationProtocol.h"
+#endif
 #include "PioneerQwen35DataflowPciMemory.h"
 #include "PioneerQwen35DataflowServiceImage.h"
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
@@ -10302,6 +10305,57 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
 	if (status!=B_OK) return status;
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+	// PIONEER_Q35_PROJECTION_CONTROL_BEGIN
+	// Fixed projection qualification is restricted to the non-loadable
+	// snapshot build. The same locked owner runs preparation, projection and
+	// cleanup; a partial or uncertain operation retains the fleet and scratch.
+	if (operation==TT_PCI_PROBE_Q35_PROJECTION_QUALIFY) {
+		if (length!=sizeof(tt_q35_projection_qualification)) return B_BAD_VALUE;
+		tt_q35_projection_qualification r={};
+		status=user_memcpy(&r,data,sizeof(r));
+		if (status!=B_OK || !PioneerQ35ProjectionQualificationRequest(r))
+			return status!=B_OK?status:B_BAD_VALUE;
+		status=AcquireProbeLock(cookie,true);if (status!=B_OK) return status;
+		auto* c=cookie->context;
+		PioneerQwen35RoleBorrowedScopeWitness borrowed(cookie,c);
+		const bool attached=borrowed.Attach();
+		if (r.expected_tag!=PIONEER_DRIVER_BUILD_TAG || r.expected_generation!=sReloadGeneration)
+			r.operation_status=B_BAD_VALUE;
+		else if (!attached || !c || sRuntimeOwner!=cookie || !c->bankStorageOnly
+			|| c->bytes!=PioneerResidentBanks::Total || c->uploadedPages || c->Unsafe()
+			|| c->q38Dispatch || c->qwen35DataflowService || c->qwen35DataflowMemory
+			|| c->qwen35SharedRoleBinding || c->qwen35GraphOwner || c->qwen35QualificationOwner.Active())
+			r.operation_status=B_NOT_ALLOWED;
+		else {
+			r.stage=1;
+			if (!PrepareQ38Dispatch(*c)) {
+				tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);
+				r.operation_status=B_DEV_NOT_READY;
+			} else {
+				PioneerQ35ProjectionQualificationScope scope(*c);
+				uint32_t stage=0,routeStage=0,routeCore=0xff;bool output=false,cleaned=false;
+				const bool okay=c->RunDataflowQualificationTransaction(scope,stage,routeStage,routeCore,output,cleaned);
+				r.stage=stage+1;r.route_stage=routeStage;r.route_core=routeCore;
+				r.output_verified=output;r.cleanup_complete=cleaned;
+				r.operation_status=okay?B_OK:B_DEV_NOT_READY;
+				if (!cleaned && (c->qwen35QualificationOwner.Active() || c->Unsafe())) {
+					c->qwen35QualificationOwner.Retain();
+					tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);
+				}
+			}
+		}
+		r.build_tag=PIONEER_DRIVER_BUILD_TAG;r.generation=sReloadGeneration;
+		if (attached && !borrowed.Detach()) {
+			if (c) { tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained); }
+			status=B_NOT_ALLOWED;
+		} else status=user_memcpy(data,&r,sizeof(r));
+		const status_t unlock=release_sem(sLock);
+		if (unlock!=B_OK) { sColdRecoveryRequired=true;return unlock; }
+		return status;
+	}
+	// PIONEER_Q35_PROJECTION_CONTROL_END
+#endif
 	if (operation==TT_PCI_PROBE_QWEN35_DATAFLOW_SUPPORT) {
 		if (length!=sizeof(tt_qwen35_dataflow_support)) return B_BAD_VALUE;
 		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
@@ -12494,6 +12548,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #endif
 #endif
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+	if (operation==TT_PCI_PROBE_Q35_PROJECTION_QUALIFY)
+		return Qwen35DataflowControl(instance,operation,data,length);
+#endif
 	// The rewrite's private ioctl numbers are one contiguous range. Routing
 	// the whole range keeps sequence and generation commands on the same
 	// checked handler as the earlier model and activation commands.
