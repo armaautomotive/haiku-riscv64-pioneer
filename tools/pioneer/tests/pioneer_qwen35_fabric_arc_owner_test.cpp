@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #define PIONEER_Q35_FABRIC_QUEUE_MODEL_ONLY
 #include "pioneer_qwen35_fabric_arc_queue_test.cpp"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerComputeFleet.h"
 using uint32=uint32_t;using uint64=uint64_t;using area_id=int;
 enum { B_OK=0,B_PAGE_SIZE=4096,B_ANY_KERNEL_ADDRESS=0,B_UNCACHED_MEMORY=1,
     B_KERNEL_READ_AREA=2,B_KERNEL_WRITE_AREA=4,PIONEER_POST_RESET_CORES=120 };
@@ -13,19 +14,12 @@ static int dropReset=-1;
 static int dropTile=-1;
 static int wrongTileId=-1,changeOnAudit=-1;
 static int disabledClockCore=-1,disabledClockNoc=-1,fifoBusyCore=-1,fifoBusyNoc=-1;
-static unsigned PioneerWorkerX(unsigned core) {
-    const unsigned x[]={1,2,3,4,5,6,7,10,11,12,13,14};return x[core/10];
-}
-static unsigned PioneerWorkerY(unsigned core) { return 2+core%10; }
-static uint32 BlackholeDramSourceX(const uint32* source,unsigned x) {
-    if (source[15]==1 && x==2) return 1;
-    return x<=6?x:x==7?11:x+2;
-}
-static uint32 BlackholeDramSourceY(const uint32* source,unsigned y) {
-    return source[15]==2 && y==2?3:y;
-}
-static uint32 BlackholeDramFixedTlbWord(uint32 base,uint32 x,uint32 y,bool readOnly,unsigned w) {
-    return w==0?base>>21:w==1?(x<<11)|(y<<17)|(x<<23)|((y&7)<<29):(y>>3)|(readOnly?0xa40:0x40);
+static const uint32 physicalSource[16]={0x6005,0x0a418820,0x1ac4a166,0x127541ee,
+    0x1e280440,0x1662b5c3,0x147,0x0a418820,0x16a4a0e6,0x06a12c20,
+    0x0c72a089,0x0e548c20,2,0,3,0};
+static void SetTranslation(uint32* source,unsigned base,unsigned coordinate,unsigned value) {
+    const unsigned word=base+coordinate/6,shift=(coordinate%6)*5;
+    source[word]=(source[word]&~(31U<<shift))|(value<<shift);
 }
 static unsigned SelectedCore() {
     for (unsigned core=0;core<120;core++) {
@@ -79,9 +73,9 @@ static uint32 PioneerRead32(const volatile uint32* p) {
     if (a>=nb && a<nb+sizeof(nocPage)) {
         const unsigned core=SelectedCore();device->io++;
         if (p==nocPage+0x44/4) {
-            const unsigned x=PioneerWorkerX(core),physical=x<=6?x:x==7?11:x+2;
+            const unsigned x=PioneerWorkerX(core),physical=BlackholeDramSourceX(physicalSource,x);
             if (coverageMutationSource && int(core)==mutateCoverageCore) {
-                coverageMutationSource[15]=1;ioAtCoverageMutation=device->io;
+                coverageMutationSource[13]|=1U<<1;ioAtCoverageMutation=device->io;
                 coverageMutationSource=nullptr;
             }
             return (physical^(int(core)==wrongTileId?1U:0U))
@@ -143,7 +137,9 @@ struct PioneerPostResetMapping {
     area_id queueArea=-1,queueMsiArea=-1;
     volatile uint32 *queueView=nullptr,*queueMsi=nullptr;
     const volatile uint32* noc=nocPage;
-    struct { uint32 source[16]{}; } topology;
+    struct { uint32 source[16]={0x6005,0x0a418820,0x1ac4a166,0x127541ee,
+        0x1e280440,0x1662b5c3,0x147,0x0a418820,0x16a4a0e6,0x06a12c20,
+        0x0c72a089,0x0e548c20,2,0,3,0}; } topology;
     uint32 queueBase=0,queueRequest=0;
     uint32 saved[3]={1,2,3};
     tt_arc_telemetry_result firmwareTelemetry=FabricQueue::Health();
@@ -355,7 +351,8 @@ int main() {
         if (fault==0) m.topologyReady=false;
         else if (fault==1) m.topology.source[13]|=1U<<1;
         else if (fault==2) m.topology.source[14]|=1U<<2;
-        else m.topology.source[15]=fault-2;
+        else if (fault==3) SetTranslation(m.topology.source,1,2,BlackholeDramSourceX(m.topology.source,1));
+        else SetTranslation(m.topology.source,7,2,3);
         const unsigned before=partial.io;
         assert(!o.HoldAllTiles(&guard,s) && partial.io==before && m.queueUnsafe
             && o.CurrentPhase()==Owner::NocReinitialized);
