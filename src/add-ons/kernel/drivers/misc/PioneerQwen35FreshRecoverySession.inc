@@ -215,13 +215,14 @@ public:
         fFresh->recoveryMapping=new(std::nothrow) PioneerPostResetMapping(fFresh->profile);
         if (!fFresh->recoveryMapping) return Retain(scope,FleetAudited);
         auto& audit=*fFresh->recoveryMapping;
-        tt_arc_scratch_result firmware{};PioneerPostResetAuditResult fleet{};
+        tt_arc_scratch_result firmware{};PioneerPostResetAuditResult fleet{};PioneerQ35PostResetL2Result l2{};
         if (!audit.Open() || !TicketValid(guard) || !audit.ProbeFirmware(100,firmware)
             || !TicketValid(guard)) return Retain(scope,FleetAudited);
         const auto& dram=fFresh->baseline.baseline.baseline.baseline.dram;
         for (unsigned word=0;word<TT_DRAM_SOURCE_WORDS;word++)
             if (audit.topology.source[word]!=dram.source[word]) return Retain(scope,FleetAudited);
-        if (!audit.Audit(fleet) || !TicketValid(guard) || !audit.AuditHostDma()
+        if (!audit.Audit(fleet) || !TicketValid(guard) || !audit.AuditQ35L2CpuHeld(l2)
+            || !TicketValid(guard) || !audit.AuditHostDma()
             || !TicketValid(guard) || !audit.Close()) return Retain(scope,FleetAudited);
         delete fFresh->recoveryMapping;fFresh->recoveryMapping=nullptr;
         if (!TicketValid(guard) || !verified()

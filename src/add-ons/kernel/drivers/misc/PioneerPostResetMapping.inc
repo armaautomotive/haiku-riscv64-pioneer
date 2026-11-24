@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerPostResetAudit.h"
 #include "PioneerQ38ArcQueue.h"
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+#include "PioneerQwen35PostResetL2Audit.h"
+#endif
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 #include "PioneerRecoveryDbi.h"
 #endif
@@ -307,6 +310,23 @@ struct PioneerPostResetMapping : ConfigIO {
 		fleetAudited=ready && SourceStable() && PioneerPostResetAudit(*this,result) && SourceStable();
 		return fleetAudited;
 	}
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+	bool AuditQ35L2CpuHeld(PioneerQ35PostResetL2Result& result) {
+		struct Adapter {
+			PioneerPostResetMapping& m;
+			bool L2AuditAllowed() {
+				return m.ready && m.firmwareReady && m.topologyReady && m.fleetAudited
+					&& m.savedValid && m.scratch && m.selected<PIONEER_POST_RESET_CORES && m.SourceStable();
+			}
+			uint32 TlbRead(unsigned word) { return m.TlbRead(word); }
+			void TlbWrite(unsigned word,uint32 value) { m.TlbWrite(word,value); }
+			uint32 L2BootRead() { return m.ScratchRead(2); }
+			uint32 L2ResetRead() { return PioneerRead32(m.scratch+0x14/4); }
+			void L2Pause() { m.PostResetAuditPause(); }
+		} adapter{*this};
+		return PioneerQ35PostResetL2Audit(adapter,result);
+	}
+#endif
 	uint32 HostPciRead(unsigned peer,uint16 offset,uint8 size) {
 		return peer==0?Read(offset,size):peer==1?RootRead(offset,size):UINT32_MAX;
 	}
