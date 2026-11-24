@@ -14,9 +14,8 @@ The [client receipt](qualify.stdout), [progress](qualify.stderr), and
 [wrapper output](wrapper.stdout) show success. The wrapper restored stable55
 generation6 without reboot. Independent [postflight](postflight.txt) showed
 the expected stable driver and guard hashes, `cold0 active_owner0`, no lock or
-inference/diagnostic process, and unchanged model metadata. Full post-run model
-hashes are still running in local session 97630; their result must be recorded
-before claiming full post-run file-integrity verification.
+inference/diagnostic process, and unchanged model metadata. Both full
+[post-run model hashes](post-model-hashes.txt) matched their pinned values.
 
 This qualifies actual-model preload and clean teardown only. It does not prove
 a projection, model inference, warm outputs, decode throughput, arbitrary fault
