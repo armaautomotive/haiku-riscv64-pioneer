@@ -5,7 +5,7 @@
 #define PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS 1
 #define Q35_PUBLISHER_FIXTURE_ONLY
 #include "pioneer_qwen35_graph_publication_test.cpp"
-#include "../PioneerQwen35DataflowResidentWorker.h"
+#include "../PioneerQwen35DataflowResidentServiceIO.h"
 
 int main() {
     (void)&q35_publisher_fixture_main;
@@ -38,7 +38,16 @@ int main() {
         && box.acknowledgedSequence==1 && box.state==DataflowWorkerRunning && box.phase==1);
     assert(!begin());
     DataflowWorkerPublish(box,2,DataflowWorkerComplete,0,2);
-    auto ready=[&]() { return DataflowResidentMailboxReady(box,roles,queues,0,2,previous); };
+    const unsigned outputSequence=command.firstSequence+command.count-1;
+    auto ready=[&]() { return DataflowResidentMailboxReady(box,roles,queues,0,2,previous,true,outputSequence); };
+    DataflowArgmaxResult before{};
+    assert(!DataflowArgmaxReadResult(box,outputSequence,before));
+    DataflowResidentServiceIO serviceIO(0,box,roles,queues);
+    assert(!serviceIO.PublishResidentCandidate(0,command)); // no valid result may be published
+    const unsigned tokenResult=42,score=0x3f800000;
+    box.reserved[0]=tokenResult;box.reserved[1]=score;box.reserved[2]=outputSequence;
+    box.reserved[3]=DataflowArgmaxResultMagic;box.reserved[4]=~tokenResult;
+    box.reserved[5]=DataflowArgmaxResultChecksum(tokenResult,score,outputSequence);
     queues[0].produced=3;queues[0].consumed=2;assert(!ready() && box.acknowledgedSequence==1);
     queues[0].consumed=3;queues[0].computeFailure=7;assert(!ready() && box.acknowledgedSequence==1);
     queues[0].computeFailure=0;roles.command=1;assert(!ready() && box.acknowledgedSequence==1);
@@ -46,6 +55,17 @@ int main() {
     assert(ready() && box.acknowledgedSequence==2 && box.completedSequence==2
         && box.commandSequence==2 && box.state==DataflowWorkerReady && !box.phase
         && !queues[0].produced && !queues[0].consumed);
+    DataflowArgmaxResult result{};
+    assert(DataflowArgmaxReadResult(box,outputSequence,result) && result.token==tokenResult);
     assert(!ready());
+    DataflowWorkerClearReceipt(box);
+    assert(!DataflowArgmaxReadResult(box,outputSequence,result));
+    DataflowWorkerMailbox other{};other.magic=DataflowWorkerMailboxMagic;other.version=DataflowWorkerMailboxVersion;
+    other.logicalCore=1;other.commandSequence=other.completedSequence=2;other.acknowledgedSequence=1;
+    other.state=DataflowWorkerComplete;other.phase=2;other.reserved[0]=1;
+    assert(!DataflowResidentMailboxReady(other,roles,queues,1,2,1,false,outputSequence));
+    other.reserved[0]=0;
+    assert(DataflowResidentMailboxReady(other,roles,queues,1,2,1,false,outputSequence)
+        && other.state==DataflowWorkerReady && other.acknowledgedSequence==2);
     puts("PASS resident worker mailbox, role-idle and queue transitions; SIMULATED ONLY");
 }

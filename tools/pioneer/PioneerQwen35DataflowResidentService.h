@@ -32,6 +32,7 @@ public:
     DataflowResidentServiceRun& operator=(const DataflowResidentServiceRun&)=delete;
     unsigned CompletedSequence() const { return phase==Candidate?command.trigger:completed; }
     unsigned CompletedEpoch() const { return phase==Candidate?command.epoch:priorEpoch; }
+    bool CompletedHasOutput() const { return phase==Candidate && command.count==DataflowGraphDecodeSteps; }
     unsigned CompletedLastStep() const {
         return phase==Candidate?command.firstSequence+command.count-1:priorLastStep;
     }

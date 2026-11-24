@@ -44,6 +44,10 @@ public:
     bool PublishResidentCandidate(unsigned core,const DataflowResidentCommand& command) {
         if (core!=worker) return false;
         if (core) return true;
+        if (command.count==DataflowGraphDecodeSteps) {
+            DataflowArgmaxResult result{};
+            if (!DataflowArgmaxReadResult(mailbox,command.firstSequence+command.count-1,result)) return false;
+        }
         auto* record=reinterpret_cast<volatile uint32_t*>(static_cast<uintptr_t>(DataflowResidentCandidateAddress));
         return DataflowResidentCandidatePublish(record,command);
     }

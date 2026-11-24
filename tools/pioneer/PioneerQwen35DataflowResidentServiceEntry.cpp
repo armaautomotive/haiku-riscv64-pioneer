@@ -50,12 +50,17 @@ extern "C" [[noreturn]] void qwen35_resident_graph_service_main() {
         DataflowFence();
     }
     unsigned completed=0,epoch=0,lastStep=0;
-    bool waitingForAudit=false;
+    bool waitingForAudit=false,pendingOutput=false;
     for (;;) {
         // The root forwards no later command until the locked host owner
         // acknowledges this exact candidate after its independent fault audit.
         if (!core && waitingForAudit) {
             if (!DataflowResidentCandidateAckMatches(ack,completed,epoch)) continue;
+            if (pendingOutput) {
+                DataflowArgmaxResult output{};
+                if (!DataflowArgmaxReadResult(*box,lastStep,output)) ResidentParkFault(*box);
+                DataflowWorkerClearReceipt(*box);DataflowFence();pendingOutput=false;
+            }
             waitingForAudit=false;
         }
         const unsigned shutdown=DataflowLoadAcquire(box->shutdownSequence);
@@ -76,6 +81,6 @@ extern "C" [[noreturn]] void qwen35_resident_graph_service_main() {
         if (status==DataflowResidentServiceIdle) continue;
         if (status!=DataflowResidentServiceCandidate) ResidentParkFault(*box);
         completed=run.CompletedSequence();epoch=run.CompletedEpoch();lastStep=run.CompletedLastStep();
-        if (!core) waitingForAudit=true;
+        if (!core) { waitingForAudit=true;pendingOutput=run.CompletedHasOutput(); }
     }
 }
