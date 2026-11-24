@@ -28,3 +28,16 @@ A single authorized seven-second OFF press was completed at approximately
 the current session notes for their outcome. This is not a projection,
 model-output, no-reboot recovery or throughput qualification. The tag is
 consumed and must not be installed or run again.
+
+After the authorized OFF/ON cycle, Fedora booted from NVMe. Its pinned Linux
+handoff helper (SHA-256
+`8e85463e4de06fc8b35d0970e697c310f9532df30747c58cc892a1e9fdd9adff`)
+prepared and booted the identity-based 64-CPU Haiku profile. The optional
+journal-view profile rejected the Samsung disk's changed Linux device name;
+the normal profile resolved the pinned Samsung identity and completed its
+read-only check. The staged restore script verified fresh boot and restored
+stable55 generation2. Independent CPU-only status was `cold0 active_owner0`;
+the exclusive lock was absent and no inference or diagnostic remained.
+The installed stable driver and guard hashes matched their pinned values.
+The two post-recovery full model hashes are running in sessions 19644 (4B) and
+5847 (27B); do not claim postflight hash success until both return.
