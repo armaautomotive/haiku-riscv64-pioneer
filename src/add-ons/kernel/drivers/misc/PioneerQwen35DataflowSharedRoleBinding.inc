@@ -281,6 +281,7 @@ public:
             image.bounds.shimWords[DataflowRoleWriter],io);
 #endif
     }
+// PIONEER_Q35_SHARED_AUTO_ARM_BEGIN
     __attribute__((noinline)) bool ArmAndBeginRelease() {
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         auto* scope=Scope();
@@ -292,8 +293,15 @@ public:
         auto* scope=Scope();
         if (!scope || !fViews.Opened()) return false;
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
-        // Partial-start recovery and physical lifetime proofs remain incomplete.
-        if (fAutoRestoreOnStop) return false;
+        // Auto-restore may arm only when the real scope can cover a partial
+        // three-role start and its stop/hold recovery. The owner rechecks the
+        // full staged fleet and preservation mask before arming; StartCore
+        // independently checks the release proof again for each tile. The
+        // current Haiku scope still denies that physical proof.
+        if (fAutoRestoreOnStop && (!fOwner.AutoRestoreMode()
+            || !fOwner.ComputeLocalRamPreservationSelected()
+            || fContext.io.runtimeCore>=PioneerQwen35::DataflowBarrierWorkers
+            || !scope->ProveRoleReleaseSafe(fContext.io,fContext.io.runtimeCore))) return false;
 #endif
         Adapter io(fContext.io,*scope,fViews);
         if (!fOwner.PreparePossibleRelease(io) || !fOwner.BeginReleaseAttempt(io)
@@ -301,6 +309,7 @@ public:
         fReleaseAuthorized=true; return true;
 #endif
     }
+// PIONEER_Q35_SHARED_AUTO_ARM_END
     __attribute__((noinline)) bool FleetHeldAndQuiescent() {
         auto* scope=Scope();
         if (!scope || !fViews.Opened()) return false;
