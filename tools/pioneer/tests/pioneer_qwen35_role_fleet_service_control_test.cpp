@@ -182,7 +182,8 @@ int main()
     auto* owner=f.context.qwen35RoleStageQualification;
     const unsigned failedCore=failureKind?0:7;
     assert(owner && owner->fleetPrestack[failedCore].serviceStarted && !owner->fleetPrestack[failedCore].serviceStopped
-        && owner->fleetPrestack[failedCore].fleetAuditFailure==(failureKind?4U:3U));
+        && owner->fleetPrestack[failedCore].fleetAuditFailure==(failureKind?4U:3U)
+        && owner->fleetPrestack[failedCore].fleetAuditDetail==(failureKind?0U:1U<<2));
     assert(acquire_sem(sLock)==B_OK && owner->views.Close() && release_sem(sLock)==B_OK);
     delete owner;f.context.qwen35RoleStageQualification=nullptr;
     gPerCoreRoleWindows=false;gAllowWrite=false;sColdRecoveryRequired=false;

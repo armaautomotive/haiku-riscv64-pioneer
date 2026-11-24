@@ -53,6 +53,7 @@ struct PioneerQwen35RolePrestackState {
 #endif
 #ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
     unsigned fleetAuditFailure=0;
+    uint32_t fleetAuditDetail=0;
 #endif
 #ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
     uint32_t faultSaved[1+PioneerQwen35::DataflowQueueStateBytes/4]{};
@@ -542,16 +543,33 @@ public:
     }
 #endif
 #ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
-    bool FleetAuditFailure(unsigned phase,uint32_t r1=0,uint32_t w1=0,uint32_t r2=0,uint32_t w2=0) {
-        fState.fleetAuditFailure=phase;
+    bool FleetAuditFailure(unsigned phase,uint32_t r1=0,uint32_t w1=0,uint32_t r2=0,uint32_t w2=0,
+        uint32_t detail=0) {
+        fState.fleetAuditFailure=phase;fState.fleetAuditDetail=detail;
 #ifdef _KERNEL_MODE
         // PCs are fixed device code addresses, not mailbox contents or model data.
-        dprintf("P100A_Q35_FLEET_AUDIT_DETAIL core=%u phase=%u pc=%08lx,%08lx,%08lx,%08lx\n",
-            fCore,phase,(unsigned long)r1,(unsigned long)w1,(unsigned long)r2,(unsigned long)w2);
+        dprintf("P100A_Q35_FLEET_AUDIT_DETAIL core=%u phase=%u pc=%08lx,%08lx,%08lx,%08lx flags=%08lx\n",
+            fCore,phase,(unsigned long)r1,(unsigned long)w1,(unsigned long)r2,(unsigned long)w2,
+            (unsigned long)detail);
 #else
         (void)r1;(void)w1;(void)r2;(void)w2;
 #endif
         return false;
+    }
+    // The flags describe failed readiness predicates only, never raw L1 data.
+    static uint32_t FleetMailboxFailureFlags(const PioneerQwen35::DataflowRoleMailbox& box) {
+        using namespace PioneerQwen35;
+        uint32_t flags=DataflowRoleMailboxHeaderValid(box)?0U:1U;
+        for (unsigned role=0;role<DataflowRoleCount;role++) {
+            if (DataflowLoadAcquire(box.started[role])!=DataflowRoleStartedValue(role)) flags|=1U<<(1+role);
+            if (DataflowLoadAcquire(box.completed[role])) flags|=1U<<(6+role);
+            if (DataflowLoadAcquire(box.stopped[role])) flags|=1U<<(8+role);
+            if (DataflowLoadAcquire(box.status[role])!=DataflowRoleReady) flags|=1U<<(10+role);
+        }
+        if (DataflowLoadAcquire(box.command)) flags|=1U<<3;
+        if (DataflowLoadAcquire(box.acknowledged)) flags|=1U<<4;
+        if (DataflowLoadAcquire(box.stopRequest)) flags|=1U<<5;
+        return flags;
     }
     // Start once, retain the captured state while other workers start, and
     // stop separately after the owner has audited the complete fleet.
@@ -568,7 +586,7 @@ public:
             || fState.cancelAttempted || !Select(Running)) return FleetAuditFailure(1);
         DataflowRoleMailbox first{},second{};
         if (!ReadMailbox(Running,first)) return FleetAuditFailure(2);
-        if (!DataflowRoleMailboxStartupReady(first)) return FleetAuditFailure(3);
+        if (!DataflowRoleMailboxStartupReady(first)) return FleetAuditFailure(3,0,0,0,0,FleetMailboxFailureFlags(first));
         const uint32_t r1=fIO.SharedRolePcRead(DataflowRoleReader),w1=fIO.SharedRolePcRead(DataflowRoleWriter);
         fIO.Pause();
         const uint32_t r2=fIO.SharedRolePcRead(DataflowRoleReader),w2=fIO.SharedRolePcRead(DataflowRoleWriter);
