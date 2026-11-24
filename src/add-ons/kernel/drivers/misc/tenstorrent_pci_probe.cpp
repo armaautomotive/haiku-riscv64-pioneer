@@ -5102,6 +5102,10 @@ Qwen35ReleasePciReservation(PioneerStoreContext& context)
 template bool PioneerStoreContext::RunQ35FabricRecovery<PioneerQ35FabricArcCompileScope>(
 	pioneer_driver_recovery_guard_v2_info*,uint64,const tt_arc_scratch_result&,tt_arc_queue_result&,
 	PioneerPostResetAuditResult&,PioneerQ35PostResetL2Result&,PioneerQ35FabricArcCompileScope&,unsigned&);
+#include "PioneerQwen35FabricHostScope.inc"
+template bool PioneerStoreContext::RunQ35FabricRecovery<PioneerQ35FabricHostScope>(
+	pioneer_driver_recovery_guard_v2_info*,uint64,const tt_arc_scratch_result&,tt_arc_queue_result&,
+	PioneerPostResetAuditResult&,PioneerQ35PostResetL2Result&,PioneerQ35FabricHostScope&,unsigned&);
 #endif
 
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
