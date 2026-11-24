@@ -17,4 +17,4 @@ no stage information, so this run does not prove where it failed or whether
 any transfer was attempted. No transfer, model inference, general fault
 recovery or decode speed was qualified. Tag 0014 is consumed; do not rerun it.
 The next candidate uses a fresh tag, exclusive-open verification and
-stage-specific error output. Post-run full model hashes are being checked.
+stage-specific error output. Both full [post-run model hashes](post-model-hashes.txt) matched their pinned values.
