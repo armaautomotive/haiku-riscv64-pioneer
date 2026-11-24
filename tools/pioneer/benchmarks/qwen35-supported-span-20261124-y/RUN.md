@@ -20,5 +20,5 @@ reservation, allowing that allocation failure to return without touching the
 card or retaining an owner. This is simulated evidence for that specific
 failure path, not general no-reboot hardware recovery.
 
-The staged recovery files matched their pinned hashes. A single authorized OFF/ON cycle and pinned Fedora-to-Haiku handoff completed. The pre-staged script restored stable55 generation2. Independent postflight confirmed it idle, the expected driver and guard hashes, no exclusive lock or diagnostic process, and expected model metadata. See [handoff](linux-handoff.txt), [restore](restore.txt) and [postflight](postflight.txt). Full model hashes are running. Tag0016 is consumed. No model output,
+The staged recovery files matched their pinned hashes. A single authorized OFF/ON cycle and pinned Fedora-to-Haiku handoff completed. The pre-staged script restored stable55 generation2. Independent postflight confirmed it idle, the expected driver and guard hashes, no exclusive lock or diagnostic process, and expected model metadata. See [handoff](linux-handoff.txt), [restore](restore.txt) and [postflight](postflight.txt). Both full [post-recovery model hashes](post-model-hashes.txt) matched their pinned values. Tag0016 is consumed. No model output,
 matrix projection or throughput was qualified.

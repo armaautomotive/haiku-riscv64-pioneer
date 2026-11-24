@@ -1,0 +1,2 @@
+00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4  /boot/home/pioneer-qwen35-4b-225/Qwen3.5-4B-Q4_K_M.gguf
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747  /boot/home/models/Qwen3.8-27B-Q4_K_M.gguf
