@@ -644,6 +644,13 @@ PioneerQ35CreateSharedRoleBinding(PioneerStoreContext& context)
     if (binding && !binding->Valid()) { delete binding; binding=NULL; }
     return binding;
 }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+static bool
+PioneerQ35SelectSharedRoleAutoRestore(PioneerQwen35SharedRoleBinding* binding)
+{
+    return binding && binding->SelectAutoRestoreOnStop();
+}
+#endif
 static bool
 PioneerQ35DestroySharedRoleBinding(PioneerQwen35SharedRoleBinding* binding)
 {

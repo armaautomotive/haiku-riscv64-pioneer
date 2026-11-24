@@ -111,7 +111,8 @@ static void ExerciseAutoRestoreImageBinding(PioneerSessionIO& io)
     assert(binding && gLocked);
     const auto ordinary=PioneerQ35SharedRoleBindingTestAccess::Image(*binding);
     assert(ordinary.Valid() && ordinary.code[DataflowRoleReader]==DataflowSharedReaderCodeWords);
-    assert(binding->SelectAutoRestoreOnStop() && !binding->SelectAutoRestoreOnStop()
+    assert(!PioneerQ35SelectSharedRoleAutoRestore(nullptr));
+    assert(PioneerQ35SelectSharedRoleAutoRestore(binding) && !PioneerQ35SelectSharedRoleAutoRestore(binding)
         && !binding->SelectCoreLocalRestore());
     const auto image=PioneerQ35SharedRoleBindingTestAccess::Image(*binding);
     assert(image.Valid() && image.code[DataflowRoleReader]==DataflowServiceProbeReaderCodeWords

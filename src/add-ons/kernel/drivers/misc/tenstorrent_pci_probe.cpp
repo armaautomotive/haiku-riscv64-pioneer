@@ -4095,6 +4095,9 @@ static bool PioneerQ35AuditedDescriptorContinuity(PioneerStoreContext& context,u
 class PioneerQwen35SharedRoleBinding;
 static PioneerQwen35SharedRoleBinding* PioneerQ35CreateSharedRoleBinding(PioneerStoreContext& context);
 static bool PioneerQ35DestroySharedRoleBinding(PioneerQwen35SharedRoleBinding* binding);
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+static bool PioneerQ35SelectSharedRoleAutoRestore(PioneerQwen35SharedRoleBinding* binding);
+#endif
 #endif
 #ifdef PIONEER_QWEN35_ROLE_STAGE_QUALIFY
 class PioneerQ35RoleStageQualification;
@@ -4635,6 +4638,22 @@ private:
 			delete qwen35DataflowMemory;qwen35DataflowMemory=NULL;
 			return PioneerQwen35::DataflowServiceInvalidState;
 		}
+// PIONEER_Q35_AUTO_RESTORE_SELECT_BEGIN
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+		// Select the saved-RAM stop images before the owner can capture or
+		// release any role. Physical startup still requires its own scope.
+		if (!PioneerQ35SelectSharedRoleAutoRestore(qwen35SharedRoleBinding)) {
+			if (!PioneerQ35DestroySharedRoleBinding(qwen35SharedRoleBinding)) {
+				sColdRecoveryRequired=true;
+				return PioneerQwen35::DataflowServiceInvalidState;
+			}
+			qwen35SharedRoleBinding=NULL;
+			delete qwen35DataflowService;qwen35DataflowService=NULL;
+			delete qwen35DataflowMemory;qwen35DataflowMemory=NULL;
+			return PioneerQwen35::DataflowServiceInvalidState;
+		}
+#endif
+// PIONEER_Q35_AUTO_RESTORE_SELECT_END
 #endif
 		const PioneerQwen35::DataflowServiceImageView image={
 			PioneerQwen35::DataflowServiceImageBootWord,
