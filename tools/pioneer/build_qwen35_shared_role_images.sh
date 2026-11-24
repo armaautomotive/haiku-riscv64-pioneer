@@ -48,6 +48,7 @@ import sys
 out=Path(sys.argv[1])
 arrays=[]
 parks={}
+loops={}
 for role,shim_start,shim_limit,code_start,code_limit in (
         ('reader',0x70000,0x70100,0xb0000,0xb5000),
         ('writer',0x70100,0x70200,0xb5000,0xb8000)):
@@ -58,14 +59,18 @@ for role,shim_start,shim_limit,code_start,code_limit in (
             symbols[parts[2]]=int(parts[0],16)
     start=symbols.get(f'qwen35_shared_{role}_start')
     park=symbols.get(f'qwen35_shared_{role}_start_park',-1)
+    loop=symbols.get(f'qwen35_shared_{role}_start_service_loop',-1)
+    loop_end=symbols.get(f'qwen35_shared_{role}_start_service_loop_end',-1)
     tick=symbols.get(f'qwen35_shared_{role}_tick',-1)
-    if start!=shim_start or not shim_start<=park<shim_limit or not code_start<=tick<code_limit:
-        raise SystemExit(f'invalid {role} entry, park or tick address')
+    if (start!=shim_start or not shim_start<=loop<loop_end<=park<shim_limit
+            or (loop|loop_end)&3 or not code_start<=tick<code_limit):
+        raise SystemExit(f'invalid {role} entry, loop, park or tick address')
     shim=(out/f'{role}-shim.bin').read_bytes()
     park_offset=park-shim_start
     if park_offset%4 or park_offset+4>len(shim) or int.from_bytes(shim[park_offset:park_offset+4],'little')!=0x0000006f:
         raise SystemExit(f'{role} park is not an aligned self-loop')
     parks[role]=park
+    loops[role]=(loop,loop_end)
 for role,kind,limit in (('reader','shim',0x100),('reader','code',0x5000),
                         ('writer','shim',0x100),('writer','code',0x3000)):
     data=(out/f'{role}-{kind}.bin').read_bytes()
@@ -77,7 +82,10 @@ for role,kind,limit in (('reader','shim',0x100),('reader','code',0x5000),
 (out/'PioneerQwen35SharedRoleImages.h').write_text(
     '#pragma once\nnamespace PioneerQwen35 {\n'
     +''.join(f'inline constexpr unsigned DataflowShared{role.capitalize()}ParkAddress=0x{park:08x}U;\n'
-        for role,park in parks.items())+''.join(arrays)+'}\n',encoding='ascii')
+        for role,park in parks.items())
+    +''.join(f'inline constexpr unsigned DataflowShared{role.capitalize()}LoopAddress=0x{loop:08x}U;\n'
+        f'inline constexpr unsigned DataflowShared{role.capitalize()}LoopEnd=0x{end:08x}U;\n'
+        for role,(loop,end) in loops.items())+''.join(arrays)+'}\n',encoding='ascii')
 entries=[]
 for line in (out/'shared-roles.su').read_text().splitlines():
     fields=line.rsplit('\t',2)
@@ -126,9 +134,11 @@ for role,base,limit,code_start,code_limit in (
             symbols[fields[2]]=int(fields[0],16)
     entry=symbols.get(f'qwen35_shared_{role}_start')
     park=symbols.get(f'qwen35_shared_{role}_start_park',-1)
+    loop=symbols.get(f'qwen35_shared_{role}_start_service_loop',-1)
+    loop_end=symbols.get(f'qwen35_shared_{role}_start_service_loop_end',-1)
     tick=symbols.get(f'qwen35_shared_{role}_tick',-1)
     shim=(out/f'exclusive-{role}-shim.bin').read_bytes()
-    if entry!=base or not base<=park<limit or not code_start<=tick<code_limit \
+    if entry!=base or not base<=loop<loop_end<=park<limit or (loop|loop_end)&3 or not code_start<=tick<code_limit \
             or not shim or len(shim)>limit-base or len(shim)%4:
         raise SystemExit(f'invalid exclusive {role} entry, park, tick or shim length')
     offset=park-base
@@ -138,6 +148,8 @@ for role,base,limit,code_start,code_limit in (
         raise SystemExit(f'exclusive {role} unexpectedly uses snapshot entry')
     cap=role.capitalize()
     parts.append(f'inline constexpr unsigned DataflowExclusive{cap}ParkAddress=0x{park:08x}U;\n')
+    parts.append(f'inline constexpr unsigned DataflowExclusive{cap}LoopAddress=0x{loop:08x}U;\n')
+    parts.append(f'inline constexpr unsigned DataflowExclusive{cap}LoopEnd=0x{loop_end:08x}U;\n')
     parts.append(f'inline constexpr unsigned DataflowExclusive{cap}ShimWords[]={{\n')
     parts.extend(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I',shim))
     parts.append('};\n')

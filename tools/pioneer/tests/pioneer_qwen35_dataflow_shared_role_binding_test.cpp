@@ -121,9 +121,14 @@ static void ExerciseAutoRestoreImageBinding(PioneerSessionIO& io)
         && image.shim[DataflowRoleWriter]==DataflowServiceProbeWriterShimWords);
     assert(image.bounds.ContainsRunning(DataflowRoleReader,DataflowRoleReaderCodeAddress
         +(DataflowServiceProbeReaderRuntimeCodeWords-1)*4));
+    assert(image.bounds.ContainsRunning(DataflowRoleReader,DataflowServiceProbeReaderLoopAddress)
+        && image.bounds.ContainsRunning(DataflowRoleReader,0x700cc)
+        && image.bounds.ContainsRunning(DataflowRoleWriter,DataflowServiceProbeWriterLoopAddress));
     assert(!image.bounds.ContainsRunning(DataflowRoleReader,DataflowServiceProbeReaderRestoreAddress)
         && !image.bounds.ContainsRunning(DataflowRoleWriter,DataflowServiceProbeWriterRestoreAddress)
-        && !image.bounds.ContainsRunning(DataflowRoleReader,DataflowServiceProbeReaderShimParkAddress));
+        && !image.bounds.ContainsRunning(DataflowRoleReader,DataflowServiceProbeReaderShimParkAddress)
+        && !image.bounds.ContainsRunning(DataflowRoleReader,DataflowRoleReaderShimAddress)
+        && !image.bounds.ContainsRunning(DataflowRoleReader,DataflowServiceProbeReaderLoopEnd));
     ResetMaps();gAllowWrite=true;
     assert(PioneerQ35SharedRoleBindingTestAccess::OpenViews(*binding));
     const unsigned resetWrites=io.sharedResetWrites;

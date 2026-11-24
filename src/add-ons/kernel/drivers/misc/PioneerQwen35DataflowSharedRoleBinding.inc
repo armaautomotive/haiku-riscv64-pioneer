@@ -76,24 +76,32 @@ class PioneerQwen35SharedRoleBinding {
                 {sizeof(DataflowServiceProbeReaderCodeWords)/sizeof(uint32_t),
                  sizeof(DataflowServiceProbeWriterCodeWords)/sizeof(uint32_t)},
                 {DataflowServiceProbeReaderShimParkAddress,DataflowServiceProbeWriterShimParkAddress},
-                {DataflowServiceProbeReaderRuntimeCodeWords,DataflowServiceProbeWriterRuntimeCodeWords}};
+                {DataflowServiceProbeReaderRuntimeCodeWords,DataflowServiceProbeWriterRuntimeCodeWords},
+                {DataflowServiceProbeReaderLoopAddress,DataflowServiceProbeWriterLoopAddress},
+                {DataflowServiceProbeReaderLoopEnd,DataflowServiceProbeWriterLoopEnd}};
         return {{sizeof(DataflowSharedReaderShimWords)/sizeof(uint32_t),
                  sizeof(DataflowSharedWriterShimWords)/sizeof(uint32_t)},
                 {sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),
                  sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t)},
-                {DataflowSharedReaderParkAddress,DataflowSharedWriterParkAddress}};
+                {DataflowSharedReaderParkAddress,DataflowSharedWriterParkAddress},{},
+                {DataflowSharedReaderLoopAddress,DataflowSharedWriterLoopAddress},
+                {DataflowSharedReaderLoopEnd,DataflowSharedWriterLoopEnd}};
 #elif defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
         return {{sizeof(DataflowExclusiveReaderShimWords)/sizeof(uint32_t),
                  sizeof(DataflowExclusiveWriterShimWords)/sizeof(uint32_t)},
                 {sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),
                  sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t)},
-                {DataflowExclusiveReaderParkAddress,DataflowExclusiveWriterParkAddress}};
+                {DataflowExclusiveReaderParkAddress,DataflowExclusiveWriterParkAddress},{},
+                {DataflowExclusiveReaderLoopAddress,DataflowExclusiveWriterLoopAddress},
+                {DataflowExclusiveReaderLoopEnd,DataflowExclusiveWriterLoopEnd}};
 #else
         return {{sizeof(DataflowSharedReaderShimWords)/sizeof(uint32_t),
                  sizeof(DataflowSharedWriterShimWords)/sizeof(uint32_t)},
                 {sizeof(DataflowSharedReaderCodeWords)/sizeof(uint32_t),
                  sizeof(DataflowSharedWriterCodeWords)/sizeof(uint32_t)},
-                {DataflowSharedReaderParkAddress,DataflowSharedWriterParkAddress}};
+                {DataflowSharedReaderParkAddress,DataflowSharedWriterParkAddress},{},
+                {DataflowSharedReaderLoopAddress,DataflowSharedWriterLoopAddress},
+                {DataflowSharedReaderLoopEnd,DataflowSharedWriterLoopEnd}};
 #endif
     }
     PioneerQwen35::DataflowRoleProgramImage RoleImage() const {

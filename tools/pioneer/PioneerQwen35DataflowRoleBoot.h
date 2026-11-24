@@ -16,6 +16,10 @@ struct DataflowRoleProgramBounds {
     // zero entry preserves the legacy whole-code range. Snapshot startup can
     // append a restore-only tail that must never count as a live role PC.
     unsigned runtimeCodeWords[DataflowRoleCount]{};
+    // Optional exact linked service-loop intervals. Without both bounds the
+    // shim is never accepted as a running PC; startup and park are excluded.
+    unsigned loopStart[DataflowRoleCount]{};
+    unsigned loopEnd[DataflowRoleCount]{};
     bool Valid() const {
         for (unsigned role=0;role<DataflowRoleCount;role++) {
             if (runtimeCodeWords[role]>codeWords[role]) return false;
@@ -26,15 +30,17 @@ struct DataflowRoleProgramBounds {
             if (!shimWords[role] || shimWords[role]>(shimLimit-shim)/4
                 || !codeWords[role] || codeWords[role]>(codeLimit-code)/4
                 || (park[role]&3) || park[role]<shim || park[role]-shim>=shimWords[role]*4) return false;
+            if ((loopStart[role] || loopEnd[role])
+                && ((loopStart[role]|loopEnd[role])&3 || loopStart[role]<shim
+                    || loopStart[role]>=loopEnd[role] || loopEnd[role]>park[role])) return false;
         }
         return true;
     }
     bool ContainsRunning(unsigned role,uint32_t pc) const {
         if (role>=DataflowRoleCount || !Valid() || (pc&3) || pc==park[role]) return false;
-        const unsigned shim=role==DataflowRoleReader?DataflowRoleReaderShimAddress:DataflowRoleWriterShimAddress;
         const unsigned code=role==DataflowRoleReader?DataflowRoleReaderCodeAddress:DataflowRoleWriterCodeAddress;
         const unsigned runtime=runtimeCodeWords[role]?runtimeCodeWords[role]:codeWords[role];
-        return (pc>=shim && pc-shim<shimWords[role]*4)
+        return (loopStart[role] && pc>=loopStart[role] && pc<loopEnd[role])
             || (pc>=code && pc-code<runtime*4);
     }
 };

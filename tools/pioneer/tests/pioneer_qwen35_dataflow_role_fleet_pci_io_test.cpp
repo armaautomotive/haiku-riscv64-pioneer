@@ -798,6 +798,8 @@ int main()
     }
     DataflowRoleProgramBounds bounds={{32,32},{64,64},
         {DataflowRoleReaderShimAddress+0x44,DataflowRoleWriterShimAddress+0x44}};
+    bounds.loopStart[0]=DataflowRoleReaderShimAddress+0x20;bounds.loopEnd[0]=DataflowRoleReaderShimAddress+0x40;
+    bounds.loopStart[1]=DataflowRoleWriterShimAddress+0x20;bounds.loopEnd[1]=DataflowRoleWriterShimAddress+0x40;
     assert(io.RunningRolePcs(11,bounds,false));
     for (unsigned noc=0;noc<2;noc++) {
         context.io.nocConfig[noc]=1U<<12;
@@ -808,6 +810,8 @@ int main()
     for (unsigned role=0;role<DataflowRoleCount;role++) {
         const uint32_t originalPc=context.io.rolePc[role];
         context.io.rolePc[role]=bounds.park[role];
+        assert(!io.RunningRolePcs(11,bounds,false));
+        context.io.rolePc[role]=role==DataflowRoleReader?DataflowRoleReaderShimAddress:DataflowRoleWriterShimAddress;
         assert(!io.RunningRolePcs(11,bounds,false));
         context.io.rolePc[role]=role==DataflowRoleReader?DataflowRoleWriterCodeAddress:DataflowRoleReaderCodeAddress;
         assert(!io.RunningRolePcs(11,bounds,false));

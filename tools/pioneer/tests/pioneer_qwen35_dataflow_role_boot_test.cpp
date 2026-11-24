@@ -30,11 +30,18 @@ int main()
     DataflowRoleProgramBounds bounds={{32,32},{64,64},
         {DataflowRoleReaderShimAddress+0x44,DataflowRoleWriterShimAddress+0x44}};
     assert(bounds.Valid());
+    assert(!bounds.ContainsRunning(DataflowRoleReader,DataflowRoleReaderShimAddress));
+    bounds.loopStart[0]=DataflowRoleReaderShimAddress+8;bounds.loopEnd[0]=DataflowRoleReaderShimAddress+0x30;
+    bounds.loopStart[1]=DataflowRoleWriterShimAddress+8;bounds.loopEnd[1]=DataflowRoleWriterShimAddress+0x30;
+    assert(bounds.Valid());
     for (unsigned role=0;role<DataflowRoleCount;role++) {
         const unsigned shim=role==DataflowRoleReader?DataflowRoleReaderShimAddress:DataflowRoleWriterShimAddress;
         const unsigned code=role==DataflowRoleReader?DataflowRoleReaderCodeAddress:DataflowRoleWriterCodeAddress;
-        assert(bounds.ContainsRunning(role,shim));
-        assert(bounds.ContainsRunning(role,shim+4));
+        assert(!bounds.ContainsRunning(role,shim));
+        assert(!bounds.ContainsRunning(role,shim+4));
+        assert(bounds.ContainsRunning(role,shim+8));
+        assert(bounds.ContainsRunning(role,shim+0x2c));
+        assert(!bounds.ContainsRunning(role,shim+0x30));
         assert(bounds.ContainsRunning(role,code+63*4));
         assert(!bounds.ContainsRunning(role,code+64*4));
         assert(!bounds.ContainsRunning(role,bounds.park[role]));
@@ -55,6 +62,8 @@ int main()
     assert(!bounds.ContainsRunning(DataflowRoleCount,DataflowRoleReaderCodeAddress));
     auto invalid=bounds; invalid.codeWords[0]=0;
     assert(!invalid.Valid() && !invalid.ContainsRunning(0,DataflowRoleReaderCodeAddress));
+    invalid=bounds; invalid.loopEnd[0]=0;assert(!invalid.Valid());
+    invalid=bounds; invalid.loopEnd[0]=invalid.park[0]+4;assert(!invalid.Valid());
     invalid=bounds; invalid.park[1]=DataflowRoleWriterShimLimit;
     assert(!invalid.Valid());
     std::puts("PASS offline role boot jumps stay in their own low shim slots; NO BOOT IMAGE");

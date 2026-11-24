@@ -22,6 +22,8 @@
     li sp,PIONEER_Q35_ROLE_PRIVATE_STACK_TOP
     addi sp,sp,-16
     sw zero,0(sp)
+.globl \name\()_service_loop
+\name\()_service_loop:
 1:
     li a0,PIONEER_Q35_ROLE_MAILBOX_ADDRESS
     mv a1,sp
@@ -29,6 +31,8 @@
     beqz a0,2f
     li t0,PIONEER_Q35_ROLE_STOP_REQUESTED
     bne a0,t0,1b
+.globl \name\()_service_loop_end
+\name\()_service_loop_end:
 2:
     fence rw,rw
 .globl \name\()_park
