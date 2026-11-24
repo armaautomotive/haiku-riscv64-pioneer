@@ -11,6 +11,9 @@
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
 #include "PioneerQwen35DataflowFleetInspection.h"
 class PioneerQ35ProjectionQualificationScope;
+#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+static bool PioneerQ35QualificationHeldOwnerAllowed(PioneerStoreContext&,PioneerSessionIO&);
+#endif
 #endif
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleReadOnlyViews.h"
 #ifdef PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY
@@ -198,8 +201,14 @@ public:
 #else
         // The snapshot path may inspect only held-role images and boot words.
         // In particular this does not authorize the host private-RAM reads
-        // that failed in the earlier physical qualification. The independent
-        // fleet proof still denies access until real ownership is provided.
+        // that failed in the earlier physical qualification. Image staging
+        // during service installation still requires separate admission.
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
+    && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+        // The held scratch admission is not authority to map or write role
+        // images. Their staging and restoration have separate owners.
+        if (fContext && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)) return false;
+#endif
         return which<=PioneerQwen35::DataflowRolePhysicalExtraCode
             && core<PioneerQwen35::DataflowBarrierWorkers && io.runtimeCore==core
             && io.DataflowPanelMappingStable() && ProveExclusiveRewrite(io)
@@ -267,7 +276,28 @@ public:
 #endif
     }
 // PIONEER_Q35_SCOPE_RESET_CONTROL_END
-    bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO&,unsigned) const { return false; }
+    // Restricted to a locked fixed-projection scratch operation. This is a
+    // fresh observation of the selected tile, not a lifetime guarantee about
+    // firmware or traffic from other tiles. The caller checks every worker.
+    bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO& io,unsigned core) const {
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
+    && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+        auto allowed=[&]() {
+            return fContext && core<PioneerQwen35::DataflowBarrierWorkers && io.runtimeCore==core
+                && io.DataflowPanelMappingStable() && ProveExclusiveRewrite(io)
+                && io.SharedRoleFirmwareMatches() && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io);
+        };
+        if (!allowed()) return false;
+        struct ObservationScope {
+            decltype(allowed)& permit;
+            bool ProveRoleStatusInspectionAllowed(PioneerSessionIO&) const { return permit(); }
+        } observation{allowed};
+        PioneerQwen35RoleRouteGuard<PioneerSessionIO,const PioneerQwen35RoleBorrowedScopeWitness> route(io,*this);
+        return PioneerQwen35SampleSelectedHeldTile(io,observation,route,core) && allowed();
+#else
+        (void)io;(void)core;return false;
+#endif
+    }
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     bool ProveRoleDedicatedObservedStage(PioneerSessionIO& io) const {
         return fDedicatedStageObserved && ProveRoleStatusInspectionAllowed(io);

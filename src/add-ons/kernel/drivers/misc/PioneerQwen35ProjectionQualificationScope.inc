@@ -8,6 +8,35 @@
 #error Projection qualification scope requires the non-loadable shared-role witness
 #endif
 
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) \
+    && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+// Metadata admission for bounded held-tile observations used by this one
+// scratch transaction. The borrowed scope supplies thread, lock and identity
+// checks; callers sample each selected tile's real reset and NoC state.
+static bool
+PioneerQ35QualificationHeldOwnerAllowed(PioneerStoreContext& c,PioneerSessionIO& io)
+{
+    if (&io!=&c.io || io.qwen35DataflowContext!=&c || sOpenCookies!=1
+        || sColdRecoveryRequired || sReloadQuiesced || !sBankStorageOnly
+        || !c.bankStorageOnly || c.bytes!=PioneerResidentBanks::Total || !c.initialized
+        || !c.qwen35QualificationInternalActive || !c.qwen35QualificationOwner.Active()
+        || c.qwen35QualificationOwner.Retained() || !c.qwen35QualificationOwner.Scratch()
+        || !c.q35PciReservationHeld || c.q35PciReleaseAttempted || !c.qwen35DedicatedFleet
+        || !c.q38DispatchRoutes || !c.q38Dispatch || c.q38Dispatch->prepared!=120
+        || c.q38Dispatch->unsafe || c.q38Dispatch->closed || c.q38Dispatch->rootRunning
+        || c.q38Dispatch->bootAttempted || c.q38Dispatch->booted
+        || c.qwen35DataflowAuthority || c.qwen35DataflowProgramScratch || c.qwen35GraphOwner
+        || !c.banks.Matches(c.baseline.baseline.baseline.baseline.dram)
+        || !c.lease.ready || c.lease.pending || c.lease.recovery_required
+        || c.host.state!=TT_HOST_PAGE_READY || c.host.released || c.Unsafe()) return false;
+    if (!c.qwen35DataflowService)
+        return !c.qwen35SharedRoleBinding && !c.qwen35DataflowMemory;
+    if (c.qwen35DataflowService->ScratchHeld())
+        return c.qwen35SharedRoleBinding && c.qwen35DataflowMemory;
+    return c.qwen35DataflowService->Closed() && !c.qwen35SharedRoleBinding && !c.qwen35DataflowMemory;
+}
+#endif
+
 class PioneerQ35ProjectionQualificationScope {
     using Fixture=PioneerQwen35::DataflowProjectionQualification;
     PioneerStoreContext& c;
@@ -233,7 +262,7 @@ public:
             && scratch->IsRunning() && RuntimeReady(*scratch,*qualification->Program());
     }
     // The service has already completed its held restoration sequence. This
-    // only returns the selected route; the separate held proof remains denied.
+    // only returns the selected route; held-worker checks remain separate.
     bool QualificationRestoreHeldRoute(const void* p,const PioneerQwen35::DataflowServiceOwner& service,
         PioneerSessionIO& io) const {
         auto* scratch=c.qwen35QualificationOwner.Scratch();
@@ -276,8 +305,8 @@ public:
             && PioneerQ35SharedRoleProjectionRestored(c.qwen35SharedRoleBinding) && HeldAndQuiet();
     }
     // Preparation is recorded while held; resume separately rechecks the
-    // same bank owner, complete role ledger and live transfer/fleet proof.
-    // The real borrowed fleet proof still denies this transition.
+    // same bank owner, complete role ledger and held-worker observations.
+    // Startup and stop permissions remain independently gated.
 // PIONEER_Q35_SCOPE_RESUME_BEGIN
     bool QualificationResumeAllowed(const void* p,const PioneerQwen35::DataflowServiceOwner& service) const {
         auto* scratch=c.qwen35QualificationOwner.Scratch();

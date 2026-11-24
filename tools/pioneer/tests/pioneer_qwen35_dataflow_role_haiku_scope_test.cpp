@@ -710,6 +710,13 @@ status_t delete_area(area_id area) {
     if (area==gFailUnmap) { gFailUnmap=-1; return -1; }
     gMapped[area]=false; return B_OK;
 }
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
+    && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+static bool gQualificationHeldOwnerAllowed=false;
+static bool PioneerQ35QualificationHeldOwnerAllowed(PioneerStoreContext&,PioneerSessionIO&) {
+    return gQualificationHeldOwnerAllowed;
+}
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35DataflowRoleHaikuScopeWitness.inc"
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 static void (*gBorrowedScopeHook)(PioneerSessionIO&)=nullptr;

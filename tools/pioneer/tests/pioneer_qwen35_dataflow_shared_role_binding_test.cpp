@@ -343,6 +343,24 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
     io.runtimeCore=7; io.simulateArc=true; io.simulateHdma=true; io.firmwareMatches=true;
     io.selectCalls=io.tlbWrites=io.hdmaReads=0;
     auto* scope=io.qwen35BorrowedRoleScope;
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+    assert(!scope->ProveRoleFleetHeldAndQuiet(io,7));
+    gQualificationHeldOwnerAllowed=true;
+    for (unsigned core=0;core<DataflowBarrierWorkers;core++)
+        assert(io.SelectRuntimeCore(core) && scope->ProveRoleFleetHeldAndQuiet(io,core));
+    assert(io.SelectRuntimeCore(7) && scope->ProveRoleFleetHeldAndQuiet(io,7));
+    assert(!scope->ProveRoleMemoryReadSafe(io,7,DataflowRolePhysicalExtraCode)
+        && !scope->ProveRoleMemoryWriteSafe(io,7,DataflowRolePhysicalExtraCode,0,4));
+    assert(!scope->ProveRoleFleetHeldAndQuiet(io,8));
+    io.nocOutstanding[1][3]=1;assert(!scope->ProveRoleFleetHeldAndQuiet(io,7));io.nocOutstanding[1][3]=0;
+    io.reset=0x6000;assert(!scope->ProveRoleFleetHeldAndQuiet(io,7));io.reset=0x47800;
+    const unsigned disabledReads=io.resetReadsClockDisabled;
+    io.nocConfig[0]=1U<<12;
+    assert(!scope->ProveRoleFleetHeldAndQuiet(io,7) && io.resetReadsClockDisabled==disabledReads);
+    io.nocConfig[0]=0;
+    io.firmwareMatches=false;assert(!scope->ProveRoleFleetHeldAndQuiet(io,7));io.firmwareMatches=true;
+    gQualificationHeldOwnerAllowed=false;assert(!scope->ProveRoleFleetHeldAndQuiet(io,7));
+#endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     assert(!scope->ProveRoleAuditedDescriptorContinuity(io,7));
 #endif

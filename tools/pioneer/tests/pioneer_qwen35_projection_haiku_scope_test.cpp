@@ -5,6 +5,7 @@
 #define PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS 1
 #define PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY 1
 #define PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS 1
+#define PIONEER_QWEN35_RECOVERY_RUN_ENABLE 1
 #define PIONEER_QWEN35_PROJECTION_SCRATCH_MOCK_ONLY 1
 #include "pioneer_qwen35_projection_scratch_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35ProjectionQualificationOwner.h"
@@ -53,7 +54,7 @@ public:
     bool ProveRoleAutoRestoreCompletionSafe(PioneerSessionIO& io,unsigned c) const { return restored && io.selected==c; }
 };
 template<class Work> static bool PioneerQwen35WithSelectedClock(PioneerSessionIO&,unsigned,Work work) { return work(); }
-struct FakeDispatch { unsigned prepared=120;bool unsafe=false,closed=false,rootRunning=false; };
+struct FakeDispatch { unsigned prepared=120;bool unsafe=false,closed=false,rootRunning=false,bootAttempted=false,booted=false; };
 struct FakeRoleBinding { bool restored=false; };
 static bool PioneerQ35SharedRoleProjectionRestored(const FakeRoleBinding* binding) {
     return binding && binding->restored;
@@ -73,8 +74,10 @@ struct PioneerStoreContext {
     PioneerResidentLease lease;tt_host_page_result host{};
     FakeDispatch dispatch;FakeDispatch* q38Dispatch=&dispatch;
     bool q38DispatchRoutes=true,bankStorageOnly=true,qwen35QualificationInternalActive=false;
+    bool q35PciReservationHeld=true,q35PciReleaseAttempted=false,qwen35DedicatedFleet=true;
     uint64_t bytes=PioneerResidentBanks::Total;
     void* qwen35DataflowAuthority=nullptr;void* qwen35DataflowProgramScratch=nullptr;void* qwen35GraphOwner=nullptr;
+    void* qwen35DataflowMemory=nullptr;
     PioneerQwen35::DataflowServiceOwner* qwen35DataflowService=nullptr;
     FakeRoleBinding* qwen35SharedRoleBinding=nullptr;
     bool qwen35DataflowRoutesAudited=false,otherUnsafe=false;
@@ -120,8 +123,38 @@ int main() {
             && !context.qwen35QualificationInternalActive && scratch->IsEmpty()
             && !context.banks.Q35StreamClaimed());
         context.qwen35QualificationInternalActive=true;
-        // The real borrowed scope currently denies held/quiet proof. The
-        // diagnostic must refuse before it reserves or modifies a page.
+        assert(PioneerQ35QualificationHeldOwnerAllowed(context,context.io));
+        context.q35PciReservationHeld=false;
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.q35PciReservationHeld=true;
+        context.q35PciReleaseAttempted=true;
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.q35PciReleaseAttempted=false;
+        context.q38Dispatch->prepared=119;
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.q38Dispatch->prepared=120;
+        context.q38Dispatch->bootAttempted=true;
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.q38Dispatch->bootAttempted=false;
+        context.qwen35DedicatedFleet=false;
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.qwen35DedicatedFleet=true;
+        sColdRecoveryRequired=true;
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));sColdRecoveryRequired=false;
+        sOpenCookies=2;assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));sOpenCookies=1;
+        context.q38Dispatch->unsafe=true;
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.q38Dispatch->unsafe=false;
+        context.q38Dispatch->rootRunning=true;
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.q38Dispatch->rootRunning=false;
+        context.lease.pending=true;
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.lease.pending=false;
+        context.qwen35QualificationInternalActive=false;
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.qwen35QualificationInternalActive=true;
+        context.qwen35DataflowMemory=&context;
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.qwen35DataflowMemory=nullptr;
+        context.io.qwen35DataflowContext=nullptr;
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.io.qwen35DataflowContext=&context;
+        context.dram.translated[0][0]^=1;
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.dram.translated[0][0]^=1;
+        PioneerSessionIO other;
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,other));
+        // The fake borrowed scope denies the held sample. The diagnostic
+        // must refuse before it reserves or modifies a page.
         assert(!scope.QualificationScratchOperationAllowed(context.qwen35QualificationOwner,*scratch,
             PioneerQ35ProjectionQualificationOwner::Capture,context));
         assert(!scope.ScratchReserveAllowed(scratch,0,Fixture::ScratchOffset,Fixture::ScratchBytes)
@@ -147,7 +180,9 @@ int main() {
         borrowed.exclusive=true;
         // Retention must quarantine even after the holder was already marked
         // retained by another part of the same failure path.
-        context.qwen35QualificationOwner.Retain();scope.RetainScratch(scratch);
+        context.qwen35QualificationOwner.Retain();
+        assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));
+        scope.RetainScratch(scratch);
         assert(context.qwen35QualificationOwner.Retained() && context.banks.Quarantined()
             && context.lease.recovery_required && context.io.HostReadMock::quarantined && sColdRecoveryRequired);
         assert(!scope.ScratchRetainedObservationAllowed(scratch,context.io));
@@ -237,7 +272,7 @@ int main() {
     }
     {
         PioneerStoreContext context;PioneerQwen35RoleBorrowedScopeWitness borrowed;
-        borrowed.held=true; // simulated fleet proof; production still denies it
+        borrowed.held=true; // simulated fleet observation
         context.io.qwen35BorrowedRoleScope=&borrowed;
         PioneerQ35ProjectionQualificationScope scope(context);
         assert(scope.QualificationOwnerAllocationAllowed(context) && context.qwen35QualificationOwner.Allocate());
