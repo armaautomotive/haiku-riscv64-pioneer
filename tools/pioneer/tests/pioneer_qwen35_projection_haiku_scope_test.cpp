@@ -17,19 +17,32 @@ struct PioneerSessionIO : BanksMock {
     PioneerStoreContext* qwen35DataflowContext=nullptr;
     PioneerQwen35RoleBorrowedScopeWitness* qwen35BorrowedRoleScope=nullptr;
     bool firmware=true,selectOkay=true,idle=true;unsigned selected=0,selects=0;
+    unsigned failSelection=UINT32_MAX;
+    unsigned failSelectionAfter=0;
     unsigned runtimeCore=0;
     bool SharedRoleFirmwareMatches() const { return firmware; }
     bool DataflowPanelMappingStable() const { return true; }
-    bool SelectRuntimeCore(unsigned c) { selected=c;selects++;return selectOkay && c<120; }
+    bool SelectRuntimeCore(unsigned c) {
+        selects++;
+        if (!selectOkay || c>=120 || (c==failSelection && selects>failSelectionAfter)) return false;
+        selected=runtimeCore=c;return true;
+    }
     bool CoreIdle(unsigned c) const { return idle && c==0 && selected==0; }
 };
 class PioneerQwen35RoleBorrowedScopeWitness {
 public:
-    bool exclusive=true,held=false,preparation=false,runtime=false,restored=false;
+    mutable bool exclusive=true;
+    bool held=false,preparation=false,runtime=false,restored=false;
+    unsigned deniedHeldCore=UINT32_MAX,loseIdentityCore=UINT32_MAX,deniedPreparationCore=UINT32_MAX;
     bool ProveExclusiveRewrite(PioneerSessionIO&) const { return exclusive; }
     bool ProveRetainedOwnerIdentity(PioneerSessionIO&) const { return exclusive && sColdRecoveryRequired; }
-    bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO& io,unsigned c) const { return held && io.selected==c; }
-    bool ProveRoleStacklessFleetPreparationSafe(PioneerSessionIO& io,unsigned c) const { return preparation && io.selected==c; }
+    bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO& io,unsigned c) const {
+        if (c==loseIdentityCore) { exclusive=false;return false; }
+        return held && io.selected==c && c!=deniedHeldCore;
+    }
+    bool ProveRoleStacklessFleetPreparationSafe(PioneerSessionIO& io,unsigned c) const {
+        return preparation && io.selected==c && c!=deniedPreparationCore;
+    }
     bool ProveRoleRuntimeSafe(PioneerSessionIO& io,unsigned c) const { return runtime && io.selected==c; }
     bool ProveRoleAutoRestoreCompletionSafe(PioneerSessionIO& io,unsigned c) const { return restored && io.selected==c; }
 };
@@ -137,6 +150,50 @@ int main() {
     sColdRecoveryRequired=false;
     {
         PioneerStoreContext context;PioneerQwen35RoleBorrowedScopeWitness borrowed;
+        borrowed.held=true;borrowed.deniedHeldCore=7;context.io.qwen35BorrowedRoleScope=&borrowed;
+        PioneerQ35ProjectionQualificationScope scope(context);
+        assert(context.qwen35QualificationOwner.Allocate());
+        auto* scratch=context.qwen35QualificationOwner.Scratch();
+        context.qwen35QualificationInternalActive=true;
+        assert(!scope.QualificationScratchOperationAllowed(context.qwen35QualificationOwner,*scratch,
+            PioneerQ35ProjectionQualificationOwner::Capture,context));
+        assert(context.io.runtimeCore==0 && context.io.selected==0 && !sColdRecoveryRequired
+            && !context.qwen35QualificationOwner.Retained() && !context.banks.Quarantined());
+    }
+    for (unsigned failureMode=0;failureMode<2;failureMode++) {
+        PioneerStoreContext context;PioneerQwen35RoleBorrowedScopeWitness borrowed;
+        borrowed.held=true;context.io.qwen35BorrowedRoleScope=&borrowed;
+        PioneerQ35ProjectionQualificationScope scope(context);
+        assert(context.qwen35QualificationOwner.Allocate());
+        auto* scratch=context.qwen35QualificationOwner.Scratch();
+        context.qwen35QualificationInternalActive=true;
+        // Fail during the sweep, or only when restoring worker zero.
+        context.io.failSelection=failureMode?0:7;
+        context.io.failSelectionAfter=failureMode?120:0;
+        assert(!scope.QualificationScratchOperationAllowed(context.qwen35QualificationOwner,*scratch,
+            PioneerQ35ProjectionQualificationOwner::Capture,context));
+        assert(sColdRecoveryRequired && context.qwen35QualificationOwner.Retained()
+            && context.banks.Quarantined() && context.lease.recovery_required
+            && context.io.HostReadMock::quarantined);
+        assert(context.io.selects==(failureMode?121U:8U)
+            && context.io.runtimeCore==(failureMode?119U:6U));
+        sColdRecoveryRequired=false;
+    }
+    {
+        PioneerStoreContext context;PioneerQwen35RoleBorrowedScopeWitness borrowed;
+        borrowed.held=true;borrowed.loseIdentityCore=7;context.io.qwen35BorrowedRoleScope=&borrowed;
+        PioneerQ35ProjectionQualificationScope scope(context);
+        assert(context.qwen35QualificationOwner.Allocate());
+        auto* scratch=context.qwen35QualificationOwner.Scratch();
+        context.qwen35QualificationInternalActive=true;
+        assert(!scope.QualificationScratchOperationAllowed(context.qwen35QualificationOwner,*scratch,
+            PioneerQ35ProjectionQualificationOwner::Capture,context));
+        assert(context.io.runtimeCore==7 && context.io.selects==8 && sColdRecoveryRequired
+            && context.qwen35QualificationOwner.Retained() && context.banks.Quarantined());
+        sColdRecoveryRequired=false;
+    }
+    {
+        PioneerStoreContext context;PioneerQwen35RoleBorrowedScopeWitness borrowed;
         context.io.qwen35BorrowedRoleScope=&borrowed;
         PioneerQ35ProjectionQualificationScope scope(context);
         assert(scope.QualificationOwnerAllocationAllowed(context) && context.qwen35QualificationOwner.Allocate());
@@ -177,6 +234,12 @@ int main() {
         for (unsigned n=0;n<2;n++) for (unsigned b=0;b<PioneerQwen35::Banks;b++)
             context.qwen35DataflowRoutes[n][b]=context.dram.translated[b][0]|context.dram.translated[b][1]<<6;
         context.qwen35DataflowRoutesAudited=true;context.qwen35QualificationInternalActive=true;
+        borrowed.preparation=true;borrowed.deniedPreparationCore=7;
+        assert(!scope.QualificationInstallationAllowed(*scratch,context)
+            && context.io.runtimeCore==0 && context.io.selected==0
+            && !context.qwen35QualificationOwner.Retained() && !sColdRecoveryRequired);
+        borrowed.deniedPreparationCore=UINT32_MAX;
+        assert(scope.QualificationInstallationAllowed(*scratch,context));
         auto* qualification=context.qwen35QualificationOwner.Qualification();
         assert(qualification && qualification->Bind(*scratch,scope,0,Fixture::ScratchAddress,
             context.qwen35DataflowRoutes) && qualification->IsUnstarted());

@@ -27,14 +27,35 @@ class PioneerQ35ProjectionQualificationScope {
         auto* scratch=c.qwen35QualificationOwner.Scratch();
         return scratch && candidate==scratch && !c.qwen35QualificationOwner.Retained();
     }
+    template<class Proof>
+    bool CheckFleet(PioneerQwen35RoleBorrowedScopeWitness* scope,Proof proof,bool idle) const {
+        // Every fleet check must leave both TLBs selecting worker zero. A
+        // failed selection may have programmed only one TLB; a denied proof
+        // after a successful selection must not strand another route.
+        auto* scratch=c.qwen35QualificationOwner.Scratch();
+        if (c.io.runtimeCore!=0) { Retain(scratch);return false; }
+        bool okay=true,selectionFailed=false;
+        for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
+            if (!c.io.SelectRuntimeCore(core)) { selectionFailed=true;okay=false;break; }
+            if (!proof(core)) { okay=false;break; }
+        }
+        // A failed selection can leave a posted or partially applied TLB
+        // write. Keep the owner rather than issuing a competing restoration.
+        if (selectionFailed) { Retain(scratch);return false; }
+        // Do not program another route if the exclusive session or its bank
+        // identity disappeared while sampling the fleet.
+        const bool restored=Identity() && Borrowed()==scope && c.io.SelectRuntimeCore(0)
+            && c.io.DataflowPanelMappingStable() && Identity() && Borrowed()==scope
+            && (!idle || c.io.CoreIdle(0)) && Identity();
+        if (!restored) Retain(scratch);
+        return okay && restored;
+    }
     bool HeldAndQuiet() const {
         auto* scope=Borrowed();
         if (!scope || !c.q38Dispatch || !c.q38DispatchRoutes
             || c.q38Dispatch->prepared!=PioneerQwen35::DataflowCoreCount
             || c.q38Dispatch->unsafe || c.q38Dispatch->closed || c.q38Dispatch->rootRunning) return false;
-        for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
-            if (!c.io.SelectRuntimeCore(core) || !scope->ProveRoleFleetHeldAndQuiet(c.io,core)) return false;
-        return c.io.SelectRuntimeCore(0) && c.io.CoreIdle(0);
+        return CheckFleet(scope,[&](unsigned core) { return scope->ProveRoleFleetHeldAndQuiet(c.io,core); },true);
     }
     bool TransferReady(const void* candidate) const {
         return Identity() && Owned(candidate) && c.qwen35QualificationInternalActive
@@ -49,11 +70,9 @@ class PioneerQ35ProjectionQualificationScope {
             || !c.qwen35DataflowService || !c.qwen35DataflowService->Ready() || c.Unsafe(true)
             || !program.Valid() || !(scratch.IsStaged() || scratch.IsRunning())
             || !scratch.MatchesBankClaimOwner(c.banks,c.baseline.baseline.baseline.baseline.dram)) return false;
-        for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
-            if (!c.io.SelectRuntimeCore(core) || !scope->ProveRoleRuntimeSafe(c.io,core)) return false;
-        return c.io.SelectRuntimeCore(0);
+        return CheckFleet(scope,[&](unsigned core) { return scope->ProveRoleRuntimeSafe(c.io,core); },false);
     }
-    void Retain(const void* candidate) {
+    void Retain(const void* candidate) const {
         if (!candidate || candidate!=c.qwen35QualificationOwner.Scratch()) return;
         c.qwen35QualificationOwner.Retain();c.banks.Quarantine();c.lease.recovery_required=true;
         c.io.QuarantineHostPage();sColdRecoveryRequired=true;
@@ -110,9 +129,9 @@ public:
         auto* scope=Borrowed();
         if (!scope || !QualificationPrepareRoutesAllowed(scratch,requested) || !c.qwen35DataflowRoutesAudited)
             return false;
-        for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
-            if (!c.io.SelectRuntimeCore(core) || !scope->ProveRoleStacklessFleetPreparationSafe(c.io,core)) return false;
-        return c.io.SelectRuntimeCore(0);
+        return CheckFleet(scope,[&](unsigned core) {
+            return scope->ProveRoleStacklessFleetPreparationSafe(c.io,core);
+        },false);
     }
     bool QualificationLeaseMatches(const PioneerQ35ProjectionScratch& scratch,unsigned bank,unsigned address,
         unsigned bytes,const unsigned (&routes)[2][PioneerQwen35::Banks]) const {
@@ -156,9 +175,9 @@ public:
         auto* scope=Borrowed();
         if (!scope || !Identity() || !Owned(p) || !c.qwen35QualificationInternalActive
             || !c.qwen35DataflowService || !c.qwen35DataflowService->Closed()) return false;
-        for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
-            if (!c.io.SelectRuntimeCore(core) || !scope->ProveRoleAutoRestoreCompletionSafe(c.io,core)) return false;
-        return c.io.SelectRuntimeCore(0);
+        return CheckFleet(scope,[&](unsigned core) {
+            return scope->ProveRoleAutoRestoreCompletionSafe(c.io,core);
+        },false);
 #else
         (void)p;return false;
 #endif
