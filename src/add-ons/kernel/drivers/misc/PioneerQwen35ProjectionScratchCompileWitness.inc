@@ -11,6 +11,29 @@
 #include "PioneerQwen35ProjectionScratch.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowProjectionQualificationService.h"
 
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+// Instantiate the held-close path against the real session IO using only a
+// synthetic flag. The containing driver rejects loading on hardware.
+struct PioneerQ35ScratchHeldCompileScope {
+    bool permitted;
+    bool QualificationHoldAllowed(const void*,const PioneerQwen35::DataflowServiceOwner&) const { return permitted; }
+    bool QualificationHeldAllowed(const void*,const PioneerQwen35::DataflowServiceOwner&) const { return permitted; }
+    bool QualificationResumeAllowed(const void*,const PioneerQwen35::DataflowServiceOwner&) const { return permitted; }
+};
+static __attribute__((used,noinline)) bool
+PioneerQ35ScratchHeldCompileWitness(PioneerStoreContext& context,unsigned action)
+{
+    auto* scratch=context.qwen35QualificationOwner.Scratch();
+    auto* service=context.qwen35DataflowService;
+    if (!scratch || !service) return false;
+    PioneerQ35ScratchHeldCompileScope scope{(action&2)!=0};
+    if ((action&1)==0) return service->CloseForScratch(context.io,scratch,scope)
+        ==PioneerQwen35::DataflowServiceScratchHeld;
+    return service->FinishScratchClose(context.io,scratch,scope)
+        ==PioneerQwen35::DataflowServiceClosed;
+}
+#endif
+
 class PioneerQ35ProjectionScratchCompileScope {
 public:
     bool permitted=false;

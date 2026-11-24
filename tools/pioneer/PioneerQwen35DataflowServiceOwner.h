@@ -105,7 +105,8 @@ enum DataflowServiceResult {
 	DataflowServiceDecoderSequenceFailed=29,
 	DataflowServiceArgmaxFailed=30,
 	DataflowServiceGenerationFailed=31,
-	DataflowServiceResetRequired=32
+	DataflowServiceResetRequired=32,
+	DataflowServiceScratchHeld=33
 };
 
 enum DataflowServiceDiagnosticStage : unsigned {
@@ -140,10 +141,17 @@ class DataflowServiceOwner {
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		, PhaseGraphRunning, PhaseGraphFaulted, PhaseGraphClosing
 #endif
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+		, PhaseScratchHeld
+#endif
 	};
 	Phase fPhase=PhaseEmpty;
 	bool fSaved[DataflowCoreCount]{};
 	bool fCloseRestored=false;
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+	const void* fScratchCloseOwner=nullptr;
+	bool fScratchResumeAttempted=false;
+#endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 	bool fSharedAttempted=false;
 #endif
@@ -318,6 +326,9 @@ public:
 #endif
 		; }
 	bool Closed() const { return fPhase==PhaseClosed; }
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+	bool ScratchHeld() const { return fPhase==PhaseScratchHeld && fScratchCloseOwner; }
+#endif
 	bool Started() const { return fPhase!=PhaseEmpty; }
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 	bool StoppedResetReady() const { return fStoppedResetReady && fPhase==PhaseFaulted; }
@@ -736,9 +747,28 @@ public:
 		return DataflowServiceRecovered;
 	}
 
+	private:
 	template<class IO>
-	DataflowServiceResult Close(IO& io)
+	DataflowServiceResult FinishClose(IO& io)
 	{
+		unsigned resumeStage=0,resumeCore=DataflowCoreCount,resumeDetail=0;
+		if (!io.ResumeRestoredFleet(resumeStage,resumeCore,resumeDetail)) {
+			DataflowWorkerSnapshot snapshot{};
+			snapshot.state=resumeStage;
+			SetDiagnostic(DataflowServiceDiagnosticResume,resumeCore,snapshot,resumeDetail);
+			return DataflowServiceResumeFailed;
+		}
+		ReleaseSnapshots(io);
+		fPhase=PhaseClosed;
+		return DataflowServiceClosed;
+	}
+
+	template<class IO>
+	DataflowServiceResult CloseImpl(IO& io,bool holdForScratch)
+	{
+#if !defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) || !defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+		(void)holdForScratch;
+#endif
 		if (fPhase==PhaseClosed) return DataflowServiceClosed;
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 		if (StoppedResetReady()) return DataflowServiceResetRequired;
@@ -807,18 +837,55 @@ public:
 #endif
 			fCloseRestored=true;
 		}
-		unsigned resumeStage=0,resumeCore=DataflowCoreCount,resumeDetail=0;
-		if (!io.ResumeRestoredFleet(resumeStage,resumeCore,resumeDetail)) {
-			DataflowWorkerSnapshot snapshot{};
-			snapshot.state=resumeStage;
-			SetDiagnostic(DataflowServiceDiagnosticResume,resumeCore,snapshot,
-				resumeDetail);
-			return DataflowServiceResumeFailed;
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+		if (holdForScratch) {
+			fPhase=PhaseScratchHeld;
+			return DataflowServiceScratchHeld;
 		}
-		ReleaseSnapshots(io);
-		fPhase=PhaseClosed;
-		return DataflowServiceClosed;
+#endif
+		return FinishClose(io);
 	}
+	public:
+	template<class IO>
+	DataflowServiceResult Close(IO& io)
+	{
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+		// A scratch owner must explicitly authorize the held close. Never
+		// resume by falling through the ordinary close after a partial hold.
+		if (fScratchCloseOwner) return DataflowServiceInvalidState;
+#endif
+		return CloseImpl(io,false);
+	}
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+	// Non-loadable witness only. Scope must prove the exact scratch owner,
+	// exclusive fleet and transfer authority; this method grants none of them.
+	template<class IO,class Scope>
+	DataflowServiceResult CloseForScratch(IO& io,const void* owner,Scope& scope)
+	{
+		if (!owner || fScratchCloseOwner || fPhase!=PhaseReady || !fSharedAttempted
+			|| !scope.QualificationHoldAllowed(owner,*this)) return DataflowServiceInvalidState;
+		fScratchCloseOwner=owner;
+		const auto result=CloseImpl(io,true);
+		if (result==DataflowServiceScratchHeld && !scope.QualificationHeldAllowed(owner,*this)) {
+			DataflowWorkerSnapshot snapshot{};
+			SetDiagnostic(DataflowServiceDiagnosticStopAudit,DataflowCoreCount,snapshot);
+			fPhase=PhaseFaulted;
+			return DataflowServiceStopAuditFailed;
+		}
+		return result;
+	}
+	template<class IO,class Scope>
+	DataflowServiceResult FinishScratchClose(IO& io,const void* owner,Scope& scope)
+	{
+		if (!ScratchHeld() || owner!=fScratchCloseOwner || fScratchResumeAttempted
+			|| !scope.QualificationResumeAllowed(owner,*this)) return DataflowServiceInvalidState;
+		// An uncertain partial resume must not be replayed automatically.
+		fScratchResumeAttempted=true;fPhase=PhaseFaulted;
+		const auto result=FinishClose(io);
+		if (result==DataflowServiceClosed) fScratchCloseOwner=nullptr;
+		return result;
+	}
+#endif
 };
 
 } // namespace PioneerQwen35
