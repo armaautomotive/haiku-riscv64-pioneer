@@ -129,6 +129,10 @@ public:
             && (phase==Staging || phase==Staged || phase==Running || phase==Stopped
                 || phase==Restoring || phase==Failed);
     }
+    bool ResetRestoreClaimMatches(const PioneerResidentBanks& banks,const uint32_t* snapshot) const {
+        return ResetRestoreEligible(snapshot)
+            && banks.Q35StreamClaimMatches(this,ranges,PioneerQwen35::DataflowCoreCount);
+    }
     const PioneerQ35ScratchFailure& Failure() const { return failure; }
     // Inspect the retained command and counters twice without changing the
     // lease, bank quarantine, host page or failure. Even a matching sample

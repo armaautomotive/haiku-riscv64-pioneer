@@ -903,8 +903,21 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
     "$directory/pioneer_qwen35_fresh_recovery_session_test.cpp" -o "$temporary/fresh-recovery-session-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fresh-recovery-session-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
-    "$directory/pioneer_qwen35_modified_reset_retirement_test.cpp" -o "$temporary/modified-reset-retirement-test"
+    -I"$temporary" "$directory/pioneer_qwen35_modified_reset_retirement_test.cpp" -o "$temporary/modified-reset-retirement-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/modified-reset-retirement-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    "$directory/pioneer_qwen35_modified_recovery_transaction_test.cpp" -o "$temporary/modified-recovery-transaction-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/modified-recovery-transaction-test"
+if ${CXX:-c++} -x c++ -std=c++17 -E -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+    -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_RUN_ENABLE \
+    -DPIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS -DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS \
+    -DPIONEER_QWEN35_RECOVERY_QUALIFY \
+    "$root/src/add-ons/kernel/drivers/misc/PioneerQwen35ModifiedRecoveryTransaction.inc" \
+    >"$temporary/modified-recovery-guard.out" 2>"$temporary/modified-recovery-guard.err"; then
+    echo 'loadable qualification accepted modified recovery transaction witness' >&2
+    exit 1
+fi
+grep -q 'Modified Q35 recovery transaction requires the non-loadable snapshot witness' "$temporary/modified-recovery-guard.err"
 awk '/PIONEER_Q35_FRESH_RECOVERY_FINISH_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q35_FRESH_RECOVERY_FINISH_GUARD_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_fresh_recovery_finish_guard.inc"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \

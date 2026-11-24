@@ -66,6 +66,14 @@ public:
         return scratch->IsCaptured()
             && banks.Q35StreamOwnerMatches(dram,scratch,PioneerQwen35::DataflowCoreCount);
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    // Admission metadata only. A faulted modified snapshot may be considered
+    // for reset if its exact complete pre-write image and sticky claim remain
+    // owned. This never proves DMA is idle or authorizes an ASIC reset.
+    bool ModifiedResetEligible(const PioneerResidentBanks& banks) const {
+        return Active() && retained && scratch && snapshot && scratch->ResetRestoreClaimMatches(banks,snapshot);
+    }
+#endif
     // Retire the inert owner only after the exact verified reset ticket and
     // disposal of old mappings. Its storage stays alive until bank teardown.
     bool RetireUnmodifiedAfterReset(const PioneerDriverRecoveryProof& proof,uint64_t ticket,

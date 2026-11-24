@@ -34,16 +34,22 @@ struct MockProof {
     bool valid=true;
     bool ReadyToRetireOneOwner() const { return valid; }
 };
-struct MockScratch { bool eligible=true; bool ResetRestoreEligible(const uint32_t* p) const { return eligible && p; } };
+struct PioneerResidentBanks;
+struct MockScratch {
+    bool eligible=true;
+    bool ResetRestoreEligible(const uint32_t* p) const { return eligible && p; }
+    bool ResetRestoreClaimMatches(const PioneerResidentBanks&,const uint32_t*) const;
+};
 using PioneerQ35ProjectionScratch=MockScratch;
 struct MockQualificationOwner {
     MockScratch scratch;
     uint32_t snapshot=1;
-    bool active=true,retained=false,retired=false;
+    bool active=true,retained=true,retired=false;
     bool Active() const { return active && !retired; }
     MockScratch* Scratch() { return Active()?&scratch:nullptr; }
     uint32_t* Snapshot() { return Active()?&snapshot:nullptr; }
     void Retain() { retained=true; }
+    bool ModifiedResetEligible(const PioneerResidentBanks&) const;
     bool RetiredModifiedIdentity(const MockScratch* expected,const uint32_t* saved) const {
         return active && retired && retained && expected==&scratch && saved==&snapshot;
     }
@@ -66,6 +72,12 @@ struct PioneerResidentBanks {
         return old.route==fresh.route;
     }
 };
+bool MockScratch::ResetRestoreClaimMatches(const PioneerResidentBanks& banks,const uint32_t* p) const {
+    return ResetRestoreEligible(p) && banks.Q35StreamClaimIdentity(this,120);
+}
+bool MockQualificationOwner::ModifiedResetEligible(const PioneerResidentBanks& banks) const {
+    return Active() && retained && scratch.ResetRestoreClaimMatches(banks,&snapshot);
+}
 struct MockLease { bool recovery_required=false,ready=false,pending=false,l1_restored=true,niu_restored=true,tlb_restored=true; };
 struct MockHost { unsigned state=0,allocated=0,released=1;int release_status=0; };
 struct MockTransaction { bool config_attempted=false; };
@@ -150,6 +162,7 @@ struct PioneerQ35ProjectionResetRecovery {
 struct Scope {
     bool admission=true,retained=false,closeAdmission=true,retirementAdmission=true,ownerAdmission=true;
     bool quarantineAtRetirement=false,loseClaimAfterRetirement=false;
+    bool dropAttachment=false;
     unsigned failBoundary=0;
     bool FreshRecoveryAdmission(PioneerQ35FreshRecoverySession&,PioneerProbeCookie*,PioneerStoreContext&,uint64 ticket) {
         return admission && ticket==kTicket;
@@ -158,6 +171,7 @@ struct Scope {
         PioneerStoreContext& fresh,unsigned stage) {
         assert(old.recoveryFreshSession==&session && session.Fresh()==&fresh && session.Ticket()==kTicket);
         assert(fresh.profile==old.profile && !memcmp(fresh.initialized,old.initialized,PioneerResidentBanks::Pages));
+        if (stage==failBoundary && dropAttachment) old.recoveryFreshSession=nullptr;
         return stage!=failBoundary;
     }
     bool FreshRecoveryRestoreAdmission(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
@@ -218,6 +232,7 @@ int main() {
     for (unsigned boundary=1;boundary<=6;boundary++) {
         Reset();PioneerStoreContext old(PioneerResidentBanks::Total);old.io.postResetDisposeComplete=true;
         PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;Scope scope;scope.failBoundary=boundary;
+        scope.dropAttachment=boundary==PioneerQ35FreshRecoverySession::Mapped;
         auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
         assert(!session->Prepare(&owner,old,&guard,scope));CheckRetained(session,old,scope);
         assert(session->FailureStage()==boundary);

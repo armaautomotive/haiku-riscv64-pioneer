@@ -5019,6 +5019,7 @@ public:
 #include "PioneerQwen35ProjectionScratchCompileWitness.inc"
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 #include "PioneerQwen35FreshRecoverySession.inc"
+#include "PioneerQwen35ModifiedRecoveryTransaction.inc"
 #include "PioneerQwen35ProjectionResetRecoveryCompileWitness.inc"
 #endif
 #endif

@@ -5,6 +5,28 @@
 #define PIONEER_QWEN35_PROJECTION_SCRATCH_MOCK_ONLY 1
 #include "pioneer_qwen35_projection_scratch_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35ProjectionQualificationOwner.h"
+#define PIONEER_QWEN35_RECOVERY_RUN_ENABLE 1
+#define PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS 1
+#define PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY 1
+
+struct ResetContext {
+    PioneerQ35ProjectionQualificationOwner& qwen35QualificationOwner;
+    PioneerResidentBanks& banks;PioneerResidentLease& lease;
+    struct A { tt_dram_samples_result& dram; };struct B { A baseline; };
+    struct C { B baseline; };struct D { C baseline; } baseline;
+    bool qwen35QualificationInternalActive=false;
+    void *qwen35DataflowService=nullptr,*qwen35DataflowMemory=nullptr,*qwen35DataflowAuthority=nullptr;
+    void *qwen35DataflowProgramScratch=nullptr,*qwen35GraphOwner=nullptr,*qwen35SharedRoleBinding=nullptr;
+    void* recoveryFreshSession=nullptr;
+    struct { void* qwen35BorrowedRoleScope=nullptr; } io;
+    ResetContext(PioneerQ35ProjectionQualificationOwner& owner,PioneerResidentBanks& b,
+        PioneerResidentLease& l,tt_dram_samples_result& d):qwen35QualificationOwner(owner),banks(b),lease(l),baseline{{{{d}}}} {}
+};
+static constexpr int B_NOT_ALLOWED=-7;
+static int ResetAllowed(ResetContext* context) {
+#include "pioneer_q35_projection_owner_reset_guard.inc"
+    return 0;
+}
 
 struct Receipt {
     const PioneerQ35ProjectionScratch* owner=nullptr;
@@ -39,9 +61,24 @@ int main() {
     assert(scratch->Capture(old->io,old->scope,old->dram,old->noc,old->host,old->lease,old->banks,
         0,Fixture::ScratchOffset,old->initialized.data(),old->initialized.size(),snapshot,
         PioneerQ35ProjectionScratch::SavedWords));
+    assert(!owner->ModifiedResetEligible(old->banks));
     assert(!owner->RetireModifiedAfterReset(proof,37,receipt,old->banks,fresh->banks,session,scope));
     assert(scratch->Stage(old->io,old->scope,old->dram,old->noc,old->host,old->lease,old->banks));
-    old->banks.Quarantine();owner->Retain();
+    old->banks.Quarantine();assert(!owner->ModifiedResetEligible(old->banks));owner->Retain();
+    PioneerQ35StreamBankRange wrongRanges[PioneerQwen35::DataflowCoreCount]{};
+    for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++)
+        wrongRanges[core]={0,Fixture::ScratchOffset+(1000+core)*Fixture::PageBytes,Fixture::PageBytes};
+    assert(fresh->banks.ReserveQ35Stream(fresh->dram,scratch,wrongRanges,PioneerQwen35::DataflowCoreCount,
+        fresh->initialized.data(),fresh->initialized.size()));
+    assert(fresh->banks.Q35StreamClaimIdentity(scratch,PioneerQwen35::DataflowCoreCount)
+        && owner->ModifiedResetEligible(old->banks) && !owner->ModifiedResetEligible(fresh->banks));
+    ResetContext context(*owner,old->banks,old->lease,old->dram);
+    assert(ResetAllowed(&context)==B_NOT_ALLOWED); // Generic controller remains closed.
+    context.qwen35DataflowService=&context;context.qwen35DataflowMemory=&context;
+    context.qwen35SharedRoleBinding=&context;
+    assert(ResetAllowed(&context)==B_NOT_ALLOWED);
+    context.recoveryFreshSession=&context;assert(ResetAllowed(&context)==B_NOT_ALLOWED);
+    context.recoveryFreshSession=nullptr;
     auto bad=proof;bad.flags^=PIONEER_RECOVERY_PROOF_NOC_IDLE;
     assert(!owner->RetireModifiedAfterReset(bad,37,receipt,old->banks,fresh->banks,session,scope));
     assert(!owner->RetireModifiedAfterReset(proof,38,receipt,old->banks,fresh->banks,session,scope));
@@ -60,6 +97,6 @@ int main() {
         && snapshot[0]==old->original[0]);
     assert(!owner->RetireModifiedAfterReset(proof,37,receipt,old->banks,fresh->banks,session,scope));
     // The sticky bank claim must be destroyed before its old owner/snapshot.
-    old.reset();owner.reset();
+    old.reset();fresh.reset();owner.reset();
     std::puts("PASS modified reset retirement keeps exact scratch owner and snapshot; SIMULATED ONLY");
 }

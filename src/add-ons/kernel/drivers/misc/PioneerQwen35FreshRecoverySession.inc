@@ -35,7 +35,10 @@ private:
     template<class Scope>
     bool Retain(Scope& scope,unsigned failed) {
         fFailureStage=failed;fStage=Retained;
-        if (fOld) { fOld->qwen35QualificationOwner.Retain();fOld->banks.Quarantine(); }
+        if (fOld) {
+            if (!fOld->recoveryFreshSession) fOld->recoveryFreshSession=this;
+            fOld->qwen35QualificationOwner.Retain();fOld->banks.Quarantine();
+        }
         if (fFresh) {
             fFresh->banks.Quarantine();fFresh->lease.recovery_required=true;
             fFresh->io.QuarantineHostPage();
@@ -55,12 +58,7 @@ private:
             || !fOld->recoveryFinishProof.ReadyToRetireOneOwner()
             || fOld->recoveryFinishProof.reset_generation!=fTicket
             || fOld->recoveryFinishProof.firmware_generation!=fTicket
-            || !fOld->qwen35QualificationOwner.Active()
-            || !fOld->qwen35QualificationOwner.Scratch()
-            || !fOld->qwen35QualificationOwner.Scratch()->ResetRestoreEligible(
-                fOld->qwen35QualificationOwner.Snapshot())
-            || !fOld->banks.Q35StreamClaimIdentity(fOld->qwen35QualificationOwner.Scratch(),
-                PioneerQwen35::DataflowCoreCount)) return false;
+            || !fOld->qwen35QualificationOwner.ModifiedResetEligible(fOld->banks)) return false;
         return guard->validate(fTicket)==B_OK;
     }
     bool RetiredTicketValid(pioneer_driver_recovery_guard_v2_info* guard,
@@ -74,7 +72,7 @@ private:
             || fOld->recoveryFinishProof.reset_generation!=fTicket
             || fOld->recoveryFinishProof.firmware_generation!=fTicket
             || !fOld->qwen35QualificationOwner.RetiredModifiedIdentity(scratch,snapshot)
-            || !fOld->banks.Q35StreamClaimIdentity(scratch,PioneerQwen35::DataflowCoreCount)
+            || !scratch->ResetRestoreClaimMatches(fOld->banks,snapshot)
             || !fRestore.VerifiedFor(*scratch,fTicket,fOld->banks,fFresh->banks)) return false;
         return guard->validate(fTicket)==B_OK;
     }
@@ -93,6 +91,13 @@ public:
     unsigned FailureStage() const { return fFailureStage; }
     PioneerStoreContext* Fresh() const { return fFresh; }
     uint64 Ticket() const { return fTicket; }
+    template<class Scope> void RetainUncertain(Scope& scope) {
+        if (fStage==Retained) {
+            if (fOld && !fOld->recoveryFreshSession) fOld->recoveryFreshSession=this;
+            sColdRecoveryRequired=true;return;
+        }
+        (void)Retain(scope,unsigned(fStage));
+    }
 #ifdef PIONEER_QWEN35_FRESH_RECOVERY_TEST
     // Test doubles own no hardware mappings or DMA; production cannot call
     // this and must wait for the separately audited close implementation.
@@ -114,10 +119,7 @@ public:
             || !old.io.postResetDisposeComplete || !old.recoveryFinishProof.ReadyToRetireOneOwner()
             || old.recoveryFinishProof.reset_generation!=old.recoveryFinishTicket
             || old.recoveryFinishProof.firmware_generation!=old.recoveryFinishTicket
-            || !old.qwen35QualificationOwner.Active() || !old.qwen35QualificationOwner.Scratch()
-            || !old.qwen35QualificationOwner.Scratch()->ResetRestoreEligible(old.qwen35QualificationOwner.Snapshot())
-            || !old.banks.Q35StreamClaimIdentity(old.qwen35QualificationOwner.Scratch(),
-                PioneerQwen35::DataflowCoreCount) || !old.initialized
+            || !old.qwen35QualificationOwner.ModifiedResetEligible(old.banks) || !old.initialized
             || old.bytes!=PioneerResidentBanks::Total
             || guard->validate(old.recoveryFinishTicket)!=B_OK
             || !scope.FreshRecoveryAdmission(*this,owner,old,old.recoveryFinishTicket)
