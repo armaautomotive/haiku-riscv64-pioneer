@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // Haiku session adapter for the fixed projection. This is compiled only in
 // the non-loadable shared-role witness. It relies on the existing borrowed
-// scope for caller, lock, generation and hardware proofs; those fleet proofs
-// still fail closed, so this class cannot authorize a physical launch.
+// scope for caller, lock, generation and hardware observations; the separate
+// role-start and recovery gates still deny a physical launch.
 #if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH) \
     || !defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) || !defined(PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY)
 #error Projection qualification scope requires the non-loadable shared-role witness
@@ -40,6 +40,7 @@ PioneerQ35QualificationHeldOwnerAllowed(PioneerStoreContext& c,PioneerSessionIO&
 class PioneerQ35ProjectionQualificationScope {
     using Fixture=PioneerQwen35::DataflowProjectionQualification;
     PioneerStoreContext& c;
+    const void* transferOwner=nullptr;
     PioneerQwen35RoleBorrowedScopeWitness* Borrowed() const {
         auto* scope=c.io.qwen35BorrowedRoleScope;
         return scope && scope->ProveExclusiveRewrite(c.io)?scope:NULL;
@@ -96,6 +97,23 @@ class PioneerQ35ProjectionQualificationScope {
             && c.lease.ready && !c.lease.pending && !c.lease.recovery_required
             && c.host.state==TT_HOST_PAGE_READY && !c.host.released && HeldAndQuiet();
     }
+    // Check the active transfer initiator on every page. The other workers
+    // are sampled at both transaction boundaries; these samples do not
+    // exclude an independent firmware change between observations.
+    bool TransferPageReady(const void* candidate) const {
+        auto* scope=Borrowed();
+        return scope && transferOwner==candidate && Identity() && Owned(candidate)
+            && c.qwen35QualificationInternalActive && !c.Unsafe()
+            && (!c.qwen35DataflowService || c.qwen35DataflowService->Closed()
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+                || c.qwen35DataflowService->ScratchHeld()
+#endif
+                ) && c.lease.ready && !c.lease.pending && !c.lease.recovery_required
+            && c.host.state==TT_HOST_PAGE_READY && !c.host.released
+            && c.io.runtimeCore==0 && c.io.DataflowPanelMappingStable() && c.io.CoreIdle(0)
+            && scope->ProveRoleFleetHeldAndQuiet(c.io,0)
+            && c.io.DataflowPanelMappingStable() && Identity() && Borrowed()==scope;
+    }
     bool RuntimeIdentity(const PioneerQ35ProjectionScratch& scratch,
         const PioneerQwen35::DataflowProjectionProgram& program) const {
         auto* scope=Borrowed();
@@ -135,9 +153,23 @@ public:
     }
     bool ScratchTransferAllowed(const void* p,unsigned bank,unsigned offset,bool) const {
         return bank==0 && offset>=Fixture::ScratchOffset && offset<Fixture::ScratchOffset+Fixture::ScratchBytes
-            && !(offset&(Fixture::PageBytes-1)) && TransferReady(p)
+            && !(offset&(Fixture::PageBytes-1)) && TransferPageReady(p)
             && c.banks.Q35StreamOwnerMatches(c.baseline.baseline.baseline.baseline.dram,p,
                 PioneerQwen35::DataflowCoreCount);
+    }
+    bool BeginScratchTransfers(const void* p) {
+        if (transferOwner || !TransferReady(p)
+            || !c.banks.Q35StreamOwnerMatches(c.baseline.baseline.baseline.baseline.dram,p,
+                PioneerQwen35::DataflowCoreCount)) return false;
+        transferOwner=p;return true;
+    }
+    bool FinishScratchTransfers(const void* p) {
+        if (transferOwner!=p) return false;
+        const bool okay=TransferPageReady(p) && TransferReady(p)
+            && c.banks.Q35StreamOwnerMatches(c.baseline.baseline.baseline.baseline.dram,p,
+                PioneerQwen35::DataflowCoreCount);
+        transferOwner=nullptr;
+        return okay;
     }
     bool ScratchStageAllowed(const void* p) const { return TransferReady(p); }
     bool ScratchOutputAllowed(const void* p) const { return TransferReady(p); }
@@ -156,7 +188,7 @@ public:
             && io.DataflowPanelMappingStable()
             && PioneerQwen35WithSelectedClock(io,0,[&]() { return io.ResetRead()==0x47800; });
     }
-    void RetainScratch(const void* p) { Retain(p); }
+    void RetainScratch(const void* p) { if (transferOwner==p) transferOwner=nullptr;Retain(p); }
     bool QualificationPrepareRoutesAllowed(const PioneerQ35ProjectionScratch& scratch,
         const PioneerStoreContext& requested) const {
         return &requested==&c && TransferReady(&scratch)

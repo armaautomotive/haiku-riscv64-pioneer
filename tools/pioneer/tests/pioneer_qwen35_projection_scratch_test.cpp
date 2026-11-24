@@ -13,7 +13,9 @@ using Fixture=PioneerQwen35::DataflowProjectionQualification;
 
 struct ScratchScope {
     const void* owner=nullptr;
-    bool allowed=true,transferAllowed=true,stopped=false,retained=false;
+    bool allowed=true,transferAllowed=true,stopped=false,retained=false,transfersActive=false;
+    bool beginAllowed=true,finishAllowed=true;
+    unsigned begins=0,finishes=0;
     mutable unsigned observationChecks=0;
     unsigned observationLimit=UINT32_MAX;
     bool ScratchReserveAllowed(const void* p,unsigned bank,unsigned offset,unsigned bytes) {
@@ -21,8 +23,16 @@ struct ScratchScope {
         owner=p;return true;
     }
     bool ScratchTransferAllowed(const void* p,unsigned bank,unsigned offset,bool) const {
-        return allowed && transferAllowed && p==owner && bank==0 && offset>=Fixture::ScratchOffset
+        return allowed && transferAllowed && transfersActive && p==owner && bank==0 && offset>=Fixture::ScratchOffset
             && offset<Fixture::ScratchOffset+Fixture::ScratchBytes && !(offset&4095);
+    }
+    bool BeginScratchTransfers(const void* p) {
+        ++begins;if (!allowed || !beginAllowed || transfersActive || p!=owner) return false;
+        transfersActive=true;return true;
+    }
+    bool FinishScratchTransfers(const void* p) {
+        ++finishes;if (!allowed || !finishAllowed || !transfersActive || p!=owner) return false;
+        transfersActive=false;return true;
     }
     bool ScratchStageAllowed(const void* p) const { return allowed && p==owner; }
     bool ScratchRunAllowed(const void* p) const { return allowed && p==owner; }
@@ -32,7 +42,7 @@ struct ScratchScope {
     template<class IO> bool ScratchRetainedObservationAllowed(const void* p,IO&) const {
         return ++observationChecks<=observationLimit && allowed && retained && p==owner;
     }
-    void RetainScratch(const void* p) { assert(p==owner);retained=true; }
+    void RetainScratch(const void* p) { assert(p==owner);retained=true;transfersActive=false; }
 };
 
 // The rewrite must not read Blackhole's unsupported RD_DATA_WORD counter.
@@ -180,6 +190,37 @@ int main()
         // must keep the scratch object alive until bank-context destruction.
         assert(device->banks.Q35StreamClaimed() && device->banks.Range(device->dram,0,0)
             && !device->banks.Range(device->dram,0,Fixture::ScratchOffset));
+    }
+    {
+        auto owner=std::make_unique<PioneerQ35ProjectionScratch>();
+        auto device=std::make_unique<ScratchDevice<>>();
+        device->scope.beginAllowed=false;
+        assert(!device->Capture(*owner) && device->scope.retained && !device->scope.transfersActive
+            && device->banks.Q35StreamClaimed() && !device->io.doorbells
+            && owner->Failure().kind==PioneerQ35ScratchFailureAdmission);
+    }
+    {
+        auto owner=std::make_unique<PioneerQ35ProjectionScratch>();
+        auto device=std::make_unique<ScratchDevice<>>();
+        device->scope.finishAllowed=false;
+        assert(!device->Capture(*owner) && device->scope.retained && !device->scope.transfersActive
+            && device->banks.Q35StreamClaimed() && !owner->IsCaptured()
+            && owner->Failure().kind==PioneerQ35ScratchFailureAdmission
+            && owner->Failure().capturedPages==Fixture::ScratchPages);
+    }
+    for (unsigned failRestore=0;failRestore<2;failRestore++) {
+        auto owner=std::make_unique<PioneerQ35ProjectionScratch>();
+        auto device=std::make_unique<ScratchDevice<>>();
+        assert(device->Capture(*owner));
+        if (failRestore) assert(device->Stage(*owner));
+        device->scope.finishAllowed=false;
+        assert(!(failRestore?device->Restore(*owner):device->Stage(*owner))
+            && device->scope.retained && !device->scope.transfersActive
+            && device->banks.Q35StreamClaimed() && !owner->IsRestored()
+            && owner->Failure().kind==PioneerQ35ScratchFailureAdmission
+            && owner->Failure().capturedPages==Fixture::ScratchPages
+            && owner->Failure().dirtyPages==Fixture::ScratchPages
+            && device->snapshot==device->original);
     }
     {
         auto owner=std::make_unique<PioneerQ35ProjectionScratch>();

@@ -172,12 +172,30 @@ int main() {
         }
         assert(context.banks.ReserveQ35Stream(context.dram,scratch,ranges,
             PioneerQwen35::DataflowCoreCount,context.initialized,PioneerResidentBanks::Pages));
+        assert(!scope.ScratchTransferAllowed(scratch,0,Fixture::ScratchOffset,false));
+        assert(scope.BeginScratchTransfers(scratch));
+        assert(!scope.BeginScratchTransfers(scratch));
+        const unsigned selectsAfterBegin=context.io.selects;
+        for (unsigned n=0;n<Fixture::ScratchPages;n++)
+            assert(scope.ScratchTransferAllowed(scratch,0,Fixture::ScratchOffset+n*Fixture::PageBytes,false));
+        assert(context.io.selects==selectsAfterBegin); // no per-page fleet sweep
+        context.io.idle=false;assert(!scope.ScratchTransferAllowed(scratch,0,Fixture::ScratchOffset,false));
+        context.io.idle=true;
         assert(scope.ScratchTransferAllowed(scratch,0,Fixture::ScratchOffset,false)
             && !scope.ScratchTransferAllowed(scratch,0,0,false));
         assert(!scope.ScratchRunAllowed(scratch) && !scope.ScratchStopped(scratch));
         borrowed.exclusive=false;
         assert(!scope.ScratchTransferAllowed(scratch,0,Fixture::ScratchOffset,true));
         borrowed.exclusive=true;
+        assert(scope.FinishScratchTransfers(scratch));
+        assert(context.io.selects==selectsAfterBegin+121); // full end audit
+        assert(!scope.ScratchTransferAllowed(scratch,0,Fixture::ScratchOffset,false)
+            && !scope.FinishScratchTransfers(scratch));
+        assert(scope.BeginScratchTransfers(scratch));
+        borrowed.deniedHeldCore=37;
+        assert(!scope.FinishScratchTransfers(scratch) && context.io.runtimeCore==0);
+        borrowed.deniedHeldCore=UINT32_MAX;
+        assert(!scope.ScratchTransferAllowed(scratch,0,Fixture::ScratchOffset,false));
         // Retention must quarantine even after the holder was already marked
         // retained by another part of the same failure path.
         context.qwen35QualificationOwner.Retain();

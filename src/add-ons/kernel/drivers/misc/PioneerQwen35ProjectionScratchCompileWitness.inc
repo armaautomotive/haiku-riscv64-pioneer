@@ -40,6 +40,8 @@ public:
     bool permitted=false;
     PioneerStoreContext* context=nullptr;
     bool ScratchReserveAllowed(const void*,unsigned,unsigned,unsigned) const { return permitted; }
+    bool BeginScratchTransfers(const void*) const { return permitted; }
+    bool FinishScratchTransfers(const void*) const { return permitted; }
     bool ScratchTransferAllowed(const void*,unsigned,unsigned,bool) const { return permitted; }
     bool ScratchStageAllowed(const void*) const { return permitted; }
     bool ScratchRunAllowed(const void*) const { return permitted; }

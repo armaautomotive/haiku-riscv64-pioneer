@@ -66,6 +66,13 @@ class PioneerQ35ProjectionScratch {
         if (trace) failure.trace=*trace;
     }
 
+    template<class Scope>
+    bool TransferBoundary(Scope& scope,const PioneerResidentLease& lease,bool begin) {
+        if (begin?scope.BeginScratchTransfers(this):scope.FinishScratchTransfers(this)) return true;
+        RecordFailure(PioneerQ35ScratchFailureAdmission,Fixture::ScratchPages,false,lease);
+        phase=Failed;scope.RetainScratch(this);return false;
+    }
+
     template<class IO,class Scope>
     bool Transfer(IO& io,Scope& scope,const tt_dram_samples_result& dram,
         const tt_compute_noc_result& noc,const tt_host_page_result& host,
@@ -221,11 +228,13 @@ public:
         if (!banks.ReserveQ35Stream(dram,this,ranges,PioneerQwen35::DataflowCoreCount,
             initialized,initializedPages)) return false;
         bank=whichBank;firstOffset=offset;saved=snapshot;phase=Capturing;
+        if (!TransferBoundary(scope,lease,true)) return false;
         for (unsigned n=0;n<Fixture::ScratchPages;n++) {
             if (!Transfer(io,scope,dram,noc,host,lease,banks,n,false,saved+n*(Fixture::PageBytes/4)))
                 return false;
             capturedPages=n+1;
         }
+        if (!TransferBoundary(scope,lease,false)) return false;
         phase=Captured;return true;
     }
 
@@ -235,6 +244,7 @@ public:
         PioneerResidentLease& lease,PioneerResidentBanks& banks) {
         if (phase!=Captured || !scope.ScratchStageAllowed(this)) return false;
         phase=Staging;
+        if (!TransferBoundary(scope,lease,true)) return false;
         for (unsigned n=0;n<Fixture::ScratchPages;n++) {
             if (!FillPage(n)) {
                 RecordFailure(PioneerQ35ScratchFailureFill,n,true,lease);
@@ -244,6 +254,7 @@ public:
             dirtyPages=n+1;
             if (!Transfer(io,scope,dram,noc,host,lease,banks,n,true,page)) return false;
         }
+        if (!TransferBoundary(scope,lease,false)) return false;
         phase=Staged;return true;
     }
     template<class Scope> bool MarkRunning(Scope& scope) {
@@ -263,6 +274,7 @@ public:
         // A bad result belongs to this run: a later buffer change must not
         // turn the same qualification into a pass. Restoration remains open.
         outputChecked=true;
+        if (!TransferBoundary(scope,lease,true)) return false;
         bool valid=true;
         for (unsigned n=0;n<Fixture::OutputPages;n++) {
             if (!Transfer(io,scope,dram,noc,host,lease,banks,Fixture::WeightPages+Fixture::InputPages+n,false,page)) return false;
@@ -271,6 +283,7 @@ public:
             for (unsigned row=first;row<limit;row++)
                 if (!Fixture::OutputMatches(row,page[row-first])) valid=false;
         }
+        if (!TransferBoundary(scope,lease,false)) return false;
         outputVerified=valid;return valid;
     }
 
@@ -281,6 +294,7 @@ public:
         if ((phase!=Staged && phase!=Stopped) || !saved || transferFailed
             || dirtyPages!=Fixture::ScratchPages || !scope.ScratchRestoreAllowed(this)) return false;
         phase=Restoring;
+        if (!TransferBoundary(scope,lease,true)) return false;
         for (unsigned n=0;n<Fixture::ScratchPages;n++)
             if (!Transfer(io,scope,dram,noc,host,lease,banks,n,true,saved+n*(Fixture::PageBytes/4))) return false;
         // Audit every page again after all writes, including cross-page damage.
@@ -291,6 +305,7 @@ public:
                 phase=Failed;scope.RetainScratch(this);return false;
             }
         }
+        if (!TransferBoundary(scope,lease,false)) return false;
         phase=Restored;return true;
     }
 };
