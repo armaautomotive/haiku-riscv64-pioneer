@@ -1,0 +1,45 @@
+         (3)
+         "device/bus" : string : "fdt"
+         "device/pretty name" : string : "pcie@7062000000"
+         "fdt/node" : uint32 : 40572 (0x9e7c)
+         "fdt/name" : string : "pcie@7062000000"
+         "fdt/device_type" : string : "pci"
+         "fdt/compatible" : string : "sophgo,cdns-pcie-host"
+         "device/driver" : string : "bus_managers/fdt/driver_v1"
+            (4)
+            "device/pretty name" : string : "SG2042 Cadence PCIe Host Controller"
+            "device/fixed child" : string : "bus_managers/pci/root/driver_v1"
+            "device/driver" : string : "busses/pci/ecam/driver_v1"
+               (5)
+               "device/pretty name" : string : "PCI"
+               "device/flags" : uint32 : 4 (0x4)
+               "device/driver" : string : "bus_managers/pci/root/driver_v1"
+                  (6)
+                  "device/bus" : string : "pci"
+                  "pci/domain" : uint8 : 1 (0x1)
+                  "pci/bus" : uint8 : 0 (0)
+                  "pci/device" : uint8 : 0 (0)
+                  "pci/function" : uint8 : 0 (0)
+                  "device/vendor" : uint16 : 7728 (0x1e30)
+                  "device/id" : uint16 : 8258 (0x2042)
+                  "device/type" : uint16 : 6 (0x6)
+                  "device/subtype" : uint16 : 4 (0x4)
+                  "device/interface" : uint16 : 0 (0)
+                  "device/flags" : uint32 : 1 (0x1)
+                  "device/driver" : string : "bus_managers/pci/driver_v1"
+                  (6)
+                  "device/bus" : string : "pci"
+                  "pci/domain" : uint8 : 1 (0x1)
+                  "pci/bus" : uint8 : 1 (0x1)
+                  "pci/device" : uint8 : 0 (0)
+                  "pci/function" : uint8 : 0 (0)
+                  "device/vendor" : uint16 : 7762 (0x1e52)
+                  "device/id" : uint16 : 45376 (0xb140)
+                  "device/type" : uint16 : 18 (0x12)
+                  "device/subtype" : uint16 : 0 (0)
+                  "device/interface" : uint16 : 0 (0)
+                  "device/flags" : uint32 : 1 (0x1)
+                  "device/driver" : string : "bus_managers/pci/driver_v1"
+         (3)
+         "device/bus" : string : "fdt"
+         "device/pretty name" : string : "pcie@7062800000"
