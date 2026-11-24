@@ -85,6 +85,14 @@ public:
         return permitted && context && holder.Owns(scratch) && context->qwen35DataflowService
             && context->qwen35DataflowService->Closed();
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    bool QualificationOwnerPrepareRetirementAllowed(const PioneerQ35ProjectionQualificationOwner& holder,
+        const PioneerQ35ProjectionScratch& scratch,
+        const PioneerQwen35::DataflowProjectionQualificationService& qualification) const {
+        return permitted && context && holder.Owns(scratch) && scratch.IsRestored() && qualification.IsAudited()
+            && context->qwen35DataflowService && context->qwen35DataflowService->ScratchHeld();
+    }
+#endif
     bool QualificationOwnerAbandonAllowed(const PioneerQ35ProjectionQualificationOwner&) const {
         return permitted && context && !context->qwen35DataflowService;
     }
@@ -150,6 +158,10 @@ PioneerQ35ProjectionScratchCompileWitnessImpl(PioneerStoreContext& context,Scope
         PioneerQ35ScratchObservation observation;
         return context.ObserveDataflowQualificationTransfer(scope,observation);
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    if (action==15) return context.qwen35QualificationOwner.PrepareRetirement(scope,context.banks,
+        context.baseline.baseline.baseline.baseline.dram);
+#endif
     return false;
 }
 

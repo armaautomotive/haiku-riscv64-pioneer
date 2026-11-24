@@ -54,6 +54,26 @@ struct CombinedScope : ScratchScope {
         return allowed && stopped && !retained && service && service->Closed()
             && holder.Owns(s) && s.IsRestored() && q.IsAudited();
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    bool QualificationHoldAllowed(const void* p,const DataflowServiceOwner& s) const {
+        return allowed && !retained && service==&s && s.Ready() && p==owner
+            && holder && holder->Scratch()==p && holder->Qualification()->IsAudited();
+    }
+    bool QualificationHeldAllowed(const void* p,const DataflowServiceOwner& s) const {
+        return allowed && !retained && service==&s && s.ScratchHeld() && p==owner
+            && holder && holder->Scratch()==p;
+    }
+    bool QualificationResumeAllowed(const void* p,const DataflowServiceOwner& s) const {
+        return allowed && !retained && service==&s && s.ScratchHeld() && p==owner
+            && holder && holder->RetirementPrepared() && holder->Scratch()==p
+            && holder->Scratch()->IsRestored();
+    }
+    bool QualificationOwnerPrepareRetirementAllowed(const PioneerQ35ProjectionQualificationOwner& h,
+        const PioneerQ35ProjectionScratch& s,const DataflowProjectionQualificationService& q) const {
+        return allowed && stopped && !retained && service && service->ScratchHeld()
+            && h.Owns(s) && s.IsRestored() && q.IsAudited();
+    }
+#endif
     bool QualificationOwnerAbandonAllowed(const PioneerQ35ProjectionQualificationOwner&) const {
         return allowed && !retained;
     }
@@ -128,13 +148,33 @@ int main()
         const unsigned offset=n*4096,remaining=Fixture::OutputBytes-offset;
         std::memcpy(p.data(),io->memory.output.data()+offset,remaining<4096?remaining:4096);
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    assert(service->CloseForScratch(*io,scratch,scope)==DataflowServiceScratchHeld
+        && service->ScratchHeld() && !io->resumeCount);
+    assert(service->FinishScratchClose(*io,scratch,scope)==DataflowServiceInvalidState && !io->resumeCount);
+    assert(!holder->PrepareRetirement(scope,device->banks,device->dram));
+#else
     assert(service->Close(*io)==DataflowServiceClosed);
+#endif
     scope.stopped=true;
     assert(scratch->MarkStopped(scope));
     assert(scratch->VerifyOutput(device->io,scope,device->dram,device->noc,device->host,device->lease,device->banks));
     assert(scratch->Restore(device->io,scope,device->dram,device->noc,device->host,device->lease,device->banks)
         && scratch->IsRestored() && !scope.retained);
     assert(!holder->AbandonRestoredUnrun(scope,device->banks,device->dram)); // this run was published
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    assert(!holder->Retire(scope,device->banks,device->dram));
+    auto wrongDram=device->dram;wrongDram.translated[0][0]^=1;
+    assert(!holder->PrepareRetirement(scope,device->banks,wrongDram) && !holder->RetirementPrepared());
+    assert(holder->PrepareRetirement(scope,device->banks,device->dram) && holder->RetirementPrepared());
+    assert(!holder->PrepareRetirement(scope,device->banks,device->dram)
+        && !holder->Retire(scope,device->banks,device->dram));
+    scope.allowed=false;
+    assert(service->FinishScratchClose(*io,scratch,scope)==DataflowServiceInvalidState && !io->resumeCount);
+    scope.allowed=true;
+    assert(service->FinishScratchClose(*io,scratch,scope)==DataflowServiceClosed
+        && service->Closed() && io->resumeCount==1);
+#endif
     assert(holder->Retire(scope,device->banks,device->dram) && holder->Retired() && !holder->Active()
         && device->banks.Q35StreamClaimed());
     for (unsigned n=0;n<Fixture::ScratchPages;n++) {

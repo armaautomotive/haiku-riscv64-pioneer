@@ -17,6 +17,9 @@ class PioneerQ35ProjectionQualificationOwner {
     PioneerQwen35::DataflowProjectionQualificationService* qualification=nullptr;
     uint32_t* snapshot=nullptr;
     bool attempted=false,active=false,retired=false,retained=false;
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    bool retirementPrepared=false;
+#endif
 public:
     enum ScratchOperation : unsigned { Capture=0,Stage=1,Verify=2,Restore=3 };
     PioneerQ35ProjectionQualificationOwner()=default;
@@ -40,6 +43,9 @@ public:
     bool Active() const { return active && !retired; }
     bool Retained() const { return retained; }
     bool Retired() const { return retired; }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    bool RetirementPrepared() const { return Active() && retirementPrepared && !retained; }
+#endif
     bool Owns(const PioneerQ35ProjectionScratch& candidate) const { return Active() && scratch==&candidate; }
     PioneerQ35ProjectionScratch* Scratch() const { return Active()?scratch:nullptr; }
     PioneerQwen35::DataflowProjectionQualificationService* Qualification() const {
@@ -48,6 +54,20 @@ public:
     uint32_t* Snapshot() const { return Active()?snapshot:nullptr; }
     void Retain() { if (active && !retired) retained=true; }
 
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    // Prepare while the fleet remains held and the exact sticky bank claim
+    // and restored scratch are still owned. This does not free anything or
+    // authorize resuming hardware; a separate scope proof does that.
+    template<class Scope> bool PrepareRetirement(Scope& scope,const PioneerResidentBanks& banks,
+        const tt_dram_samples_result& dram) {
+        if (!Active() || retained || retirementPrepared || !scratch || !qualification
+            || !scratch->IsRestored() || !qualification->IsAudited()
+            || !scratch->MatchesBankClaimOwner(banks,dram)
+            || !scope.QualificationOwnerPrepareRetirementAllowed(*this,*scratch,*qualification)) return false;
+        retirementPrepared=true;return true;
+    }
+#endif
+
     // This permits session teardown only; the sticky claim and its owner
     // remain alive until the bank object itself is destroyed. The scope must
     // prove service close, drained transfers and exclusive session identity.
@@ -55,6 +75,9 @@ public:
         const tt_dram_samples_result& dram) {
         if (!Active() || retained || !scratch || !qualification || !scratch->IsRestored()
             || !qualification->IsAudited() || !scratch->MatchesBankClaimOwner(banks,dram)
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+            || !retirementPrepared
+#endif
             || !scope.QualificationOwnerRetirementAllowed(*this,*scratch,*qualification)) return false;
         retired=true;return true;
     }

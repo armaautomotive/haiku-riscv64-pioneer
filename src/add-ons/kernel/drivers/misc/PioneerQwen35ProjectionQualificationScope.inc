@@ -187,6 +187,14 @@ public:
         return &holder==&c.qwen35QualificationOwner && q.IsAudited() && scratch.IsRestored()
             && c.qwen35DataflowService && c.qwen35DataflowService->Closed() && TransferReady(&scratch);
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    // Held ownership and worker-zero scratch transfer continuity are not yet
+    // established by the real scope. A simulated proof cannot grant this.
+    bool QualificationOwnerPrepareRetirementAllowed(const PioneerQ35ProjectionQualificationOwner&,
+        const PioneerQ35ProjectionScratch&,const PioneerQwen35::DataflowProjectionQualificationService&) const {
+        return false;
+    }
+#endif
     bool QualificationOwnerAbandonAllowed(const PioneerQ35ProjectionQualificationOwner& holder) const {
         return &holder==&c.qwen35QualificationOwner && Identity() && c.qwen35QualificationInternalActive
             && !c.qwen35DataflowService && !c.banks.Q35StreamClaimed() && !c.Unsafe();
