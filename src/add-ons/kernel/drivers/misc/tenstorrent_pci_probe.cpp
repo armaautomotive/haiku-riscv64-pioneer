@@ -4846,11 +4846,44 @@ public:
 		return result;
 	}
 // PIONEER_Q35_PROJECTION_CLOSE_END
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+	template<class Scope>
+	bool PrepareDataflowQualificationRetirement(Scope& scope) {
+		if (qwen35QualificationInternalActive || !qwen35QualificationOwner.Active()
+			|| !qwen35DataflowService || !qwen35DataflowService->ScratchHeld()) return false;
+		QualificationInternalScope admission(qwen35QualificationInternalActive);
+		return qwen35QualificationOwner.PrepareRetirement(scope,banks,
+			baseline.baseline.baseline.baseline.dram);
+	}
+// PIONEER_Q35_PROJECTION_FINISH_BEGIN
+	template<class Scope>
+	PioneerQwen35::DataflowServiceResult FinishDataflowQualificationClose(Scope& scope) {
+		auto* scratch=qwen35QualificationOwner.Scratch();
+		if (qwen35QualificationInternalActive || qwen35QualificationOwner.Retained()
+			|| !scratch || !scratch->IsRestored() || !qwen35QualificationOwner.RetirementPrepared()
+			|| !qwen35DataflowService || !qwen35DataflowService->ScratchHeld())
+			return PioneerQwen35::DataflowServiceInvalidState;
+		PioneerQwen35::DataflowServiceResult result;
+		{
+			QualificationInternalScope admission(qwen35QualificationInternalActive);
+			result=qwen35DataflowService->FinishScratchClose(io,scratch,scope);
+			if (result==PioneerQwen35::DataflowServiceClosed) result=CloseDataflowRewrite();
+		}
+		// A denied proof has not attempted resume; any failure after the fleet
+		// leaves the held phase is uncertain and retains its resources.
+		if (result!=PioneerQwen35::DataflowServiceClosed
+			&& !(result==PioneerQwen35::DataflowServiceInvalidState && qwen35DataflowService->ScratchHeld()))
+			qwen35QualificationOwner.Retain();
+		return result;
+	}
+// PIONEER_Q35_PROJECTION_FINISH_END
 #endif
+#endif
+// PIONEER_Q35_DATAFLOW_CLOSE_BEGIN
 	PioneerQwen35::DataflowServiceResult CloseDataflowRewrite() {
 		if (!qwen35DataflowService) return PioneerQwen35::DataflowServiceInvalidState;
-		if (qwen35DataflowService->Closed()) return PioneerQwen35::DataflowServiceClosed;
-		const auto result=qwen35DataflowService->Close(io);
+		const auto result=qwen35DataflowService->Closed()?PioneerQwen35::DataflowServiceClosed
+			:qwen35DataflowService->Close(io);
 		if (qwen35DataflowService->Closed()) {
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 			if (!PioneerQ35DestroySharedRoleBinding(qwen35SharedRoleBinding)) {
@@ -4865,6 +4898,7 @@ public:
 		qwen35DataflowLastResult=result;
 		return result;
 	}
+// PIONEER_Q35_DATAFLOW_CLOSE_END
 	PioneerQwen35::DataflowServiceResult RecoverDataflowRewrite() {
 		if (!qwen35DataflowService) return PioneerQwen35::DataflowServiceInvalidState;
 		const auto result=qwen35DataflowService->RecoverProjection(io);

@@ -827,6 +827,11 @@ awk '/PIONEER_Q35_AUTO_RESTORE_SELECT_BEGIN/ {copying=1;next} /PIONEER_Q35_AUTO_
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     -I"$temporary" "$directory/pioneer_qwen35_auto_restore_install_test.cpp" -o "$temporary/auto-restore-install-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/auto-restore-install-test"
+awk '/PIONEER_Q35_DATAFLOW_CLOSE_BEGIN/ {copying=1;next} /PIONEER_Q35_DATAFLOW_CLOSE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_dataflow_close.inc"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -I"$temporary" "$directory/pioneer_qwen35_closed_service_cleanup_test.cpp" -o "$temporary/closed-service-cleanup-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/closed-service-cleanup-test"
 awk '/PIONEER_Q35_PROJECTION_OWNER_END_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_OWNER_END_GUARD_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_owner_end_guard.inc"
 awk '/PIONEER_Q35_PROJECTION_OWNER_UNSAFE_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_OWNER_UNSAFE_GUARD_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
@@ -853,6 +858,11 @@ awk '/PIONEER_Q35_PROJECTION_RUN_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_run.inc"
 awk '/PIONEER_Q35_PROJECTION_CLOSE_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_CLOSE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_close.inc"
+awk '/PIONEER_Q35_PROJECTION_FINISH_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_FINISH_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_finish.inc"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -I"$temporary" "$directory/pioneer_qwen35_projection_finish_context_test.cpp" -o "$temporary/projection-finish-context-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-finish-context-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     -I"$temporary" "$directory/pioneer_qwen35_projection_owner_end_guard_test.cpp" -o "$temporary/projection-owner-end-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-owner-end-test"

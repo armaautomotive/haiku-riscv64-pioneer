@@ -176,8 +176,8 @@ PioneerQ35ProjectionScratchCompileWitnessImpl(PioneerStoreContext& context,Scope
         return context.ObserveDataflowQualificationTransfer(scope,observation);
     }
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
-    if (action==15) return context.qwen35QualificationOwner.PrepareRetirement(scope,context.banks,
-        context.baseline.baseline.baseline.baseline.dram);
+    if (action==15) return context.PrepareDataflowQualificationRetirement(scope);
+    if (action==16) return context.FinishDataflowQualificationClose(scope)==PioneerQwen35::DataflowServiceClosed;
 #endif
     return false;
 }

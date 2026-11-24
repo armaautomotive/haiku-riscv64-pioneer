@@ -71,7 +71,8 @@ struct CombinedScope : ScratchScope {
     bool QualificationResumeAllowed(const void* p,const DataflowServiceOwner& s) const {
         return allowed && !retained && service==&s && s.ScratchHeld() && p==owner
             && holder && holder->RetirementPrepared() && holder->Scratch()==p
-            && holder->Scratch()->IsRestored();
+            && holder->Scratch()->IsRestored()
+            && holder->Scratch()->MatchesBankClaimOwner(device.banks,device.dram);
     }
     bool QualificationOwnerPrepareRetirementAllowed(const PioneerQ35ProjectionQualificationOwner& h,
         const PioneerQ35ProjectionScratch& s,const DataflowProjectionQualificationService& q) const {
@@ -100,6 +101,11 @@ struct QualificationContext {
 #include "pioneer_q35_projection_run.inc"
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 #include "pioneer_q35_projection_close.inc"
+    unsigned bindingCleanups=0;
+    DataflowServiceResult CloseDataflowRewrite() {
+        assert(qwen35DataflowService->Closed());++bindingCleanups;return DataflowServiceClosed;
+    }
+#include "pioneer_q35_projection_finish.inc"
 #endif
 };
 
@@ -159,7 +165,7 @@ int main()
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
     assert(context.CloseDataflowQualification(scope)==DataflowServiceScratchHeld
         && service->ScratchHeld() && !io->resumeCount);
-    assert(service->FinishScratchClose(*io,scratch,scope)==DataflowServiceInvalidState && !io->resumeCount);
+    assert(context.FinishDataflowQualificationClose(scope)==DataflowServiceInvalidState && !io->resumeCount);
     assert(!holder->PrepareRetirement(scope,device->banks,device->dram));
 #else
     assert(service->Close(*io)==DataflowServiceClosed);
@@ -178,10 +184,13 @@ int main()
     assert(!holder->PrepareRetirement(scope,device->banks,device->dram)
         && !holder->Retire(scope,device->banks,device->dram));
     scope.allowed=false;
-    assert(service->FinishScratchClose(*io,scratch,scope)==DataflowServiceInvalidState && !io->resumeCount);
+    assert(context.FinishDataflowQualificationClose(scope)==DataflowServiceInvalidState && !io->resumeCount
+        && !holder->Retained() && !context.bindingCleanups);
     scope.allowed=true;
-    assert(service->FinishScratchClose(*io,scratch,scope)==DataflowServiceClosed
-        && service->Closed() && io->resumeCount==1);
+    assert(context.FinishDataflowQualificationClose(scope)==DataflowServiceClosed
+        && service->Closed() && io->resumeCount==1 && context.bindingCleanups==1);
+    assert(context.FinishDataflowQualificationClose(scope)==DataflowServiceInvalidState
+        && io->resumeCount==1 && context.bindingCleanups==1);
 #endif
     assert(holder->Retire(scope,device->banks,device->dram) && holder->Retired() && !holder->Active()
         && device->banks.Q35StreamClaimed());
