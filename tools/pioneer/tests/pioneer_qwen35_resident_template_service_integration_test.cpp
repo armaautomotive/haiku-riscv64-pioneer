@@ -57,6 +57,7 @@ struct ResidentScope {
     bool ResidentTemplateAccessAllowed(ResidentServiceIO& io,unsigned c,bool) { return &io==&owner && io.CoreHeld(c); }
     void RetainResidentTemplates() { owner.RetainResidentTemplates(); }
 };
+#ifndef Q35_RESIDENT_FIXTURE_ONLY
 int main() {
     (void)&q35_service_fixture_main;(void)&q35_publisher_fixture_main;
     auto f=std::make_unique<Fixture>();auto plan=std::make_unique<DataflowStreamPlan>();
@@ -88,3 +89,4 @@ int main() {
     }
     puts("PASS resident templates installed and audited inside held service lifecycle; SIMULATED ONLY");
 }
+#endif

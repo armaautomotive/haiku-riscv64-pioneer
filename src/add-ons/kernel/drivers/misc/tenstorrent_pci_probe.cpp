@@ -4145,6 +4145,10 @@ template class PioneerPciRootLeaseScope<PioneerRootLeaseCompileQuarantine,pionee
 class PioneerQ35GraphOwner;
 static void PioneerQ35GraphOwnerDestroy(PioneerQ35GraphOwner* owner);
 static bool PioneerQ35GraphOwnerRetained(const PioneerQ35GraphOwner* owner);
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+static PioneerQwen35::DataflowServiceResult PioneerQ35GraphOwnerInstallResident(
+	PioneerStoreContext& context,const PioneerQwen35::DataflowServiceImageView& image);
+#endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 static bool PioneerQ35BeginRetainedFaultScope(PioneerStoreContext& context,const PioneerQ35GraphOwner* owner,const void* run);
 static bool PioneerQ35PromoteRetainedFaultScope(PioneerStoreContext& context);
@@ -4761,7 +4765,11 @@ private:
 				/sizeof(PioneerQwen35::DataflowServiceDispatchWords[0]))
 #endif
 		};
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+		const auto result=PioneerQ35GraphOwnerInstallResident(*this,image);
+#else
 		const auto result=qwen35DataflowService->Install(image,io);
+#endif
 // PIONEER_Q35_INSTALL_CLEANUP_BEGIN
 		if (!qwen35DataflowService->Started()) {
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS

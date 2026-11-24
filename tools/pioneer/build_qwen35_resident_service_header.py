@@ -47,7 +47,8 @@ def generate(directory: Path) -> str:
 
     return (
         '#pragma once\n'
-        '#if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || '
+        '#if !defined(PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS) || '
+        '!defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || '
         '!defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) || '
         '!defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) || '
         'defined(PIONEER_QWEN35_RECOVERY_QUALIFY) || '

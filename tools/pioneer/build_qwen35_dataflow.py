@@ -301,6 +301,43 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
             print(f'qwen35_graph_install_stack_envelope_bytes={install_bound}/18432 '
                   '(includes 2048-byte helper allowance; not a whole-program proof)')
 
+        if any('PioneerQ35GraphOwner::InstallResident(' in name for name, _, _ in entries):
+            # Bound the new ioctl -> resident setup branch separately from the
+            # recorder above. Sum even mutually exclusive staging, verification,
+            # mapping and fleet-audit frames; retain a helper allowance. This
+            # remains an envelope, not a whole-program proof.
+            resident_groups = [
+                ('context install', ('PioneerStoreContext::InstallDataflowServiceResources(',)),
+                ('resident owner', ('PioneerQ35GraphOwner::InstallResident(',)),
+                ('service install', ('DataflowServiceOwner::Install(', 'BeforeStart = PioneerQwen35::DataflowResidentTemplateSetup<PioneerQ35GraphOwner')),
+                ('template install', ('DataflowResidentTemplateInstaller::Install(', 'PioneerQ35GraphOwner::InstallResident')),
+                ('template verification', ('DataflowResidentTemplateInstaller::VerifyBeforeRelease(', 'PioneerQ35GraphOwner::InstallResident')),
+                ('template access', ('ResidentTemplateAccessAllowed(', 'PioneerQ35GraphOwner::InstallResident')),
+                ('owner identity', ('ResidentTemplateOwnerAllowed(', 'PioneerQ35GraphOwner::InstallResident')),
+                ('sealed stream', ('PioneerQ35StreamRecordingWitness::SealedMatches(',)),
+                ('graph descriptor build', ('DataflowGraphRunBuild(',)),
+                ('graph input validation', ('DataflowGraphRunInputsValid(',)),
+                ('template read', ('DataflowResidentTemplateSetup<Scope>::Adapter<IO>::ReadCoreMemory(', 'PioneerQ35GraphOwner::InstallResident')),
+                ('held fleet wrapper', ('PioneerSessionIO::SharedFleetHeldAndQuiescent(',)),
+                ('held fleet', ('PioneerQwen35SharedRoleBinding::FleetHeldAndQuiescent(',)),
+                ('role hold', ('PioneerQwen35RoleFleetPciIO<IO, Scope, Views>::AllRolesHeld(',)),
+                ('core hold', ('PioneerQwen35DataflowPciMemory<Raw>::CoreHeld(',)),
+                ('core map', ('PioneerQwen35DataflowPciMemory<Raw>::SelectMapped(',)),
+                ('PCI write', ('PioneerQwen35DataflowPciMemory<Raw>::WriteCoreMemoryInternal(',)),
+                ('PCI read', ('PioneerQwen35DataflowPciMemory<Raw>::ReadCoreMemory(',)),
+            ]
+            resident_total = sizes['control'] + 4096
+            for label, markers in resident_groups:
+                matches = [(frame, kind) for name, frame, kind in entries
+                           if all(marker in name for marker in markers)]
+                if not matches or any(kind != 'static' for _, kind in matches):
+                    raise RuntimeError('missing or unbounded resident install frame: ' + label)
+                resident_total += max(frame for frame, _ in matches)
+            if resident_total > 18432:
+                raise RuntimeError(f'resident install stack envelope is {resident_total} bytes')
+            print(f'qwen35_resident_install_stack_envelope_bytes={resident_total}/18432 '
+                  '(includes 4096-byte helper allowance; not a whole-program proof)')
+
     # The model transaction is a distinct non-loadable witness. Sum the
     # metadata decoder's measured call frames and conservative branches;
     # this still does not certify a future session/ioctl caller.

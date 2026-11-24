@@ -2274,6 +2274,9 @@ public:
 // This context-owned object is compiled only in the non-loadable graph
 // build. Record before service install, bind after install, and retain the
 // object until the service has been cleanly restored or a reset is proved.
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowResidentTemplateSetup.h"
+#endif
 class PioneerQ35GraphOwner {
 	PioneerStoreContext& context;
 	PioneerQ35StreamRecordingWitness stream;
@@ -2284,17 +2287,71 @@ class PioneerQ35GraphOwner {
 	bool recorded=false,bound=false,retiredAfterFault=false;
 public:
 	explicit PioneerQ35GraphOwner(PioneerStoreContext& c):context(c),stream(c) {}
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+	// The existing service owner retains its snapshots on every failed setup.
+	// The physical role scope still independently denies unqualified release.
+// PIONEER_Q35_RESIDENT_OWNER_INSTALL_BEGIN
+	PioneerQwen35::DataflowServiceResult InstallResident(const PioneerQwen35::DataflowServiceImageView& image) {
+		using namespace PioneerQwen35;
+		const auto* plan=stream.SealedPlan();
+		const auto* manifest=context.qwen35DataflowAuthority?context.qwen35DataflowAuthority->Manifest():nullptr;
+		DataflowDynamicTokenContext seed{};
+		if (!recorded || bound || context.qwen35GraphOwner!=this || !plan || !manifest
+			|| !context.qwen35DataflowService || !stream.SealedMatches(*plan,stream.SealedSlot())
+			|| !DataflowDynamicTokenContext::Build(*manifest,0,0,seed)) return DataflowServiceInvalidState;
+		struct Scope {
+			PioneerQ35GraphOwner& owner;
+			PioneerStoreContext& context;
+			const DataflowStreamPlan& plan;
+			const DataflowDynamicTokenContext& seed;
+			unsigned slot;
+			bool retained=false;
+			bool ResidentTemplateOwnerAllowed(PioneerSessionIO& io,const DataflowStreamPlan& requested,
+				const DataflowDynamicTokenContext& token,unsigned requestedSlot) const {
+				return !retained && &io==&context.io && &requested==&plan && requestedSlot==slot
+					&& DataflowDynamicTokenMatches(seed,token) && context.qwen35GraphOwner==&owner
+					&& context.qwen35DataflowService && context.qwen35DataflowService->SharedRoleCapturePending()
+					&& context.qwen35DataflowMemory && context.qwen35DataflowAuthority
+					&& io.qwen35DataflowContext==&context && !sColdRecoveryRequired && !sReloadQuiesced
+					&& sReloadGeneration && sRuntimeOwner && sRuntimeOwner->magic==0x50313030
+					&& sRuntimeOwner->context==&context && sBankStorageOnly && context.bankStorageOnly
+					&& context.bytes==PioneerResidentBanks::Total && context.initialized
+					&& owner.stream.SealedMatches(requested,slot);
+			}
+			bool ResidentTemplateFleetHeld(PioneerSessionIO& io) const {
+				return &io==&context.io && io.SharedFleetHeldAndQuiescent();
+			}
+			bool ResidentTemplateCoreHeld(PioneerSessionIO& io,unsigned core) const {
+				return &io==&context.io && core<DataflowCoreCount && io.CoreHeld(core);
+			}
+			bool ResidentTemplateAccessAllowed(PioneerSessionIO& io,unsigned core,bool) const {
+				return ResidentTemplateOwnerAllowed(io,plan,seed,slot) && ResidentTemplateCoreHeld(io,core);
+			}
+			void RetainResidentTemplates() { retained=true; }
+		} scope{*this,context,*plan,seed,stream.SealedSlot()};
+		DataflowResidentTemplateSetup<Scope> setup(*plan,context.qwen35DataflowRoutes,seed,
+			stream.SealedSlot(),DataflowGraphRunMaxPolls,scope);
+		return context.qwen35DataflowService->Install(image,context.io,setup);
+	}
+// PIONEER_Q35_RESIDENT_OWNER_INSTALL_END
+#endif
 	bool Record(unsigned slot,unsigned& stage) {
 		if (recorded || bound || context.qwen35DataflowService) return false;
 		recorded=stream.Build(1,0,0,slot,true,stage);return recorded;
 	}
 	bool Bind() {
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+		// The per-core graph session sends the old host-driven protocol. The
+		// resident command/ack owner must replace it before this path can run.
+		return false;
+#else
 		const auto* plan=stream.SealedPlan();
 		if (!recorded || bound || !plan || !context.qwen35DataflowService) return false;
 		PioneerQ35GraphBackend backend(context,stream);
 		bound=session.Bind(*plan,context.qwen35DataflowRoutes,stream.SealedSlot(),
 			context.qwen35DataflowAuthority,*context.qwen35DataflowService,backend);
 		return bound;
+#endif
 	}
 	bool ReadyForSlot(unsigned slot) const { return bound && !Retained() && stream.SealedSlot()==slot; }
 	PioneerQwen35::DataflowGraphSessionResult Run(unsigned position,unsigned token,bool decode,unsigned polls,
@@ -2369,6 +2426,16 @@ public:
 	}
 #endif
 };
+
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+static PioneerQwen35::DataflowServiceResult
+PioneerQ35GraphOwnerInstallResident(PioneerStoreContext& context,
+	const PioneerQwen35::DataflowServiceImageView& image)
+{
+	return context.qwen35GraphOwner?context.qwen35GraphOwner->InstallResident(image)
+		:PioneerQwen35::DataflowServiceInvalidState;
+}
+#endif
 
 static void
 PioneerQ35GraphOwnerDestroy(PioneerQ35GraphOwner* owner)

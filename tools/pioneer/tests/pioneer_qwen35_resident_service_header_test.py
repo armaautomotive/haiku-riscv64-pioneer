@@ -67,7 +67,7 @@ with tempfile.TemporaryDirectory() as temporary:
     source = image / 'guard-test.cpp'
     source.write_text('#include "resident.h"\n', encoding='ascii')
     command = [os.environ.get('CXX', 'c++'), '-std=c++17', '-fsyntax-only', str(source)]
-    required = ['PIONEER_QWEN35_RECOVERY_COMPILE_ONLY',
+    required = ['PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS', 'PIONEER_QWEN35_RECOVERY_COMPILE_ONLY',
                 'PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS',
                 'PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS']
     def compiles(defines):
