@@ -240,8 +240,20 @@ public:
             && scratch->MatchesBankClaimOwner(c.banks,c.baseline.baseline.baseline.baseline.dram)
             && PioneerQ35SharedRoleProjectionRestored(c.qwen35SharedRoleBinding) && HeldAndQuiet();
     }
-    // Scratch-retirement and resume proofs are not yet established.
-    bool QualificationResumeAllowed(const void*,const PioneerQwen35::DataflowServiceOwner&) const { return false; }
+    // Preparation is recorded while held; resume separately rechecks the
+    // same bank owner, complete role ledger and live transfer/fleet proof.
+    // The real borrowed fleet proof still denies this transition.
+// PIONEER_Q35_SCOPE_RESUME_BEGIN
+    bool QualificationResumeAllowed(const void* p,const PioneerQwen35::DataflowServiceOwner& service) const {
+        auto* scratch=c.qwen35QualificationOwner.Scratch();
+        auto* qualification=c.qwen35QualificationOwner.Qualification();
+        return scratch && p==scratch && &service==c.qwen35DataflowService && service.ScratchHeld()
+            && c.qwen35QualificationOwner.RetirementPrepared() && scratch->IsRestored()
+            && qualification && qualification->IsAudited()
+            && scratch->MatchesBankClaimOwner(c.banks,c.baseline.baseline.baseline.baseline.dram)
+            && PioneerQ35SharedRoleProjectionRestored(c.qwen35SharedRoleBinding) && TransferReady(p);
+    }
+// PIONEER_Q35_SCOPE_RESUME_END
 #endif
     bool ScratchStopped(const void* p) const {
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
@@ -256,12 +268,17 @@ public:
             && c.qwen35DataflowService && c.qwen35DataflowService->Closed() && TransferReady(&scratch);
     }
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
-    // Held ownership and worker-zero scratch transfer continuity are not yet
-    // established by the real scope. A simulated proof cannot grant this.
-    bool QualificationOwnerPrepareRetirementAllowed(const PioneerQ35ProjectionQualificationOwner&,
-        const PioneerQ35ProjectionScratch&,const PioneerQwen35::DataflowProjectionQualificationService&) const {
-        return false;
+    // A retired bank claim is prepared only while this exact restored scratch
+    // and role ledger are still held, with a fresh transfer/fleet check.
+// PIONEER_Q35_SCOPE_PREPARE_BEGIN
+    bool QualificationOwnerPrepareRetirementAllowed(const PioneerQ35ProjectionQualificationOwner& holder,
+        const PioneerQ35ProjectionScratch& scratch,const PioneerQwen35::DataflowProjectionQualificationService& q) const {
+        return &holder==&c.qwen35QualificationOwner && holder.Owns(scratch) && scratch.IsRestored()
+            && q.IsAudited() && c.qwen35DataflowService && c.qwen35DataflowService->ScratchHeld()
+            && scratch.MatchesBankClaimOwner(c.banks,c.baseline.baseline.baseline.baseline.dram)
+            && PioneerQ35SharedRoleProjectionRestored(c.qwen35SharedRoleBinding) && TransferReady(&scratch);
     }
+// PIONEER_Q35_SCOPE_PREPARE_END
 #endif
     bool QualificationOwnerAbandonAllowed(const PioneerQ35ProjectionQualificationOwner& holder) const {
         return &holder==&c.qwen35QualificationOwner && Identity() && c.qwen35QualificationInternalActive
