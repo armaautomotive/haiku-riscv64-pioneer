@@ -151,6 +151,7 @@ class DataflowServiceOwner {
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
 	const void* fScratchCloseOwner=nullptr;
 	bool fScratchResumeAttempted=false;
+	bool fSnapshotCleanStopPending=false;
 #endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 	bool fSharedAttempted=false;
@@ -328,6 +329,11 @@ public:
 	bool Closed() const { return fPhase==PhaseClosed; }
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
 	bool ScratchHeld() const { return fPhase==PhaseScratchHeld && fScratchCloseOwner; }
+	// Lifecycle metadata only. The physical scope independently checks the
+	// owned images, running roles, NoCs and route before a stop write.
+	bool SharedSnapshotCleanStopPending() const {
+		return fSnapshotCleanStopPending && fPhase==PhaseFaulted;
+	}
 #endif
 	bool Started() const { return fPhase!=PhaseEmpty; }
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
@@ -783,6 +789,11 @@ public:
 		// Remember only a clean ready-to-close transition. A retry after a
 		// partial stop retains this marker; failed startup/graph does not.
 		if (fPhase==PhaseReady) fDedicatedCleanStopPending=fSharedAttempted;
+#endif
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+		// Preserve the origin of a clean close across a partial stop. A
+		// failed install or graph close must not inherit this admission.
+		if (fPhase==PhaseReady) fSnapshotCleanStopPending=fSharedAttempted;
 #endif
 		fPhase=PhaseFaulted;
 		if (!fCloseRestored) {

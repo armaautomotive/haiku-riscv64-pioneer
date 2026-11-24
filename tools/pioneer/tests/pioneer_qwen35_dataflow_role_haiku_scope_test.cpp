@@ -60,6 +60,7 @@ struct FakeService {
     bool SharedRoleCapturePending() const { return capturePending; }
     bool GraphRunning() const { return graphRunning; }
     bool SharedDedicatedCleanStopPending() const { return cleanStopPending; }
+    bool SharedSnapshotCleanStopPending() const { return cleanStopPending; }
 };
 struct FakeGraph { bool retained=false; const void* run=nullptr; bool closePermitted=false; unsigned ackCore=UINT32_MAX; };
 struct PioneerSessionIO {
@@ -760,6 +761,13 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
             assert(!scope.ProveRoleMemoryWriteSafe(context->io,0,DataflowRolePhysicalBriscRam,0,4)
                 && !scope.ProveRoleMemoryWriteSafe(context->io,0,DataflowRolePhysicalNcriscRam,0,4));
             assert(!scope.ProveRoleControlWriteSafe(context->io,0,0,0x3c0));
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+            context->qwen35DataflowService->cleanStopPending=true;
+            context->io.firmwareMatches=true;
+            assert(!scope.CanObserveSnapshotCleanStop(context->io,0)
+                && !scope.ProveRoleStopSafe(context->io,0,false)); // runtime proof is still denied
+            context->qwen35DataflowService->cleanStopPending=false;
+#endif
             assert(!scope.ProveRoleStackCancelSafe(context->io,0));
             assert(!scope.ProveRoleStackCancelledSafe(context->io,0));
             assert(!scope.ProveRoleStackReleaseWriteDrained(context->io,0));

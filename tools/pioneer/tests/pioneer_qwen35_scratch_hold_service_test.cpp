@@ -29,6 +29,15 @@ struct ScratchHoldScope {
     }
 };
 
+struct SnapshotStopIO : MockDataflowIO {
+    DataflowServiceOwner* owner=nullptr;
+    bool observedCleanStop=false;
+    bool SharedStopAndHoldAll(unsigned& stage,unsigned& core) {
+        observedCleanStop=owner && owner->SharedSnapshotCleanStopPending();
+        return MockDataflowIO::SharedStopAndHoldAll(stage,core);
+    }
+};
+
 int main()
 {
     uint32_t code[96]{},dispatch[80]{};
@@ -37,8 +46,9 @@ int main()
     const DataflowServiceImageView image={DataflowServiceBootWord,code,96,dispatch,80};
     int scratch=0,other=0;
     for (unsigned scenario=0;scenario<6;scenario++) {
-        auto io=std::make_unique<MockDataflowIO>();
+        auto io=std::make_unique<SnapshotStopIO>();
         auto service=std::make_unique<DataflowServiceOwner>();
+        io->owner=service.get();
         ScratchHoldScope scope{&scratch,false,false};
         assert(service->Install(image,*io)==DataflowServiceComplete && service->Ready());
         assert(service->CloseForScratch(*io,&scratch,scope)==DataflowServiceInvalidState
@@ -49,8 +59,10 @@ int main()
         if (scenario==4) scope.heldAllowed=false;
         if (scenario==5) scope.heldRouteAllowed=false;
         const auto held=service->CloseForScratch(*io,&scratch,scope);
+        assert(io->observedCleanStop);
         if (scenario==1) {
             assert(held==DataflowServiceStopAuditFailed && service->Faulted()
+                && service->SharedSnapshotCleanStopPending()
                 && !io->resumeCount && service->Close(*io)==DataflowServiceInvalidState
                 && service->CloseForScratch(*io,&scratch,scope)==DataflowServiceInvalidState);
             continue;
@@ -74,6 +86,7 @@ int main()
         }
         assert(scope.heldRoutes==1 && scope.route==0);
         assert(held==DataflowServiceScratchHeld && service->ScratchHeld() && !service->Closed()
+            && !service->SharedSnapshotCleanStopPending()
             && io->roleStops==1 && io->roleRestores==1 && !io->resumeCount);
         for (unsigned core=0;core<DataflowCoreCount;core++) assert(io->captured[core] && !io->released[core]);
         assert(service->Close(*io)==DataflowServiceInvalidState
@@ -93,6 +106,25 @@ int main()
                 && io->resumeCount==1);
             for (unsigned core=0;core<DataflowCoreCount;core++) assert(!io->captured[core] && io->released[core]);
         }
+    }
+    {
+        auto io=std::make_unique<SnapshotStopIO>();
+        auto service=std::make_unique<DataflowServiceOwner>();io->owner=service.get();
+        assert(service->Install(image,*io)==DataflowServiceComplete && !service->SharedSnapshotCleanStopPending());
+        io->failStopAudit=true;
+        assert(service->Close(*io)==DataflowServiceStopAuditFailed && io->observedCleanStop
+            && service->SharedSnapshotCleanStopPending());
+        io->failStopAudit=false;io->observedCleanStop=false;
+        assert(service->Close(*io)==DataflowServiceClosed && io->observedCleanStop
+            && !service->SharedSnapshotCleanStopPending());
+    }
+    {
+        auto io=std::make_unique<SnapshotStopIO>();
+        auto service=std::make_unique<DataflowServiceOwner>();io->owner=service.get();
+        io->failStartCore=37;
+        assert(service->Install(image,*io)==DataflowServiceStartFailed && service->Faulted());
+        assert(!service->SharedSnapshotCleanStopPending());
+        assert(service->Close(*io)==DataflowServiceClosed && !io->observedCleanStop);
     }
     std::puts("PASS scratch-held close blocks resume until owner proof and retains uncertain failures; SIMULATED ONLY");
 }

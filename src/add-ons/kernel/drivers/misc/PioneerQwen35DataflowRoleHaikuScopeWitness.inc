@@ -325,8 +325,23 @@ public:
         (void)io;(void)core;return false;
 #endif
     }
+    // The snapshot service records that Close began from Ready before it
+    // changes phase to Faulted. That marker is not a hardware proof: the
+    // separate runtime proof remains mandatory and currently denies access.
+    bool CanObserveSnapshotCleanStop(PioneerSessionIO& io,unsigned core) const {
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+        auto* service=fContext?fContext->qwen35DataflowService:NULL;
+        return core<PioneerQwen35::DataflowBarrierWorkers && service
+            && service->SharedSnapshotCleanStopPending() && ProveExclusiveRewrite(io)
+            && !PioneerQ35GraphOwnerRetained(fContext->qwen35GraphOwner)
+            && !RetainedFaultAuditActive(io) && io.SharedRoleFirmwareMatches()
+            && ProveRoleRuntimeSafe(io,core);
+#else
+        (void)io;(void)core;return false;
+#endif
+    }
     bool ProveRoleStopSafe(PioneerSessionIO& io,unsigned core,bool fault) const {
-        return !fault && CanObserveDedicatedCleanStop(io,core);
+        return !fault && (CanObserveDedicatedCleanStop(io,core) || CanObserveSnapshotCleanStop(io,core));
     }
     bool ProveRolePostStopSafe(PioneerSessionIO& io,unsigned core) const {
         return CanObserveDedicatedCleanStop(io,core);
