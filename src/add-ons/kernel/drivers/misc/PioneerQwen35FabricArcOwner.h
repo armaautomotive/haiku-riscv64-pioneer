@@ -26,6 +26,8 @@ private:
     uint32 fResetWrites=0;
     uint32 fTileWrites[4]={};
     unsigned fFailedTile=120;
+    uint32 fFinalDescriptorAddress=0,fFinalQueueBase=0;
+    uint32 fFinalDescriptor[4]={},fFinalQueueHeader[8]={};
 
     template<class Scope> bool Allowed(Guard* guard,Scope& scope) const {
         return guard && guard->validate && fTicket && guard->validate(fTicket)==B_OK
@@ -178,6 +180,18 @@ public:
         if (fPhase==Fresh) fClockBaseline=true;
         else if (fPhase==ClockForced) fClockForced=true;
         else {
+            if (result.version!=1 || result.state!=TT_ARC_QUERY_PASSED || !result.submitted
+                || !result.responded || !result.acknowledged || !result.request_restored
+                || !result.tlb_restored || result.recovery_required || result.status
+                || !BlackholeArcQueueRange(arc.message_queue,16)
+                || !BlackholeArcQueueRange(result.base,288) || result.descriptor[0]!=result.base
+                || fMapping.queueBase!=result.base || !BlackholeArcQueueHeaderValid(result.after)
+                || result.after[0]!=result.after[4] || result.after[1]!=result.after[5]) {
+                fPhase=Failed;return false;
+            }
+            fFinalDescriptorAddress=arc.message_queue;fFinalQueueBase=result.base;
+            for (unsigned i=0;i<4;i++) fFinalDescriptor[i]=result.descriptor[i];
+            for (unsigned i=0;i<8;i++) fFinalQueueHeader[i]=result.after[i];
             // Any pre-existing audits predate the completed reset sequence.
             // Fresh fleet and DMA audits are required before retirement.
             fMapping.fleetAudited=false;fMapping.dmaAudited=false;
@@ -320,7 +334,7 @@ public:
 
     // The surrounding locked recovery transaction must run fresh fleet and
     // host-DMA audits after the last clock check. Its scope must separately
-    // prove ARC queue completion, writer exclusion, ticket ownership and the
+    // prove writer exclusion, ticket ownership and the
     // post-reset identities throughout retirement. No hardware is accessed
     // after an uncertain deletion or lost proof; the remaining mappings and
     // the original owner are retained for recovery, never retried here.
@@ -328,6 +342,8 @@ public:
         if (!fOpen || fRetirementAttempted || fPhase!=ClockReleased || !fClockRestored
             || !fMapping.queueUnsafe || !fMapping.fleetAudited || !fMapping.dmaAudited
             || !fMapping.savedValid || fMapping.selected>=PIONEER_POST_RESET_CORES
+            || !BlackholeArcQueueRange(fFinalDescriptorAddress,16)
+            || !BlackholeArcQueueRange(fFinalQueueBase,288) || fMapping.queueBase!=fFinalQueueBase
             || !fResetView || !fTileView || !fMapping.queueView || !fMapping.queueMsi
             || fResetArea<B_OK || fTileArea<B_OK || fMapping.queueArea<B_OK || fMapping.queueMsiArea<B_OK
             || !Allowed(guard,scope) || !scope.FabricRetirementAllowed(*this,fMapping,fTicket)) return false;
@@ -346,6 +362,41 @@ public:
                 PioneerWorkerX(core),PioneerWorkerY(core),true,word);
             if (fMapping.TlbRead(word)!=expected || !access() || fMapping.TlbRead(word)!=expected)
                 return fail();
+        }
+        if (!access()) return fail();
+        // Reopen only the ARC CSM route and confirm the final acknowledged
+        // clock-query receipt still describes an empty, unchanged queue.
+        // A route or queue mismatch is uncertain and is never retried.
+        uint32 workerRoute[3]{};
+        for (unsigned word=0;word<3;word++) {
+            workerRoute[word]=BlackholeDramFixedTlbWord(0xffa00000U,
+                PioneerWorkerX(core),PioneerWorkerY(core),true,word);
+            if (!access()) return fail();
+            fMapping.TlbWrite(word,BlackholeArcQueueTlbWord(false,word));
+            if (!access() || fMapping.TlbRead(word)!=BlackholeArcQueueTlbWord(false,word)) return fail();
+        }
+        auto csmRoute=[&]() {
+            if (!access()) return false;
+            for (unsigned word=0;word<3;word++)
+                if (fMapping.TlbRead(word)!=BlackholeArcQueueTlbWord(false,word)) return false;
+            return access();
+        };
+        for (unsigned pass=0;pass<2;pass++) {
+            for (unsigned word=0;word<4;word++) {
+                if (!csmRoute() || PioneerRead32(fMapping.queueView
+                        +(fFinalDescriptorAddress-0x10000000U)/4+word)!=fFinalDescriptor[word]) return fail();
+            }
+            for (unsigned word=0;word<8;word++) {
+                if (!csmRoute() || PioneerRead32(fMapping.queueView
+                        +(fFinalQueueBase-0x10000000U)/4+word)!=fFinalQueueHeader[word]) return fail();
+            }
+            if (!csmRoute() || (pass==0 && snooze(500)!=B_OK)) return fail();
+        }
+        for (unsigned word=0;word<3;word++) {
+            if (word==0 && !csmRoute()) return fail();
+            if (!access()) return fail();
+            fMapping.TlbWrite(word,workerRoute[word]);
+            if (!access() || fMapping.TlbRead(word)!=workerRoute[word]) return fail();
         }
         if (!access()) return fail();
         area_id* areas[]={&fTileArea,&fResetArea,&fMapping.queueMsiArea,&fMapping.queueArea};

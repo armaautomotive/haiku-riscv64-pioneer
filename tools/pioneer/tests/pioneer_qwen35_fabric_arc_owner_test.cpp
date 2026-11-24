@@ -33,6 +33,8 @@ static unsigned SelectedCore() {
 static unsigned mapCount=0;static int failMap=-1;
 static unsigned deleteCount=0;static int failDelete=-1,loseTicketOnDelete=-1;
 static bool ticketValid=true;
+static unsigned retirementCsmReads=0;
+static int changeQueueOnRead=-1,loseTicketOnRead=-1;
 static area_id deletedAreas[4]{};
 static int delete_area(area_id area) {
     const unsigned n=deleteCount++;
@@ -53,8 +55,15 @@ static int map_physical_memory(const char*,uint64 address,size_t size,int,uint32
 }
 static uint32 PioneerRead32(const volatile uint32* p) {
     const uintptr_t a=(uintptr_t)p,b=(uintptr_t)device->csm.data();
-    if (a>=b && a<b+TT_ARC_QUEUE_CSM_BYTES)
-        return device->CsmRead(0x10000000+uint32(a-b));
+    if (a>=b && a<b+TT_ARC_QUEUE_CSM_BYTES) {
+        const uint32 value=device->CsmRead(0x10000000+uint32(a-b));
+        if (changeQueueOnRead>=0 || loseTicketOnRead>=0) {
+            const unsigned n=++retirementCsmReads;
+            if (int(n)==changeQueueOnRead) device->At(device->base+24)^=1;
+            if (int(n)==loseTicketOnRead) ticketValid=false;
+        }
+        return value;
+    }
     const uintptr_t rb=(uintptr_t)resetPage;
     if (a>=rb && a<rb+sizeof(resetPage)) { device->Check(true);device->io++;return *p; }
     const uintptr_t nb=(uintptr_t)nocPage;
@@ -164,6 +173,17 @@ static bool ForceClock(Owner& owner,Guard& guard,Scope& scope,const tt_arc_scrat
     return owner.CheckClock(&guard,scope,arc,result) && owner.SendNext(&guard,scope,arc,result)
         && owner.CheckClock(&guard,scope,arc,result);
 }
+static void PrepareRetirement(Owner& owner,Guard& guard,Scope& scope,PioneerPostResetMapping& mapping,
+    FabricQueue& queue,const tt_arc_scratch_result& arc,tt_arc_queue_result& result) {
+    assert(owner.Open(&guard,scope) && ForceClock(owner,guard,scope,arc,result)
+        && owner.SetRiscReset(&guard,scope,true) && owner.SendNext(&guard,scope,arc,result)
+        && owner.SendNext(&guard,scope,arc,result) && owner.HoldAllTiles(&guard,scope)
+        && owner.SetRiscReset(&guard,scope,false) && owner.SendNext(&guard,scope,arc,result)
+        && owner.CheckClock(&guard,scope,arc,result));
+    mapping.fleetAudited=mapping.dmaAudited=true;mapping.selected=119;
+    for (unsigned w=0;w<3;w++) queue.tlb[w]=BlackholeDramFixedTlbWord(0xffa00000U,
+        PioneerWorkerX(119),PioneerWorkerY(119),true,w);
+}
 static void ResetUnit() {
     memset(resetPage,0,sizeof(resetPage));resetPage[0x408/4]=5;
     for (unsigned i=0;i<8;i++) resetPage[0x40/4+i]=UINT32_MAX;
@@ -221,9 +241,13 @@ int main() {
         && mapping.sourceReads==sourceBefore);scope.retireAllowed=true;
     ticketValid=false;assert(!owner.Retire(&guard,scope) && !deleteCount
         && mapping.sourceReads==sourceBefore);ticketValid=true;
+    const unsigned queueWritesBefore=fake.writes,notificationsBefore=fake.notifications;
     assert(owner.Retire(&guard,scope) && owner.CurrentPhase()==Owner::Retired && !owner.Opened()
         && !mapping.queueUnsafe && deleteCount==4 && deletedAreas[0]==3 && deletedAreas[1]==2
         && deletedAreas[2]==1 && deletedAreas[3]==0 && !mapping.queueView && !mapping.queueMsi);
+    assert(fake.writes==queueWritesBefore && fake.notifications==notificationsBefore);
+    for (unsigned w=0;w<3;w++) assert(fake.tlb[w]==BlackholeDramFixedTlbWord(0xffa00000U,
+        PioneerWorkerX(119),PioneerWorkerY(119),true,w));
     assert(!owner.Retire(&guard,scope) && deleteCount==4);
     for (int failure=0;failure<2;failure++) {
         FabricQueue partial(0,0,0);device=&partial;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};
@@ -274,6 +298,37 @@ int main() {
         assert(!o.Retire(&guard,s) && deleteCount==unsigned(failure+1) && partial.io==before);
     }
     loseTicketOnDelete=-1;
+    // A changed descriptor, queue header, or a change between two samples
+    // must retain the mappings without replaying any part of retirement.
+    for (int fault=0;fault<3;fault++) {
+        FabricQueue partial(0,0,0);device=&partial;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};
+        mapCount=deleteCount=0;ResetUnit();PrepareRetirement(o,guard,s,m,partial,arc,result);
+        retirementCsmReads=0;
+        if (fault==0) partial.At(arc.message_queue+4)^=1;
+        else if (fault==1) partial.At(partial.base+24)^=1;
+        else changeQueueOnRead=12;
+        assert(!o.Retire(&guard,s) && o.CurrentPhase()==Owner::Failed && m.queueUnsafe && !deleteCount);
+        const unsigned before=partial.io;assert(!o.Retire(&guard,s) && partial.io==before && !deleteCount);
+        changeQueueOnRead=-1;
+    }
+    for (int lost:{1,12,13,24}) {
+        FabricQueue partial(0,0,0);device=&partial;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};
+        mapCount=deleteCount=0;ResetUnit();PrepareRetirement(o,guard,s,m,partial,arc,result);
+        retirementCsmReads=0;loseTicketOnRead=lost;
+        assert(!o.Retire(&guard,s) && o.CurrentPhase()==Owner::Failed && m.queueUnsafe && !deleteCount);
+        ticketValid=true;loseTicketOnRead=-1;
+        const unsigned before=partial.io;assert(!o.Retire(&guard,s) && partial.io==before && !deleteCount);
+    }
+    for (unsigned drop=1;drop<=6;drop++) {
+        FabricQueue partial(0,0,0);device=&partial;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};
+        mapCount=deleteCount=0;ResetUnit();PrepareRetirement(o,guard,s,m,partial,arc,result);
+        partial.dropTlb=partial.tlbWrites+drop;
+        const bool retired=o.Retire(&guard,s);
+        if (partial.effectiveDroppedTlb) {
+            assert(!retired && o.CurrentPhase()==Owner::Failed && m.queueUnsafe && !deleteCount);
+            const unsigned before=partial.io;assert(!o.Retire(&guard,s) && partial.io==before && !deleteCount);
+        } else assert(retired && o.CurrentPhase()==Owner::Retired && !m.queueUnsafe && deleteCount==4);
+    }
     // Partial mapping and uncertain command outcomes cannot be replayed or unmapped.
     for (int failed=0;failed<4;failed++) {
         FabricQueue partial(0,0,0);device=&partial;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};
