@@ -8,9 +8,12 @@
 // A native caller MUST retain its context/cookie/PCI/ALL mappings and host
 // leases, and latch cold recovery. This object alone cannot do that.
 // RecoveryTest is a separate, opt-in kernel-channel firmware liveness check.
-// It does not submit reset commands or authorize a reset by itself.
-template<class IO,bool RecoveryState0=false,bool RecoveryTest=false> class PioneerQ38ArcQueue {
-	static_assert(!(RecoveryState0 && RecoveryTest),"ARC recovery queue modes are exclusive");
+// Q35FabricRecovery permits only the four fixed message/argument pairs used
+// by the Q35 fabric recovery controller. The queue does not enforce their
+// sequence, prove exclusive fabric ownership, or authorize a reset itself.
+template<class IO,bool RecoveryState0=false,bool RecoveryTest=false,bool Q35FabricRecovery=false> class PioneerQ38ArcQueue {
+	static_assert(unsigned(RecoveryState0)+unsigned(RecoveryTest)+unsigned(Q35FabricRecovery)<=1,
+		"ARC recovery queue modes are exclusive");
 	IO& io;
 	bool unsafe=false;
 	bool Fault(tt_arc_queue_result& r) { unsafe=true; r.recovery_required=1; return false; }
@@ -28,11 +31,13 @@ public:
 	bool Unsafe() const { return unsafe; }
 	void Quarantine() { unsafe=true; } // MEMORY ONLY after external uncertainty
 	bool Message(const tt_arc_scratch_result& arc,const tt_arc_telemetry_result& health,
-		tt_arc_queue_result& r,uint32_t message) {
+		tt_arc_queue_result& r,uint32_t message,uint32_t argument=0) {
 		if (unsafe) return false; // even the result stays unchanged after fault
 		r={}; r.version=1; r.request_restored=r.tlb_restored=1;
-		if ((RecoveryState0 ? message!=0xa0 : RecoveryTest ? message!=0x90
-				: (message!=0x34 && message!=0x52 && message!=0x54))
+		if ((RecoveryState0 ? message!=0xa0 || argument : RecoveryTest ? message!=0x90 || argument
+				: Q35FabricRecovery ? !((message==0x33 && (argument==0 || argument==250))
+					|| ((message==0x20 || message==0xaf) && !argument))
+				: (argument || (message!=0x34 && message!=0x52 && message!=0x54)))
 			|| arc.version!=1 || arc.state!=TT_ARC_SCRATCH_READY || arc.tlb_restored!=1
 			|| health.version!=1 || health.state!=TT_ARC_TELEMETRY_OK || health.tlb_restored!=1
 			|| (health.present_mask&0x3c1)!=0x3c1 || health.values[0]!=0x12050001
@@ -63,7 +68,7 @@ public:
 		for (unsigned w=0;w<4;w++) if (io.CsmRead(arc.message_queue+w*4)!=r.descriptor[w]) return Fault(r);
 		// Queue 0 is the kernel firmware channel; existing private clock
 		// operations remain on application queue 3.
-		r.base=allBase+((RecoveryState0 || RecoveryTest)?0:3)*288; r.state=TT_ARC_QUERY_BUSY;
+		r.base=allBase+((RecoveryState0 || RecoveryTest || Q35FabricRecovery)?0:3)*288; r.state=TT_ARC_QUERY_BUSY;
 		uint32_t current[8]; BlackholeArcQueueHeader(io,r.base,r.before);
 		io.Pause(); BlackholeArcQueueHeader(io,r.base,current);
 		if (!BlackholeArcQueueHeaderValid(r.before) || !BlackholeArcQueueSame(current,r.before)
@@ -80,7 +85,7 @@ public:
 		if (!BlackholeArcQueueSame(current,r.before)) return Fault(r);
 		r.state=TT_ARC_QUERY_STAGE_FAILED; r.request_restored=0;
 		for (unsigned w=0;w<8;w++) {
-			const uint32_t value=w?0:message;
+			const uint32_t value=w==0?message:w==1?argument:0;
 			io.QueueWrite(r.request_address+w*4,value);
 			if (io.CsmRead(r.request_address+w*4)!=value) return Fault(r);
 		}
