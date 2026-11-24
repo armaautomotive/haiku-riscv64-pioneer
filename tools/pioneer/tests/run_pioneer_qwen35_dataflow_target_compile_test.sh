@@ -1208,6 +1208,8 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-dispatch-test"
 python3 -B "$directory/pioneer_qwen35_resident_service_header_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_graph_owner_test.py"
+python3 -B "$directory/pioneer_qwen35_resident_model_transaction_test.py"
+python3 -B "$directory/pioneer_qwen35_resident_graph_session_test.py"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE \
 	"$directory/pioneer_qwen35_resident_dispatch_test.cpp" -o "$temporary/resident-dispatch-paired-test"
@@ -1380,6 +1382,12 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/shared-exported-images-recovery-test"
 echo 'PASS exported reader/writer images staged and restored on all 120 simulated tiles; NO HARDWARE'
 shared_owner_flags='-std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -ffreestanding -fstack-usage -mcmodel=medany -fpic -D_KERNEL_MODE -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS'
+for probe in model session; do
+	"$cxx" $shared_owner_flags -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_PAIRED_RECURRENCE \
+		-I"$sdk/headers" -I"$sdk/headers/os" -I"$sdk/headers/os/support" -idirafter "$sdk/headers/posix" \
+		-c "$directory/pioneer_qwen35_resident_${probe}_target_probe.cpp" -o "$temporary/resident-${probe}-target.o"
+done
+echo 'PASS resident session and model host transport Haiku SDK compile; NO LIVE DRIVER BINDING'
 if "$cxx" $shared_owner_flags -I"$sdk/headers" -I"$sdk/headers/os" -I"$sdk/headers/os/support" -idirafter "$sdk/headers/posix" \
 	-c "$directory/pioneer_qwen35_dataflow_shared_service_kernel_probe.cpp" \
 	-o "$temporary/invalid-shared-service-kernel.o" >"$temporary/invalid-shared-service-kernel.log" 2>&1; then
