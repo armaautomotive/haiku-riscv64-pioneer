@@ -126,7 +126,8 @@ static void PioneerWrite32(volatile uint32* p,uint32 value) {
     }
     assert(p==msiPage && value==0);device->NotifyArc();
 }
-static int snooze(int) { device->Pause();return B_OK; }
+static bool failSnooze=false;
+static int snooze(int) { if (failSnooze) return -1;device->Pause();return B_OK; }
 struct Profile { uint64 bar0_host_start=0x100000000ULL; };
 struct PioneerPostResetAuditResult {};
 struct PioneerQ35PostResetL2Result {};
@@ -148,6 +149,8 @@ struct PioneerPostResetMapping {
     bool pciReady=true;unsigned sourceReads=0;
     bool PciReady() const { return pciReady; }
     bool SourceStable() { ++sourceReads;return pciReady; }
+    template<class Check> bool PciReadyQ35(Check& check) { return check() && PciReady() && check(); }
+    template<class Check> bool SourceStableQ35(Check& check) { return check() && SourceStable() && check(); }
     uint32 TlbRead(unsigned w) { return device->TlbRead(w); }
     void TlbWrite(unsigned w,uint32 value) { device->TlbWrite(w,value); }
     bool Audit(PioneerPostResetAuditResult&) {
@@ -156,8 +159,17 @@ struct PioneerPostResetMapping {
             PioneerWorkerX(selected),PioneerWorkerY(selected),true,word);
         return true;
     }
+    template<class Check> bool AuditQ35Fabric(PioneerPostResetAuditResult& result,Check& check) {
+        return check() && Audit(result) && check();
+    }
     bool AuditQ35L2CpuHeld(PioneerQ35PostResetL2Result&) { return fleetAudited; }
+    template<class Check> bool AuditQ35L2CpuHeldGuarded(PioneerQ35PostResetL2Result& result,Check& check) {
+        return check() && AuditQ35L2CpuHeld(result) && check();
+    }
     bool AuditHostDma() { return dmaAudited=fleetAudited; }
+    template<class Check> bool AuditQ35HostDmaGuarded(Check& check) {
+        return check() && AuditHostDma() && check();
+    }
 };
 struct Guard { int (*validate)(uint64); };
 static int Validate(uint64 ticket) { return ticket==123 && ticketValid?B_OK:-1; }
@@ -166,9 +178,13 @@ using Owner=PioneerQ35FabricArcOwner<Guard>;
 struct Scope {
     Owner* expected=nullptr;PioneerPostResetMapping* mapping=nullptr;
     bool allowed=true,phaseReady=true,resetAllowed=true,tilesHeld=true,clockAllowed=true,retireAllowed=true;
-    unsigned calls=0,denyAt=0;
+    bool transientDeny=false,denialSeen=false;unsigned calls=0,denyAt=0,ioAtDenial=0;
     bool FabricArcAllowed(const Owner& owner,const PioneerPostResetMapping& m,uint64 ticket,Owner::Phase phase) {
-        if (++calls==denyAt) allowed=false;
+        if (++calls==denyAt) {
+            ioAtDenial=device->io;denialSeen=true;
+            if (transientDeny) return false;
+            allowed=false;
+        }
         return allowed && expected==&owner && mapping==&m && ticket==123 && phase!=Owner::Failed;
     }
     bool FabricArcPhaseReady(const Owner& owner,const PioneerPostResetMapping& m,uint64 ticket,Owner::Phase phase) {
@@ -341,6 +357,12 @@ int main() {
         ticketValid=true;loseTicketOnRead=-1;
         const unsigned before=partial.io;assert(!o.Retire(&guard,s) && partial.io==before && !deleteCount);
     }
+    {
+        FabricQueue partial(0,0,0);device=&partial;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};
+        mapCount=deleteCount=0;ResetUnit();PrepareRetirement(o,guard,s,m,partial,arc,result);
+        failSnooze=true;assert(!o.Retire(&guard,s) && o.CurrentPhase()==Owner::Failed && m.queueUnsafe && !deleteCount);
+        failSnooze=false;const unsigned before=partial.io;assert(!o.Retire(&guard,s) && partial.io==before && !deleteCount);
+    }
     for (unsigned drop=1;drop<=6;drop++) {
         FabricQueue partial(0,0,0);device=&partial;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};
         mapCount=deleteCount=0;ResetUnit();PrepareRetirement(o,guard,s,m,partial,arc,result);
@@ -474,6 +496,15 @@ int main() {
         FabricQueue fault(0,0,0);device=&fault;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};mapCount=0;
         assert(o.Open(&guard,s));s.denyAt=s.calls+12;
         assert(!o.CheckClock(&guard,s,arc,result) && !s.allowed && o.CurrentPhase()==Owner::Failed && m.queueUnsafe);
+        const unsigned before=fault.io;assert(!o.CheckClock(&guard,s,arc,result) && fault.io==before);
+    }
+    for (unsigned query=0;query<2;query++) {
+        FabricQueue fault(0,0,0);device=&fault;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};mapCount=0;
+        assert(o.Open(&guard,s));if (!query) assert(o.CheckClock(&guard,s,arc,result));
+        s.transientDeny=true;s.denyAt=s.calls+12;
+        const bool okay=query?o.CheckClock(&guard,s,arc,result):o.SendNext(&guard,s,arc,result);
+        assert(!okay && s.allowed && s.denialSeen && fault.io==s.ioAtDenial
+            && o.CurrentPhase()==Owner::Failed && m.queueUnsafe);
         const unsigned before=fault.io;assert(!o.CheckClock(&guard,s,arc,result) && fault.io==before);
     }
     puts("PASS retained Q35 fabric ARC owner: fixed phases, scoped ticket, real mapping adapter and fault retention; SIMULATED ONLY");

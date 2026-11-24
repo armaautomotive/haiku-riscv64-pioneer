@@ -25,8 +25,13 @@ static int Validate(uint64 ticket) {
 struct pioneer_driver_recovery_guard_v2_info { int (*validate)(uint64); };
 struct PioneerPostResetMapping {
     bool Audit(PioneerPostResetAuditResult&) { return Step(12); }
+    template<class Check> bool AuditQ35Fabric(PioneerPostResetAuditResult& result,Check&) { return Audit(result); }
     bool AuditQ35L2CpuHeld(PioneerQ35PostResetL2Result&) { return Step(13); }
+    template<class Check> bool AuditQ35L2CpuHeldGuarded(PioneerQ35PostResetL2Result& result,Check&) {
+        return AuditQ35L2CpuHeld(result);
+    }
     bool AuditHostDma() { return Step(14); }
+    template<class Check> bool AuditQ35HostDmaGuarded(Check&) { return AuditHostDma(); }
 };
 template<class Guard> class PioneerQ35FabricArcOwner {
 public:

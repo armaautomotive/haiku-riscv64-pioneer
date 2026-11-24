@@ -311,6 +311,83 @@ struct PioneerPostResetMapping : ConfigIO {
 		return fleetAudited;
 	}
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+	// Recovery may be invalidated asynchronously. These Q35-only helpers
+	// check the retained ticket/scope on both sides of each PCI or MMIO access;
+	// the older recovery path continues to use its existing methods.
+	template<class Check> bool PciReadyQ35(Check& check) {
+		bool lost=false;
+		auto allowed=[&]() { if (lost || !check()) { lost=true;return false; } return true; };
+		PioneerBlackholeBarPlan plan;
+		if (!allowed() || !PioneerMinimumBarLayoutMatches(profile)
+			|| !PioneerPlanBlackholeBars(profile.ranges,TT_PIONEER_RANGE_COUNT,plan)
+			|| plan.hostStart[0]!=profile.bar0_host_start || plan.hostEnd[0]!=profile.bar0_host_end
+			|| plan.hostStart[1]!=profile.bar2_host_start || plan.hostEnd[1]!=profile.bar2_host_end) return false;
+		auto card=[&](uint16 offset,uint8 size) {
+			if (!allowed()) return uint32(UINT32_MAX);
+			const uint32 value=Read(offset,size);return allowed()?value:uint32(UINT32_MAX);
+		};
+		auto root=[&](uint16 offset,uint8 size) {
+			if (!allowed()) return uint32(UINT32_MAX);
+			const uint32 value=RootRead(offset,size);return allowed()?value:uint32(UINT32_MAX);
+		};
+		if (!(card(0,4)==0xb1401e52 && card(0x2c,4)==0x00431e52
+			&& root(0,4)==0x20421e30 && (root(8,4)>>8)==0x060400
+			&& card(4,2)==0x402 && root(4,2)==0x402
+			&& root(0x18,4)==0x003f0100 && root(0x20,4)==0x0000fff0)) return false;
+		for (unsigned i=0;i<6;i++) if (card(0x10+4*i,4)!=plan.bars[i]) return false;
+		for (unsigned i=0;i<3;i++) if (root(0x24+4*i,4)!=plan.bridge[i]) return false;
+		return allowed();
+	}
+	template<class Check> bool SourceStableQ35(Check& check) {
+		if (!ready || !firmwareReady || !topologyReady || !node || !PciReadyQ35(check)) return false;
+		for (unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++) {
+			if (!check()) return false;
+			const uint32 value=PioneerRead32(node+BlackholeDramSourceOffset(i)/4);
+			if (!check() || value!=topology.source[i]) return false;
+		}
+		return check();
+	}
+	template<class Check> bool AuditQ35Fabric(PioneerPostResetAuditResult& result,Check& check) {
+		result={};fleetAudited=false;dmaAudited=false;
+		struct Adapter {
+			PioneerPostResetMapping& m;Check& check;bool lost=false;
+			bool Allowed() { if (lost || !check()) { lost=true;return false; } return true; }
+			bool SelectPostResetCore(unsigned core) {
+				m.selected=PIONEER_POST_RESET_CORES;
+				if (core>=PIONEER_POST_RESET_CORES || !Allowed() || !m.SourceStableQ35(check) || !Allowed()) return false;
+				const unsigned x=PioneerWorkerX(core),y=PioneerWorkerY(core);
+				m.modified=true;
+				for (unsigned i=0;i<3;i++) {
+					if (!Allowed()) return false;
+					PioneerWrite32(m.tlb+i,BlackholeDramFixedTlbWord(0xffa00000,x,y,true,i));
+					if (!Allowed()) return false;
+					const uint32 value=PioneerRead32(m.tlb+i);
+					if (!Allowed() || value!=BlackholeDramFixedTlbWord(0xffa00000,x,y,true,i)) return false;
+				}
+				if (!Allowed()) return false;
+				const uint32 id=PioneerRead32(m.noc+0x44/4);
+				if (!Allowed()) return false;
+				const uint32 endpoint=PioneerRead32(m.noc+0x48/4);
+				if (!Allowed()) return false;
+				const uint32 expected=BlackholeDramSourceX(m.topology.source,x)|(y<<6);
+				if ((id&0xfff)!=expected || ((id>>12)&127)!=17 || ((id>>19)&127)!=12
+					|| (endpoint&0xffffff00)!=0x10000) return false;
+				m.selected=core;return Allowed();
+			}
+			bool ReadPostResetState(uint32_t& value) {
+				if (!Allowed()) return false;
+				const bool okay=m.ReadPostResetState(value);return Allowed() && okay;
+			}
+			bool ReadPostResetNoC(unsigned network,unsigned offset,uint32_t& value) {
+				if (!Allowed()) return false;
+				const bool okay=m.ReadPostResetNoC(network,offset,value);return Allowed() && okay;
+			}
+			void PostResetAuditPause() { if (Allowed()) { m.PostResetAuditPause();Allowed(); } }
+		} adapter{*this,check};
+		fleetAudited=SourceStableQ35(check) && PioneerPostResetAudit(adapter,result)
+			&& adapter.Allowed() && SourceStableQ35(check) && adapter.Allowed();
+		return fleetAudited;
+	}
 	bool AuditQ35L2CpuHeld(PioneerQ35PostResetL2Result& result) {
 		struct Adapter {
 			PioneerPostResetMapping& m;
@@ -325,6 +402,88 @@ struct PioneerPostResetMapping : ConfigIO {
 			void L2Pause() { m.PostResetAuditPause(); }
 		} adapter{*this};
 		return PioneerQ35PostResetL2Audit(adapter,result);
+	}
+	template<class Check> bool AuditQ35L2CpuHeldGuarded(PioneerQ35PostResetL2Result& result,Check& check) {
+		struct Adapter {
+			PioneerPostResetMapping& m;Check& check;bool lost=false;
+			bool Allowed() { if (lost || !check()) { lost=true;return false; } return true; }
+			bool L2AuditAllowed() {
+				if (!Allowed() || !m.ready || !m.firmwareReady || !m.topologyReady || !m.fleetAudited
+					|| !m.savedValid || !m.scratch || m.selected>=PIONEER_POST_RESET_CORES) return false;
+				auto permit=[&]() { return Allowed(); };
+				return m.SourceStableQ35(permit) && Allowed();
+			}
+			uint32 TlbRead(unsigned word) {
+				if (!Allowed()) return UINT32_MAX;
+				const uint32 value=m.TlbRead(word);return Allowed()?value:uint32(UINT32_MAX);
+			}
+			void TlbWrite(unsigned word,uint32 value) {
+				if (Allowed()) { m.TlbWrite(word,value);Allowed(); }
+			}
+			uint32 L2BootRead() {
+				if (!Allowed()) return UINT32_MAX;
+				const uint32 value=m.ScratchRead(2);return Allowed()?value:uint32(UINT32_MAX);
+			}
+			uint32 L2ResetRead() {
+				if (!Allowed()) return UINT32_MAX;
+				const uint32 value=PioneerRead32(m.scratch+0x14/4);return Allowed()?value:uint32(UINT32_MAX);
+			}
+			void L2Pause() { if (Allowed()) { m.PostResetAuditPause();Allowed(); } }
+		} adapter{*this,check};
+		return PioneerQ35PostResetL2Audit(adapter,result) && adapter.Allowed();
+	}
+	template<class Check> bool AuditQ35HostDmaGuarded(Check& check) {
+		dmaAudited=false;dmaDiagnostic=0x10000;
+		bool lost=false;
+		auto allowed=[&]() { if (lost || !check()) { lost=true;return false; } return true; };
+		if (!fleetAudited || !savedValid || !SourceStableQ35(allowed) || !allowed()) return false;
+		const uint32 nodeId=PioneerRead32(node+0x44/4);
+		if (!allowed() || (nodeId&0xfff)!=2 || !BlackholeHostSourceRoute(topology.source)) return false;
+		dmaModified=true;dmaDiagnostic=0x20000;
+		for (unsigned i=0;i<3;i++) {
+			if (!allowed()) return false;
+			PioneerWrite32(tlb-3+i,BlackholeHostDbiTlbWord(i));
+			if (!allowed()) return false;
+			const uint32 value=PioneerRead32(tlb-3+i);
+			if (!allowed() || value!=BlackholeHostDbiTlbWord(i)) return false;
+		}
+		struct PciStatus {
+			PioneerPostResetMapping& m;decltype(allowed)& permit;
+			uint32 HostPciRead(unsigned peer,uint16 offset,uint8 size) {
+				if (!permit()) return UINT32_MAX;
+				const uint32 value=m.HostPciRead(peer,offset,size);
+				return permit()?value:uint32(UINT32_MAX);
+			}
+		} statusIo{*this,allowed};
+		uint32 firstStatus[2]={},firstDma[4]={};
+		for (unsigned sample=0;sample<3;sample++) {
+			dmaDiagnostic=0x30000|sample;
+			if (!PciReadyQ35(allowed)) return false;
+			for (unsigned peer=0;peer<2;peer++) {
+				uint32 status=0;
+				if (!allowed() || !BlackholeHostPcieStatus(statusIo,peer,status) || !allowed()
+					|| (sample && status!=firstStatus[peer])) {
+					dmaDiagnostic=0x40000|(peer<<15)|(sample<<13)|(status&0x1fff);return false;
+				}
+				if (!sample) firstStatus[peer]=status;
+			}
+			for (unsigned i=0;i<4;i++) {
+				if (!allowed()) return false;
+				const uint32 value=PioneerRead32(hdma+BlackholeHostHdmaOffset(i)/4);
+				if (!allowed() || (i%2==0 && value!=0) || (i%2==1 && value!=0 && value!=3)
+					|| (sample && value!=firstDma[i])) {
+					dmaDiagnostic=0x50000|(i<<13)|(sample<<11)|((value&~0x3ffU)?0x400:0)|(value&0x3ff);
+					return false;
+				}
+				if (!sample) firstDma[i]=value;
+			}
+			if (sample<2) { if (!allowed()) return false;PostResetAuditPause();if (!allowed()) return false; }
+		}
+		dmaDiagnostic=0x60000;
+		uint32 resetState=0;
+		if (!allowed() || !ReadPostResetState(resetState) || !allowed()
+			|| resetState!=PIONEER_POST_RESET_HELD || !SourceStableQ35(allowed) || !allowed()) return false;
+		dmaAudited=true;dmaDiagnostic=0;return true;
 	}
 #endif
 	uint32 HostPciRead(unsigned peer,uint16 offset,uint8 size) {

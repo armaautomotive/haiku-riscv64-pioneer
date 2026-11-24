@@ -4,8 +4,8 @@
 // an active recovery ticket and the independent physical-ownership scope.
 // Success means only that the Tensix fabric sequence and its audits completed:
 // the context, owner, mapping, PCI reservation and cold latch remain retained.
-// The mapping audits currently recheck the ticket only at stage boundaries;
-// no live scope may admit them without continuous ownership and fault fencing.
+// A live scope must independently maintain physical ownership and fault
+// fencing throughout each audit and the entire recovery transaction.
 #if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH) \
     || defined(PIONEER_QWEN35_RECOVERY_QUALIFY) \
     || !defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) || !defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
@@ -53,9 +53,9 @@ bool RunQ35FabricRecovery(pioneer_driver_recovery_guard_v2_info* guard,uint64 ti
         || !step(9,[&]() { return owner->SetRiscReset(guard,scope,false); })
         || !step(10,[&]() { return owner->SendNext(guard,scope,firmware,queue); })
         || !step(11,[&]() { return owner->CheckClock(guard,scope,firmware,queue); })
-        || !step(12,[&]() { return mapping->Audit(fleet); })
-        || !step(13,[&]() { return mapping->AuditQ35L2CpuHeld(l2); })
-        || !step(14,[&]() { return mapping->AuditHostDma(); })
+        || !step(12,[&]() { return mapping->AuditQ35Fabric(fleet,valid); })
+        || !step(13,[&]() { return mapping->AuditQ35L2CpuHeldGuarded(l2,valid); })
+        || !step(14,[&]() { return mapping->AuditQ35HostDmaGuarded(valid); })
         || !step(15,[&]() { return owner->Retire(guard,scope); })) return false;
     stage=16;
     return valid() && owner->CurrentPhase()==FabricOwner::Retired;

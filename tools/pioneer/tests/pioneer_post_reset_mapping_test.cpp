@@ -25,8 +25,15 @@ static uint32 BlackholeHostDbiTlbWord(unsigned w) {
 }
 static uint32 BlackholeHostHdmaOffset(unsigned w) { const uint32 v[]={0,0x80,0x100,0x180};return v[w]; }
 static int fakePciPendingPeer=-1;
-template<class IO> static bool BlackholeHostPcieStatus(IO&,unsigned peer,uint32& s) {
+template<class IO> static bool BlackholeHostPcieStatus(IO& io,unsigned peer,uint32& s) {
+#ifdef TEST_Q35_FABRIC_AUDIT
+	if (io.HostPciRead(peer,0x34,1)!=0x40 || (io.HostPciRead(peer,0x40,2)&0xff)!=0x10
+		|| (io.HostPciRead(peer,0x42,2)&15)!=2) return false;
+	s=io.HostPciRead(peer,0x4a,2);return s<=0xffff && !(s&0x2f);
+#else
+	(void)io;
 	s=int(peer)==fakePciPendingPeer?0x20:0;return !s;
+#endif
 }
 static uint32 BlackholeDramFixedTlbWord(uint32 base,uint32 x,uint32 y,bool readOnly,unsigned w) {
 	return w==0?base>>21:w==1?(x<<11)|(y<<17)|(x<<23)|((y&7)<<29):(y>>3)|(readOnly?0xa40:0x40);
@@ -35,8 +42,20 @@ static uint32 tlbPage[1024],nodePage[1024],resetPage[1024],nocPage[0x12000/4],hd
 static unsigned mapCalls=0,unmapCalls=0;static int failMap=-1,failUnmap=-1,mapFailureStatus=B_NO_MEMORY;static bool wrongNode=false;
 static uint32 cardBars[6]={12,0,12,0,12,0};
 static uint32 cardCommand=0x402,rootCommand=0x402;
+#ifdef TEST_Q35_FABRIC_AUDIT
+static bool permitRevoked=false;
+static unsigned deviceAccesses=0,accessesAfterRevoke=0;
+static void TrackAccess() { ++deviceAccesses;if (permitRevoked) ++accessesAfterRevoke; }
+#else
+static void TrackAccess() {}
+#endif
 struct Pci {
 	uint32 read_pci_config(unsigned,unsigned,unsigned,unsigned offset,unsigned) {
+		TrackAccess();
+#ifdef TEST_Q35_FABRIC_AUDIT
+		if(offset==0x34)return 0x40;if(offset==0x40)return 0x10;if(offset==0x42)return 2;
+		if(offset==0x4a)return fakePciPendingPeer==1?0x20:0;
+#endif
 		if(offset==0)return 0x20421e30;if(offset==8)return 0x06040000;if(offset==4)return rootCommand;
 		if(offset==0x18)return 0x003f0100;if(offset==0x20)return 0x0000fff0;
 		if(offset>=0x24 && offset<=0x2c)return (offset-0x24)/4+1;return 0;
@@ -44,6 +63,11 @@ struct Pci {
 } pci,*sPCI=&pci;
 struct ConfigIO {
 	uint32 Read(uint16 offset,uint8) {
+		TrackAccess();
+#ifdef TEST_Q35_FABRIC_AUDIT
+		if(offset==0x34)return 0x40;if(offset==0x40)return 0x10;if(offset==0x42)return 2;
+		if(offset==0x4a)return fakePciPendingPeer==0?0x20:0;
+#endif
 		if(offset==0)return 0xb1401e52;if(offset==0x2c)return 0x00431e52;if(offset==4)return cardCommand;
 		if(offset>=0x10 && offset<=0x24)return cardBars[(offset-0x10)/4];return 0;
 	}
@@ -68,6 +92,7 @@ static int map_physical_memory(const char*,uint64_t addr,size_t size,int address
 }
 static int delete_area(int a) { unmapCalls++;return a==failUnmap?-1:B_OK; }
 static uint32 PioneerRead32(const volatile uint32* p) {
+	TrackAccess();
 	if(p==nocPage+0x44/4) {
 		const uint32 word=tlbPage[0x96c/4+1];const unsigned x=(word>>11)&63,y=(word>>17)&63;
 		return (wrongNode?63:x)|(y<<6)|(17U<<12)|(12U<<19);
@@ -78,6 +103,7 @@ static uint32 PioneerRead32(const volatile uint32* p) {
 static bool blockTlbRestore=false,blockDbiTlbRestore=false,dropDbiWrite=false;
 static bool fakeQueueTimeout=false,fakeQueueBadReply=false;
 static void PioneerWrite32(volatile uint32* p,uint32 value) {
+	TrackAccess();
 	if (blockTlbRestore && p==tlbPage+0x96c/4 && value==7) return;
 	if (blockDbiTlbRestore && p==tlbPage+0x960/4 && value==10) return;
 	if (p==dbiPage+0x78/4) {
@@ -267,4 +293,5 @@ int main() {
 		&& !badRestore.FirmwareRetryable() && !sleeps && !badRestore.Close() && !unmapCalls);
 	blockTlbRestore=false;assert(badRestore.Close());
 	puts("PASS post-reset ARC scratch/telemetry, fleet mapping and DMA gates; SIMULATED MMIO ONLY");
+	return 0;
 }

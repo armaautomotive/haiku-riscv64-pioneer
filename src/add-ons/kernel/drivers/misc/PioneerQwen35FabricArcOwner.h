@@ -60,15 +60,31 @@ private:
             && scope.FabricArcAllowed(*this,fMapping,fTicket,fPhase)
             && guard->validate(fTicket)==B_OK;
     }
+    template<class Scope> bool PciAllowed(Guard* guard,Scope& scope) const {
+        auto permit=[&]() { return Allowed(guard,scope); };
+        return permit() && fMapping.PciReadyQ35(permit) && permit();
+    }
     template<class Scope> struct Transport {
         PioneerQ35FabricArcOwner& owner;
         Guard* guard;
         Scope& scope;
-        bool delayFailed=false;
+        bool clockQuery=false,delayFailed=false,accessFailed=false;
         bool Accessible() {
-            return !delayFailed && owner.fOpen && owner.fPhase!=Failed
-                && owner.Allowed(guard,scope) && owner.fMapping.PciReady()
-                && owner.Allowed(guard,scope);
+            // Scope predicates here must not access or reroute this queue's
+            // TLB; they may inspect retained ownership and guard metadata.
+            auto permit=[&]() {
+                if (accessFailed) return false;
+                const bool okay=!delayFailed && owner.fOpen && owner.fPhase!=Failed
+                    && owner.Allowed(guard,scope)
+                    && (clockQuery?scope.FabricClockQueryAllowed(owner,owner.fMapping,owner.fTicket,owner.fPhase)
+                        :scope.FabricArcPhaseReady(owner,owner.fMapping,owner.fTicket,owner.fPhase))
+                    && owner.Allowed(guard,scope);
+                if (!okay) accessFailed=true;
+                return okay;
+            };
+            const bool okay=permit() && owner.fMapping.PciReadyQ35(permit) && permit();
+            if (!okay) accessFailed=true;
+            return okay;
         }
         uint32 TlbRead(unsigned w) { return Accessible()?owner.fMapping.TlbRead(w):UINT32_MAX; }
         void TlbWrite(unsigned w,uint32 value) { if (Accessible() && w<3) owner.fMapping.TlbWrite(w,value); }
@@ -112,7 +128,7 @@ public:
         if (fOpenAttempted || fPhase!=Fresh || !Allowed(guard,scope)
             || !fMapping.ready || !fMapping.firmwareReady || !fMapping.topologyReady
             || !fMapping.savedValid || fMapping.queueAttempted || fMapping.queueArea>=B_OK
-            || fMapping.queueMsiArea>=B_OK || fMapping.dmaModified || !fMapping.PciReady()) return false;
+            || fMapping.queueMsiArea>=B_OK || fMapping.dmaModified || !PciAllowed(guard,scope)) return false;
         fOpenAttempted=true;fMapping.queueAttempted=true;fMapping.queueUnsafe=true;
         void* view=NULL;
         if (!Allowed(guard,scope)) { fPhase=Failed;return false; }
@@ -121,7 +137,7 @@ public:
             B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA,&view);
         if (fMapping.queueArea<B_OK || !view) { fPhase=Failed;return false; }
         fMapping.queueView=(volatile uint32*)view;view=NULL;
-        if (!Allowed(guard,scope) || !fMapping.PciReady()) { fPhase=Failed;return false; }
+        if (!PciAllowed(guard,scope)) { fPhase=Failed;return false; }
         fMapping.queueMsiArea=map_physical_memory("P100A Q35 fabric recovery ARC notify",
             fMapping.profile.bar0_host_start+0x192b0000,B_PAGE_SIZE,
             B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA,&view);
@@ -129,7 +145,7 @@ public:
         fMapping.queueMsi=(volatile uint32*)view;
         if (fMapping.queueMsiArea==fMapping.queueArea) { fPhase=Failed;return false; }
         view=NULL;
-        if (!Allowed(guard,scope) || !fMapping.PciReady()) { fPhase=Failed;return false; }
+        if (!PciAllowed(guard,scope)) { fPhase=Failed;return false; }
         fResetArea=map_physical_memory("P100A Q35 fabric recovery reset unit",
             fMapping.profile.bar0_host_start+0x19230000,B_PAGE_SIZE,
             B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA,&view);
@@ -137,7 +153,7 @@ public:
             || fResetArea==fMapping.queueMsiArea) { fPhase=Failed;return false; }
         fResetView=(volatile uint32*)view;
         view=NULL;
-        if (!Allowed(guard,scope) || !fMapping.PciReady()) { fPhase=Failed;return false; }
+        if (!PciAllowed(guard,scope)) { fPhase=Failed;return false; }
         fTileArea=map_physical_memory("P100A Q35 fabric recovery tile reset",
             fMapping.profile.bar0_host_start+0x19312000,B_PAGE_SIZE,
             B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA,&view);
@@ -154,7 +170,7 @@ public:
                 fPhase=Failed;return false;
             }
         }
-        if (!Allowed(guard,scope) || !fMapping.PciReady()) { fPhase=Failed;return false; }
+        if (!PciAllowed(guard,scope)) { fPhase=Failed;return false; }
         fOpen=true;return true;
     }
 
@@ -193,7 +209,7 @@ public:
             || (fPhase==Fresh && fClockBaseline) || (fPhase==ClockForced && fClockForced)
             || (fPhase==ClockReleased && fClockRestored) || !Allowed(guard,scope)
             || !scope.FabricClockQueryAllowed(*this,fMapping,fTicket,fPhase)) return false;
-        Transport<Scope> transport{*this,guard,scope};
+        Transport<Scope> transport{*this,guard,scope,true};
         PioneerQ38ArcQueue<Transport<Scope>,false,false,true> queue(transport);
         if (!queue.Message(arc,fMapping.firmwareTelemetry,result,0x34U) || queue.Unsafe()
             || !Allowed(guard,scope)
@@ -235,9 +251,9 @@ public:
             || !Allowed(guard,scope)
             || !scope.FabricResetUnitAllowed(*this,fMapping,fTicket,fPhase,hold)) return false;
         auto access=[&]() {
-            return Allowed(guard,scope) && fMapping.PciReady()
-                && scope.FabricResetUnitAllowed(*this,fMapping,fTicket,fPhase,hold)
-                && Allowed(guard,scope);
+            auto permit=[&]() { return Allowed(guard,scope)
+                && scope.FabricResetUnitAllowed(*this,fMapping,fTicket,fPhase,hold) && Allowed(guard,scope); };
+            return permit() && fMapping.PciReadyQ35(permit) && permit();
         };
         auto fail=[&]() { fPhase=Failed;return false; };
         fResetWrites=0;
@@ -293,10 +309,10 @@ public:
             || !Allowed(guard,scope)
             || !scope.FabricTileCoverage(*this,fMapping,fTicket)) return false;
         auto access=[&](unsigned core) {
-            return P100WorkerCoverage() && Allowed(guard,scope) && fMapping.PciReady() && fMapping.SourceStable()
+            auto permit=[&]() { return P100WorkerCoverage() && Allowed(guard,scope)
                 && scope.FabricTileCoverage(*this,fMapping,fTicket)
-                && scope.FabricTileResetAllowed(*this,fMapping,fTicket,core)
-                && Allowed(guard,scope);
+                && scope.FabricTileResetAllowed(*this,fMapping,fTicket,core) && Allowed(guard,scope); };
+            return permit() && fMapping.SourceStableQ35(permit) && permit();
         };
         auto fail=[&]() { fPhase=Failed;return false; };
         uint32 saved[3]{};
@@ -380,10 +396,10 @@ public:
             || !Allowed(guard,scope) || !scope.FabricRetirementAllowed(*this,fMapping,fTicket)) return false;
         const unsigned core=fMapping.selected;
         auto access=[&]() {
-            return fMapping.fleetAudited && fMapping.dmaAudited && fMapping.selected==core
+            auto permit=[&]() { return fMapping.fleetAudited && fMapping.dmaAudited && fMapping.selected==core
                 && Allowed(guard,scope) && scope.FabricRetirementAllowed(*this,fMapping,fTicket)
-                && fMapping.SourceStable() && Allowed(guard,scope)
-                && scope.FabricRetirementAllowed(*this,fMapping,fTicket);
+                && Allowed(guard,scope); };
+            return permit() && fMapping.SourceStableQ35(permit) && permit();
         };
         fRetirementAttempted=true;
         auto fail=[&]() { fPhase=Failed;return false; };
