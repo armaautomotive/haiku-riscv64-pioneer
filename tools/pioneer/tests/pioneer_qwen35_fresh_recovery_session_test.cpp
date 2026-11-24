@@ -14,6 +14,7 @@
 #include <vector>
 using uint64=uint64_t;
 constexpr int B_OK=0;
+constexpr unsigned TT_HOST_PAGE_READY=1;
 constexpr uint64 kTicket=37;
 namespace PioneerQwen35 { enum { DataflowCoreCount=120 }; }
 
@@ -27,21 +28,32 @@ constexpr unsigned TT_DRAM_SOURCE_WORDS=16;
 struct MockDram { unsigned route=77,source[TT_DRAM_SOURCE_WORDS]{}; };
 struct MockNoc {};
 struct MockRoot { struct A { struct B { struct C { MockDram dram; } baseline;MockNoc noc; } baseline; } baseline; };
-struct MockPci { unsigned node_id[3]={2,2,2}; };
+struct MockPci { unsigned node_id[3]={2,2,2};unsigned restored=0; };
 struct MockProof {
     uint64 reset_generation=kTicket,firmware_generation=kTicket;
     bool valid=true;
     bool ReadyToRetireOneOwner() const { return valid; }
 };
 struct MockScratch { bool eligible=true; bool ResetRestoreEligible(const uint32_t* p) const { return eligible && p; } };
+using PioneerQ35ProjectionScratch=MockScratch;
 struct MockQualificationOwner {
     MockScratch scratch;
     uint32_t snapshot=1;
-    bool active=true,retained=false;
-    bool Active() const { return active; }
-    MockScratch* Scratch() { return active?&scratch:nullptr; }
-    uint32_t* Snapshot() { return active?&snapshot:nullptr; }
+    bool active=true,retained=false,retired=false;
+    bool Active() const { return active && !retired; }
+    MockScratch* Scratch() { return Active()?&scratch:nullptr; }
+    uint32_t* Snapshot() { return Active()?&snapshot:nullptr; }
     void Retain() { retained=true; }
+    bool RetiredModifiedIdentity(const MockScratch* expected,const uint32_t* saved) const {
+        return active && retired && retained && expected==&scratch && saved==&snapshot;
+    }
+    template<class Proof,class Receipt,class Banks,class Session,class Scope>
+    bool RetireModifiedAfterReset(const Proof&,uint64 ticket,const Receipt& receipt,
+        const Banks& old,const Banks& fresh,const Session& session,Scope& scope) {
+        if (!Active() || !receipt.VerifiedFor(scratch,ticket,old,fresh)
+            || !scope.QualificationModifiedResetRetirementAllowed(*this,scratch,receipt,session)) return false;
+        retained=true;retired=true;return true;
+    }
 };
 struct PioneerResidentBanks {
     static constexpr uint64 Total=128*4096;
@@ -54,7 +66,9 @@ struct PioneerResidentBanks {
         return old.route==fresh.route;
     }
 };
-struct MockLease { bool recovery_required=false,ready=false; };
+struct MockLease { bool recovery_required=false,ready=false,pending=false,l1_restored=true,niu_restored=true,tlb_restored=true; };
+struct MockHost { unsigned state=0,allocated=0,released=1;int release_status=0; };
+struct MockTransaction { bool config_attempted=false; };
 struct tt_arc_scratch_result {};
 struct PioneerPostResetAuditResult {};
 struct PioneerPostResetMapping {
@@ -70,6 +84,7 @@ struct PioneerHostDmaAuditIO { bool AfterNodeId(unsigned) { return Step(2); } };
 struct MockIO : PioneerHostDmaAuditIO {
     bool postResetDisposeComplete=false,quarantined=false;
     void QuarantineHostPage() { quarantined=true; }
+    int ReleaseHostPage() { return Step(16)?B_OK:-1; }
 };
 class PioneerQ35FreshRecoverySession;
 struct PioneerStoreContext {
@@ -87,7 +102,9 @@ struct PioneerStoreContext {
     MockRoot baseline;
     MockIO io;
     MockPci pci;
-    unsigned transaction=0,idle=0,host=0;
+    MockTransaction transaction;
+    unsigned idle=0;
+    MockHost host;
     MockLease lease;
     explicit PioneerStoreContext(uint64 capacity):bytes(capacity),
         initialized(failFreshAllocation?nullptr:static_cast<uint8_t*>(calloc(PioneerResidentBanks::Pages,1))),
@@ -101,9 +118,9 @@ static int Validate(uint64 ticket) {
     ++guardCalls;return ticket==kTicket && guardCalls!=failGuardAt?B_OK:-1;
 }
 struct pioneer_driver_recovery_guard_v2_info { int (*validate)(uint64)=Validate; };
-static bool BlackholePioneerMmioBegin(MockIO&,MockPci&,unsigned&) { return Step(1); }
+static bool BlackholePioneerMmioBegin(MockIO&,MockPci&,MockTransaction& t) { if (!Step(1)) return false;t.config_attempted=true;return true; }
 static bool PioneerResidentSessionIdle(MockIO&,MockNoc&,unsigned&) { return Step(3); }
-static bool PioneerPrepareHostPage(MockIO&,unsigned& host) { if (!Step(5)) return false;host=1;return true; }
+static bool PioneerPrepareHostPage(MockIO&,MockHost& host) { if (!Step(5)) return false;host.state=TT_HOST_PAGE_READY;host.allocated=1;host.released=0;return true; }
 static bool PioneerResidentLeaseBegin(MockIO&,MockNoc&,MockLease& lease) {
     if (!Step(6)) return false;
     lease.ready=true;return true;
@@ -112,13 +129,16 @@ static bool PioneerResidentLeaseEnd(MockIO&,MockNoc&,MockLease& lease) {
     if (!Step(8)) return false;
     lease.ready=false;return true;
 }
-static bool PioneerQ38DispatchMmioEnd(MockIO&,MockPci&,unsigned&) { return Step(14); }
+static bool PioneerQ38DispatchMmioEnd(MockIO&,MockPci& pci,MockTransaction& t) {
+    if (!Step(14)) return false;
+    pci.restored=1;t.config_attempted=false;return true;
+}
 struct PioneerQ35ProjectionResetRecovery {
     bool restored=false;
     template<class Scope>
     bool Restore(MockScratch&,uint64 ticket,const MockProof&,MockIO&,Scope&,
         PioneerResidentBanks&,const MockDram&,PioneerResidentBanks&,const MockDram&,
-        const MockNoc&,const unsigned&,MockLease&,const uint8_t*,unsigned pages) {
+        const MockNoc&,const MockHost&,MockLease&,const uint8_t*,unsigned pages) {
         if (ticket!=kTicket || pages!=PioneerResidentBanks::Pages || !Step(7)) return false;
         restored=true;return true;
     }
@@ -128,7 +148,8 @@ struct PioneerQ35ProjectionResetRecovery {
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FreshRecoverySession.inc"
 
 struct Scope {
-    bool admission=true,retained=false,closeAdmission=true;
+    bool admission=true,retained=false,closeAdmission=true,retirementAdmission=true,ownerAdmission=true;
+    bool quarantineAtRetirement=false,loseClaimAfterRetirement=false;
     unsigned failBoundary=0;
     bool FreshRecoveryAdmission(PioneerQ35FreshRecoverySession&,PioneerProbeCookie*,PioneerStoreContext&,uint64 ticket) {
         return admission && ticket==kTicket;
@@ -149,6 +170,19 @@ struct Scope {
         PioneerStoreContext&,const PioneerQ35ProjectionResetRecovery&) { return true; }
     bool FreshRecoveryPciIdle(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&,const PioneerQ35ProjectionResetRecovery&) { return Step(15); }
+    bool FreshRecoveryRetirementAdmission(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
+        PioneerStoreContext& fresh,const PioneerQ35ProjectionResetRecovery&) {
+        if (quarantineAtRetirement) fresh.banks.Quarantine();
+        return retirementAdmission;
+    }
+    bool FreshRecoveryAfterOwnerRetired(PioneerQ35FreshRecoverySession&,PioneerStoreContext& old,
+        PioneerStoreContext&,const PioneerQ35ProjectionResetRecovery&) {
+        if (!Step(17)) return false;
+        if (loseClaimAfterRetirement) old.banks.claimed=false;
+        return true;
+    }
+    bool QualificationModifiedResetRetirementAllowed(const MockQualificationOwner&,const MockScratch&,
+        const PioneerQ35ProjectionResetRecovery&,const PioneerQ35FreshRecoverySession&) { return ownerAdmission; }
     void RetainFreshRecovery(PioneerQ35FreshRecoverySession&) { retained=true; }
 };
 static void Reset() {
@@ -201,7 +235,7 @@ int main() {
         const bool closed=restored && session->CloseTransport(&guard,scope);
         if (!failure) {
             assert(closed && !scope.retained && session->CurrentStage()==PioneerQ35FreshRecoverySession::TransportClosed
-                && !session->Fresh()->lease.ready && session->Fresh()->host==1
+                && !session->Fresh()->lease.ready && session->Fresh()->host.allocated && !session->Fresh()->host.released
                 && old.recoveryFreshSession==session && !session->Fresh()->recoveryMapping
                 && operations==std::vector<unsigned>({1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}));
         } else {
@@ -218,6 +252,52 @@ int main() {
                 && operations.size()==count);
         }
         PioneerQ35FreshRecoverySession::DisposeSimulated(session);
+    }
+    for (unsigned mutation=0;mutation<2;mutation++) {
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);old.io.postResetDisposeComplete=true;
+        PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;Scope scope;
+        auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(session->Prepare(&owner,old,&guard,scope) && session->RestoreScratch(&guard,scope)
+            && session->CloseTransport(&guard,scope));
+        if (!mutation) scope.quarantineAtRetirement=true;
+        else scope.loseClaimAfterRetirement=true;
+        assert(!session->Retire(&guard,scope));CheckRetained(session,old,scope);
+        if (!mutation) assert(session->FailureStage()==PioneerQ35FreshRecoverySession::Retiring && operations.back()==15);
+        else assert(session->FailureStage()==PioneerQ35FreshRecoverySession::OwnerRetired && operations.back()==17);
+        PioneerQ35FreshRecoverySession::DisposeSimulated(session);
+    }
+    for (unsigned failure=0;failure<=10;failure++) {
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);old.io.postResetDisposeComplete=true;
+        PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;Scope scope;
+        auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(session->Prepare(&owner,old,&guard,scope));
+        assert(!session->Retire(&guard,scope));
+        assert(session->RestoreScratch(&guard,scope) && session->CloseTransport(&guard,scope));
+        auto* scratch=old.qwen35QualificationOwner.Scratch();auto* snapshot=old.qwen35QualificationOwner.Snapshot();
+        if (failure==1) scope.retirementAdmission=false;
+        if (failure==2) failedOperation=16;
+        if (failure==3) scope.ownerAdmission=false;
+        if (failure==4) failedOperation=17;
+        if (failure==5) failGuardAt=guardCalls+1;
+        if (failure==6) failGuardAt=guardCalls+3;
+        if (failure==7) failGuardAt=guardCalls+5;
+        if (failure==8) failGuardAt=guardCalls+2;
+        if (failure==9) failGuardAt=guardCalls+4;
+        if (failure==10) failGuardAt=guardCalls+6;
+        const bool retired=session->Retire(&guard,scope);
+        if (!failure) {
+            assert(retired && !scope.retained && !old.recoveryFreshSession
+                && old.qwen35QualificationOwner.RetiredModifiedIdentity(scratch,snapshot)
+                && old.banks.Q35StreamClaimIdentity(scratch,120) && sColdRecoveryRequired
+                && operations==std::vector<unsigned>({1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17}));
+        } else {
+            assert(!retired);CheckRetained(session,old,scope);
+            assert(session->FailureStage()==(failure==1 || failure==5 || failure==8?PioneerQ35FreshRecoverySession::Retiring
+                :failure==2 || failure==6 || failure==9?PioneerQ35FreshRecoverySession::HostReleased
+                :PioneerQ35FreshRecoverySession::OwnerRetired));
+            const auto count=operations.size();assert(!session->Retire(&guard,scope) && operations.size()==count);
+            PioneerQ35FreshRecoverySession::DisposeSimulated(session);
+        }
     }
     {
         Reset();PioneerStoreContext old(PioneerResidentBanks::Total);old.io.postResetDisposeComplete=true;

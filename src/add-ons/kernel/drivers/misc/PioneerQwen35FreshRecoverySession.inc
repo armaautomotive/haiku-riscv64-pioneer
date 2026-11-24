@@ -20,7 +20,7 @@ class PioneerQ35FreshRecoverySession {
 public:
     enum Stage { Unstarted=0,Attached=1,Mapped=2,Baseline=3,Banks=4,Host=5,Lease=6,Ready=7,
         ScratchRestoring=8,ScratchVerified=9,Closing=10,LeaseClosed=11,FleetAudited=12,
-        PciClosed=13,TransportClosed=14,Retained=15 };
+        PciClosed=13,TransportClosed=14,Retiring=15,HostReleased=16,OwnerRetired=17,Retained=18 };
 private:
     PioneerQ35ProjectionResetRecovery fRestore;
     PioneerStoreContext* fOld=nullptr;
@@ -61,6 +61,21 @@ private:
                 fOld->qwen35QualificationOwner.Snapshot())
             || !fOld->banks.Q35StreamClaimIdentity(fOld->qwen35QualificationOwner.Scratch(),
                 PioneerQwen35::DataflowCoreCount)) return false;
+        return guard->validate(fTicket)==B_OK;
+    }
+    bool RetiredTicketValid(pioneer_driver_recovery_guard_v2_info* guard,
+        const PioneerQ35ProjectionScratch* scratch,const uint32_t* snapshot) const {
+        if (!guard || !fOld || !fFresh || !fOwner || !fTicket || fOwner!=sRuntimeOwner
+            || fOwner->context!=fOld || !sColdRecoveryRequired || sReloadQuiesced || sOpenCookies!=1
+            || !sBankStorageOnly || !fOld->bankStorageOnly || fOld->recoveryFreshSession!=this
+            || !fOld->recoveryAttempted || !fOld->recoveryFinishPending || fOld->recoveryFinishTicket!=fTicket
+            || fOld->recoveryMapping || !fOld->io.postResetDisposeComplete
+            || !fOld->recoveryFinishProof.ReadyToRetireOneOwner()
+            || fOld->recoveryFinishProof.reset_generation!=fTicket
+            || fOld->recoveryFinishProof.firmware_generation!=fTicket
+            || !fOld->qwen35QualificationOwner.RetiredModifiedIdentity(scratch,snapshot)
+            || !fOld->banks.Q35StreamClaimIdentity(scratch,PioneerQwen35::DataflowCoreCount)
+            || !fRestore.VerifiedFor(*scratch,fTicket,fOld->banks,fFresh->banks)) return false;
         return guard->validate(fTicket)==B_OK;
     }
 public:
@@ -218,5 +233,46 @@ public:
             || !scope.FreshRecoveryPciIdle(*this,*fOld,*fFresh,fRestore)
             || !TicketValid(guard) || !verified()) return Retain(scope,TransportClosed);
         fStage=TransportClosed;return true;
+    }
+
+    // Retire only after the post-transfer fleet/DMA audit and PCI idle
+    // transition. The exact old snapshot stays alive through old-bank
+    // destruction; the fresh bank is destroyed first. A failed attempt
+    // keeps the original context and all still-owned resources retained.
+    // On success this deletes the fresh session, so the caller must discard
+    // its pointer and revalidate the recovery guard before generic finish.
+    template<class Scope>
+    bool Retire(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        if (fStage!=TransportClosed || !fOld || !fFresh) return false;
+        auto* scratch=fOld->qwen35QualificationOwner.Scratch();
+        auto* snapshot=fOld->qwen35QualificationOwner.Snapshot();
+        auto readyForRelease=[&]() {
+            return !fFresh->recoveryMapping && fFresh->Pci().restored && !fFresh->transaction.config_attempted
+                && !fFresh->lease.ready && !fFresh->lease.pending && !fFresh->lease.recovery_required
+                && fFresh->lease.l1_restored && fFresh->lease.niu_restored && fFresh->lease.tlb_restored
+                && fFresh->host.state==TT_HOST_PAGE_READY && fFresh->host.allocated && !fFresh->host.released;
+        };
+        if (!TicketValid(guard) || !scratch || !snapshot
+            || !fRestore.VerifiedFor(*scratch,fTicket,fOld->banks,fFresh->banks)
+            || !readyForRelease()
+            || !scope.FreshRecoveryRetirementAdmission(*this,*fOld,*fFresh,fRestore)
+            || !TicketValid(guard) || !readyForRelease()
+            || !fRestore.VerifiedFor(*scratch,fTicket,fOld->banks,fFresh->banks)) return Retain(scope,Retiring);
+        fStage=Retiring;
+        fFresh->host.release_status=fFresh->io.ReleaseHostPage();
+        fFresh->host.released=fFresh->host.release_status==B_OK;
+        if (!fFresh->host.released) return Retain(scope,HostReleased);
+        fStage=HostReleased;
+        if (!TicketValid(guard) || !fRestore.VerifiedFor(*scratch,fTicket,fOld->banks,fFresh->banks)
+            || !scope.FreshRecoveryRetirementAdmission(*this,*fOld,*fFresh,fRestore)
+            || !TicketValid(guard)) return Retain(scope,HostReleased);
+        if (!fOld->qwen35QualificationOwner.RetireModifiedAfterReset(fOld->recoveryFinishProof,fTicket,
+            fRestore,fOld->banks,fFresh->banks,*this,scope)) return Retain(scope,OwnerRetired);
+        fStage=OwnerRetired;
+        if (!RetiredTicketValid(guard,scratch,snapshot)
+            || !scope.FreshRecoveryAfterOwnerRetired(*this,*fOld,*fFresh,fRestore)
+            || !RetiredTicketValid(guard,scratch,snapshot)) return Retain(scope,OwnerRetired);
+        fOld->recoveryFreshSession=nullptr;
+        delete this;return true;
     }
 };

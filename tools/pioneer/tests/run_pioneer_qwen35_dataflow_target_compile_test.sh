@@ -902,6 +902,9 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pro
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     "$directory/pioneer_qwen35_fresh_recovery_session_test.cpp" -o "$temporary/fresh-recovery-session-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fresh-recovery-session-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    "$directory/pioneer_qwen35_modified_reset_retirement_test.cpp" -o "$temporary/modified-reset-retirement-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/modified-reset-retirement-test"
 awk '/PIONEER_Q35_FRESH_RECOVERY_FINISH_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q35_FRESH_RECOVERY_FINISH_GUARD_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_fresh_recovery_finish_guard.inc"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \

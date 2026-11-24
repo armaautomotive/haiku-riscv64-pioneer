@@ -20,6 +20,13 @@ struct PioneerQ35FreshRecoveryCompileScope {
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
     template<class Receipt> bool FreshRecoveryPciIdle(PioneerQ35FreshRecoverySession&,
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRecoveryRetirementAdmission(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRecoveryAfterOwnerRetired(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt,class Session> bool QualificationModifiedResetRetirementAllowed(
+        const PioneerQ35ProjectionQualificationOwner&,const PioneerQ35ProjectionScratch&,
+        const Receipt&,const Session&) const { return allowed; }
     bool RecoveryAdmissionAllowed(PioneerQ35ProjectionScratch&,PioneerSessionIO&,
         const PioneerResidentBanks&,const tt_dram_samples_result&,PioneerResidentBanks&,const tt_dram_samples_result&,
         const tt_compute_noc_result&,const tt_host_page_result&,PioneerResidentLease&,
@@ -42,7 +49,8 @@ PioneerQ35FreshRecoveryCompileWitness(PioneerQ35FreshRecoverySession* session,
     PioneerQ35FreshRecoveryCompileScope scope{allowed};
     if (action==0) return session->Prepare(owner,old,guard,scope);
     if (action==1) return session->RestoreScratch(guard,scope);
-    return action==2 && session->CloseTransport(guard,scope);
+    if (action==2) return session->CloseTransport(guard,scope);
+    return action==3 && session->Retire(guard,scope);
 }
 struct PioneerQ35ResetScratchCompileScope {
     bool permitted;

@@ -78,6 +78,30 @@ public:
     }
 
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    // Metadata retirement after a separate fresh session restored and reread
+    // the modified scratch. The scope must prove that session's post-transfer
+    // fleet/DMA audit, idle PCI state and host-page release under the same
+    // retained ticket. The old claim and snapshot remain allocated until
+    // their containing context is destroyed; this never clears the cold latch.
+    template<class Receipt,class Session,class Scope>
+    bool RetireModifiedAfterReset(const PioneerDriverRecoveryProof& proof,uint64_t ticket,
+        const Receipt& receipt,const PioneerResidentBanks& oldBanks,const PioneerResidentBanks& freshBanks,
+        const Session& session,Scope& scope) {
+        if (!Active() || !scratch || !snapshot || !ticket || !proof.ReadyToRetireOneOwner()
+            || proof.reset_generation!=ticket || proof.firmware_generation!=ticket
+            || !scratch->ResetRestoreEligible(snapshot)
+            || !receipt.VerifiedFor(*scratch,ticket,oldBanks,freshBanks)
+            || !scope.QualificationModifiedResetRetirementAllowed(*this,*scratch,receipt,session)
+            || !scratch->ResetRestoreEligible(snapshot)
+            || !receipt.VerifiedFor(*scratch,ticket,oldBanks,freshBanks)) return false;
+        retained=true;retired=true;return true;
+    }
+    bool RetiredModifiedIdentity(const PioneerQ35ProjectionScratch* expected,const uint32_t* saved) const {
+        return active && retired && retained && expected && expected==scratch && saved && saved==snapshot;
+    }
+#endif
+
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
     // Prepare while the fleet remains held and the exact sticky bank claim
     // and restored scratch are still owned. This does not free anything or
     // authorize resuming hardware; a separate scope proof does that.
