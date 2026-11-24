@@ -20,6 +20,10 @@ struct FleetPciTestScope {
     bool coreRestoreProof=false;
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
     bool autoRestoreCompletion=false,autoCancelHeld=false,autoRetirement=false;
+    bool snapshotObservation=false;
+    bool CanInspectSnapshotRuntime(PioneerSessionIO&,unsigned core) const {
+        return snapshotObservation && core<DataflowBarrierWorkers;
+    }
     bool expectAutoCancelAttempt=false,expectAutoRetirementCancelled=false;
     bool ProveRoleAutoRestoreCompletionSafe(PioneerSessionIO&,unsigned) const { return autoRestoreCompletion; }
     bool ProveRoleAutoCancelHeldSafe(PioneerSessionIO&,unsigned,const uint32_t* reader,
@@ -696,6 +700,13 @@ int main()
     assert(context.io.ReadWorkerSnapshot(11,readySnapshot));
     context.io.computePc=DataflowServiceEntryAddress+0x100;
     assert(!io.RunningReady(11,readySnapshot,0x1000,0x100));
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    assert(!io.InspectSnapshotRunningReady(11,readySnapshot,0x1000,0x100));
+    scope.snapshotObservation=true;
+    assert(io.InspectSnapshotRunningReady(11,readySnapshot,0x1000,0x100)
+        && !io.RunningReady(11,readySnapshot,0x1000,0x100));
+    scope.snapshotObservation=false;
+#endif
     scope.runtime=true;
     assert(io.RunningReady(11,readySnapshot,0x1000,0x100));
     auto& handoff=context.io.roleHandoffs[11];
@@ -804,6 +815,11 @@ int main()
     bounds.loopStart[0]=DataflowRoleReaderShimAddress+0x20;bounds.loopEnd[0]=DataflowRoleReaderShimAddress+0x40;
     bounds.loopStart[1]=DataflowRoleWriterShimAddress+0x20;bounds.loopEnd[1]=DataflowRoleWriterShimAddress+0x40;
     assert(io.RunningRolePcs(11,bounds,false));
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    scope.runtime=false;scope.snapshotObservation=true;
+    assert(io.InspectSnapshotRunningRolePcs(11,bounds) && !io.RunningRolePcs(11,bounds,false));
+    scope.snapshotObservation=false;scope.runtime=true;
+#endif
     for (unsigned noc=0;noc<2;noc++) {
         context.io.nocConfig[noc]=1U<<12;
         const unsigned previousResetReads=context.io.resetReads;

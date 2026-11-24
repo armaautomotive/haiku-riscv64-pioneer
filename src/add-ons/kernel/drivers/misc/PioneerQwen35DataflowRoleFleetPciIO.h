@@ -193,6 +193,11 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
         return fScope.ProveRoleRuntimeSafe(fIO,core);
 #endif
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    bool SnapshotObservationAllowed(unsigned core) {
+        return fScope.CanInspectSnapshotRuntime(fIO,core);
+    }
+#endif
 public:
     PioneerQwen35RoleFleetPciIO(IO& io,Scope& scope,Views& views)
         :fIO(io),fScope(scope),fViews(views),fGuard(io,scope) {}
@@ -507,11 +512,20 @@ public:
         return fIO.ResetRead()==0x47800 && fIO.ResetRead()==0x47800
             && fScope.ProveRoleHeldAfterAttempt(fIO,core) && fGuard.ProveSelectedRoute(core);
     }
-    bool RunningReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& expected,
-        unsigned textWords,unsigned dispatchWords) {
+private:
+    bool RunningReadySample(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& expected,
+        unsigned textWords,unsigned dispatchWords,bool observation) {
         using namespace PioneerQwen35;
+        auto allowed=[&]() {
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+            if (observation) return SnapshotObservationAllowed(core);
+#else
+            (void)observation;
+#endif
+            return RuntimeInspectionAllowed(core);
+        };
         if (core>=DataflowBarrierWorkers || !DataflowWorkerSnapshotReady(expected)
-            || !RuntimeInspectionAllowed(core) || !SelectForStop(core)) return false;
+            || !allowed() || !SelectForStop(core)) return false;
         DataflowWorkerMailbox worker{};
         DataflowWorkerSnapshot observed{};
         DataflowRoleMailbox roles{};
@@ -522,9 +536,20 @@ public:
         const uint32_t pc1=fIO.RuntimePcRead(); fIO.Pause(); const uint32_t pc2=fIO.RuntimePcRead();
         return DataflowServicePcInImage(pc1,textWords,dispatchWords)
             && DataflowServicePcInImage(pc2,textWords,dispatchWords)
-            && RuntimeInspectionAllowed(core) && fGuard.ProveSelectedRoute(core)
+            && allowed() && fGuard.ProveSelectedRoute(core)
             && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
     }
+public:
+    bool RunningReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& expected,
+        unsigned textWords,unsigned dispatchWords) {
+        return RunningReadySample(core,expected,textWords,dispatchWords,false);
+    }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    bool InspectSnapshotRunningReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& expected,
+        unsigned textWords,unsigned dispatchWords) {
+        return RunningReadySample(core,expected,textWords,dispatchWords,true);
+    }
+#endif
     bool RuntimeStable(unsigned core,unsigned textWords,unsigned dispatchWords) {
         using namespace PioneerQwen35;
         if (core>=DataflowBarrierWorkers || !RuntimeInspectionAllowed(core)
@@ -538,10 +563,18 @@ public:
     // Two snapshots of each B/NC PC must be in its own exported image and
     // outside the stop/failure park loop. A speculative PC is only a sample,
     // never a substitute for the independent runtime/NoC/ownership proof.
-    bool RunningRolePcs(unsigned core,const PioneerQwen35::DataflowRoleProgramBounds& bounds,bool fault) {
+private:
+    bool RunningRolePcsSample(unsigned core,const PioneerQwen35::DataflowRoleProgramBounds& bounds,
+        bool fault,bool observation) {
         using namespace PioneerQwen35;
-        auto allowed=[&]() { return fault?fScope.ProveRoleFaultAuditSafe(fIO,core)
-            :RuntimeInspectionAllowed(core); };
+        auto allowed=[&]() {
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+            if (observation) return !fault && SnapshotObservationAllowed(core);
+#else
+            (void)observation;
+#endif
+            return fault?fScope.ProveRoleFaultAuditSafe(fIO,core):RuntimeInspectionAllowed(core);
+        };
         if (core>=DataflowBarrierWorkers || !bounds.Valid() || !allowed() || !SelectForStop(core)) return false;
         uint32_t first[DataflowRoleCount]{},second[DataflowRoleCount]{};
         for (unsigned role=0;role<DataflowRoleCount;role++) first[role]=fIO.SharedRolePcRead(role);
@@ -553,6 +586,15 @@ public:
         return allowed() && fGuard.ProveSelectedRoute(core)
             && fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
     }
+public:
+    bool RunningRolePcs(unsigned core,const PioneerQwen35::DataflowRoleProgramBounds& bounds,bool fault) {
+        return RunningRolePcsSample(core,bounds,fault,false);
+    }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    bool InspectSnapshotRunningRolePcs(unsigned core,const PioneerQwen35::DataflowRoleProgramBounds& bounds) {
+        return RunningRolePcsSample(core,bounds,false,true);
+    }
+#endif
     // Compare the actual B/NC boot words, shims and text against the exported
     // images twice while the selected running tile and route remain owned.
     // This is a startup observation, not proof against a later writer.

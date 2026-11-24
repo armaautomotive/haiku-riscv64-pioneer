@@ -36,6 +36,7 @@ class PioneerQwen35SharedRoleBinding {
     bool fReleaseAuthorized=false;
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
     bool fAutoRestoreOnStop=false;
+    unsigned fRuntimeObservationCore=PioneerQwen35::DataflowBarrierWorkers;
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     bool fSnapshotFleetParked=false;
 #endif
@@ -67,6 +68,11 @@ class PioneerQwen35SharedRoleBinding {
     }
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
 public:
+    // A fresh sample is visible only during the same locked CoreReady call.
+    bool RuntimeObservationActive(unsigned core) const {
+        return core<PioneerQwen35::DataflowBarrierWorkers && fRuntimeObservationCore==core
+            && fContext.qwen35SharedRoleBinding==this && fViews.Opened();
+    }
     // Set only after all started roles and compute workers have been observed
     // parked. A retry may observe a prior hold, but must not issue it twice.
     bool SnapshotHoldTransition(unsigned core,bool attempted) const {
@@ -392,7 +398,8 @@ public:
     }
     __attribute__((noinline)) bool CoreReady(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot) {
         auto* scope=Scope();
-        if (!scope || core>=PioneerQwen35::DataflowBarrierWorkers || !fReleaseConfirmed[core]
+        if (!scope || fContext.qwen35SharedRoleBinding!=this
+            || core>=PioneerQwen35::DataflowBarrierWorkers || !fReleaseConfirmed[core]
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
             || !fStackReleaseConfirmed[core]
 #endif
@@ -407,10 +414,24 @@ public:
 #endif
                 ) return false;
         }
-        if (!io.RunningReady(core,snapshot,
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+        // Collect a fresh bounded observation without granting command writes.
+        // The real runtime proof remains a separate, currently denied check.
+        if (fRuntimeObservationCore!=PioneerQwen35::DataflowBarrierWorkers
+            || !io.InspectSnapshotRunningReady(core,snapshot,
+                sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
+                sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t))
+            || !io.InspectSnapshotRunningRolePcs(core,RoleBounds())) return false;
+        fRuntimeObservationCore=core;
+#endif
+        const bool ready=io.RunningReady(core,snapshot,
             sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
             sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t))
-            || !io.RunningRolePcs(core,RoleBounds(),false)) return false;
+            && io.RunningRolePcs(core,RoleBounds(),false);
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+        fRuntimeObservationCore=PioneerQwen35::DataflowBarrierWorkers;
+#endif
+        if (!ready) return false;
         fRunningImagesObserved[core]=true;
         return true;
     }

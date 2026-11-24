@@ -101,6 +101,28 @@ struct PioneerQ35SharedRoleBindingTestAccess {
         b.fStackReleaseConfirmed[core]=b.fStopAttempted[core]=b.fAutoRestoreParked[core]=false;
         b.fComputeStopAttempted[core]=b.fHoldAttempted[core]=false;b.fStopToken[core]=0;
     }
+    static void ExerciseSnapshotRuntimeObservation(PioneerQwen35SharedRoleBinding& b) {
+        constexpr unsigned core=7;
+        auto* scope=b.Scope();assert(scope);
+        const bool firmware=b.fContext.io.firmwareMatches;
+        b.fContext.io.firmwareMatches=true;
+        assert(scope->CanInspectSnapshotRuntime(b.fContext.io,core)
+            && !scope->ProveRoleRuntimeSafe(b.fContext.io,core));
+        assert(!b.RuntimeObservationActive(core));
+        b.fRuntimeObservationCore=core;
+        assert(b.RuntimeObservationActive(core) && !b.RuntimeObservationActive(core+1));
+        b.fRuntimeObservationCore=DataflowBarrierWorkers;
+        auto* service=b.fContext.qwen35DataflowService;
+        const bool ready=service->ready,capture=service->capturePending,running=service->graphRunning;
+        service->ready=service->capturePending=service->graphRunning=false;
+        assert(!scope->CanInspectSnapshotRuntime(b.fContext.io,core));
+        service->ready=ready;service->capturePending=capture;service->graphRunning=running;
+        auto* graph=b.fContext.qwen35GraphOwner;graph->retained=true;
+        assert(!scope->CanInspectSnapshotRuntime(b.fContext.io,core));graph->retained=false;
+        b.fContext.io.firmwareMatches=false;
+        assert(!scope->CanInspectSnapshotRuntime(b.fContext.io,core));
+        b.fContext.io.firmwareMatches=firmware;
+    }
 #endif
 #endif
     static bool OpenViews(PioneerQwen35SharedRoleBinding& binding) {
@@ -178,6 +200,7 @@ static void ExerciseAutoRestoreImageBinding(PioneerSessionIO& io)
     assert(PioneerQ35SharedRoleBindingTestAccess::OpenViews(*binding));
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     PioneerQ35SharedRoleBindingTestAccess::ExerciseSnapshotHoldLedger(*binding);
+    PioneerQ35SharedRoleBindingTestAccess::ExerciseSnapshotRuntimeObservation(*binding);
 #endif
     const unsigned resetWrites=io.sharedResetWrites;
     assert(!binding->ArmAndBeginRelease() && !binding->StartCore(0) && io.sharedResetWrites==resetWrites);

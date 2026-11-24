@@ -218,6 +218,17 @@ public:
 #endif
                 );
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    // Read-only startup/runtime samples may establish evidence for the
+    // independent runtime proof; they do not themselves authorize a write.
+    bool CanInspectSnapshotRuntime(PioneerSessionIO& io,unsigned core) const {
+        auto* service=fContext?fContext->qwen35DataflowService:NULL;
+        return core<PioneerQwen35::DataflowBarrierWorkers && service
+            && fContext->qwen35SharedRoleBinding && ProveExclusiveRewrite(io)
+            && !RetainedFaultAuditActive(io) && io.SharedRoleFirmwareMatches()
+            && (service->SharedRoleCapturePending() || service->Ready() || service->GraphRunning());
+    }
+#endif
     // Read-only image comparison during installation or a separately
     // authorized retained-fault audit. Neither admits writes or proves that
     // another agent cannot change an image after it has been sampled.
