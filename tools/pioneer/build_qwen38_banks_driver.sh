@@ -644,6 +644,12 @@ case "${PIONEER_Q38_SPAN_FAST:-0}" in
     extra="$extra -DPIONEER_Q38_SPAN_FAST";;
  *) exit 2;;
 esac
+case "${PIONEER_QWEN35_SUPPORTED_SPAN_COMPILE_ONLY:-0}" in
+ 0) ;;
+ 1) [ "$variant:${PIONEER_QWEN35_RECOVERY_COMPILE_ONLY:-0}:${PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY:-0}:${PIONEER_Q38_SPAN_PRELOAD:-0}:${PIONEER_Q38_SPAN_FAST:-0}:${PIONEER_QWEN35_RECOVERY_QUALIFY:-0}:${PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL:-0}" = 60:1:1:1:1:0:0 ] || exit 2
+    extra="$extra -DPIONEER_QWEN35_SUPPORTED_SPAN";;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_SPAN_REUSE_CODE:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_SPAN_FAST:-0}" = 1 ] || exit 2
@@ -802,6 +808,11 @@ set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/pri
  -I"$sdk/headers" -idirafter "$sdk/headers/posix"
 if [ "$variant" = 60 ]; then
 	mkdir -m 700 "$output"
+	if [ "${PIONEER_QWEN35_SUPPORTED_SPAN_COMPILE_ONLY:-0}" = 1 ]; then
+		span_image="$output/qwen35-supported-span-image"
+		sh "$project/tools/pioneer/build_qwen35_span_image.sh" "$build" "$span_image"
+		set -- "$@" -I"$span_image"
+	fi
 	dataflow_image="$output/qwen35-dataflow-service-image"
 	sh "$project/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$dataflow_image"
 	set -- "$@" -I"$dataflow_image"

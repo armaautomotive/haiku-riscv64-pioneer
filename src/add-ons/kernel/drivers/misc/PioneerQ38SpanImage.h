@@ -2,7 +2,14 @@
 #ifndef PIONEER_Q38_SPAN_IMAGE_H
 #define PIONEER_Q38_SPAN_IMAGE_H
 #include <stdint.h>
-#ifdef PIONEER_Q38_SPAN_FAST
+#if defined(PIONEER_QWEN35_SUPPORTED_SPAN)
+#if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH) \
+    || !defined(PIONEER_Q38_SPAN_FAST) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY) \
+    || defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL)
+#error The Q35 supported-counter span image is restricted to the non-loadable rewrite witness
+#endif
+#include "PioneerQwen35SupportedSpanImage.h"
+#elif defined(PIONEER_Q38_SPAN_FAST)
 #include "PioneerQ38FastSpanImage.h"
 #endif
 // EXACT OFFLINE research image;NO driver/ABI selects it. A future owner
@@ -11,7 +18,9 @@
 // Text SHA256 10cc657069152a0f8b216490105fee287a517b680cc6af04f3d598906a448b61
 // Original8192B code bound preserved;3248B text,400B main+128B packet frames.
 enum { TT_Q38_SPAN_CODE_BYTES=
-#ifdef PIONEER_Q38_SPAN_FAST
+#if defined(PIONEER_QWEN35_SUPPORTED_SPAN)
+ TT_QWEN35_SUPPORTED_SPAN_CODE_BYTES,
+#elif defined(PIONEER_Q38_SPAN_FAST)
  TT_Q38_FAST_SPAN_CODE_BYTES,
 #else
  3248,
@@ -21,7 +30,9 @@ enum { TT_Q38_SPAN_CODE_BYTES=
  TT_Q38_SPAN_FAULT_ENTRY=0x72060,TT_Q38_SPAN_FAULT_PARK=0x7207c };
 static inline uint32_t PioneerQ38SpanCodeWord(unsigned word)
 {
-#ifdef PIONEER_Q38_SPAN_FAST
+#if defined(PIONEER_QWEN35_SUPPORTED_SPAN)
+ return PioneerQwen35SupportedSpanCodeWord(word);
+#elif defined(PIONEER_Q38_SPAN_FAST)
  return PioneerQ38FastSpanCodeWord(word);
 #else
  static const uint32_t code[]={

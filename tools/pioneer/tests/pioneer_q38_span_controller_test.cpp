@@ -50,7 +50,12 @@ struct SpanControlIO:PanelIO {
 	uint32_t ResetRead() { Touch(); return coreReset; }
 	uint32_t RuntimePcRead() { Touch(); pcSamples++; return latePcFault && pcSamples==latePcFault?0x72004:
 		(pcSamples&1?TT_Q38_SPAN_PARK:TT_Q38_SPAN_PARK_FETCH); }
-	uint32_t ResidentNocRead(uint32_t a) { Touch(); return PanelIO::ResidentNocRead(a); }
+	uint32_t ResidentNocRead(uint32_t a) {
+#ifdef PIONEER_QWEN35_SUPPORTED_SPAN
+		assert(a!=0x20c);
+#endif
+		Touch(); return PanelIO::ResidentNocRead(a);
+	}
 	uint32_t BulkL1Read(unsigned w) { Touch(); return BulkMock::BulkL1Read(w); }
 	void BulkL1Write(unsigned w,uint32_t v) { Touch(); BulkMock::BulkL1Write(w,v); }
 	uint32_t HostPciRead(unsigned p,uint16_t o,uint8_t s) { Touch(); return StoreMock::HostPciRead(p,o,s); }
@@ -82,7 +87,12 @@ struct SpanControlIO:PanelIO {
 		for (unsigned w=0;w<8192;w++) m.memory[0x140000+w*4]=l1[w];
 		for (unsigned w=0;w<64;w++) m.descriptor[w]=l1[w];
 		for (unsigned w=0;w<16;w++) m.seals[w]=w?source[w]:config;
-		for (unsigned w=0;w<8;w++) m.counts[w]=PanelIO::ResidentNocRead(PioneerQ38SpanCounter(w));
+		for (unsigned w=0;w<8;w++) {
+#ifdef PIONEER_QWEN35_SUPPORTED_SPAN
+			if (w==1) { m.counts[w]=0;continue; }
+#endif
+			m.counts[w]=PanelIO::ResidentNocRead(PioneerQ38SpanCounter(w));
+		}
 		for (unsigned w=0;w<10;w++) m.command[w]=command[w];
 		m.failPacket=packetFault; m.dropPacket=int(deviceDropPacket); m.corruptPacket=int(deviceCorruptPacket);
 		(void)m.Run();

@@ -3,6 +3,9 @@
 #define PIONEER_Q38_SPAN_CONTROLLER_H
 #include "PioneerQ38SpanAuthority.h"
 #include "PioneerQ38SpanImage.h"
+#ifdef PIONEER_QWEN35_SUPPORTED_SPAN
+#include "PioneerQwen35SpanSummary.h"
+#endif
 #include "PioneerRuntimeMatvec.h"
 #include "PioneerBulkUpload.h"
 #include "PioneerWideOutput.h"
@@ -158,7 +161,12 @@ template<class IO,bool Work=false> bool PioneerQ38SpanUpload(IO& io,const tt_dra
 	for (unsigned w=0;w<3;w++) io.RuntimeStatusWrite(w,0);
 	for (unsigned w=0;w<3;w++) if (io.RuntimeStatusRead(w)) return fail();
 	if (!PioneerQ38SpanSources(io,dram,noc,banks,input,store,bulk,transfer,wide,lease,0x47800,0x402)) return fail();
-	for (unsigned w=0;w<8;w++) r.before[w]=io.ResidentNocRead(PioneerQ38SpanCounter(w));
+	for (unsigned w=0;w<8;w++) {
+#ifdef PIONEER_QWEN35_SUPPORTED_SPAN
+		if (w==1) { r.before[w]=0;continue; }
+#endif
+		r.before[w]=io.ResidentNocRead(PioneerQ38SpanCounter(w));
+	}
 	// First uncertain BME/reset write retains ALL owners;there is NO rollback.
 	lease.running=true; wide.pending=true; lease.nonce=d[6]; r.nonce=d[6]; r.bytes=bytes;
 	io.HostPciWrite(1,4,2,0x406); if (io.HostPciRead(1,4,2)!=0x406) return fail();
@@ -182,9 +190,18 @@ template<class IO,bool Work=false> bool PioneerQ38SpanUpload(IO& io,const tt_dra
 	}
 	if (!r.completed || !PioneerQ38SpanSources(io,dram,noc,banks,input,store,bulk,transfer,wide,lease,0x46800,0x406)
 		|| !PioneerQ38SpanLiveCode<IO,Work>(io)) return fail();
-	for (unsigned w=0;w<8;w++) r.after[w]=io.ResidentNocRead(PioneerQ38SpanCounter(w));
+	for (unsigned w=0;w<8;w++) {
+#ifdef PIONEER_QWEN35_SUPPORTED_SPAN
+		if (w==1) { r.after[w]=0;continue; }
+#endif
+		r.after[w]=io.ResidentNocRead(PioneerQ38SpanCounter(w));
+	}
 	for (unsigned w=0;w<32;w++) r.summary[w]=io.BulkL1Read(3072+w);
+#ifdef PIONEER_QWEN35_SUPPORTED_SPAN
+	if (!PioneerQwen35SpanSummary(r.summary,d,r.before,r.after)) return fail();
+#else
 	if (!PioneerQ38SpanSummary(r.summary,d,r.before,r.after)) return fail();
+#endif
 	for (unsigned w=0;w<64;w++) if (io.BulkL1Read(w)!=d[w]) return fail();
 	unsigned last=(bytes-1)&~16383U;
 	const uint32_t command[]={Work?0x144000:d[7]+last,Work?0U:d[8],Work?129U:1555U,

@@ -1174,4 +1174,5 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 	-DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS \
 	"$directory/pioneer_qwen35_graph_descriptor_update_test.cpp" -o "$temporary/shared-role-descriptor-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/shared-role-descriptor-test"
+sh "$directory/run_pioneer_qwen35_span_image_tests.sh" "$build"
 echo 'PASS: Qwen35 dataflow roles compile as RV32IMF without A atomics or runtime helpers'

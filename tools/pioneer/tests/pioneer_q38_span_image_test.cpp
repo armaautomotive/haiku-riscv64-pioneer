@@ -44,6 +44,9 @@ struct Q38SpanMachine:BlockMachine {
 	uint32_t Load(uint32_t a) override {
 		if (Range(a,0xffb20000,0x2000)) {
 			mmioReads++; unsigned offset=a-0xffb20000;
+#ifdef PIONEER_QWEN35_SUPPORTED_SPAN
+			assert(offset!=0x20c); // The Q35 image must not read this Blackhole counter.
+#endif
 			if (offset<40) return command[offset/4];
 			for (unsigned i=0;i<4;i++) if (offset==0x40+i*0x800) return i?0:unsigned(pending);
 			if (offset>=0x240 && offset<0x2c0) return 0;
