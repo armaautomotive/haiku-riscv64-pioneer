@@ -11,7 +11,7 @@ using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uin
 using vuint8=volatile uint8;using vuint16=volatile uint16;using vuint32=volatile uint32;
 using addr_t=uintptr_t;using thread_id=int;using status_t=int;
 enum {B_OK=0,B_BAD_VALUE=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,B_ENTRY_NOT_FOUND=-4,B_ERROR=-5};
-enum {PCI_header_type=0x0e,PCI_header_type_mask=0x7f,PCI_header_type_PCI_to_PCI_bridge=1};
+enum {PCI_command=0x04,PCI_header_type=0x0e,PCI_header_type_mask=0x7f,PCI_header_type_PCI_to_PCI_bridge=1};
 static constexpr uint32 kSg2042AtPciAddress0=0,kSg2042AtDescriptor0=8;
 #define ROUNDDOWN(value,alignment) ((value)&~((alignment)-1))
 #define dprintf(...) ((void)0)
@@ -97,5 +97,30 @@ int main()
 	assert(!readDone.load() && !writeDone.load() && *reinterpret_cast<uint32*>(controller.root+4)==0);
 	assert(controller.EndPioneerRecovery(ticket)==B_OK);configReader.join();configWriter.join();
 	assert(readDone && writeDone && observed==0x20421e30 && *reinterpret_cast<uint32*>(controller.root+4)==0x402);
+	// These assert the exact dword sent to the root, rather than modelling
+	// W1C as ordinary memory. Untouched status bits must be sent as zero.
+	auto* commandStatus=reinterpret_cast<uint32*>(controller.root+4);
+	*commandStatus=0xf9100402;
+	assert(controller.WriteSg2042Config(0,0,0,PCI_command,2,0x403)==B_OK && *commandStatus==0x00000403);
+	*commandStatus=0xf9100402;
+	assert(controller.WriteSg2042Config(0,0,0,PCI_command+1,1,0x05)==B_OK && *commandStatus==0x00000502);
+	*commandStatus=0xf9100402;
+	assert(controller.WriteSg2042Config(0,0,0,PCI_command+2,2,0x2000)==B_OK && *commandStatus==0x20000402);
+	*commandStatus=0xf9100402;
+	assert(controller.WriteSg2042Config(0,0,0,PCI_command+3,1,0x20)==B_OK && *commandStatus==0x20000402);
+	*commandStatus=0xf9100402;
+	assert(controller.WriteSg2042Config(0,0,0,PCI_command,4,0x20000403)==B_OK && *commandStatus==0x20000403);
+	other.fStartBus=0xc0;
+	*reinterpret_cast<uint32*>(other.root+4)=0xf9100402;
+	assert(other.WriteSg2042Config(0,0,0,PCI_command,2,0x403)==B_OK
+		&& *reinterpret_cast<uint32*>(other.root+4)==0xf9100403);
+	other.fStartBus=0x80;other.fEndBus=0xbe;
+	*reinterpret_cast<uint32*>(other.root+4)=0xf9100402;
+	assert(other.WriteSg2042Config(0,0,0,PCI_command,2,0x403)==B_OK
+		&& *reinterpret_cast<uint32*>(other.root+4)==0xf9100403);
+	other.fEndBus=0xbf;other.fRegsPhysical=0x4800001000ULL;
+	*reinterpret_cast<uint32*>(other.root+4)=0xf9100402;
+	assert(other.WriteSg2042Config(0,0,0,PCI_command,2,0x403)==B_OK
+		&& *reinterpret_cast<uint32*>(other.root+4)==0xf9100403);
 	std::puts("PASS actual SG2042 controller lease and config methods: private-root admission, owner access, blocked read/write and wake; SIMULATED ONLY");
 }

@@ -434,6 +434,15 @@ ECAMPCIController::WriteSg2042Config(uint8 bus, uint8 device, uint8 function,
 			uint32 shift = (offset & 3) * 8;
 			uint32 mask = (size == 1 ? 0xff : 0xffff) << shift;
 			uint32 word = Sg2042MmioRead((vuint32*)address);
+			// The Pioneer root's command and status share one 32-bit
+			// register. Status contains write-one-to-clear bits: replaying
+			// their read values during a narrow command write would erase
+			// recorded errors. Preserve the command half, but write zero
+			// to status bits unless the caller explicitly addressed them.
+			if (fStartBus == 0x80 && fEndBus == 0xbf
+				&& fRegsPhysical == 0x4800000000ULL
+				&& ROUNDDOWN(offset, 4) == PCI_command)
+				word &= 0x0000ffff;
 			Sg2042MmioWrite((vuint32*)address,
 				(word & ~mask) | ((value << shift) & mask));
 		}
