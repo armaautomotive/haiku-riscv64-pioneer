@@ -212,6 +212,24 @@ public:
     bool StacklessCopiesCaptured(unsigned core) const {
         return fStackless && fRam.StacklessCopiesCaptured(core);
     }
+    // Bind a per-core source to this owner's exact retained allocation.
+    // This is host ledger identity only; callers separately establish held
+    // routes, reset continuity and protection of uncaptured tiles.
+    bool StacklessSources(unsigned core,const uint32_t* storage,unsigned words,
+        const uint32_t*& reader,const uint32_t*& writer,bool& captured) const {
+        reader=writer=nullptr;captured=false;
+        if (core>=DataflowBarrierWorkers || !fStackless || !fCoreLocalReleaseLedger
+            || (fPhase!=ReleaseAttempted && fPhase!=Faulted)
+            || !fRam.StacklessStorageMatches(storage,words)) return false;
+        const bool has=fRam.StacklessCopiesCaptured(core);
+        const uint32_t* r=fRam.OriginalWords(core,DataflowRoleReader);
+        const uint32_t* w=fRam.OriginalWords(core,DataflowRoleWriter);
+        if (has) {
+            const uint32_t* expected=storage+core*DataflowRoleLocalRamOwner::RequiredWords();
+            if (r!=expected || w!=expected+DataflowRoleLocalRamWords) return false;
+        } else if (r || w) return false;
+        reader=r;writer=w;captured=has;return true;
+    }
     // Capture is read-only; these states have not performed any role write.
     bool Untouched() const { return fPhase==Empty || fPhase==Captured || fPhase==Unavailable; }
     template<class IO> bool CaptureAll(uint32_t* code,unsigned codeWords,uint32_t* ram,

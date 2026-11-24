@@ -73,6 +73,13 @@ public:
         return core<PioneerQwen35::DataflowBarrierWorkers && fRuntimeObservationCore==core
             && fContext.qwen35SharedRoleBinding==this && fViews.Opened();
     }
+    bool SavedRamSources(unsigned core,const uint32_t*& reader,const uint32_t*& writer,bool& captured) const {
+        reader=writer=nullptr;captured=false;
+        if (fContext.qwen35SharedRoleBinding!=this || !fViews.Opened()
+            || !fCodeSnapshot || !fRamSnapshot || !fOwner.CoreLocalRestoreMode()) return false;
+        return fOwner.StacklessSources(core,fRamSnapshot,
+            PioneerQwen35::DataflowRoleFleetRecoveryOwner::RamWords(),reader,writer,captured);
+    }
     // Set only after all started roles and compute workers have been observed
     // parked. A retry may observe a prior hold, but must not issue it twice.
     bool SnapshotHoldTransition(unsigned core,bool attempted) const {
@@ -691,6 +698,18 @@ public:
 };
 
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+static bool
+PioneerQ35SharedRoleSavedRamSources(const PioneerQwen35SharedRoleBinding* binding,unsigned core,
+    const uint32_t*& reader,const uint32_t*& writer,bool& captured)
+{
+    reader=writer=nullptr;captured=false;
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    return binding && binding->SavedRamSources(core,reader,writer,captured);
+#else
+    (void)binding;(void)core;return false;
+#endif
+}
+
 static bool
 PioneerQ35SharedRoleSnapshotHoldTransition(const PioneerQwen35SharedRoleBinding* binding,
     unsigned core,bool attempted)

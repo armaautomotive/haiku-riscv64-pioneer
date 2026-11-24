@@ -123,6 +123,19 @@ struct PioneerQ35SharedRoleBindingTestAccess {
         assert(!scope->CanInspectSnapshotRuntime(b.fContext.io,core));
         b.fContext.io.firmwareMatches=firmware;
     }
+    static void ExerciseUnstartedRamSources(PioneerQwen35SharedRoleBinding& b) {
+        const uint32_t* reader=reinterpret_cast<const uint32_t*>(1);
+        const uint32_t* writer=reinterpret_cast<const uint32_t*>(1);bool captured=true;
+        assert(!PioneerQ35SharedRoleSavedRamSources(&b,0,reader,writer,captured)
+            && !reader && !writer && !captured);
+        auto* scope=b.Scope();assert(scope);
+        reader=writer=reinterpret_cast<const uint32_t*>(1);captured=true;
+        assert(!scope->ProveRoleHeldCopySources(b.fContext.io,0,reader,writer,captured)
+            && !reader && !writer && !captured);
+        reader=writer=reinterpret_cast<const uint32_t*>(1);captured=true;
+        assert(!scope->ProveRoleRetirementRamSources(b.fContext.io,0,reader,writer,captured)
+            && !reader && !writer && !captured);
+    }
 #endif
 #endif
     static bool OpenViews(PioneerQwen35SharedRoleBinding& binding) {
@@ -201,6 +214,7 @@ static void ExerciseAutoRestoreImageBinding(PioneerSessionIO& io)
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     PioneerQ35SharedRoleBindingTestAccess::ExerciseSnapshotHoldLedger(*binding);
     PioneerQ35SharedRoleBindingTestAccess::ExerciseSnapshotRuntimeObservation(*binding);
+    PioneerQ35SharedRoleBindingTestAccess::ExerciseUnstartedRamSources(*binding);
 #endif
     const unsigned resetWrites=io.sharedResetWrites;
     assert(!binding->ArmAndBeginRelease() && !binding->StartCore(0) && io.sharedResetWrites==resetWrites);

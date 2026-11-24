@@ -60,6 +60,12 @@ public:
     }
     bool MarkedForPossibleRelease() const { return fPhase==Dirty && fReleaseLedgerReady; }
     bool StacklessCapturePrepared() const { return fPhase==StacklessPrepared && fStacklessStorage; }
+    // Identity only: this does not prove the saved words remain equal to
+    // the device or authorize any access to a held worker.
+    bool StacklessStorageMatches(const uint32_t* storage,unsigned words) const {
+        return storage && storage==fStacklessStorage && words==RequiredWords()
+            && (fPhase==StacklessPrepared || fPhase==StacklessFaulted || fPhase==StacklessRestored);
+    }
     // Both verified pre-stack shims have completed their local-RAM copies.
     // This records an observation, not continuity: a subsequent reset could
     // start initialization again and must be independently excluded.

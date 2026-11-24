@@ -24,6 +24,8 @@ static bool PioneerQ35SharedRoleCopiesCaptured(const PioneerQwen35SharedRoleBind
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 static bool PioneerQ35SharedRoleResetTransition(const PioneerQwen35SharedRoleBinding*,unsigned,uint32_t,uint32_t);
 static bool PioneerQ35SharedRoleSnapshotHoldTransition(const PioneerQwen35SharedRoleBinding*,unsigned,bool);
+static bool PioneerQ35SharedRoleSavedRamSources(const PioneerQwen35SharedRoleBinding*,unsigned,
+    const uint32_t*&,const uint32_t*&,bool&);
 #endif
 #endif
 // Borrow, never reacquire, the lock already held by Qwen35DataflowControl.
@@ -312,12 +314,23 @@ public:
     // unsnapshotted tiles (including misrouted restoration writes).
     bool ProveRoleStacklessFleetPreparationSafe(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleUncapturedRamProtected(PioneerSessionIO&,unsigned) const { return false; }
-    // A future copy-aware restore must bind these pointers to the retained
-    // fleet ledger and exclude every source/destination writer for the whole
-    // transaction. No physical proof is implemented yet.
-    bool ProveRoleHeldCopySources(PioneerSessionIO&,unsigned,const uint32_t*& reader,
+    // Exact retained sources do not themselves establish that device RAM,
+    // reset or incoming writers remained stable. Those checks are separate.
+    bool ProveRoleHeldCopySources(PioneerSessionIO& io,unsigned core,const uint32_t*& reader,
         const uint32_t*& writer,bool& captured) const {
-        reader=writer=nullptr;captured=false;return false;
+        reader=writer=nullptr;captured=false;
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+        if (core>=PioneerQwen35::DataflowBarrierWorkers || io.runtimeCore!=core
+            || !io.DataflowPanelMappingStable() || !ProveExclusiveRewrite(io)
+            || !io.SharedRoleFirmwareMatches() || !ProveRoleFleetHeldAndQuiet(io,core)) return false;
+        const uint32_t* r=nullptr;const uint32_t* w=nullptr;bool has=false;
+        if (!PioneerQ35SharedRoleSavedRamSources(fContext->qwen35SharedRoleBinding,core,r,w,has)
+            || (has?!ProveRoleResetContinuitySinceCapture(io,core):!ProveRoleUncapturedRamProtected(io,core))
+            || !ProveRoleFleetHeldAndQuiet(io,core) || !ProveExclusiveRewrite(io)) return false;
+        reader=r;writer=w;captured=has;return true;
+#else
+        (void)io;(void)core;return false;
+#endif
     }
     bool ProveRoleCoreRestore(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*) const { return false; }
     // These require lifetime-spanning ownership and drain guarantees, not
@@ -330,9 +343,9 @@ public:
     bool ProveRoleRestorePhysicalReleaseSafe(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleRestorePhysicalHoldSafe(PioneerSessionIO&,unsigned) const { return false; }
     bool ProveRoleRestoreHeldAfterAttempt(PioneerSessionIO&,unsigned) const { return false; }
-    bool ProveRoleRetirementRamSources(PioneerSessionIO&,unsigned,const uint32_t*& reader,
+    bool ProveRoleRetirementRamSources(PioneerSessionIO& io,unsigned core,const uint32_t*& reader,
         const uint32_t*& writer,bool& captured) const {
-        reader=writer=nullptr;captured=false;return false;
+        return ProveRoleHeldCopySources(io,core,reader,writer,captured);
     }
     bool ProveRoleFleetImageRetirementSafe(PioneerSessionIO&) const { return false; }
     bool ProveRoleFleetImageRetirementRetrySafe(PioneerSessionIO&) const { return false; }
