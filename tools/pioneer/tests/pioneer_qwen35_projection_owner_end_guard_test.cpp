@@ -10,6 +10,12 @@
 struct Context {
     PioneerQ35ProjectionQualificationOwner qwen35QualificationOwner;
     PioneerResidentBanks banks;
+    PioneerResidentLease lease;
+    tt_dram_samples_result dram{};
+    struct A { tt_dram_samples_result& dram; };struct B { A baseline; };
+    struct C { B baseline; };struct D { C baseline; } baseline{{{{dram}}}};
+    void* qwen35DataflowService=nullptr;void* qwen35DataflowMemory=nullptr;
+    void* qwen35DataflowAuthority=nullptr;void* qwen35DataflowProgramScratch=nullptr;void* qwen35GraphOwner=nullptr;
     bool qwen35QualificationInternalActive=false;
     unsigned retained=0;
 };
@@ -42,8 +48,12 @@ int main() {
         Context c;Result result;bool clean=true;
         assert(c.qwen35QualificationOwner.Allocate());
         assert(Unsafe(c) && Reset(&c)==B_NOT_ALLOWED);
+        c.lease.ready=true;assert(Reset(&c)==0);
+        c.lease.pending=true;assert(Reset(&c)==B_NOT_ALLOWED);c.lease.pending=false;
+        c.qwen35DataflowService=&c;assert(Reset(&c)==B_NOT_ALLOWED);c.qwen35DataflowService=nullptr;
+        c.qwen35GraphOwner=&c;assert(Reset(&c)==B_NOT_ALLOWED);c.qwen35GraphOwner=nullptr;
         c.qwen35QualificationInternalActive=true;
-        assert(!Unsafe(c));
+        assert(!Unsafe(c) && Reset(&c)==B_NOT_ALLOWED);
         c.qwen35QualificationInternalActive=false;
         assert(!End(c,result,clean) && !clean && c.qwen35QualificationOwner.Active()
             && c.qwen35QualificationOwner.Retained() && c.retained==1 && result.retained==1);

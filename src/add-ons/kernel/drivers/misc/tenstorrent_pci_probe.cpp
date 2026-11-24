@@ -11794,13 +11794,21 @@ Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* contex
 		|| proof.reset_generation!=ticket || proof.firmware_generation!=ticket
 		|| context->recoveryMapping || !context->io.postResetDisposeComplete)
 		return abandon(B_BAD_VALUE);
-#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
-	// The diagnostic scratch snapshot has not yet been integrated into the
-	// reset proof. Never free it or clear quarantine via the generic path.
-	if (context->qwen35QualificationOwner.Active()) return retain(B_DEV_NOT_READY);
-#endif
+// PIONEER_Q35_PROJECTION_RESET_FINISH_BEGIN
 	status_t status=guard->validate(ticket);
 	if (status!=B_OK) return retain(status);
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
+	// Only an untouched diagnostic claim can be retired after a fully audited
+	// reset. Its storage remains alive until the bank context is destroyed.
+	if (context->qwen35QualificationOwner.Active()) {
+		if (!context->qwen35QualificationOwner.RetireUnmodifiedAfterReset(proof,ticket,
+			context->io.postResetDisposeComplete && !context->recoveryMapping,context->banks,
+			context->baseline.baseline.baseline.baseline.dram,context->lease)) return retain(B_DEV_NOT_READY);
+		status=guard->validate(ticket);
+		if (status!=B_OK) return retain(status);
+	}
+#endif
+// PIONEER_Q35_PROJECTION_RESET_FINISH_END
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 	if (!PioneerQ35ReleaseSharedRoleAfterReset(context->qwen35SharedRoleBinding,proof,ticket))
 		return retain(B_DEV_NOT_READY);
@@ -11886,9 +11894,17 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 	PioneerStoreContext* context=owner->context;
 // PIONEER_Q35_PROJECTION_OWNER_RESET_GUARD_BEGIN
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
-	// Until reset recovery knows how to retire this snapshot, reject before a
-	// reset can invalidate it. Keep the existing owner and quarantine intact.
-	if (context->qwen35QualificationOwner.Active()) return B_NOT_ALLOWED;
+	// A never-staged claim has not written scratch. Modified or uncertain
+	// transactions still retain their snapshots and cannot use generic reset.
+	if (context->qwen35QualificationOwner.Active()
+		&& (context->qwen35QualificationInternalActive || context->qwen35DataflowService
+			|| context->qwen35DataflowMemory || context->qwen35DataflowAuthority
+			|| context->qwen35DataflowProgramScratch || context->qwen35GraphOwner
+#ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+			|| context->qwen35SharedRoleBinding
+#endif
+			|| !context->qwen35QualificationOwner.UnmodifiedResetEligible(context->banks,
+				context->baseline.baseline.baseline.baseline.dram,context->lease))) return B_NOT_ALLOWED;
 #endif
 // PIONEER_Q35_PROJECTION_OWNER_RESET_GUARD_END
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE

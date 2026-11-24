@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_PROJECTION_QUALIFICATION_OWNER_H
 
 #include "PioneerQwen35ProjectionScratch.h"
+#include "PioneerDriverReloadState.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowProjectionQualificationService.h"
 #include <new>
 #include <stdlib.h>
@@ -53,6 +54,28 @@ public:
     }
     uint32_t* Snapshot() const { return Active()?snapshot:nullptr; }
     void Retain() { if (active && !retired) retained=true; }
+
+    // A diagnostic that never staged scratch has not written its claimed
+    // bank pages. This does not authorize a reset: the caller must separately
+    // hold the recovery ticket and prove device, firmware and DMA recovery.
+    bool UnmodifiedResetEligible(const PioneerResidentBanks& banks,const tt_dram_samples_result& dram,
+        const PioneerResidentLease& lease) const {
+        if (!Active() || !scratch || !qualification || !snapshot || !qualification->IsUnstarted()
+            || banks.Quarantined() || !lease.ready || lease.pending || lease.recovery_required) return false;
+        if (scratch->IsEmpty()) return !banks.Q35StreamClaimed();
+        return scratch->IsCaptured()
+            && banks.Q35StreamOwnerMatches(dram,scratch,PioneerQwen35::DataflowCoreCount);
+    }
+    // Retire the inert owner only after the exact verified reset ticket and
+    // disposal of old mappings. Its storage stays alive until bank teardown.
+    bool RetireUnmodifiedAfterReset(const PioneerDriverRecoveryProof& proof,uint64_t ticket,
+        bool oldMappingsDisposed,const PioneerResidentBanks& banks,const tt_dram_samples_result& dram,
+        const PioneerResidentLease& lease) {
+        if (!ticket || !oldMappingsDisposed || !proof.ReadyToRetireOneOwner()
+            || proof.reset_generation!=ticket || proof.firmware_generation!=ticket
+            || !UnmodifiedResetEligible(banks,dram,lease)) return false;
+        retained=true;retired=true;return true;
+    }
 
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
     // Prepare while the fleet remains held and the exact sticky bank claim

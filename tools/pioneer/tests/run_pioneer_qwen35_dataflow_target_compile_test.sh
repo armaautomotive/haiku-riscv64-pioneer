@@ -889,6 +889,14 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
     -I"$temporary" "$directory/pioneer_qwen35_projection_owner_end_guard_test.cpp" -o "$temporary/projection-owner-end-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-owner-end-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    "$directory/pioneer_qwen35_unmodified_reset_recovery_test.cpp" -o "$temporary/unmodified-reset-recovery-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/unmodified-reset-recovery-test"
+awk '/PIONEER_Q35_PROJECTION_RESET_FINISH_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_RESET_FINISH_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_reset_finish.inc"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -I"$temporary" "$directory/pioneer_qwen35_unmodified_reset_finish_test.cpp" -o "$temporary/unmodified-reset-finish-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/unmodified-reset-finish-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     -I"$temporary" "$directory/pioneer_qwen35_projection_scratch_context_test.cpp" -o "$temporary/projection-scratch-context-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-scratch-context-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
