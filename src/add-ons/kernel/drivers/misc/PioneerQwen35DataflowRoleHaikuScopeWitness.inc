@@ -23,6 +23,7 @@ static status_t Qwen35DataflowGenerate(PioneerProbeCookie*,void*,size_t);
 static bool PioneerQ35SharedRoleCopiesCaptured(const PioneerQwen35SharedRoleBinding*,unsigned);
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 static bool PioneerQ35SharedRoleResetTransition(const PioneerQwen35SharedRoleBinding*,unsigned,uint32_t,uint32_t);
+static bool PioneerQ35SharedRoleSnapshotHoldTransition(const PioneerQwen35SharedRoleBinding*,unsigned,bool);
 #endif
 #endif
 // Borrow, never reacquire, the lock already held by Qwen35DataflowControl.
@@ -400,10 +401,22 @@ public:
         return CanObserveDedicatedCleanStop(io,core) || CanObserveSnapshotCleanStop(io,core);
     }
     bool ProveRoleHoldSafe(PioneerSessionIO& io,unsigned core) const {
-        return CanObserveDedicatedCleanStop(io,core);
+        if (CanObserveDedicatedCleanStop(io,core)) return true;
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+        return CanObserveSnapshotCleanStop(io,core)
+            && PioneerQ35SharedRoleSnapshotHoldTransition(fContext->qwen35SharedRoleBinding,core,false);
+#else
+        return false;
+#endif
     }
     bool ProveRoleHeldAfterAttempt(PioneerSessionIO& io,unsigned core) const {
-        return CanObserveDedicatedCleanStop(io,core);
+        if (CanObserveDedicatedCleanStop(io,core)) return true;
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+        return CanObserveSnapshotCleanStop(io,core)
+            && PioneerQ35SharedRoleSnapshotHoldTransition(fContext->qwen35SharedRoleBinding,core,true);
+#else
+        return false;
+#endif
     }
     // Must independently establish the owned role/compute images, routes,
     // NoC quiescence and session/graph state, including partially stopped

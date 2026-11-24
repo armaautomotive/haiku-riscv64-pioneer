@@ -36,6 +36,9 @@ class PioneerQwen35SharedRoleBinding {
     bool fReleaseAuthorized=false;
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
     bool fAutoRestoreOnStop=false;
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    bool fSnapshotFleetParked=false;
+#endif
     bool fAutoRestoreParked[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fAutoCancelParked[PioneerQwen35::DataflowBarrierWorkers]{};
     bool fAutoRestoreRecorded[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -62,6 +65,20 @@ class PioneerQwen35SharedRoleBinding {
         auto* scope=fContext.io.qwen35BorrowedRoleScope;
         return scope && scope->ProveExclusiveRewrite(fContext.io)?scope:NULL;
     }
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+public:
+    // Set only after all started roles and compute workers have been observed
+    // parked. A retry may observe a prior hold, but must not issue it twice.
+    bool SnapshotHoldTransition(unsigned core,bool attempted) const {
+        return core<PioneerQwen35::DataflowBarrierWorkers && fContext.qwen35SharedRoleBinding==this
+            && fViews.Opened() && fAutoRestoreOnStop && fSnapshotFleetParked
+            && fReleaseAttempted[core] && fReleaseConfirmed[core] && !fReleaseHeld[core]
+            && fStackReleaseConfirmed[core] && fStopAttempted[core] && fStopToken[core]
+            && fAutoRestoreParked[core] && fComputeStopAttempted[core]
+            && fHoldAttempted[core]==attempted;
+    }
+private:
+#endif
     bool OpenForRecovery(PioneerQwen35RoleBorrowedScopeWitness& scope) {
         if (fViews.Opened()) return true;
         PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness> guard(fContext.io,scope);
@@ -560,6 +577,9 @@ public:
                 }
                 if (!parked) { stage=12;core=i;return false; }
             }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+            fSnapshotFleetParked=true;
+#endif
             // No reset is asserted until every started tile has either both
             // normal stop receipts or both stackless cancellation receipts,
             // plus a stopped compute receipt/park proof. The scope must
@@ -650,6 +670,17 @@ public:
 };
 
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+static bool
+PioneerQ35SharedRoleSnapshotHoldTransition(const PioneerQwen35SharedRoleBinding* binding,
+    unsigned core,bool attempted)
+{
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    return binding && binding->SnapshotHoldTransition(core,attempted);
+#else
+    (void)binding;(void)core;(void)attempted;return false;
+#endif
+}
+
 static bool
 PioneerQ35SharedRoleResetTransition(const PioneerQwen35SharedRoleBinding* binding,
     unsigned core,uint32_t expected,uint32_t desired)

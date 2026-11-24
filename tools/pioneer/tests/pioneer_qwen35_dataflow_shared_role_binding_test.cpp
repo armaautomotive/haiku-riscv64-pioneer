@@ -70,6 +70,38 @@ struct PioneerQ35SharedRoleBindingTestAccess {
         return binding.RoleImage();
     }
     static bool CloseViews(PioneerQwen35SharedRoleBinding& binding) { return binding.fViews.Close(); }
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    static void ExerciseSnapshotHoldLedger(PioneerQwen35SharedRoleBinding& b) {
+        constexpr unsigned core=7;
+        assert(!PioneerQ35SharedRoleSnapshotHoldTransition(&b,core,false));
+        b.fSnapshotFleetParked=true;b.fReleaseAttempted[core]=true;b.fReleaseConfirmed[core]=true;
+        b.fStackReleaseConfirmed[core]=true;b.fStopAttempted[core]=true;b.fStopToken[core]=1;
+        b.fAutoRestoreParked[core]=true;b.fComputeStopAttempted[core]=true;
+        assert(PioneerQ35SharedRoleSnapshotHoldTransition(&b,core,false));
+        assert(!PioneerQ35SharedRoleSnapshotHoldTransition(nullptr,core,false)
+            && !PioneerQ35SharedRoleSnapshotHoldTransition(&b,DataflowBarrierWorkers,false));
+        b.fAutoRestoreOnStop=false;
+        assert(!PioneerQ35SharedRoleSnapshotHoldTransition(&b,core,false));b.fAutoRestoreOnStop=true;
+        b.fContext.qwen35SharedRoleBinding=nullptr;
+        assert(!PioneerQ35SharedRoleSnapshotHoldTransition(&b,core,false));b.fContext.qwen35SharedRoleBinding=&b;
+        bool* required[]={&b.fSnapshotFleetParked,&b.fReleaseAttempted[core],&b.fReleaseConfirmed[core],
+            &b.fStackReleaseConfirmed[core],&b.fStopAttempted[core],&b.fAutoRestoreParked[core],
+            &b.fComputeStopAttempted[core]};
+        for (auto* flag:required) {
+            *flag=false;assert(!PioneerQ35SharedRoleSnapshotHoldTransition(&b,core,false));*flag=true;
+        }
+        b.fStopToken[core]=0;assert(!PioneerQ35SharedRoleSnapshotHoldTransition(&b,core,false));
+        b.fStopToken[core]=1;b.fReleaseHeld[core]=true;
+        assert(!PioneerQ35SharedRoleSnapshotHoldTransition(&b,core,false));b.fReleaseHeld[core]=false;
+        b.fHoldAttempted[core]=true;
+        assert(!PioneerQ35SharedRoleSnapshotHoldTransition(&b,core,false)
+            && PioneerQ35SharedRoleSnapshotHoldTransition(&b,core,true));
+        auto* scope=b.Scope();assert(scope && !scope->ProveRoleHeldAfterAttempt(b.fContext.io,core));
+        b.fSnapshotFleetParked=false;b.fReleaseAttempted[core]=b.fReleaseConfirmed[core]=false;
+        b.fStackReleaseConfirmed[core]=b.fStopAttempted[core]=b.fAutoRestoreParked[core]=false;
+        b.fComputeStopAttempted[core]=b.fHoldAttempted[core]=false;b.fStopToken[core]=0;
+    }
+#endif
 #endif
     static bool OpenViews(PioneerQwen35SharedRoleBinding& binding) {
         Guard guard;
@@ -144,6 +176,9 @@ static void ExerciseAutoRestoreImageBinding(PioneerSessionIO& io)
         && !image.bounds.ContainsRunning(DataflowRoleReader,DataflowServiceProbeReaderLoopEnd));
     ResetMaps();gAllowWrite=true;
     assert(PioneerQ35SharedRoleBindingTestAccess::OpenViews(*binding));
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    PioneerQ35SharedRoleBindingTestAccess::ExerciseSnapshotHoldLedger(*binding);
+#endif
     const unsigned resetWrites=io.sharedResetWrites;
     assert(!binding->ArmAndBeginRelease() && !binding->StartCore(0) && io.sharedResetWrites==resetWrites);
     assert(PioneerQ35SharedRoleBindingTestAccess::CloseViews(*binding));
