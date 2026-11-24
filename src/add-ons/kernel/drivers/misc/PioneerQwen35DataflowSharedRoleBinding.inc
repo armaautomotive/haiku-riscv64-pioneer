@@ -145,6 +145,12 @@ public:
         return core<PioneerQwen35::DataflowBarrierWorkers && fReleaseConfirmed[core]
             && fOwner.StacklessCopiesCaptured(core);
     }
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    bool ResetDisableTransitionMatches(unsigned core,uint32_t expected,uint32_t desired) const {
+        return fCodeSnapshot && fRamSnapshot
+            && fOwner.ResetDisableTransitionMatches(core,expected,desired);
+    }
+#endif
     bool CanDestroy() const { return !fViews.HasMappings() && !fOwner.RestorationRequired()
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         && !fTakeover.ResetRequired()
@@ -641,6 +647,13 @@ public:
 };
 
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+static bool
+PioneerQ35SharedRoleResetTransition(const PioneerQwen35SharedRoleBinding* binding,
+    unsigned core,uint32_t expected,uint32_t desired)
+{
+    return binding && binding->ResetDisableTransitionMatches(core,expected,desired);
+}
+
 static bool
 PioneerQ35SharedRoleProjectionRestored(const PioneerQwen35SharedRoleBinding* binding)
 {

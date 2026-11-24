@@ -161,6 +161,17 @@ public:
     bool ComputeLocalRamPreservationSelected() const {
         return fPreserveResetMask==DataflowSharedPreserveResetMask;
     }
+    // Metadata only: the physical scope must still prove the selected tile
+    // and fleet are held and exclusively owned. Permit only transitions
+    // between this tile's saved control word and its preservation variant,
+    // while the owner has marked a control write as potentially attempted.
+    bool ResetDisableTransitionMatches(unsigned core,uint32_t expected,uint32_t desired) const {
+        if (core>=DataflowBarrierWorkers || !fResetDisableCaptured || !fResetDisableTouched
+            || fPhase!=Faulted) return false;
+        const uint32_t original=fResetDisable[core],preserved=original|fPreserveResetMask;
+        return (expected==original || expected==preserved)
+            && (desired==original || desired==preserved);
+    }
     bool ReleaseLedgerPrepared() const { return fPhase==Armed
         && (fStackless?fRam.StacklessCapturePrepared():fRam.MarkedForPossibleRelease()); }
     bool RestorationRequired() const {

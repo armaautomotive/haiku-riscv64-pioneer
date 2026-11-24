@@ -885,6 +885,11 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/scope-retirement-test"
 awk '/PIONEER_Q35_PROJECTION_TRANSACTION_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_TRANSACTION_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_transaction.inc"
+awk '/PIONEER_Q35_SCOPE_RESET_CONTROL_BEGIN/ {copying=1;next} /PIONEER_Q35_SCOPE_RESET_CONTROL_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/PioneerQwen35DataflowRoleHaikuScopeWitness.inc" > "$temporary/pioneer_q35_scope_reset_control.inc"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -I"$temporary" "$directory/pioneer_qwen35_shared_reset_control_test.cpp" -o "$temporary/shared-reset-control-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/shared-reset-control-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     -I"$temporary" "$directory/pioneer_qwen35_projection_transaction_test.cpp" -o "$temporary/projection-transaction-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-transaction-test"

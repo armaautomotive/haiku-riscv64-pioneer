@@ -17,6 +17,9 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie*,uint32_t,void*,size_t)
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 static status_t Qwen35DataflowGenerate(PioneerProbeCookie*,void*,size_t);
 static bool PioneerQ35SharedRoleCopiesCaptured(const PioneerQwen35SharedRoleBinding*,unsigned);
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+static bool PioneerQ35SharedRoleResetTransition(const PioneerQwen35SharedRoleBinding*,unsigned,uint32_t,uint32_t);
+#endif
 #endif
 // Borrow, never reacquire, the lock already held by Qwen35DataflowControl.
 // The private constructor limits creation to that control path. The caller
@@ -198,7 +201,17 @@ public:
             && ProveRoleMemoryReadSafe(io,core,which);
 #endif
     }
-    bool ProveRoleControlWriteSafe(PioneerSessionIO&,unsigned,uint32_t,uint32_t) const { return false; }
+// PIONEER_Q35_SCOPE_RESET_CONTROL_BEGIN
+    bool ProveRoleControlWriteSafe(PioneerSessionIO& io,unsigned core,uint32_t expected,uint32_t desired) const {
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+        return ProveRoleMemoryReadSafe(io,core,PioneerQwen35::DataflowRolePhysicalExtraCode)
+            && PioneerQ35SharedRoleResetTransition(fContext->qwen35SharedRoleBinding,core,expected,desired)
+            && ProveRoleMemoryReadSafe(io,core,PioneerQwen35::DataflowRolePhysicalExtraCode);
+#else
+        (void)io;(void)core;(void)expected;(void)desired;return false;
+#endif
+    }
+// PIONEER_Q35_SCOPE_RESET_CONTROL_END
     bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO&,unsigned) const { return false; }
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     bool ProveRoleDedicatedObservedStage(PioneerSessionIO& io) const {

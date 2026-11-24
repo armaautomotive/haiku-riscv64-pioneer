@@ -14,6 +14,8 @@ struct RecoveryIO {
     bool coreRestoreProof=false,restoreReleaseReady=false,staleRestoreReceipt=false;
     bool restoreCompletion=false,restoreCompletedHeld=false;
     bool autoArmProof=false,autoHeldProof=false,autoCancelProof=false,autoRetirementProof=false;
+    const DataflowRoleFleetRecoveryOwner* transitionOwner=nullptr;
+    unsigned validatedTransitions=0;
     bool expectCancelledRetirement[DataflowBarrierWorkers]{};
     DataflowRoleSnapshotHandoff restoreHandoff[DataflowBarrierWorkers]{};
     unsigned releaseReadyCalls=0,failReleaseReadyCall=0;
@@ -145,6 +147,12 @@ struct RecoveryIO {
     }
     bool WriteResetDisable(unsigned core,uint32_t value) {
         if (!AllRolesHeld(core)) return false;
+        if (transitionOwner) {
+            assert(transitionOwner->ResetDisableTransitionMatches(core,resetDisable[core],value));
+            assert(!transitionOwner->ResetDisableTransitionMatches(core,resetDisable[core],value^0x80000000U));
+            assert(!transitionOwner->ResetDisableTransitionMatches(DataflowBarrierWorkers,resetDisable[core],value));
+            ++validatedTransitions;
+        }
         ++writes; resetDisable[core]=value;
         if (corruptPriorDisableOnWrite && core==37) {
             resetDisable[0]^=1; corruptPriorDisableOnWrite=false;
@@ -221,13 +229,30 @@ int main()
     std::vector<uint32_t> ramSnapshot(DataflowRoleFleetRecoveryOwner::RamWords());
     const uint32_t codeA[]={1,2,3},codeB[]={4,5},shimA[]={6,7},shimB[]={8,9};
     {
+        RecoveryIO io;const auto original=io.resetDisable;
+        DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.SelectComputeLocalRamPreservation());
+        assert(owner.CaptureAll(codeSnapshot.data(),codeSnapshot.size(),ramSnapshot.data(),ramSnapshot.size(),io));
+        assert(owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
+        io.transitionOwner=&owner;
+        assert(owner.PreparePossibleRelease(io));
+        assert(owner.RestoreAll(io));
+        assert(io.validatedTransitions==2*DataflowBarrierWorkers && io.resetDisable==original);
+        assert(!owner.ResetDisableTransitionMatches(0,original[0],original[0]));
+    }
+    {
         RecoveryIO io; const auto original=io.resetDisable;
         DataflowRoleFleetRecoveryOwner owner;
+        assert(!owner.ResetDisableTransitionMatches(0,original[0],original[0]));
         assert(owner.SelectComputeLocalRamPreservation() && owner.ComputeLocalRamPreservationSelected());
         assert(!owner.SelectComputeLocalRamPreservation());
         assert(owner.CaptureAll(codeSnapshot.data(),codeSnapshot.size(),ramSnapshot.data(),ramSnapshot.size(),io));
         assert(owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
+        io.transitionOwner=&owner;
         assert(owner.PreparePossibleRelease(io));
+        assert(io.validatedTransitions==DataflowBarrierWorkers);
+        assert(!owner.ResetDisableTransitionMatches(0,original[0],original[0]));
+        io.transitionOwner=nullptr;
         for (unsigned core=0;core<DataflowBarrierWorkers;core++)
             assert(io.resetDisable[core]==(original[core]|DataflowSharedPreserveResetMask));
         io.resetDisable[119]&=~uint32_t(DataflowComputeLocalRamPreserveResetMask);
