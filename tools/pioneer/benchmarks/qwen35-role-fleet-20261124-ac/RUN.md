@@ -19,8 +19,8 @@ mappings and the exclusive lock retained. After capturing evidence and
 verifying the staged recovery hashes, one authorized OFF pulse was sent;
 after the shutdown interval and an SSH timeout, one ON pulse was sent. The verified staged recovery script restored stable55 generation2 after Haiku
 booted. Independent postflight confirms `cold0 active_owner0`, matching driver
-and guard hashes, no lock and expected model metadata (`postflight.txt`). Full
-post-run 4B and 27B hash verification is running in SSH session `17196`.
+and guard hashes, no lock and expected model metadata (`postflight.txt`). Both full
+post-run model hashes match their pinned values (`post-model-hashes.txt`).
 Tag0020 is consumed.
 
 TRISCs stayed held. This was not inference and measured no decode throughput.
