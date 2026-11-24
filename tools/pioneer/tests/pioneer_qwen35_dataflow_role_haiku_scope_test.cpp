@@ -194,6 +194,8 @@ struct PioneerSessionIO {
     bool requireAllServicesBeforeStop=false;
     unsigned dropPrestackReleaseCore=UINT32_MAX;
     unsigned failPrestackHandoffReadCore=UINT32_MAX,prestackHandoffReads=0;
+    unsigned failMailboxReadCore=UINT32_MAX,mailboxReadCount=0,mailboxInitWrites=0,mailboxRestoreWrites=0;
+    bool failMailboxReadInjected=false,dropMailboxInit=false,dropMailboxRestore=false;
 #endif
 #ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
     uint32_t faultInvocationWord=0xabcddcbaU;
@@ -292,6 +294,14 @@ struct PioneerSessionIO {
         if (address>=DataflowRoleMailboxAddress && address<DataflowRoleMailboxAddress+sizeof(DataflowRoleMailbox)) {
             auto& box=roleBoxes[runtimeCore];
             const unsigned offset=address-DataflowRoleMailboxAddress;
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+            if (runtimeCore==failMailboxReadCore && !failMailboxReadInjected && reset==0x47800
+                && ++mailboxInitWrites==5 && dropMailboxInit) return;
+            if (runtimeCore==failMailboxReadCore && failMailboxReadInjected && reset==0x47800) {
+                ++mailboxRestoreWrites;
+                if (dropMailboxRestore) return;
+            }
+#endif
             if (reset==0x7000 && simulateService && dropServiceStop
                 && offset==offsetof(DataflowRoleMailbox,stopRequest) && value==1) {
                 ++serviceStops;return;
@@ -429,6 +439,11 @@ struct PioneerSessionIO {
             uint32_t value=0;
             std::memcpy(&value,reinterpret_cast<const uint8_t*>(&roleBoxes[runtimeCore])
                 +(address-DataflowRoleMailboxAddress),sizeof(value));
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+            if (runtimeCore==failMailboxReadCore && reset==0x47800 && ++mailboxReadCount==49) {
+                failMailboxReadInjected=true;return value^1U;
+            }
+#endif
             return value;
         }
 #endif

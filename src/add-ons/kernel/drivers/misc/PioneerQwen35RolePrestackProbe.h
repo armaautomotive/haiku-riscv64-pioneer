@@ -54,6 +54,8 @@ struct PioneerQwen35RolePrestackState {
 #ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
     unsigned fleetAuditFailure=0;
     uint32_t fleetAuditDetail=0;
+    uint32_t mailboxInitConfirmed=0;
+    bool preReleaseRestoreAttempted=false,preReleaseRestored=false;
 #endif
 #ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
     uint32_t faultSaved[1+PioneerQwen35::DataflowQueueStateBytes/4]{};
@@ -246,6 +248,9 @@ class PioneerQwen35RolePrestackProbe {
                 :i==1?uint32_t(DataflowRoleMailboxVersion):0U;
             fState.mailboxInitAttempts|=1U<<i;
             if (!WriteMailbox(Held,i,value)) return false;
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+            fState.mailboxInitConfirmed|=1U<<i;
+#endif
         }
         if (!ReadMailboxWords(Held) || fState.mailboxReadSecond[0]!=DataflowRoleMailboxMagic
             || fState.mailboxReadSecond[1]!=DataflowRoleMailboxVersion) return false;
@@ -543,6 +548,36 @@ public:
     }
 #endif
 #ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+    // Roll back confirmed mailbox initialization while this core is held.
+    // Any unconfirmed store, handoff or reset attempt retains the owner.
+    bool RollbackBeforeFleetRelease() {
+        if (!fState.attempted || !fState.captured || !fState.mailboxCaptured
+            || fState.preReleaseRestoreAttempted || fState.releaseAttempted || fState.serviceReleaseAttempted
+            || fState.cancelAttempted || fState.holdAttempted || fState.complete
+            || fState.handoffZeroAttempts || fState.preserveAttempted
+            || fState.mailboxInitAttempts!=fState.mailboxInitConfirmed
+            || fState.handoffRestoreAttempts || fState.mailboxRestoreAttempts || fState.resetRestoreAttempted
+            || !fAdapter.AllRolesHeld(fCore) || !Select(Held)) return false;
+        if (!ResetDisable(fState.resetDisable)) return false;
+        fState.preReleaseRestoreAttempted=true;
+        for (unsigned i=0;i<16;i++) if (fState.mailboxInitConfirmed&(1U<<i)) {
+            fState.mailboxRestoreAttempts|=1U<<i;
+            if (!WriteMailbox(Held,i,fState.mailbox[i])) return false;
+        }
+        uint32_t restored[3]{};
+        fState.preReleaseRestored=ReadMailboxWords(Held)
+            && !memcmp(fState.mailboxReadSecond,fState.mailbox,sizeof(fState.mailbox))
+            && ReadHandoff(Held,restored) && !memcmp(restored,fState.handoff,sizeof(restored))
+            && ResetDisable(fState.resetDisable) && fAdapter.AllRolesHeld(fCore);
+        return fState.preReleaseRestored;
+    }
+    bool VerifyFleetPreReleaseAfterImages() {
+        uint32_t restored[3]{};
+        return fState.preReleaseRestored && !fState.releaseAttempted && !fState.serviceReleaseAttempted
+            && ReadMailboxWords(Held) && !memcmp(fState.mailboxReadSecond,fState.mailbox,sizeof(fState.mailbox))
+            && ReadHandoff(Held,restored) && !memcmp(restored,fState.handoff,sizeof(restored))
+            && ResetDisable(fState.resetDisable) && fAdapter.AllRolesHeld(fCore);
+    }
     bool FleetAuditFailure(unsigned phase,uint32_t r1=0,uint32_t w1=0,uint32_t r2=0,uint32_t w2=0,
         uint32_t detail=0) {
         fState.fleetAuditFailure=phase;fState.fleetAuditDetail=detail;

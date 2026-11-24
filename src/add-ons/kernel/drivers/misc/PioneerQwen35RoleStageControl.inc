@@ -58,14 +58,15 @@ public:
     }
     bool FleetPrestackReadyForRollback() const {
         if (!fleetPrestack) return false;
-        unsigned phase=0; // completed prefix, at most one read-only failure, untouched suffix
+        unsigned phase=0; // completed prefix, at most one restored failure, untouched suffix
         for (unsigned core=0;core<PioneerQwen35::DataflowBarrierWorkers;core++) {
             const auto& state=fleetPrestack[core];
             if (!state.attempted) { if (state.complete) return false;phase=2;continue; }
             if (state.complete) {
                 if (phase || !state.serviceStopped || !state.copiesVerified || !state.mailboxRestored) return false;
             } else {
-                if (phase || !FleetPrestackReadOnlyFailure(state)) return false;
+                if (phase || !(FleetPrestackReadOnlyFailure(state)
+                    || (state.preReleaseRestored && !state.releaseAttempted && !state.serviceReleaseAttempted))) return false;
                 phase=1;
             }
         }
@@ -201,10 +202,12 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                                 worker(c->io,scope,owner->views,adapter,owner->fleetPrestack[core],core);
                             okay=worker.StartFleetService(65536);
                             if (okay) ++started;
-                            else if (PioneerQ35RoleStageQualification::FleetPrestackReadOnlyFailure(owner->fleetPrestack[core])
-                                && owner->views.ImageWritesConfirmed() && !c->Unsafe()
-                                && scope.ProveRoleDedicatedObservedStage(c->io)) {
-                                // This core has made no write or release attempt.
+                            else if (owner->views.ImageWritesConfirmed() && !c->Unsafe()
+                                && scope.ProveRoleDedicatedObservedStage(c->io)
+                                && (PioneerQ35RoleStageQualification::FleetPrestackReadOnlyFailure(owner->fleetPrestack[core])
+                                    || worker.RollbackBeforeFleetRelease())) {
+                                // This core made no write, or every confirmed
+                                // pre-release write was restored and verified.
                                 // Stop each already-started pair once; the common
                                 // rollback below restores images only if every
                                 // completed pair and the entire held fleet verify.
@@ -325,11 +328,13 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
 #ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
                         if (restored && r.version==6) {
                             for (unsigned core=0;restored && core<DataflowBarrierWorkers;core++) {
-                                if (!owner->fleetPrestack[core].complete) continue;
+                                if (!owner->fleetPrestack[core].complete
+                                    && !owner->fleetPrestack[core].preReleaseRestored) continue;
                                 PioneerQwen35RolePrestackProbe<PioneerSessionIO,PioneerQ35FleetInspectionScope,
                                     DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>,decltype(adapter)>
                                     worker(c->io,scope,owner->views,adapter,owner->fleetPrestack[core],core);
-                                restored=worker.VerifyAfterImages();
+                                restored=owner->fleetPrestack[core].complete
+                                    ?worker.VerifyAfterImages():worker.VerifyFleetPreReleaseAfterImages();
                             }
                         }
 #endif
