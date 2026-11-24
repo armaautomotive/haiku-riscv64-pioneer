@@ -413,6 +413,19 @@ public:
 	template<class IO>
 	DataflowServiceResult Install(const DataflowServiceImageView& image,IO& io)
 	{
+		struct NoExtraSetup {
+			bool Stage(IO&) const { return true; }
+			bool Verify(IO&) const { return true; }
+		} setup;
+		return Install(image,io,setup);
+	}
+
+	// Optional resident graph setup is performed while every worker is held.
+	// Its final verification occurs after arming but before any core release.
+	// A failed or uncertain setup keeps the existing service owner faulted.
+	template<class IO,class BeforeStart>
+	DataflowServiceResult Install(const DataflowServiceImageView& image,IO& io,BeforeStart& setup)
+	{
 		if (fPhase!=PhaseEmpty) return DataflowServiceInvalidState;
 		fDiagnostic={DataflowServiceDiagnosticNone,DataflowCoreCount,0,0,0,0};
 		if (!image.Valid()) return DataflowServiceInvalidImage;
@@ -535,6 +548,9 @@ public:
 			}
 		}
 
+		if (!setup.Stage(io)) {
+			fPhase=PhaseFaulted;return DataflowServiceStartupWriteFailed;
+		}
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 		// The one-shot fleet ledger must be consumed before any reset release.
 		if (!io.SharedArmAndBeginRelease() || !SharedVerifyStagedFleet(image,io)) {
@@ -542,6 +558,9 @@ public:
 			return DataflowServiceStartFailed;
 		}
 #endif
+		if (!setup.Verify(io)) {
+			fPhase=PhaseFaulted;return DataflowServiceStartFailed;
+		}
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 			if (!io.SharedStartCore(core)) {
