@@ -1,0 +1,52 @@
+/* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_QWEN35_DATAFLOW_RESIDENT_SERVICE_IO_H
+#define PIONEER_QWEN35_DATAFLOW_RESIDENT_SERVICE_IO_H
+#if !defined(PIONEER_QWEN35_DEVICE_DISPATCH) || !defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS)
+#error Resident graph service requires the shared-role graph witness
+#endif
+#include "PioneerQwen35DataflowResidentWorker.h"
+#include "PioneerQwen35DataflowResidentService.h"
+#include "PioneerQwen35DataflowResidentReceipt.h"
+namespace PioneerQwen35 {
+// Concrete device adapter. The containing worker loop owns startup, shutdown,
+// model identity and the saved L1 template. This adapter does not establish a
+// clean fleet, authorize inference or enable a driver entrypoint.
+class DataflowResidentServiceIO : public DataflowResidentWorkerIO {
+    DataflowWorkerMailbox& mailbox;
+    DataflowQueueControl* controls;
+    unsigned worker,failure=0;
+public:
+    DataflowResidentServiceIO(unsigned core,DataflowWorkerMailbox& box,
+        const DataflowRoleMailbox& roles,DataflowQueueControl* queues)
+        :DataflowResidentWorkerIO(core,box,roles,queues),mailbox(box),controls(queues),worker(core) {}
+    DataflowBarrierReadResult ReadResidentRequest(unsigned completed,unsigned epoch,DataflowResidentCommand& out) {
+        const auto* payload=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(DataflowBarrierReleasePayload));
+        const auto* marker=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(DataflowBarrierReleaseCommit));
+        return DataflowResidentCommandRead(payload,marker,completed,epoch,out);
+    }
+    bool ExecuteResidentGraph(unsigned core,const DataflowGraphRunDescriptor& d) {
+        if (core!=worker || !controls || !DataflowGraphRunValid(d,core)) return false;
+        bool okay=qwen35_graph_run_descriptor(&d,&mailbox);
+        for (unsigned i=0;i<DataflowCircularBufferCount;i++) {
+            const unsigned current=DataflowQueueFailure(controls[i]);
+            if (!failure && current) failure=current;
+        }
+        if (failure) okay=false;
+        if (!okay && !failure) { DataflowSignalLocalFailure(DataflowFailureQueue);failure=DataflowFailureQueue; }
+        return okay;
+    }
+    bool RecordResidentGraphResult(unsigned core,unsigned trigger,bool okay) {
+        if (core!=worker || !trigger || (okay && failure)) return false;
+        DataflowWorkerPublish(mailbox,trigger,okay?DataflowWorkerComplete:DataflowWorkerFailed,
+            okay?0:(failure?failure:DataflowFailureQueue),okay?2:5);
+        DataflowFence();return true;
+    }
+    bool PublishResidentCandidate(unsigned core,const DataflowResidentCommand& command) {
+        if (core!=worker) return false;
+        if (core) return true;
+        auto* record=reinterpret_cast<volatile uint32_t*>(static_cast<uintptr_t>(DataflowResidentCandidateAddress));
+        return DataflowResidentCandidatePublish(record,command);
+    }
+};
+}
+#endif

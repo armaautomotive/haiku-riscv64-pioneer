@@ -790,6 +790,8 @@ fi
 PIONEER_QWEN35_SHARED_ROLE_GRAPH_COMPILE_ONLY=1 PIONEER_QWEN35_RECOVERY_COMPILE_ONLY=1 \
 	PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY=1 \
 	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/shared-graph-service"
+sh "$root/tools/pioneer/build_qwen35_resident_service_witness.sh" \
+    "$build" "$temporary/shared-graph-service" "$temporary/resident-graph-service"
 for image in "$temporary/shared-role-images/reader.disassembly" \
 	"$temporary/shared-graph-service/disassembly.txt"; do
 	if ! grep -E '# abe40([[:space:]]|$)' "$image" >/dev/null; then
@@ -1218,6 +1220,13 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/res
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	"$directory/pioneer_qwen35_resident_worker_test.cpp" -o "$temporary/resident-worker-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-worker-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	"$directory/pioneer_qwen35_resident_service_test.cpp" -o "$temporary/resident-service-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-service-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE \
+	"$directory/pioneer_qwen35_resident_service_test.cpp" -o "$temporary/resident-service-paired-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-service-paired-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_graph_authorization_test.cpp" \
 	-o "$temporary/graph-authorization-test"

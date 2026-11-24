@@ -30,10 +30,10 @@ enum DataflowResidentLifecycleResult {
 // No failed or uncertain operation is retried. A received message cannot by
 // itself prove that the sender observed a successful NoC completion; physical
 // fault recovery and clean release still require independent qualification.
-template<class IO> class DataflowResidentLifecycle {
+template<class IO,class BarrierIO=IO> class DataflowResidentLifecycle {
     enum Phase { Empty,Running,Completing,Readying,Gathering,Gathered,Retained } phase=Empty;
     IO& io;
-    DataflowDeviceBarrier<IO> barrier;
+    DataflowDeviceBarrier<BarrierIO> barrier;
     unsigned core=DataflowBarrierWorkers,epoch=0,trigger=0,pollLimit=0,polls=0,seen=0;
     bool gatherSent=false;
     DataflowResidentLifecycleResult Fail() { phase=Retained;return DataflowResidentLifecycleRetained; }
@@ -66,7 +66,7 @@ template<class IO> class DataflowResidentLifecycle {
         phase=Gathered;return DataflowResidentLifecycleGathered;
     }
 public:
-    explicit DataflowResidentLifecycle(IO& transport):io(transport),barrier(transport) {}
+    explicit DataflowResidentLifecycle(IO& transport):io(transport),barrier(static_cast<BarrierIO&>(transport)) {}
     DataflowResidentLifecycle(const DataflowResidentLifecycle&)=delete;
     DataflowResidentLifecycle& operator=(const DataflowResidentLifecycle&)=delete;
     DataflowResidentLifecycleResult Start(unsigned worker,const DataflowResidentCommand& command,
