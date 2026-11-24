@@ -67,6 +67,8 @@
     li sp,PIONEER_Q35_ROLE_PRIVATE_STACK_TOP
     addi sp,sp,-16
     sw zero,0(sp)               /* private DataflowRoleTickState */
+.globl \name\()_service_loop
+\name\()_service_loop:
 1:
     li a0,PIONEER_Q35_ROLE_MAILBOX_ADDRESS
     mv a1,sp
@@ -74,6 +76,8 @@
     beqz a0,2f                 /* malformed state: retain, then park */
     li t0,PIONEER_Q35_ROLE_STOP_REQUESTED
     bne a0,t0,1b
+.globl \name\()_service_loop_end
+\name\()_service_loop_end:
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_PROBE
     /* Restricted probe only: after the real role has stopped, execute the
        separately verified stackless restore before leaving this processor. */

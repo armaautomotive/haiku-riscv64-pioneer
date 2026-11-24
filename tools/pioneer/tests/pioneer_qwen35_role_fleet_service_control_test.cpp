@@ -31,6 +31,15 @@ int main()
     }
     for (unsigned noc=0;noc<2;noc++) f.context.io.nocAvailable[noc]=0x10101010U;
     f.context.io.simulateService=true;f.context.io.requireAllServicesBeforeStop=true;
+    // After all starts, sample both service loops in the actual shim. The
+    // reader sample matches the 0x700cc observed on Pioneer hardware.
+    f.context.io.pauseHook=[](PioneerSessionIO* io) {
+        if (io->serviceStarts==DataflowBarrierWorkers) {
+            io->fleetRolePc[0][DataflowRoleReader]=0x700cc;
+            io->fleetRolePc[0][DataflowRoleWriter]=DataflowServiceProbeWriterLoopAddress;
+            io->pauseHook=nullptr;
+        }
+    };
     auto r=Request();r.version=6;
     assert(Qwen35RoleStageControl(&f.cookie,&r,sizeof(r))==B_OK);
     if (r.operation_status!=B_OK) std::fprintf(stderr,"fleet failed status=%d stage=%u capture=%u stage_image=%u restore=%u close=%u starts=%u stops=%u reset=%u hold=%u core=%u\n",
@@ -214,7 +223,7 @@ int main()
     gPerCoreRoleWindows=false;gAllowWrite=false;sColdRecoveryRequired=false;
     for (auto& windows:gRoleTileWindows) windows.clear();
     }
-    for (unsigned failureKind=0;failureKind<2;failureKind++) {
+    for (unsigned failureKind=0;failureKind<3;failureKind++) {
     Fixture f;assert(f.Run()==B_OK && f.request.operation_status==B_OK);
     ResetMaps();gAllowWrite=true;gPerCoreRoleWindows=true;
     gRoleWindowCore=gRoleSelectedCore=f.context.io.runtimeCore;
@@ -228,9 +237,15 @@ int main()
                 io->pauseHook=nullptr;
             }
         };
-    else f.context.io.pauseHook=[](PioneerSessionIO* io) {
+    else if (failureKind==1) f.context.io.pauseHook=[](PioneerSessionIO* io) {
             if (io->serviceStarts==DataflowBarrierWorkers) {
                 io->fleetRolePc[0][DataflowRoleReader]=0;
+                io->pauseHook=nullptr;
+            }
+        };
+    else f.context.io.pauseHook=[](PioneerSessionIO* io) {
+            if (io->serviceStarts==DataflowBarrierWorkers) {
+                io->fleetRolePc[0][DataflowRoleReader]=DataflowServiceProbeReaderShimParkAddress;
                 io->pauseHook=nullptr;
             }
         };

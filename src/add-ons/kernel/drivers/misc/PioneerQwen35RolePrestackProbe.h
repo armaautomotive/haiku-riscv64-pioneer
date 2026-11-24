@@ -21,6 +21,7 @@
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleBoot.h"
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleMailbox.h"
+#include "PioneerQwen35RoleServiceProbeImages.h"
 #endif
 #ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
 #ifndef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
@@ -137,6 +138,19 @@ class PioneerQwen35RolePrestackProbe {
         return fIO.Q38PanelRead(address)==value && Select(reset);
     }
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+    static bool ServicePcValid(unsigned role,uint32_t pc) {
+        using namespace PioneerQwen35;
+        if (pc&3) return false;
+        if (role==DataflowRoleReader)
+            return (pc>=DataflowRoleReaderCodeAddress
+                    && pc<DataflowRoleReaderCodeAddress+4*DataflowServiceProbeReaderRuntimeCodeWords)
+                || (pc>=DataflowServiceProbeReaderLoopAddress && pc<DataflowServiceProbeReaderLoopEnd);
+        if (role==DataflowRoleWriter)
+            return (pc>=DataflowRoleWriterCodeAddress
+                    && pc<DataflowRoleWriterCodeAddress+4*DataflowServiceProbeWriterRuntimeCodeWords)
+                || (pc>=DataflowServiceProbeWriterLoopAddress && pc<DataflowServiceProbeWriterLoopEnd);
+        return false;
+    }
 #ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
     static constexpr unsigned FaultWordCount=1+PioneerQwen35::DataflowQueueStateBytes/4;
     static constexpr unsigned FaultInvocationAddress=PioneerQwen35::DataflowProgramAddress
@@ -277,8 +291,7 @@ class PioneerQwen35RolePrestackProbe {
             DataflowRoleMailbox box{};
             if (ReadMailbox(Running,box) && DataflowRoleMailboxStartupReady(box)) {
                 const uint32_t r=fIO.SharedRolePcRead(DataflowRoleReader),w=fIO.SharedRolePcRead(DataflowRoleWriter);
-                if (r>=DataflowRoleReaderCodeAddress && r<DataflowRoleReaderCodeLimit
-                    && w>=DataflowRoleWriterCodeAddress && w<DataflowRoleWriterCodeLimit
+                if (ServicePcValid(DataflowRoleReader,r) && ServicePcValid(DataflowRoleWriter,w)
                     && Select(Running)) { fState.serviceStarted=true;break; }
             }
             fIO.Pause();
@@ -625,10 +638,8 @@ public:
         const uint32_t r1=fIO.SharedRolePcRead(DataflowRoleReader),w1=fIO.SharedRolePcRead(DataflowRoleWriter);
         fIO.Pause();
         const uint32_t r2=fIO.SharedRolePcRead(DataflowRoleReader),w2=fIO.SharedRolePcRead(DataflowRoleWriter);
-        if (!(r1>=DataflowRoleReaderCodeAddress && r1<DataflowRoleReaderCodeLimit
-            && r2>=DataflowRoleReaderCodeAddress && r2<DataflowRoleReaderCodeLimit
-            && w1>=DataflowRoleWriterCodeAddress && w1<DataflowRoleWriterCodeLimit
-            && w2>=DataflowRoleWriterCodeAddress && w2<DataflowRoleWriterCodeLimit))
+        if (!(ServicePcValid(DataflowRoleReader,r1) && ServicePcValid(DataflowRoleReader,r2)
+            && ServicePcValid(DataflowRoleWriter,w1) && ServicePcValid(DataflowRoleWriter,w2)))
             return FleetAuditFailure(4,r1,w1,r2,w2);
         if (!ReadMailbox(Running,second)) return FleetAuditFailure(5);
         if (memcmp(&first,&second,sizeof(first))) return FleetAuditFailure(6);
