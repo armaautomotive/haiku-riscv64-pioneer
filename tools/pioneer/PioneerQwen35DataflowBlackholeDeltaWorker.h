@@ -32,30 +32,51 @@ inline bool DataflowDeltaFinite(float value)
 	return (PioneerAttentionBits(value)&0x7f800000U)!=0x7f800000U;
 }
 
+// Round the software-binary64 sum to float after an exact power-of-two
+// scaling. Q/K L2 uses power zero; gated RMS uses the mean (power -7).
+PIONEER_QWEN35_DELTA_SIZE_OPT inline bool
+DataflowDeltaRoundedSum(const DataflowRmsSum& sum,int power,float& result)
+{
+	if (!(sum.high|sum.low)) { result=0;return true; }
+	uint32_t mantissa=(sum.high<<3)|(sum.low>>29);
+	const uint32_t tail=sum.low&0x1fffffffU;
+	int exponent=sum.exponent+power;
+	if (tail>0x10000000U || (tail==0x10000000U && (mantissa&1))) mantissa++;
+	if (mantissa==0x01000000U) { mantissa>>=1; exponent++; }
+	if (exponent>127) return false;
+	result=exponent< -126?0.0f:PioneerAttentionFloat(
+		(uint32_t(exponent+127)<<23)|(mantissa&0x7fffffU));
+	return true;
+}
+
 PIONEER_QWEN35_DELTA_SIZE_OPT inline bool
 DataflowDeltaNormalizeQk(float* query,float* key)
 {
 	if (!query || !key) return false;
-	float querySum=0,keySum=0;
+	DataflowRmsSum querySum,keySum;
 	for (unsigned i=0;i<DeltaWidth;i++) {
-		if (!DataflowRmsDomain(query[i]) || !DataflowRmsDomain(key[i]))
+		if (!DataflowRmsDomain(query[i]) || !DataflowRmsDomain(key[i])
+			|| !querySum.Add(PioneerQ38PrepareFlush(query[i]*query[i]))
+			|| !keySum.Add(PioneerQ38PrepareFlush(key[i]*key[i])))
 			return false;
-		querySum+=PioneerQ38PrepareFlush(query[i]*query[i]);
-		keySum+=PioneerQ38PrepareFlush(key[i]*key[i]);
 	}
-	if (!DataflowDeltaFinite(querySum) || !DataflowDeltaFinite(keySum)
-		|| querySum<0 || keySum<0) return false;
-	const float queryRoot=PioneerGraphSqrtPositive(querySum+1e-6f);
-	const float keyRoot=PioneerGraphSqrtPositive(keySum+1e-6f);
+	float querySquared=0,keySquared=0;
+	if (!DataflowDeltaRoundedSum(querySum,0,querySquared)
+		|| !DataflowDeltaRoundedSum(keySum,0,keySquared)) return false;
+	float queryRoot=PioneerGraphSqrtPositive(querySquared);
+	float keyRoot=PioneerGraphSqrtPositive(keySquared);
+	// GGML L2 normalization clamps the norm itself; epsilon is not added
+	// to the squared sum. This matters especially for low-magnitude heads.
+	if (queryRoot<1e-6f) queryRoot=1e-6f;
+	if (keyRoot<1e-6f) keyRoot=1e-6f;
 	if (!(queryRoot>0) || !(keyRoot>0)
 		|| !DataflowDeltaFinite(queryRoot) || !DataflowDeltaFinite(keyRoot)) return false;
-	const float queryScale=PioneerGraphDividePositive(1.0f,queryRoot)
-		*0.0883883461356163f;
+	const float queryScale=PioneerGraphDividePositive(1.0f,queryRoot);
 	const float keyScale=PioneerGraphDividePositive(1.0f,keyRoot);
 	if (!(queryScale>0) || !(keyScale>0)
 		|| !DataflowDeltaFinite(queryScale) || !DataflowDeltaFinite(keyScale)) return false;
 	for (unsigned i=0;i<DeltaWidth;i++) {
-		query[i]*=queryScale;
+		query[i]=(query[i]*queryScale)*0.0883883461356163f;
 		key[i]*=keyScale;
 		if (!DataflowDeltaFinite(query[i]) || !DataflowDeltaFinite(key[i])) return false;
 	}
@@ -121,19 +142,7 @@ DataflowDeltaUpdatePanel(const float* query,const float* key,
 PIONEER_QWEN35_DELTA_SIZE_OPT inline bool
 DataflowDeltaRoundedMean(const DataflowRmsSum& sum,float& mean)
 {
-	if (!(sum.high|sum.low)) {
-		mean=0;
-		return true;
-	}
-	uint32_t mantissa=(sum.high<<3)|(sum.low>>29);
-	const uint32_t tail=sum.low&0x1fffffffU;
-	int exponent=sum.exponent-7;
-	if (tail>0x10000000U || (tail==0x10000000U && (mantissa&1))) mantissa++;
-	if (mantissa==0x01000000U) { mantissa>>=1; exponent++; }
-	if (exponent>127) return false;
-	mean=exponent< -126?0.0f:PioneerAttentionFloat(
-		(uint32_t(exponent+127)<<23)|(mantissa&0x7fffffU));
-	return true;
+	return DataflowDeltaRoundedSum(sum,-7,mean);
 }
 
 PIONEER_QWEN35_DELTA_SIZE_OPT inline bool

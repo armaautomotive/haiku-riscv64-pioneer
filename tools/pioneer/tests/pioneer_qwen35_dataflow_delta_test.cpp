@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <cmath>
 #include <cstdio>
+#include <initializer_list>
 
 #define PIONEER_Q35_OPERATOR_TEST 1
 #include "../PioneerQwen35Operators.h"
@@ -14,8 +15,38 @@ static bool Near(float actual,float expected,float tolerance=2.0e-6f)
 	return std::fabs(actual-expected)<=tolerance*(1.0f+std::fabs(expected));
 }
 
+// Reference the GGML L2 rule independently: square in FP32, accumulate in
+// binary64, clamp the norm itself, then scale Q by 1/sqrt(head width).
+static void CheckQkNormalization(float magnitude)
+{
+	float q[DeltaWidth]{},k[DeltaWidth]{},qInput[DeltaWidth]{},kInput[DeltaWidth]{};
+	double qSum=0,kSum=0;
+	for (unsigned i=0;i<DeltaWidth;i++) {
+		qInput[i]=q[i]=magnitude*float(int(i%7)-3)/3.0f;
+		kInput[i]=k[i]=magnitude*float(int(i%11)-5)/5.0f;
+		const float qSquare=q[i]*q[i],kSquare=k[i]*k[i];
+		qSum+=double(qSquare);kSum+=double(kSquare);
+	}
+	const float qScale=1.0f/std::fmax(std::sqrt(float(qSum)),1e-6f);
+	const float kScale=1.0f/std::fmax(std::sqrt(float(kSum)),1e-6f);
+	assert(DataflowDeltaNormalizeQk(q,k));
+	for (unsigned i=0;i<DeltaWidth;i++) {
+		const float expectedQ=(qInput[i]*qScale)*0.0883883461356163f;
+		const float expectedK=kInput[i]*kScale;
+		assert(Near(q[i],expectedQ,2e-6f) && Near(k[i],expectedK,2e-6f));
+	}
+}
+
 int main()
 {
+	for (float magnitude:{0.0f,1e-8f,1e-7f,1e-6f,1e-4f,1.0f,100.0f})
+		CheckQkNormalization(magnitude);
+	{
+		float q[DeltaWidth]{},k[DeltaWidth]{};
+		q[0]=k[0]=1e-8f;
+		assert(DataflowDeltaNormalizeQk(q,k));
+		assert(Near(q[0],0.00088388346f,1e-7f) && Near(k[0],0.01f,1e-7f));
+	}
 	float recurrent[DeltaWidth],norm[DeltaWidth],gate[DeltaWidth];
 	float expected[DeltaWidth];
 	for (unsigned i=0;i<DeltaWidth;i++) {
@@ -37,7 +68,7 @@ int main()
 	key[0]=1.0f;
 	assert(DataflowDeltaNormalizeQk(query,key));
 	assert(Near(query[0],0.0883883461f));
-	assert(Near(key[0],0.999999523f));
+	assert(key[0]==1.0f);
 
 	float decay=0,beta=0;
 	assert(DataflowDeltaHeadGates(-1.0f,0.0f,0.0f,0.0f,decay,beta));
