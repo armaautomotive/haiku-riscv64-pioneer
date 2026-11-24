@@ -178,6 +178,10 @@ PioneerQ35ProjectionScratchCompileWitnessImpl(PioneerStoreContext& context,Scope
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
     if (action==15) return context.PrepareDataflowQualificationRetirement(scope);
     if (action==16) return context.FinishDataflowQualificationClose(scope)==PioneerQwen35::DataflowServiceClosed;
+    if (action==17) {
+        uint32_t stage=0,routeStage=0,routeCore=0xff;bool verified=false,cleaned=false;
+        return context.RunDataflowQualificationTransaction(scope,stage,routeStage,routeCore,verified,cleaned);
+    }
 #endif
     return false;
 }

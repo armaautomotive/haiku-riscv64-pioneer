@@ -4886,6 +4886,60 @@ public:
 		return result;
 	}
 // PIONEER_Q35_PROJECTION_FINISH_END
+// PIONEER_Q35_PROJECTION_TRANSACTION_BEGIN
+	// One locked diagnostic sequence. A valid comparison and complete cleanup
+	// are independent: bad math must still permit restoration, never success.
+	template<class Scope>
+	bool RunDataflowQualificationTransaction(Scope& scope,uint32_t& stage,
+		uint32_t& routeStage,uint32_t& routeCore,bool& outputVerified,bool& cleaned) {
+		using Owner=PioneerQ35ProjectionQualificationOwner;
+		using namespace PioneerQwen35;
+		stage=0;routeStage=0;routeCore=0xff;outputVerified=false;cleaned=false;
+		if (!AllocateDataflowQualification(scope)) return false;
+		auto prelaunchFailure=[&]() {
+			if (qwen35QualificationOwner.Retained()) return false;
+			auto* scratch=qwen35QualificationOwner.Scratch();
+			if (!scratch) return false;
+			if (scratch->IsStaged() && !DataflowQualificationScratchOperation(Owner::Restore,scope)) {
+				qwen35QualificationOwner.Retain();return false;
+			}
+			if (!AbandonDataflowQualification(scope)) qwen35QualificationOwner.Retain();
+			return false;
+		};
+		auto retainFailure=[&]() { qwen35QualificationOwner.Retain();return false; };
+		stage=1;
+		if (!DataflowQualificationScratchOperation(Owner::Capture,scope)) return prelaunchFailure();
+		stage=2;
+		if (!DataflowQualificationScratchOperation(Owner::Stage,scope)) return prelaunchFailure();
+		stage=3;
+		auto* scratch=qwen35QualificationOwner.Scratch();
+		if (!scratch || !PrepareDataflowQualificationRoutes(*scratch,scope,routeStage,routeCore))
+			return prelaunchFailure();
+		stage=4;
+		if (!BindDataflowQualification(scope)) return prelaunchFailure();
+		stage=5;
+		if (InstallDataflowQualification(*scratch,scope)!=DataflowServiceComplete) return prelaunchFailure();
+		stage=6;
+		if (RunDataflowQualification(scope)!=DataflowServiceComplete) return retainFailure();
+		stage=7;
+		if (CloseDataflowQualification(scope)!=DataflowServiceScratchHeld) return retainFailure();
+		stage=8;
+		if (!MarkDataflowQualificationStopped(scope)) return retainFailure();
+		stage=9;
+		outputVerified=DataflowQualificationScratchOperation(Owner::Verify,scope) && scratch->OutputVerified();
+		if (qwen35QualificationOwner.Retained()) return false;
+		stage=10;
+		if (!DataflowQualificationScratchOperation(Owner::Restore,scope)) return retainFailure();
+		stage=11;
+		if (!PrepareDataflowQualificationRetirement(scope)) return retainFailure();
+		stage=12;
+		if (FinishDataflowQualificationClose(scope)!=DataflowServiceClosed) return retainFailure();
+		stage=13;
+		if (!RetireDataflowQualification(scope)) return retainFailure();
+		stage=14;cleaned=true;
+		return outputVerified;
+	}
+// PIONEER_Q35_PROJECTION_TRANSACTION_END
 #endif
 #endif
 // PIONEER_Q35_DATAFLOW_CLOSE_BEGIN
