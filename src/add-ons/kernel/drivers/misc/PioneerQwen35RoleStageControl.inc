@@ -50,6 +50,14 @@ public:
     }
     PioneerQ35RoleStageQualification(const PioneerQ35RoleStageQualification&)=delete;
     PioneerQ35RoleStageQualification& operator=(const PioneerQ35RoleStageQualification&)=delete;
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+    bool FleetPrestackUntouched() const {
+        if (!fleetPrestack) return false;
+        for (unsigned core=0;core<PioneerQwen35::DataflowBarrierWorkers;core++)
+            if (fleetPrestack[core].attempted) return false;
+        return true;
+    }
+#endif
 };
 
 static void
@@ -270,7 +278,11 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                     // failure retains the owner exactly as before.
                     if (!okay && r.captured && !r.mappings_closed
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
-                        && r.version==1
+                        && (r.version==1
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+                            || (r.version==6 && owner->FleetPrestackUntouched())
+#endif
+                            )
 #endif
                         && owner->views.Opened() && owner->views.ImageWritesConfirmed() && !c->Unsafe()
                         && scope.ProveRoleDedicatedObservedStage(c->io)) {

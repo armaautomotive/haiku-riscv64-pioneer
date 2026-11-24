@@ -71,6 +71,26 @@ int main()
     Fixture f;assert(f.Run()==B_OK && f.request.operation_status==B_OK);
     ResetMaps();gAllowWrite=true;gPerCoreRoleWindows=true;
     gRoleWindowCore=gRoleSelectedCore=f.context.io.runtimeCore;
+    for (unsigned noc=0;noc<2;noc++) f.context.io.nocAvailable[noc]=0x10101010U;
+    gFailAfterStageWrite=true;gFailStageWriteOnce=true;gStageWriteFailureInjected=false;
+    auto r=Request();r.version=6;
+    assert(Qwen35RoleStageControl(&f.cookie,&r,sizeof(r))==B_OK);
+    assert(r.operation_status==B_DEV_NOT_READY && r.stage==5 && r.captured && !r.staged
+        && r.restored && r.mappings_closed && gStageWriteFailureInjected
+        && !f.context.io.sharedResetWrites && !f.context.qwen35RoleStageQualification
+        && !f.context.dispatchOwnerRetained && !sColdRecoveryRequired && !gRetains);
+    assert(f.context.io.SelectRuntimeCore(0));
+    for (unsigned core=0;core<DataflowBarrierWorkers;core++)
+        for (unsigned which=0;which<=DataflowRolePhysicalControl;which++)
+            for (uint32_t word:gRoleTileWindows[core][which])
+                assert(word==RoleWindowInitial(core,which));
+    gFailStageWriteOnce=false;gPerCoreRoleWindows=false;gAllowWrite=false;
+    for (auto& windows:gRoleTileWindows) windows.clear();
+    }
+    {
+    Fixture f;assert(f.Run()==B_OK && f.request.operation_status==B_OK);
+    ResetMaps();gAllowWrite=true;gPerCoreRoleWindows=true;
+    gRoleWindowCore=gRoleSelectedCore=f.context.io.runtimeCore;
     f.context.io.perCoreReset=true;
     for (unsigned core=0;core<DataflowBarrierWorkers;core++) f.context.io.tileReset[core]=0x47800;
     for (unsigned noc=0;noc<2;noc++) f.context.io.nocAvailable[noc]=0x10101010U;
