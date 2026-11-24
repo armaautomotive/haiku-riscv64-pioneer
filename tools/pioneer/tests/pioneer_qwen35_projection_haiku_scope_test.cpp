@@ -48,6 +48,10 @@ public:
 };
 template<class Work> static bool PioneerQwen35WithSelectedClock(PioneerSessionIO&,unsigned,Work work) { return work(); }
 struct FakeDispatch { unsigned prepared=120;bool unsafe=false,closed=false,rootRunning=false; };
+struct FakeRoleBinding { bool restored=false; };
+static bool PioneerQ35SharedRoleProjectionRestored(const FakeRoleBinding* binding) {
+    return binding && binding->restored;
+}
 struct PioneerStoreContext {
     PioneerQ35ProjectionQualificationOwner qwen35QualificationOwner;
     PioneerSessionIO io;
@@ -66,6 +70,7 @@ struct PioneerStoreContext {
     uint64_t bytes=PioneerResidentBanks::Total;
     void* qwen35DataflowAuthority=nullptr;void* qwen35DataflowProgramScratch=nullptr;void* qwen35GraphOwner=nullptr;
     PioneerQwen35::DataflowServiceOwner* qwen35DataflowService=nullptr;
+    FakeRoleBinding* qwen35SharedRoleBinding=nullptr;
     bool qwen35DataflowRoutesAudited=false,otherUnsafe=false;
     unsigned qwen35DataflowRoutes[2][PioneerQwen35::Banks]{};
     PioneerStoreContext():dram(BankProof(io)),noc(io.Compute()),baseline{{{{dram},noc}}} {

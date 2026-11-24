@@ -229,19 +229,23 @@ public:
         }
         return true;
     }
-    // These require lifetime-spanning held-fleet/NoC and scratch-retirement
-    // proofs, which are not yet established by the real Haiku scope.
-    bool QualificationHeldAllowed(const void*,const PioneerQwen35::DataflowServiceOwner&) const { return false; }
+    // The binding's complete ledger is historical evidence; the independent
+    // live fleet/NoC proof still fails closed in the real borrowed scope.
+    bool QualificationHeldAllowed(const void* p,const PioneerQwen35::DataflowServiceOwner& service) const {
+        auto* scratch=c.qwen35QualificationOwner.Scratch();
+        auto* qualification=c.qwen35QualificationOwner.Qualification();
+        return scratch && p==scratch && Identity() && Owned(p) && c.qwen35QualificationInternalActive
+            && &service==c.qwen35DataflowService && service.ScratchHeld() && !c.Unsafe()
+            && qualification && qualification->IsAudited() && scratch->IsRunning()
+            && scratch->MatchesBankClaimOwner(c.banks,c.baseline.baseline.baseline.baseline.dram)
+            && PioneerQ35SharedRoleProjectionRestored(c.qwen35SharedRoleBinding) && HeldAndQuiet();
+    }
+    // Scratch-retirement and resume proofs are not yet established.
     bool QualificationResumeAllowed(const void*,const PioneerQwen35::DataflowServiceOwner&) const { return false; }
 #endif
     bool ScratchStopped(const void* p) const {
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
-        auto* scope=Borrowed();
-        if (!scope || !Identity() || !Owned(p) || !c.qwen35QualificationInternalActive
-            || !c.qwen35DataflowService || !c.qwen35DataflowService->ScratchHeld()) return false;
-        return CheckFleet(scope,[&](unsigned core) {
-            return scope->ProveRoleAutoRestoreCompletionSafe(c.io,core);
-        },false);
+        return c.qwen35DataflowService && QualificationHeldAllowed(p,*c.qwen35DataflowService);
 #else
         (void)p;return false;
 #endif

@@ -148,6 +148,17 @@ public:
 #endif
         ; }
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+    // Identifies this binding's completed software ledger. It is not a
+    // firmware, reset-continuity or live NoC ownership proof.
+    bool ProjectionFleetRestoredLedger() const {
+        if (!fAutoRestoreOnStop || !fCodeSnapshot || !fRamSnapshot || fViews.HasMappings()
+            || !fOwner.AutoRestoredFleetLedgerComplete()) return false;
+        for (unsigned core=0;core<PioneerQwen35::DataflowBarrierWorkers;core++)
+            if (!fReleaseConfirmed[core] || !fStackReleaseConfirmed[core]
+                || !fAutoRestoreParked[core] || fAutoCancelParked[core] || !fAutoRestoreRecorded[core])
+                return false;
+        return true;
+    }
     // Explicit compile-only opt-in. The concrete scope and PCI adapter still
     // deny the lifetime proof and release authority, so these operations do
     // not authorize a physical restore or a fallback to host private RAM.
@@ -616,6 +627,14 @@ public:
 #endif
     }
 };
+
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+static bool
+PioneerQ35SharedRoleProjectionRestored(const PioneerQwen35SharedRoleBinding* binding)
+{
+    return binding && binding->ProjectionFleetRestoredLedger();
+}
+#endif
 
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 // Force the non-loadable snapshot build to compile each actual binding path.

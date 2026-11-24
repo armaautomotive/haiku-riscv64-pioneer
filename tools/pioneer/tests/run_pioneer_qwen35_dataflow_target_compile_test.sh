@@ -434,6 +434,9 @@ for test in role_local_ram_owner role_fleet_local_ram_owner role_restore_handoff
 		-o "$temporary/${test}-test"
 	ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/${test}-test"
 done
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    "$directory/pioneer_qwen35_auto_restored_fleet_ledger_test.cpp" -o "$temporary/auto-restored-fleet-ledger-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/auto-restored-fleet-ledger-test"
 # Check proposed disjoint code slots including service-tick adapters, beyond
 # the currently saved L1 view. No resident loop, boot shim or owner is linked;
 # the current owner must never load either result.

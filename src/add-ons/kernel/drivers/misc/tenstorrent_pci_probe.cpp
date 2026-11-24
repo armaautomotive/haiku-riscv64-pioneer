@@ -4097,6 +4097,7 @@ static PioneerQwen35SharedRoleBinding* PioneerQ35CreateSharedRoleBinding(Pioneer
 static bool PioneerQ35DestroySharedRoleBinding(PioneerQwen35SharedRoleBinding* binding);
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 static bool PioneerQ35SelectSharedRoleAutoRestore(PioneerQwen35SharedRoleBinding* binding);
+static bool PioneerQ35SharedRoleProjectionRestored(const PioneerQwen35SharedRoleBinding* binding);
 #endif
 #endif
 #ifdef PIONEER_QWEN35_ROLE_STAGE_QUALIFY

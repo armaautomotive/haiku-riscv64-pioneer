@@ -154,6 +154,19 @@ public:
         return fPhase==Faulted || fPhase==Staged || fPhase==Armed || fPhase==ReleaseAttempted;
     }
     bool CoveredStateRestored() const { return fPhase==Restored; }
+    // Historical ledger only: a full successful projection must have captured,
+    // run and locally restored every role. This does not prove that reset,
+    // firmware or a NoC writer stayed excluded after the observations.
+    bool AutoRestoredFleetLedgerComplete() const {
+        if (fPhase!=Restored || !fAutoRestoreMode || !fCoreLocalReleaseLedger || !fStackless
+            || !fResetDisableCaptured || fResetDisableTouched || !fImages.ImagesRestored()
+            || !fRam.StacklessRestoredByCore()) return false;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++)
+            if (!fRam.StacklessCopiesCaptured(core) || !fRam.CoreRestoredByCore(core)
+                || !fAutoRestoreMayRun[core] || !fAutoRestoreArmed[core]
+                || !fAutoRestoreCompleted[core] || fAutoRestoreCancelled[core]) return false;
+        return true;
+    }
     // Opt-in for the future core-local restore lifecycle. This changes only
     // the ledger; it does not provide physical scope or release authority.
     bool SelectCoreLocalRestoreMode() {

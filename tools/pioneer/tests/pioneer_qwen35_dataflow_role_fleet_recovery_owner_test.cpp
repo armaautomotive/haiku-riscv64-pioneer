@@ -261,6 +261,7 @@ int main()
         io.retirementRetry=true;
         assert(owner.RestoreAfterAutoRestoreFleetProof(io) && owner.CoveredStateRestored()
             && owner.VerifyAfterAutoResidentRestore(io) && io.privateRamReads==reads);
+        assert(!owner.AutoRestoredFleetLedgerComplete()); // only one of 120 was captured
         assert(io.ram==originalRam && io.code==originalCode && io.boots==originalBoots
             && io.shims==originalShims && io.resetDisable==originalDisable);
         io.autoRetirementProof=false;
@@ -303,6 +304,7 @@ int main()
         io.expectCancelledRetirement[1]=true;
         assert(owner.RestoreAfterAutoRestoreFleetProof(io)
             && owner.VerifyAfterAutoResidentRestore(io));
+        assert(!owner.AutoRestoredFleetLedgerComplete()); // cancellation is cleanup, not a completed fleet
     }
     for (bool autoMode:{false,true}) {
         // Before any release ledger, cleanup has no captured private RAM to
