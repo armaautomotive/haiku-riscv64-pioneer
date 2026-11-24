@@ -10,15 +10,39 @@ struct PioneerQ35FreshRecoveryCompileScope {
         PioneerStoreContext&,uint64) const { return allowed; }
     bool FreshRecoveryBoundary(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&,unsigned) const { return allowed; }
+    template<class Receipt> bool FreshRecoveryRestoreAdmission(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRecoveryRestoreComplete(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRecoveryCloseAdmission(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRecoveryPostTransferAudit(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRecoveryPciIdle(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    bool RecoveryAdmissionAllowed(PioneerQ35ProjectionScratch&,PioneerSessionIO&,
+        const PioneerResidentBanks&,const tt_dram_samples_result&,PioneerResidentBanks&,const tt_dram_samples_result&,
+        const tt_compute_noc_result&,const tt_host_page_result&,PioneerResidentLease&,
+        uint64_t,const uint32_t*,unsigned,const uint8_t*,unsigned) const { return allowed; }
+    bool RecoveryTransferAllowed(PioneerQ35ProjectionScratch&,PioneerSessionIO&,
+        const PioneerResidentBanks&,PioneerResidentBanks&,const tt_compute_noc_result&,const tt_host_page_result&,
+        PioneerResidentLease&,uint64_t,const uint32_t*,unsigned,unsigned,bool) const { return allowed; }
+    bool RecoveryCompleteAllowed(PioneerQ35ProjectionScratch&,PioneerSessionIO&,
+        const PioneerResidentBanks&,PioneerResidentBanks&,const tt_compute_noc_result&,const tt_host_page_result&,
+        PioneerResidentLease&,uint64_t,const uint32_t*) const { return allowed; }
+    void RetainRecovery(PioneerQ35ProjectionScratch&) { allowed=false; }
     void RetainFreshRecovery(PioneerQ35FreshRecoverySession&) { allowed=false; }
 };
 static __attribute__((used,noinline)) bool
 PioneerQ35FreshRecoveryCompileWitness(PioneerQ35FreshRecoverySession* session,
-    PioneerProbeCookie* owner,PioneerStoreContext& old,pioneer_driver_recovery_guard_v2_info* guard,bool allowed)
+    PioneerProbeCookie* owner,PioneerStoreContext& old,pioneer_driver_recovery_guard_v2_info* guard,
+    bool allowed,unsigned action)
 {
     if (!session) return false;
     PioneerQ35FreshRecoveryCompileScope scope{allowed};
-    return session->Prepare(owner,old,guard,scope);
+    if (action==0) return session->Prepare(owner,old,guard,scope);
+    if (action==1) return session->RestoreScratch(guard,scope);
+    return action==2 && session->CloseTransport(guard,scope);
 }
 struct PioneerQ35ResetScratchCompileScope {
     bool permitted;

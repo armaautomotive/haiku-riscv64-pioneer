@@ -119,6 +119,16 @@ public:
     bool IsRunning() const { return phase==Running; }
     bool IsRestored() const { return phase==Restored; }
     bool FailedTransfer() const { return transferFailed; }
+    // Metadata admission only: a reset-recovery session must retain the exact
+    // complete pre-write snapshot, including after a failed transfer. This
+    // does not prove card identity, reset completion or permission to write.
+    bool ResetRestoreEligible(const uint32_t* snapshot) const {
+        return snapshot && snapshot==saved && capturedPages==Fixture::ScratchPages
+            && dirtyPages && dirtyPages<=Fixture::ScratchPages && bank==0
+            && firstOffset==Fixture::ScratchOffset
+            && (phase==Staging || phase==Staged || phase==Running || phase==Stopped
+                || phase==Restoring || phase==Failed);
+    }
     const PioneerQ35ScratchFailure& Failure() const { return failure; }
     // Inspect the retained command and counters twice without changing the
     // lease, bank quarantine, host page or failure. Even a matching sample

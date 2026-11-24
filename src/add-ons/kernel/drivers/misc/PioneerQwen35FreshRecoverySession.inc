@@ -12,11 +12,17 @@
 #if defined(PIONEER_QWEN35_FRESH_RECOVERY_TEST) && defined(_KERNEL_MODE)
 #error Simulated fresh-session disposal is not permitted in a kernel build
 #endif
+#ifndef PIONEER_QWEN35_FRESH_RECOVERY_TEST
+#include "PioneerQwen35ProjectionResetRecovery.h"
+#endif
 
 class PioneerQ35FreshRecoverySession {
 public:
-    enum Stage { Unstarted=0,Attached=1,Mapped=2,Baseline=3,Banks=4,Host=5,Lease=6,Ready=7,Retained=8 };
+    enum Stage { Unstarted=0,Attached=1,Mapped=2,Baseline=3,Banks=4,Host=5,Lease=6,Ready=7,
+        ScratchRestoring=8,ScratchVerified=9,Closing=10,LeaseClosed=11,FleetAudited=12,
+        PciClosed=13,TransportClosed=14,Retained=15 };
 private:
+    PioneerQ35ProjectionResetRecovery fRestore;
     PioneerStoreContext* fOld=nullptr;
     PioneerStoreContext* fFresh=nullptr;
     PioneerProbeCookie* fOwner=nullptr;
@@ -51,6 +57,8 @@ private:
             || fOld->recoveryFinishProof.firmware_generation!=fTicket
             || !fOld->qwen35QualificationOwner.Active()
             || !fOld->qwen35QualificationOwner.Scratch()
+            || !fOld->qwen35QualificationOwner.Scratch()->ResetRestoreEligible(
+                fOld->qwen35QualificationOwner.Snapshot())
             || !fOld->banks.Q35StreamClaimIdentity(fOld->qwen35QualificationOwner.Scratch(),
                 PioneerQwen35::DataflowCoreCount)) return false;
         return guard->validate(fTicket)==B_OK;
@@ -92,6 +100,7 @@ public:
             || old.recoveryFinishProof.reset_generation!=old.recoveryFinishTicket
             || old.recoveryFinishProof.firmware_generation!=old.recoveryFinishTicket
             || !old.qwen35QualificationOwner.Active() || !old.qwen35QualificationOwner.Scratch()
+            || !old.qwen35QualificationOwner.Scratch()->ResetRestoreEligible(old.qwen35QualificationOwner.Snapshot())
             || !old.banks.Q35StreamClaimIdentity(old.qwen35QualificationOwner.Scratch(),
                 PioneerQwen35::DataflowCoreCount) || !old.initialized
             || old.bytes!=PioneerResidentBanks::Total
@@ -134,5 +143,80 @@ public:
         fStage=Lease;
         if (!allowed(Lease)) return Retain(scope,Lease);
         fStage=Ready;return true;
+    }
+
+    // Restore through this session's exact fresh resources and retained old
+    // snapshot. The underlying owner writes and rereads every page and is
+    // single-use; the surrounding scope supplies the missing live proofs.
+    template<class Scope>
+    bool RestoreScratch(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        if (fStage!=Ready || !fOld || !fFresh) return false;
+        auto* scratch=fOld->qwen35QualificationOwner.Scratch();
+        if (!TicketValid(guard) || !scratch
+            || !scope.FreshRecoveryRestoreAdmission(*this,*fOld,*fFresh,fRestore)
+            || !TicketValid(guard)) return Retain(scope,ScratchRestoring);
+        fStage=ScratchRestoring;
+        if (!fRestore.Restore(*scratch,fTicket,fOld->recoveryFinishProof,fFresh->io,scope,
+            fOld->banks,fOld->baseline.baseline.baseline.baseline.dram,
+            fFresh->banks,fFresh->baseline.baseline.baseline.baseline.dram,
+            fFresh->baseline.baseline.baseline.noc,fFresh->host,fFresh->lease,
+            fFresh->initialized,PioneerResidentBanks::Pages)) return Retain(scope,ScratchRestoring);
+        if (!TicketValid(guard) || !fRestore.VerifiedFor(*scratch,fTicket,fOld->banks,fFresh->banks)
+            || !scope.FreshRecoveryRestoreComplete(*this,*fOld,*fFresh,fRestore)
+            || !TicketValid(guard) || !fRestore.VerifiedFor(*scratch,fTicket,fOld->banks,fFresh->banks))
+            return Retain(scope,ScratchVerified);
+        fStage=ScratchVerified;return true;
+    }
+
+    // Close only after the exact saved scratch has been restored and reread.
+    // The scope must independently audit the complete fleet and host DMA
+    // after the final transfer. The wired host page, fresh bank claim and old
+    // snapshot stay alive even after PCI has been restored to idle; releasing
+    // them requires a separate, not-yet-implemented owner-retirement step.
+    // Any attempted close or uncertain result is one-shot and retained.
+    template<class Scope>
+    bool CloseTransport(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        if (fStage!=ScratchVerified || !fOld || !fFresh) return false;
+        auto verified=[&]() {
+            auto* scratch=fOld->qwen35QualificationOwner.Scratch();
+            return scratch && fRestore.VerifiedFor(*scratch,fTicket,fOld->banks,fFresh->banks);
+        };
+        if (!TicketValid(guard) || !verified()
+            || !scope.FreshRecoveryCloseAdmission(*this,*fOld,*fFresh,fRestore)
+            || !TicketValid(guard) || !verified()) return Retain(scope,Closing);
+        fStage=Closing;
+        if (!PioneerResidentLeaseEnd(fFresh->io,fFresh->baseline.baseline.baseline.noc,fFresh->lease))
+            return Retain(scope,LeaseClosed);
+        fStage=LeaseClosed;
+        if (!TicketValid(guard) || !verified()
+            || !scope.FreshRecoveryPostTransferAudit(*this,*fOld,*fFresh,fRestore)
+            || !TicketValid(guard) || !verified()) return Retain(scope,FleetAudited);
+        // Use a distinct fresh audit mapping, kept on the fresh context on
+        // every failure. Audit both NoCs on all 120 held cores and host DMA,
+        // then restore and unmap the temporary TLB apertures before PCI end.
+        if (fFresh->recoveryMapping) return Retain(scope,FleetAudited);
+        fFresh->recoveryMapping=new(std::nothrow) PioneerPostResetMapping(fFresh->profile);
+        if (!fFresh->recoveryMapping) return Retain(scope,FleetAudited);
+        auto& audit=*fFresh->recoveryMapping;
+        tt_arc_scratch_result firmware{};PioneerPostResetAuditResult fleet{};
+        if (!audit.Open() || !TicketValid(guard) || !audit.ProbeFirmware(100,firmware)
+            || !TicketValid(guard)) return Retain(scope,FleetAudited);
+        const auto& dram=fFresh->baseline.baseline.baseline.baseline.dram;
+        for (unsigned word=0;word<TT_DRAM_SOURCE_WORDS;word++)
+            if (audit.topology.source[word]!=dram.source[word]) return Retain(scope,FleetAudited);
+        if (!audit.Audit(fleet) || !TicketValid(guard) || !audit.AuditHostDma()
+            || !TicketValid(guard) || !audit.Close()) return Retain(scope,FleetAudited);
+        delete fFresh->recoveryMapping;fFresh->recoveryMapping=nullptr;
+        if (!TicketValid(guard) || !verified()
+            || !scope.FreshRecoveryPostTransferAudit(*this,*fOld,*fFresh,fRestore)
+            || !TicketValid(guard) || !verified()) return Retain(scope,FleetAudited);
+        fStage=FleetAudited;
+        if (!PioneerQ38DispatchMmioEnd(fFresh->io,fFresh->Pci(),fFresh->transaction))
+            return Retain(scope,PciClosed);
+        fStage=PciClosed;
+        if (!TicketValid(guard) || !verified()
+            || !scope.FreshRecoveryPciIdle(*this,*fOld,*fFresh,fRestore)
+            || !TicketValid(guard) || !verified()) return Retain(scope,TransportClosed);
+        fStage=TransportClosed;return true;
     }
 };

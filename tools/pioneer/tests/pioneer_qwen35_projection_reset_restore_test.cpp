@@ -61,7 +61,10 @@ int main() {
         auto oldDevice=std::make_unique<ScratchDevice<>>();
         auto fresh=std::make_unique<ScratchDevice<>>();
         auto recovery=std::make_unique<PioneerQ35ProjectionResetRecovery>();
-        assert(oldDevice->Capture(*scratch) && oldDevice->Stage(*scratch));
+        assert(!scratch->ResetRestoreEligible(oldDevice->snapshot.data()));
+        assert(oldDevice->Capture(*scratch) && !scratch->ResetRestoreEligible(oldDevice->snapshot.data()));
+        assert(oldDevice->Stage(*scratch) && scratch->ResetRestoreEligible(oldDevice->snapshot.data())
+            && !scratch->ResetRestoreEligible(fresh->snapshot.data()));
         oldDevice->banks.Quarantine(); // identity survives; old bank access does not
         PioneerQ35StreamBankRange ranges[PioneerQwen35::DataflowCoreCount]{};
         for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {

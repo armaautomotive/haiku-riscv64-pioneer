@@ -56,10 +56,7 @@ public:
             || &oldBanks==&newBanks
             || !oldBanks.Q35RecoveryRoutesMatch(oldDram,newBanks,newDram)
             || !oldBanks.Q35StreamClaimMatches(&scratch,scratch.ranges,PioneerQwen35::DataflowCoreCount)
-            || !scratch.saved || scratch.capturedPages!=Fixture::ScratchPages || !scratch.dirtyPages
-            || scratch.dirtyPages>Fixture::ScratchPages || scratch.bank!=0 || scratch.firstOffset!=Fixture::ScratchOffset
-            || scratch.phase==PioneerQ35ProjectionScratch::Empty || scratch.phase==PioneerQ35ProjectionScratch::Captured
-            || scratch.phase==PioneerQ35ProjectionScratch::Restored
+            || !scratch.ResetRestoreEligible(scratch.saved)
             || !newBanks.Matches(newDram) || newBanks.Q35StreamClaimed() || !initialized
             || initializedPages!=PioneerResidentBanks::Pages || !lease.ready || lease.pending || lease.recovery_required
             || !scope.RecoveryAdmissionAllowed(scratch,io,oldBanks,oldDram,newBanks,newDram,noc,host,lease,ticket,

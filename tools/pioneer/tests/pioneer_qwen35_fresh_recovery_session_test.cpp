@@ -18,12 +18,13 @@ constexpr uint64 kTicket=37;
 namespace PioneerQwen35 { enum { DataflowCoreCount=120 }; }
 
 static unsigned failedOperation=0,guardCalls=0,failGuardAt=0;
-static bool failFreshAllocation=false;
+static bool failFreshAllocation=false,auditSourceMismatch=false;
 static bool sColdRecoveryRequired=true,sReloadQuiesced=false,sBankStorageOnly=true;
 static unsigned sOpenCookies=1;
 static std::vector<unsigned> operations;
 static bool Step(unsigned operation) { operations.push_back(operation);return failedOperation!=operation; }
-struct MockDram { unsigned route=77; };
+constexpr unsigned TT_DRAM_SOURCE_WORDS=16;
+struct MockDram { unsigned route=77,source[TT_DRAM_SOURCE_WORDS]{}; };
 struct MockNoc {};
 struct MockRoot { struct A { struct B { struct C { MockDram dram; } baseline;MockNoc noc; } baseline; } baseline; };
 struct MockPci { unsigned node_id[3]={2,2,2}; };
@@ -32,12 +33,14 @@ struct MockProof {
     bool valid=true;
     bool ReadyToRetireOneOwner() const { return valid; }
 };
-struct MockScratch {};
+struct MockScratch { bool eligible=true; bool ResetRestoreEligible(const uint32_t* p) const { return eligible && p; } };
 struct MockQualificationOwner {
     MockScratch scratch;
+    uint32_t snapshot=1;
     bool active=true,retained=false;
     bool Active() const { return active; }
     MockScratch* Scratch() { return active?&scratch:nullptr; }
+    uint32_t* Snapshot() { return active?&snapshot:nullptr; }
     void Retain() { retained=true; }
 };
 struct PioneerResidentBanks {
@@ -52,6 +55,17 @@ struct PioneerResidentBanks {
     }
 };
 struct MockLease { bool recovery_required=false,ready=false; };
+struct tt_arc_scratch_result {};
+struct PioneerPostResetAuditResult {};
+struct PioneerPostResetMapping {
+    MockDram topology;
+    explicit PioneerPostResetMapping(unsigned) { if (auditSourceMismatch) topology.source[0]=1; }
+    bool Open() { return Step(9); }
+    bool ProbeFirmware(unsigned,tt_arc_scratch_result&) { return Step(10); }
+    bool Audit(PioneerPostResetAuditResult&) { return Step(11); }
+    bool AuditHostDma() { return Step(12); }
+    bool Close() { return Step(13); }
+};
 struct PioneerHostDmaAuditIO { bool AfterNodeId(unsigned) { return Step(2); } };
 struct MockIO : PioneerHostDmaAuditIO {
     bool postResetDisposeComplete=false,quarantined=false;
@@ -65,7 +79,7 @@ struct PioneerStoreContext {
     uint32_t* hashes;
     bool bankStorageOnly=true,recoveryAttempted=true,recoveryFinishPending=true;
     uint64 recoveryFinishTicket=kTicket;
-    void* recoveryMapping=nullptr;
+    PioneerPostResetMapping* recoveryMapping=nullptr;
     MockProof recoveryFinishProof;
     PioneerQ35FreshRecoverySession* recoveryFreshSession=nullptr;
     MockQualificationOwner qwen35QualificationOwner;
@@ -78,7 +92,7 @@ struct PioneerStoreContext {
     explicit PioneerStoreContext(uint64 capacity):bytes(capacity),
         initialized(failFreshAllocation?nullptr:static_cast<uint8_t*>(calloc(PioneerResidentBanks::Pages,1))),
         hashes(static_cast<uint32_t*>(calloc(PioneerResidentBanks::Pages,sizeof(uint32_t)))) {}
-    ~PioneerStoreContext() { free(initialized);free(hashes); }
+    ~PioneerStoreContext() { delete recoveryMapping;free(initialized);free(hashes); }
     MockPci& Pci() { return pci; }
 };
 struct PioneerProbeCookie { PioneerStoreContext* context=nullptr; };
@@ -89,15 +103,32 @@ static int Validate(uint64 ticket) {
 struct pioneer_driver_recovery_guard_v2_info { int (*validate)(uint64)=Validate; };
 static bool BlackholePioneerMmioBegin(MockIO&,MockPci&,unsigned&) { return Step(1); }
 static bool PioneerResidentSessionIdle(MockIO&,MockNoc&,unsigned&) { return Step(3); }
-static bool PioneerPrepareHostPage(MockIO&,unsigned&) { return Step(5); }
+static bool PioneerPrepareHostPage(MockIO&,unsigned& host) { if (!Step(5)) return false;host=1;return true; }
 static bool PioneerResidentLeaseBegin(MockIO&,MockNoc&,MockLease& lease) {
     if (!Step(6)) return false;
     lease.ready=true;return true;
 }
+static bool PioneerResidentLeaseEnd(MockIO&,MockNoc&,MockLease& lease) {
+    if (!Step(8)) return false;
+    lease.ready=false;return true;
+}
+static bool PioneerQ38DispatchMmioEnd(MockIO&,MockPci&,unsigned&) { return Step(14); }
+struct PioneerQ35ProjectionResetRecovery {
+    bool restored=false;
+    template<class Scope>
+    bool Restore(MockScratch&,uint64 ticket,const MockProof&,MockIO&,Scope&,
+        PioneerResidentBanks&,const MockDram&,PioneerResidentBanks&,const MockDram&,
+        const MockNoc&,const unsigned&,MockLease&,const uint8_t*,unsigned pages) {
+        if (ticket!=kTicket || pages!=PioneerResidentBanks::Pages || !Step(7)) return false;
+        restored=true;return true;
+    }
+    bool VerifiedFor(const MockScratch&,uint64 ticket,const PioneerResidentBanks&,
+        const PioneerResidentBanks& fresh) const { return restored && ticket==kTicket && !fresh.quarantined; }
+};
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FreshRecoverySession.inc"
 
 struct Scope {
-    bool admission=true,retained=false;
+    bool admission=true,retained=false,closeAdmission=true;
     unsigned failBoundary=0;
     bool FreshRecoveryAdmission(PioneerQ35FreshRecoverySession&,PioneerProbeCookie*,PioneerStoreContext&,uint64 ticket) {
         return admission && ticket==kTicket;
@@ -108,10 +139,20 @@ struct Scope {
         assert(fresh.profile==old.profile && !memcmp(fresh.initialized,old.initialized,PioneerResidentBanks::Pages));
         return stage!=failBoundary;
     }
+    bool FreshRecoveryRestoreAdmission(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
+        PioneerStoreContext&,const PioneerQ35ProjectionResetRecovery&) { return true; }
+    bool FreshRecoveryRestoreComplete(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
+        PioneerStoreContext&,const PioneerQ35ProjectionResetRecovery&) { return true; }
+    bool FreshRecoveryCloseAdmission(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
+        PioneerStoreContext&,const PioneerQ35ProjectionResetRecovery&) { return closeAdmission; }
+    bool FreshRecoveryPostTransferAudit(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
+        PioneerStoreContext&,const PioneerQ35ProjectionResetRecovery&) { return true; }
+    bool FreshRecoveryPciIdle(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
+        PioneerStoreContext&,const PioneerQ35ProjectionResetRecovery&) { return Step(15); }
     void RetainFreshRecovery(PioneerQ35FreshRecoverySession&) { retained=true; }
 };
 static void Reset() {
-    failedOperation=guardCalls=failGuardAt=0;failFreshAllocation=false;operations.clear();
+    failedOperation=guardCalls=failGuardAt=0;failFreshAllocation=false;auditSourceMismatch=false;operations.clear();
     sColdRecoveryRequired=true;sReloadQuiesced=false;sBankStorageOnly=true;sOpenCookies=1;
 }
 static void CheckRetained(PioneerQ35FreshRecoverySession* session,PioneerStoreContext& old,Scope& scope) {
@@ -148,6 +189,60 @@ int main() {
         assert(session->FailureStage()==boundary);
         PioneerQ35FreshRecoverySession::DisposeSimulated(session);
     }
+    for (unsigned failure=0;failure<=10;failure++) {
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);old.io.postResetDisposeComplete=true;
+        PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;Scope scope;
+        auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(session->Prepare(&owner,old,&guard,scope));
+        assert(!session->CloseTransport(&guard,scope));
+        if (failure && failure<=9) failedOperation=6+failure;
+        if (failure==10) scope.closeAdmission=false;
+        const bool restored=session->RestoreScratch(&guard,scope);
+        const bool closed=restored && session->CloseTransport(&guard,scope);
+        if (!failure) {
+            assert(closed && !scope.retained && session->CurrentStage()==PioneerQ35FreshRecoverySession::TransportClosed
+                && !session->Fresh()->lease.ready && session->Fresh()->host==1
+                && old.recoveryFreshSession==session && !session->Fresh()->recoveryMapping
+                && operations==std::vector<unsigned>({1,2,3,4,5,6,7,8,9,10,11,12,13,14,15}));
+        } else {
+            assert(!closed);CheckRetained(session,old,scope);
+            assert(session->FailureStage()==(failure==1?PioneerQ35FreshRecoverySession::ScratchRestoring
+                :failure==2?PioneerQ35FreshRecoverySession::LeaseClosed
+                :failure>=3 && failure<=7?PioneerQ35FreshRecoverySession::FleetAudited
+                :failure==8?PioneerQ35FreshRecoverySession::PciClosed
+                :failure==9?PioneerQ35FreshRecoverySession::TransportClosed
+                :PioneerQ35FreshRecoverySession::Closing));
+            if (failure>=3 && failure<=7) assert(session->Fresh()->recoveryMapping);
+            const auto count=operations.size();
+            assert(!session->RestoreScratch(&guard,scope) && !session->CloseTransport(&guard,scope)
+                && operations.size()==count);
+        }
+        PioneerQ35FreshRecoverySession::DisposeSimulated(session);
+    }
+    {
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);old.io.postResetDisposeComplete=true;
+        PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;Scope scope;
+        auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(session->Prepare(&owner,old,&guard,scope) && session->RestoreScratch(&guard,scope));
+        auditSourceMismatch=true;
+        assert(!session->CloseTransport(&guard,scope));CheckRetained(session,old,scope);
+        assert(session->FailureStage()==PioneerQ35FreshRecoverySession::FleetAudited
+            && session->Fresh()->recoveryMapping && operations.back()==10);
+        PioneerQ35FreshRecoverySession::DisposeSimulated(session);
+    }
+    for (unsigned invalidGuard=15;invalidGuard<=30;invalidGuard++) {
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);old.io.postResetDisposeComplete=true;
+        PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;Scope scope;
+        auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(session->Prepare(&owner,old,&guard,scope));failGuardAt=invalidGuard;
+        const bool restored=session->RestoreScratch(&guard,scope);
+        assert(!(restored && session->CloseTransport(&guard,scope)));
+        CheckRetained(session,old,scope);assert(guardCalls==invalidGuard);
+        const auto count=operations.size();
+        assert(!session->RestoreScratch(&guard,scope) && !session->CloseTransport(&guard,scope)
+            && operations.size()==count);
+        PioneerQ35FreshRecoverySession::DisposeSimulated(session);
+    }
     {
         Reset();PioneerStoreContext old(PioneerResidentBanks::Total);old.io.postResetDisposeComplete=true;
         old.baseline.baseline.baseline.baseline.dram.route=78;
@@ -173,7 +268,7 @@ int main() {
         assert(!session->Prepare(&owner,old,&guard,scope) && operations.empty()
             && !old.recoveryFreshSession && !scope.retained && session->DiscardUnstarted());
     }
-    for (unsigned invalid=0;invalid<10;invalid++) {
+    for (unsigned invalid=0;invalid<11;invalid++) {
         Reset();PioneerStoreContext old(PioneerResidentBanks::Total);old.io.postResetDisposeComplete=true;
         PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;Scope scope;
         if (invalid==0) old.io.postResetDisposeComplete=false;
@@ -186,6 +281,7 @@ int main() {
         if (invalid==7) sOpenCookies=2;
         if (invalid==8) sReloadQuiesced=true;
         if (invalid==9) failGuardAt=2;
+        if (invalid==10) old.qwen35QualificationOwner.scratch.eligible=false;
         auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
         assert(!session->Prepare(&owner,old,&guard,scope) && operations.empty()
             && !old.recoveryFreshSession && !scope.retained && session->DiscardUnstarted());
