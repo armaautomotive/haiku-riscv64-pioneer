@@ -32,9 +32,14 @@ struct ScratchHoldScope {
 struct SnapshotStopIO : MockDataflowIO {
     DataflowServiceOwner* owner=nullptr;
     bool observedCleanStop=false;
+    bool observedStopDuringResume=false;
     bool SharedStopAndHoldAll(unsigned& stage,unsigned& core) {
         observedCleanStop=owner && owner->SharedSnapshotCleanStopPending();
         return MockDataflowIO::SharedStopAndHoldAll(stage,core);
+    }
+    bool ResumeRestoredFleet(unsigned& stage,unsigned& core,unsigned& detail) {
+        observedStopDuringResume=owner && owner->SharedSnapshotCleanStopPending();
+        return MockDataflowIO::ResumeRestoredFleet(stage,core,detail);
     }
 };
 
@@ -95,6 +100,7 @@ int main()
             && !io->resumeCount);
         scope.resumeAllowed=true;io->failResume=scenario==2;
         const auto resumed=service->FinishScratchClose(*io,&scratch,scope);
+        assert(!io->observedStopDuringResume);
         if (scenario==2) {
             assert(resumed==DataflowServiceResumeFailed && service->Faulted() && !service->Closed()
                 && io->resumeCount==1 && service->Close(*io)==DataflowServiceInvalidState
@@ -116,7 +122,7 @@ int main()
             && service->SharedSnapshotCleanStopPending());
         io->failStopAudit=false;io->observedCleanStop=false;
         assert(service->Close(*io)==DataflowServiceClosed && io->observedCleanStop
-            && !service->SharedSnapshotCleanStopPending());
+            && !service->SharedSnapshotCleanStopPending() && !io->observedStopDuringResume);
     }
     {
         auto io=std::make_unique<SnapshotStopIO>();

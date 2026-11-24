@@ -332,7 +332,7 @@ public:
 	// Lifecycle metadata only. The physical scope independently checks the
 	// owned images, running roles, NoCs and route before a stop write.
 	bool SharedSnapshotCleanStopPending() const {
-		return fSnapshotCleanStopPending && fPhase==PhaseFaulted;
+		return fSnapshotCleanStopPending && !fCloseRestored && fPhase==PhaseFaulted;
 	}
 #endif
 	bool Started() const { return fPhase!=PhaseEmpty; }
