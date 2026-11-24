@@ -4,11 +4,31 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstdio>
+#include <cerrno>
 #include <cstring>
 #include "PioneerQwen35SpanQualificationClient.h"
 struct Transport {
-    int Open() { return open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC); }
-    bool Call(int fd,uint32_t op,void* data,size_t size) { return ioctl(fd,op,data,size)==0; }
+    int Open() {
+        const char* device="/dev/misc/tenstorrent_pci_probe";
+        int fd=open(device,O_RDWR|O_CLOEXEC|O_EXCL);
+        if (fd<0) { perror("P100A_Q35_SUPPORTED_SPAN open_exclusive"); return -1; }
+        int probe=open(device,O_RDWR|O_CLOEXEC);
+        int error=errno;
+        if (probe>=0 || error!=EBUSY) {
+            if (probe>=0) close(probe);
+            std::fprintf(stderr,"P100A_Q35_SUPPORTED_SPAN exclusive_check_failed errno=%d\n",error);
+            close(fd);return -1;
+        }
+        return fd;
+    }
+    bool Call(int fd,uint32_t op,void* data,size_t size) {
+        if (ioctl(fd,op,data,size)==0) return true;
+        std::fprintf(stderr,"P100A_Q35_SUPPORTED_SPAN ioctl=0x%08x errno=%d\n",op,errno);
+        return false;
+    }
+    void Failure(const char* stage,unsigned bank) {
+        std::fprintf(stderr,"P100A_Q35_SUPPORTED_SPAN failed_stage=%s bank=%u\n",stage,bank);
+    }
     int Close(int fd) { return close(fd); }
 };
 int main(int argc,char** argv)

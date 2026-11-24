@@ -6,6 +6,7 @@
 struct FakeTransport {
     unsigned calls=0,uploads=0,closes=0,failCall=0,badReply=0;
     int Open() { return 7; }
+    void Failure(const char*,unsigned) {}
     int Close(int fd) { assert(fd==7); ++closes; return 0; }
     bool Call(int fd,uint32_t op,void* data,size_t) {
         assert(fd==7); ++calls;

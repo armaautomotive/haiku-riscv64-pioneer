@@ -1177,6 +1177,9 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sha
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	"$directory/pioneer_qwen35_span_qualification_test.cpp" -o "$temporary/span-qualification-client-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/span-qualification-client-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-I"$directory/cli-stubs" "$directory/pioneer_qwen35_span_exclusive_client_test.cpp" -o "$temporary/span-exclusive-client-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/span-exclusive-client-test"
 python3 "$directory/pioneer_qwen35_span_qualification_guard_test.py" "$build"
 sh "$directory/run_pioneer_qwen35_span_image_tests.sh" "$build"
 echo 'PASS: Qwen35 dataflow roles compile as RV32IMF without A atomics or runtime helpers'
