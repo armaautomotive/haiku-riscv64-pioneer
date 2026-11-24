@@ -390,6 +390,8 @@ def main():
                         help='compile dedicated role staging with release disabled')
     parser.add_argument('--compile-snapshot-takeover-prototype', action='store_true',
                         help='compile held dedicated fleet with role snapshot/restore; non-loadable')
+    parser.add_argument('--compile-supported-span-prototype', action='store_true',
+                        help='compile the supported-counter Q35 preload into the non-loadable rewrite')
     parser.add_argument('--build-device-dispatch-trial', action='store_true',
                         help='build the dedicated graph qualification driver without ASIC reset')
     parser.add_argument('--build-recovery-qualification', action='store_true',
@@ -459,6 +461,9 @@ def main():
     if args.compile_snapshot_takeover_prototype and (not args.compile_shared_role_owner_prototype
             or args.compile_exclusive_takeover_prototype):
         parser.error('snapshot takeover requires shared-role owner and excludes destructive takeover')
+    if args.compile_supported_span_prototype and (not args.compile_device_dispatch_prototype
+            or args.build_recovery_qualification or args.build_device_dispatch_trial):
+        parser.error('supported span requires the non-loadable device dispatch prototype')
 
     build = args.haiku_build.resolve(strict=True)
     output = args.new_output.absolute()
@@ -493,6 +498,8 @@ def main():
         driver_env['PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_COMPILE_ONLY'] = '1'
     if args.compile_snapshot_takeover_prototype:
         driver_env['PIONEER_QWEN35_SNAPSHOT_TAKEOVER_COMPILE_ONLY'] = '1'
+    if args.compile_supported_span_prototype:
+        driver_env['PIONEER_QWEN35_SUPPORTED_SPAN_COMPILE_ONLY'] = '1'
     if args.build_recovery_qualification:
         driver_env['PIONEER_QWEN35_RECOVERY_QUALIFY'] = '1'
     if args.build_firmware_recovery_qualification:

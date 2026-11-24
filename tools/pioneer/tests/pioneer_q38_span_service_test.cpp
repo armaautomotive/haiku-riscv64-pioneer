@@ -111,7 +111,7 @@ static std::unique_ptr<tt_q38_span_upload> Request(unsigned bytes=4096,unsigned 
 static void Bind(PioneerProbeCookie& cookie,NativeSpanContext& c)
 { cookie.context=&c; sRuntimeOwner=&cookie; sBankStorageOnly=true; }
 static void Unbind() { sRuntimeOwner=nullptr; sBankStorageOnly=sColdRecoveryRequired=false; failCopy=0; }
-#ifndef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+#if !defined(PIONEER_Q38_HYBRID_TRACKED_UPLOAD) && !defined(PIONEER_QWEN35_SPAN_SERVICE_MOCK_ONLY)
 int main(int argc,char** argv)
 {
 	assert(argc==2);

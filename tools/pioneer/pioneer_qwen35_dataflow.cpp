@@ -28,6 +28,7 @@
 #include "PioneerQwen35DataflowGraphWorkspace.h"
 #include "PioneerQwen35DataflowRecoveryRetry.h"
 #include "PioneerQwen35Preload.h"
+#include "PioneerQwen35VerifiedSpan.h"
 #include "PioneerQwen35RootImageLayout.h"
 #include "llama.h"
 
@@ -167,10 +168,8 @@ static bool Begin(int fd,bool& bankOpen)
 		|| bank.driver!=TT_Q38_BANK_DRIVER || bank.version!=TT_Q38_BANK_PROTOCOL
 		|| bank.banks!=D::Banks || bank.page_bytes!=D::LoadPageBytes
 		|| !bank.storage_only || bank.bytes_per_bank!=PioneerQwen35PackedPlan::Capacity
-		|| !Call(fd,TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT,&span,sizeof(span))
-		|| span.version!=TT_Q38_SPAN_PUBLIC_VERSION || span.banks!=D::Banks
-		|| span.page_bytes!=D::LoadPageBytes || span.max_bytes!=D::LoadSpanBytes
-		|| !span.before_cohort || !span.explicit_end || span.reserved) return false;
+		|| !Call(fd,TT_PCI_PROBE_Q38_SPAN_SUPPORT,&span,sizeof(span))
+		|| !D::VerifiedSpanSupport(span)) return false;
 
 	tt_q38_bank_session session{};
 	session.version=TT_Q38_BANK_PROTOCOL;
@@ -195,16 +194,10 @@ static bool Upload(int fd,PioneerQwen35Gguf& source,
 		packet->bytes=bytes;
 		packet->reserved=0;
 		packet->result={};
-		if (!Call(fd,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,packet.get(),sizeof(*packet)))
+		if (!Call(fd,TT_PCI_PROBE_Q38_SPAN_UPLOAD,packet.get(),sizeof(*packet)))
 			return false;
 		const auto& result=packet->result;
-		if (packet->version!=TT_Q38_SPAN_PUBLIC_VERSION || packet->bank!=bank
-			|| packet->offset!=offset || packet->bytes!=bytes || packet->reserved
-			|| result.version!=1 || result.state!=TT_RUNTIME_PASSED
-			|| result.bytes!=bytes || result.pages!=bytes/D::LoadPageBytes
-			|| result.nonce!=spans+1 || !result.started || !result.completed
-			|| !result.held || result.host_exact || result.matched_words
-			|| result.recovery_required || result.reserved) {
+		if (!D::VerifiedSpanReply(*packet,bank,offset,bytes,spans+1)) {
 			fprintf(stderr,"P100A_Q35_DATAFLOW upload failed span=%u bank=%u "
 				"offset=%u state=%u recovery=%u\n",spans+1,bank,offset,
 				result.state,result.recovery_required);
