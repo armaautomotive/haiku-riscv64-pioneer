@@ -1184,6 +1184,16 @@ awk '/PIONEER_Q35_BANK_PREALLOC_TEST_BEGIN/ {copying=1;next} /PIONEER_Q35_BANK_P
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	-I"$temporary" "$directory/pioneer_qwen35_span_panel_mapping_test.cpp" -o "$temporary/span-panel-mapping-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/span-panel-mapping-test"
+awk '/PIONEER_Q35_MODEL_PRELOAD_SESSION_BEGIN/ {copying=1;next} /PIONEER_Q35_MODEL_PRELOAD_SESSION_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+	"$directory/../pioneer_qwen35_dataflow.cpp" > "$temporary/pioneer_q35_model_preload_session.inc"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-I"$temporary" "$directory/pioneer_qwen35_model_preload_session_test.cpp" -o "$temporary/model-preload-session-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/model-preload-session-test"
+awk '/PIONEER_Q35_BEGIN_CLIENT_BEGIN/ {copying=1;next} /PIONEER_Q35_BEGIN_CLIENT_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+	"$directory/../pioneer_qwen35_dataflow.cpp" > "$temporary/pioneer_q35_begin_client.inc"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-I"$directory/cli-stubs" -I"$temporary" "$directory/pioneer_qwen35_preload_begin_test.cpp" -o "$temporary/preload-begin-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/preload-begin-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	-I"$directory/cli-stubs" "$directory/pioneer_qwen35_span_exclusive_client_test.cpp" -o "$temporary/span-exclusive-client-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/span-exclusive-client-test"

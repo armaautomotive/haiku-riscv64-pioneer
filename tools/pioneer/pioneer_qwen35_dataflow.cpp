@@ -141,13 +141,14 @@ static unsigned Parse(const char* text,unsigned maximum)
 	return errno || *end || value>maximum?0:unsigned(value);
 }
 
-static bool Begin(int fd,bool& bankOpen)
+// PIONEER_Q35_BEGIN_CLIENT_BEGIN
+static bool Begin(int fd,bool& bankOpen,bool preloadOnly=false)
 {
 	bankOpen=false;
 	tt_qwen35_dataflow_support dataflow{};
 	tt_q38_bank_support bank{};
 	tt_q38_span_support span{};
-	if (!Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_SUPPORT,&dataflow,sizeof(dataflow))
+	if (!preloadOnly && (!Call(fd,TT_PCI_PROBE_QWEN35_DATAFLOW_SUPPORT,&dataflow,sizeof(dataflow))
 		|| dataflow.version!=TT_QWEN35_DATAFLOW_ABI
 		|| dataflow.driver!=TT_QWEN35_DATAFLOW_DRIVER
 		|| dataflow.cores!=D::DataflowCoreCount
@@ -163,8 +164,8 @@ static bool Begin(int fd,bool& bankOpen)
 				|TT_QWEN35_DATAFLOW_CAP_DECODER_SEQUENCE
 				|TT_QWEN35_DATAFLOW_CAP_GENERATION)
 		|| dataflow.projection_capabilities!=TT_QWEN35_DATAFLOW_PROJECTION_MATRIX
-		|| dataflow.token_capabilities!=TT_QWEN35_DATAFLOW_TOKEN_EMBEDDING
-		|| !Call(fd,TT_PCI_PROBE_Q38_BANK_SUPPORT,&bank,sizeof(bank))
+		|| dataflow.token_capabilities!=TT_QWEN35_DATAFLOW_TOKEN_EMBEDDING)) return false;
+	if (!Call(fd,TT_PCI_PROBE_Q38_BANK_SUPPORT,&bank,sizeof(bank))
 		|| bank.driver!=TT_Q38_BANK_DRIVER || bank.version!=TT_Q38_BANK_PROTOCOL
 		|| bank.banks!=D::Banks || bank.page_bytes!=D::LoadPageBytes
 		|| !bank.storage_only || bank.bytes_per_bank!=PioneerQwen35PackedPlan::Capacity
@@ -179,6 +180,7 @@ static bool Begin(int fd,bool& bankOpen)
 		&& session.result.active && session.result.host_ready
 		&& !session.result.cold && !session.result.uploaded_pages;
 }
+// PIONEER_Q35_BEGIN_CLIENT_END
 
 static bool Upload(int fd,PioneerQwen35Gguf& source,
 	const PioneerQwen35PackedPlan& plan,const D::DeviceLayout& manifest,
@@ -718,6 +720,58 @@ static int OpenExclusiveDataflowDriver()
 }
 // PIONEER_QWEN35_EXCLUSIVE_CLIENT_END
 
+// Authenticate and upload the actual model through the same strict preload
+// used by inference, then close the bank session. No graph is installed and
+// no tokenization, inference or fallback is performed in this qualification.
+static bool QualifyModelPreload(const char* path)
+{
+	const int sourceFD=open(path,O_RDONLY|O_NOFOLLOW|O_NONBLOCK|O_CLOEXEC);
+	if (sourceFD<0) { perror("Open pinned GGUF"); return false; }
+	std::unique_ptr<FILE,decltype(&fclose)> source(fdopen(sourceFD,"rb"),&fclose);
+	if (!source) { close(sourceFD);return false; }
+	PioneerQwen35Gguf packed;PioneerModelWeightCache::Digest digest{};std::string error;
+	if (!packed.Open(source.get()) || !PioneerModelWeightCache::HashFile(sourceFD,packed.FullBytes,digest,error)
+		|| PioneerModelWeightCache::Hex(digest)!="00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4"
+		|| !packed.Stable()) {
+		fprintf(stderr,"P100A_Q35_PRELOAD_ONLY authentication_failed %s\n",error.c_str());return false;
+	}
+	PioneerQwen35PackedPlan plan;auto manifest=std::make_unique<D::DeviceLayout>();
+	if (!plan.Build(packed,128,true) || !D::BuildDeviceLayout(packed,plan,128,*manifest)) {
+		fprintf(stderr,"P100A_Q35_PRELOAD_ONLY layout_failed\n");return false;
+	}
+	const int fd=OpenExclusiveDataflowDriver();if (fd<0) return false;
+	// PIONEER_Q35_MODEL_PRELOAD_SESSION_BEGIN
+	tt_pioneer_driver_reload status{};status.version=1;
+	bool okay=Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&status,sizeof(status))
+		&& status.driver==TT_QWEN35_DATAFLOW_DRIVER && status.build_tag==UINT64_C(0x2026112300030018)
+		&& status.generation && !status.cold && !status.quiesced && !status.active_owner
+		&& status.open_count==1 && status.guard_version==1;
+	bool bankOpen=false,spanOpen=false;uint64_t uploadedBytes=0;
+	const auto start=system_time();
+	if (okay) okay=Begin(fd,bankOpen,true);
+	bool uploaded=false;
+	if (okay) { uploaded=Upload(fd,packed,plan,*manifest,spanOpen,uploadedBytes);okay=uploaded; }
+	const bool modelValid=okay && uploadedBytes==UINT64_C(2740498432) && !spanOpen && packed.Stable();
+	bool bankEnded=false;
+	// A fully verified and closed upload remains safe to end even if the
+	// expected byte count or source-stability check fails afterwards.
+	if (uploaded && bankOpen && !spanOpen) {
+		tt_q38_bank_session end{};end.version=TT_Q38_BANK_PROTOCOL;
+		bankEnded=Call(fd,TT_PCI_PROBE_Q38_BANK_END,&end,sizeof(end))
+			&& end.result.state==TT_RESIDENT_SESSION_CLOSED && !end.result.active
+			&& end.result.pci_restored && end.result.host_released && !end.result.cold;
+	}
+	okay=modelValid && bankEnded;
+	const auto elapsed=system_time()-start;
+	if (!okay) fprintf(stderr,"P100A_Q35_PRELOAD_ONLY failed bytes=%llu bank_open=%u span_open=%u;CLOSE_ONLY\n",
+		static_cast<unsigned long long>(uploadedBytes),unsigned(bankOpen),unsigned(spanOpen));
+	const bool closed=close(fd)==0;
+	if (okay && closed) printf("P100A_Q35_PRELOAD_ONLY bytes=%llu load_seconds=%.6f clean_end=1;NO_INFERENCE\n",
+		static_cast<unsigned long long>(uploadedBytes),double(elapsed)*1e-6);
+	return okay && closed;
+	// PIONEER_Q35_MODEL_PRELOAD_SESSION_END
+}
+
 // PIONEER_QWEN35_QUALIFY_CLIENT_BEGIN
 // Deliberately uses the restricted qualification driver and an empty bank
 // session. No GGUF, model upload, worker startup or inference is performed.
@@ -856,6 +910,8 @@ static bool QualifyHeldFleet(bool stageRoles=false,bool prestack=false,bool loca
 int main(int argc,char** argv)
 {
 	setvbuf(stdout,nullptr,_IOLBF,0);
+	if (argc==3 && strcmp(argv[1],"--qualify-model-preload")==0)
+		return QualifyModelPreload(argv[2])?0:1;
 	if (argc==2 && strcmp(argv[1],"--inspect-held-fleet")==0)
 		return QualifyHeldFleet()?0:1;
 	if (argc==2 && strcmp(argv[1],"--qualify-held-role-stage")==0)

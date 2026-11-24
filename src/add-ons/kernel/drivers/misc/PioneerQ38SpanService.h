@@ -132,6 +132,7 @@ template<class C,bool Work=false
 #endif
 	if (!PioneerQ38SpanPrepareService(c)) {
 		PIONEER_Q35_SPAN_TRACE("service_prepare_failed");
+		PIONEER_Q35_SPAN_PREPARE_FAILURE();
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 		if (receipt) receipt->Abort();
 #endif

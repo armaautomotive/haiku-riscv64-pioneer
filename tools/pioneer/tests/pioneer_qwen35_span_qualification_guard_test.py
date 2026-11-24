@@ -36,4 +36,17 @@ with tempfile.TemporaryDirectory(prefix='q35-span-guard-') as temp:
         result=subprocess.run(['sh', str(script), sys.argv[1], str(output)],
             env=dict(env, **change), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=25)
         assert result.returncode != 0 and not output.exists(), change
+    model=dict(env,PIONEER_DRIVER_BUILD_TAG='2026112300030018',PIONEER_QWEN35_MODEL_PRELOAD_QUALIFY='1')
+    for i, change in enumerate((
+            {'PIONEER_QWEN35_MODEL_PRELOAD_QUALIFY':'0'},
+            {'PIONEER_QWEN35_SPAN_QUALIFY':'0'},
+            {'PIONEER_QWEN35_SUPPORTED_SPAN_COMPILE_ONLY':'0'},
+            {'PIONEER_QWEN35_RECOVERY_QUALIFY':'0'},
+            {'PIONEER_QWEN35_FLEET_INSPECTION_QUALIFY':'1'},
+            {'PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL':'1'},
+            {'PIONEER_DRIVER_BUILD_TAG':'2026112300030017'})):
+        output=Path(temp)/('model-'+str(i))
+        result=subprocess.run(['sh',str(script),sys.argv[1],str(output)],
+            env=dict(model,**change),stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=25)
+        assert result.returncode != 0 and not output.exists(), change
 print('PASS supported span qualification rejects missing or conflicting build guards')

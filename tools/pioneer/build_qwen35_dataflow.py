@@ -20,6 +20,7 @@ ROLE_LOCAL_RESTORE_QUALIFICATION_TAG = '2026112300030011'
 ROLE_SERVICE_QUALIFICATION_TAG = '2026112300030012'
 ROLE_SERVICE_FAULT_QUALIFICATION_TAG = '2026112300030013'
 SPAN_QUALIFICATION_TAG = '2026112300030017'
+MODEL_PRELOAD_QUALIFICATION_TAG = '2026112300030018'
 
 
 def verify_snapshot_witness_refuses_load(build, driver):
@@ -418,6 +419,8 @@ def main():
                         help='build the restricted idle-session ASIC recovery qualification driver')
     parser.add_argument('--build-span-qualification', action='store_true',
                         help='build the restricted supported-counter preload qualification driver')
+    parser.add_argument('--build-model-preload-qualification', action='store_true',
+                        help='build the restricted actual-model preload qualification driver')
     parser.add_argument('--build-firmware-recovery-qualification', action='store_true',
                         help='build the restricted idle-session firmware reset qualification driver')
     parser.add_argument('--build-fleet-inspection-qualification', action='store_true',
@@ -433,6 +436,10 @@ def main():
     parser.add_argument('--build-role-service-fault-qualification', action='store_true',
                         help='build the restricted one-core resident role fault/stop/restore driver')
     args = parser.parse_args()
+    if args.build_model_preload_qualification:
+        if args.build_span_qualification:
+            parser.error('model preload qualification selects its own span qualification')
+        args.build_span_qualification = True
     if args.build_span_qualification:
         if (args.build_recovery_qualification or args.build_firmware_recovery_qualification
                 or args.build_fleet_inspection_qualification or args.build_role_stage_qualification
@@ -506,7 +513,8 @@ def main():
     driver = output / 'driver'
     driver_env = dict(env, PIONEER_Q38_PANEL_DRIVER='15',
                       PIONEER_DRIVER_RELOAD='1',
-                      PIONEER_DRIVER_BUILD_TAG=(SPAN_QUALIFICATION_TAG if args.build_span_qualification
+                      PIONEER_DRIVER_BUILD_TAG=(MODEL_PRELOAD_QUALIFICATION_TAG if args.build_model_preload_qualification
+                                               else SPAN_QUALIFICATION_TAG if args.build_span_qualification
                                                else ROLE_SERVICE_FAULT_QUALIFICATION_TAG if args.build_role_service_fault_qualification
                                                else ROLE_SERVICE_QUALIFICATION_TAG if args.build_role_service_qualification
                                                else ROLE_LOCAL_RESTORE_QUALIFICATION_TAG if args.build_role_local_restore_qualification
@@ -535,6 +543,8 @@ def main():
         driver_env['PIONEER_QWEN35_SUPPORTED_SPAN_COMPILE_ONLY'] = '1'
     if args.build_span_qualification:
         driver_env['PIONEER_QWEN35_SPAN_QUALIFY'] = '1'
+    if args.build_model_preload_qualification:
+        driver_env['PIONEER_QWEN35_MODEL_PRELOAD_QUALIFY'] = '1'
     if args.build_recovery_qualification:
         driver_env['PIONEER_QWEN35_RECOVERY_QUALIFY'] = '1'
     if args.build_firmware_recovery_qualification:

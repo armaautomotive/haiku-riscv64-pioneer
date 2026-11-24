@@ -11,9 +11,18 @@
 #include "PioneerWideOutput.h"
 #if defined(PIONEER_QWEN35_SPAN_QUALIFY) && defined(_KERNEL_MODE)
 #include <KernelExport.h>
+#if !defined(PIONEER_QWEN35_MODEL_PRELOAD_QUALIFY)
 #define PIONEER_Q35_SPAN_TRACE(stage) dprintf("P100A_Q35_SPAN_TRACE %s\n",stage)
 #else
 #define PIONEER_Q35_SPAN_TRACE(stage) ((void)0)
+#endif
+#define PIONEER_Q35_SPAN_FAILURE(r) dprintf("P100A_Q35_SPAN_FAILURE started=%u completed=%u phase=0x%08x count=%u marker=0x%08x pc=%08x/%08x nonce=%u\n", \
+    (r).started,(r).completed,(r).phase,(r).count,(r).marker,(r).pc[0],(r).pc[1],(r).nonce)
+#define PIONEER_Q35_SPAN_PREPARE_FAILURE() dprintf("P100A_Q35_SPAN_FAILURE service_prepare\n")
+#else
+#define PIONEER_Q35_SPAN_TRACE(stage) ((void)0)
+#define PIONEER_Q35_SPAN_FAILURE(r) ((void)0)
+#define PIONEER_Q35_SPAN_PREPARE_FAILURE() ((void)0)
 #endif
 // Lease/result/descriptor/physical addresses are KERNEL-PRIVATE,not a wire
 // request. The adapter forbids any cohort/legacy compute while this lease
@@ -148,6 +157,7 @@ template<class IO,bool Work=false> bool PioneerQ38SpanUpload(IO& io,const tt_dra
 		|| !PioneerQ38SpanAuthorize(banks,dram,initialized,initializedPages,bank,offset,bytes,e)) return false;
 	auto fail=[&]() {
 		PIONEER_Q35_SPAN_TRACE("upload_failed_retained");
+		PIONEER_Q35_SPAN_FAILURE(r);
 		r.state=TT_RUNTIME_COMPLETION_FAILED; r.recovery_required=1; r.pages=r.host_exact=0;
 		return PioneerQ38SpanFail(io,banks,store,bulk,transfer,wide,lease);
 	};
