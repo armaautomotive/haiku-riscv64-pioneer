@@ -3,6 +3,7 @@
 #define PIONEER_FIRMWARE_RESET_H
 
 #include "PioneerQ38ArcQueue.h"
+#include "PioneerFirmwareResetTrace.h"
 
 // Experimental transport contract, not an ioctl or a hardware binding. The
 // caller must hold the exclusive device/recovery ticket and retain all host

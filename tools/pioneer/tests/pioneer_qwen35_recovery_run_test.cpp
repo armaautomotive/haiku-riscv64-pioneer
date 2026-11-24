@@ -32,6 +32,7 @@
 #include <algorithm>
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerRecoveryProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadState.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerFirmwareResetTrace.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerPcieRootAerSnapshot.h"
 using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uint64_t;using status_t=int;
 constexpr int B_OK=0,B_BAD_VALUE=-1,B_NOT_ALLOWED=-2,B_BUSY=-3,B_DEV_NOT_READY=-4,B_NO_MEMORY=-5;
@@ -228,9 +229,14 @@ struct PioneerPostResetMapping {
 #ifdef TEST_FIRMWARE_RESET
 template<class IO,class Guard> class PioneerFirmwareRecoveryOwner {
 	IO& ownerIo;uint64 ticket;bool started=false,retired=false;
+	PioneerFirmwareResetTrace callback=nullptr;void* callbackContext=nullptr;
 	struct FakeResult {uint32 failedStage=3;tt_arc_queue_result probe{};} result;
 public:
 	PioneerFirmwareRecoveryOwner(PioneerPostResetMapping& m,IO& io,uint64 t):ownerIo(io),ticket(t) {assert(m.isPre);}
+	bool SetTrace(PioneerFirmwareResetTrace next,void* context) {
+		if (started || callback || !next || !context) return false;
+		callback=next;callbackContext=context;return true;
+	}
 	bool Start(Guard* guard,uint64 t,const tt_arc_scratch_result&,const tt_arc_telemetry_result&) {
 		assert(guard && t==ticket && !started);++firmwareStarts;
 		if (!Step(PIONEER_RECOVERY_STAGE_ASIC_RESET) || failFirmwareStart) return false;
@@ -241,6 +247,12 @@ public:
 	}
 	bool Resume(Guard* guard,uint64 t,unsigned) {
 		assert(guard && t==ticket && started && !retired);++firmwareResumes;
+		if (callback) {
+			callback(callbackContext,PioneerFirmwareResetBeforeFirstPoll);
+			callback(callbackContext,PioneerFirmwareResetAfterFirstVendor);
+			callback(callbackContext,PioneerFirmwareResetAfterFirstMarker);
+			callback=nullptr;
+		}
 		return !resetTimeout && !resumeResetTimeout;
 	}
 	status_t Retire(Guard* guard,uint64 t,const PioneerDriverRecoveryProof& p) {
@@ -728,6 +740,11 @@ int main(){
 		&& evidence.samples[PIONEER_PCIE_TRACE_AFTER_RESET].valid
 		&& evidence.samples[PIONEER_PCIE_TRACE_AFTER_RESET].device_status==6
 		&& evidence.samples[PIONEER_PCIE_TRACE_ON_FAILURE].uncorrectable==0x20);
+	#ifdef TEST_FIRMWARE_RESET
+	assert(evidence.samples[PIONEER_PCIE_TRACE_BEFORE_FIRST_POLL].valid
+		&& evidence.samples[PIONEER_PCIE_TRACE_AFTER_FIRST_VENDOR].valid
+		&& evidence.samples[PIONEER_PCIE_TRACE_AFTER_FIRST_MARKER].valid);
+	#endif
 	assert(Qwen35RecoveryPcieEvidence(candidate,&evidence,sizeof(evidence))==B_BAD_VALUE);
 	evidence={};evidence.version=1;evidence.expected_tag=PIONEER_DRIVER_BUILD_TAG;evidence.expected_generation=3;
 	activeTeam=18;assert(Qwen35RecoveryPcieEvidence(candidate,&evidence,sizeof(evidence))==B_NOT_ALLOWED);

@@ -99,6 +99,12 @@ struct Owner {
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerFirmwareResetTransport.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerFirmwareRecoveryOwner.h"
 
+static PioneerFirmwareResetPollTrace pollEvents[3];
+static unsigned pollEventCount=0;
+static void RecordPoll(void* context,PioneerFirmwareResetPollTrace event) {
+	assert(context==&pollEventCount && pollEventCount<3 && published && resetBells==1);
+	pollEvents[pollEventCount++]=event;
+}
 static void ResetFake() {
 	memset(tlbs,0,sizeof(tlbs));memset(queueWords,0,sizeof(queueWords));
 	memset(msi,0,sizeof(msi));memset(preparedMsi,0,sizeof(preparedMsi));
@@ -107,6 +113,7 @@ static void ResetFake() {
 	msi[2]=1;preparedMsi[2]=1;maps=queuePublishes=resetBells=pingBells=afterPublishMmio=0;
 	failMap=dropTlb=failDelete=aliasMap=-1;deletionCount=0;published=firmwareCompletes=false;
 	leaseValid=true;validateCalls=denyAt=0;cardCommand=0x402;
+	pollEventCount=0;
 }
 static PioneerDriverRecoveryProof Evidence() {
 	PioneerDriverRecoveryProof p{};
@@ -202,12 +209,18 @@ int main() {
 	}
 	ResetFake();PioneerPostResetMapping owned;
 	PioneerFirmwareRecoveryOwner<Owner,Guard> recovery(owned,owner,123);
+	assert(!recovery.SetTrace(nullptr,&pollEventCount));
+	assert(recovery.SetTrace(RecordPoll,&pollEventCount) && !recovery.SetTrace(RecordPoll,&pollEventCount));
 	assert(!recovery.Start(&guard,124,arc,health) && !maps);
 	leaseValid=false;assert(!recovery.Start(&guard,123,arc,health) && !maps);leaseValid=true;
 	assert(recovery.Start(&guard,123,arc,health) && queuePublishes==1 && resetBells==1);
-	assert(!recovery.Start(&guard,123,arc,health));
+	assert(!recovery.Start(&guard,123,arc,health) && !recovery.SetTrace(RecordPoll,&pollEventCount));
 	assert(!recovery.Resume(&guard,124,1) && !recovery.Resume(&guard,123,1));
+	assert(pollEventCount==3 && pollEvents[0]==PioneerFirmwareResetBeforeFirstPoll
+		&& pollEvents[1]==PioneerFirmwareResetAfterFirstVendor
+		&& pollEvents[2]==PioneerFirmwareResetAfterFirstMarker);
 	firmwareCompletes=true;assert(recovery.Resume(&guard,123,1));
+	assert(pollEventCount==3); // retry does not duplicate evidence or reset
 	badProof=Evidence();badProof.reset_generation=124;
 	assert(recovery.Retire(&guard,123,badProof)==B_BAD_VALUE && !deletionCount);
 	assert(recovery.Retire(&guard,123,Evidence())==B_OK && recovery.Retired() && deletionCount==10);

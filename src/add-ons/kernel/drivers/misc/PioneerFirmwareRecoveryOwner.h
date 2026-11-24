@@ -17,6 +17,9 @@ public:
 	PioneerFirmwareRecoveryOwner(const PioneerFirmwareRecoveryOwner&)=delete;
 	PioneerFirmwareRecoveryOwner& operator=(const PioneerFirmwareRecoveryOwner&)=delete;
 	~PioneerFirmwareRecoveryOwner() = default; // no device IO or unmap
+	bool SetTrace(PioneerFirmwareResetTrace callback,void* context) {
+		return !startAttempted && transport.SetTrace(callback,context);
+	}
 
 	bool Start(Guard* guard,uint64 expected,const tt_arc_scratch_result& arc,
 		const tt_arc_telemetry_result& health) {

@@ -21,6 +21,9 @@ template<class OwnerIO,class Guard> class PioneerFirmwareResetTransport {
 	bool opened=false,openAttempted=false,prepareAttempted=false,prepared=false;
 	bool publicationAttempted=false,notificationAttempted=false,delayFailed=false;
 	bool disposeAttempted=false,disposeComplete=false;
+	PioneerFirmwareResetTrace trace=NULL;
+	void* traceContext=NULL;
+	bool firstDelay=false,firstVendor=false,firstMarker=false;
 	bool TicketValid() const { return ticket && guard && guard->validate && guard->validate(ticket)==B_OK; }
 	bool Allowed() const {
 		return !disposeAttempted && TicketValid() && !delayFailed;
@@ -33,6 +36,12 @@ public:
 	PioneerFirmwareResetTransport(const PioneerFirmwareResetTransport&)=delete;
 	PioneerFirmwareResetTransport& operator=(const PioneerFirmwareResetTransport&)=delete;
 	~PioneerFirmwareResetTransport() = default;
+	// Install before any mapping or reset attempt. The context is owned by
+	// the retained driver session and outlives this transport.
+	bool SetTrace(PioneerFirmwareResetTrace callback,void* context) {
+		if (openAttempted || trace || !callback || !context) return false;
+		trace=callback;traceContext=context;return true;
+	}
 	// The driver holds its lock when dropping the temporary module reference.
 	// Never retain a callable pointer across put_module(); a later operation
 	// must obtain the module again and bind the same recovery ticket.
@@ -133,12 +142,28 @@ public:
 		// have caused the reset. PioneerWrite32 supplies the platform fence.
 		if (Allowed()) PioneerWrite32(preparedMsi,0);
 	}
-	uint32 CardRead(uint16 a,uint8 size) { return Allowed()?owner.CardRead(a,size):UINT32_MAX; }
+	uint32 CardRead(uint16 a,uint8 size) {
+		if (!Allowed()) return UINT32_MAX;
+		const uint32 value=owner.CardRead(a,size);
+		if (trace && publicationAttempted && firstDelay && Allowed()) {
+			if (!firstVendor && a==0 && size==4) {
+				firstVendor=true;trace(traceContext,PioneerFirmwareResetAfterFirstVendor);
+			} else if (firstVendor && !firstMarker && a==4 && size==2) {
+				firstMarker=true;trace(traceContext,PioneerFirmwareResetAfterFirstMarker);
+			}
+		}
+		return value;
+	}
 	uint32 RootRead(uint16 a,uint8 size) { return Allowed()?owner.RootRead(a,size):UINT32_MAX; }
 	void CardWrite(uint16 a,uint8 size,uint32 value) {
 		if (Accessible() && a==4 && size==2 && value==0x442) owner.CardWrite(a,size,value);
 	}
-	void RecoveryDelay() { if (!Allowed() || snooze(100000)!=B_OK) delayFailed=true; }
+	void RecoveryDelay() {
+		if (!Allowed() || snooze(100000)!=B_OK) { delayFailed=true;return; }
+		if (trace && publicationAttempted && !firstDelay && Allowed()) {
+			firstDelay=true;trace(traceContext,PioneerFirmwareResetBeforeFirstPoll);
+		}
+	}
 
 	// Virtual unmaps only, after independent post-reset firmware, all-core,
 	// NoC and DMA audits. The proof and completed reset must belong to this

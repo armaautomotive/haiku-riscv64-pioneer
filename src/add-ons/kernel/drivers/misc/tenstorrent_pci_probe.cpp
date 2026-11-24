@@ -11710,6 +11710,17 @@ Qwen35QualificationTrace(PioneerStoreContext* context,unsigned sample)
 	if (context && context->qualificationTraceActive && sample<PIONEER_PCIE_TRACE_SAMPLES)
 		(void)PioneerPcieRootTraceSample(context->io,context->qualificationTrace[sample]);
 }
+#ifdef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS
+static void
+Qwen35FirmwareResetPollTrace(void* context,PioneerFirmwareResetPollTrace event)
+{
+	unsigned sample=PIONEER_PCIE_TRACE_SAMPLES;
+	if (event==PioneerFirmwareResetBeforeFirstPoll) sample=PIONEER_PCIE_TRACE_BEFORE_FIRST_POLL;
+	else if (event==PioneerFirmwareResetAfterFirstVendor) sample=PIONEER_PCIE_TRACE_AFTER_FIRST_VENDOR;
+	else if (event==PioneerFirmwareResetAfterFirstMarker) sample=PIONEER_PCIE_TRACE_AFTER_FIRST_MARKER;
+	Qwen35QualificationTrace(static_cast<PioneerStoreContext*>(context),sample);
+}
+#endif
 #endif
 struct Qwen35RecoveryResetIO {
 	PioneerSessionIO& io;
@@ -12121,6 +12132,10 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 			PioneerFirmwareRecoveryOwner<PioneerSessionIO,pioneer_driver_recovery_guard_v2_info>(
 				*context->recoveryPreResetMapping,context->io,ticket);
 		if (!context->recoveryFirmwareResetOwner) return fail(B_NO_MEMORY);
+		#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+		if (!context->recoveryFirmwareResetOwner->SetTrace(Qwen35FirmwareResetPollTrace,context))
+			return fail(B_BAD_VALUE);
+		#endif
 		if (!context->recoveryFirmwareResetOwner->Start(guard,ticket,preFirmware,
 			context->recoveryPreResetMapping->firmwareTelemetry)) {
 			const auto& resetResult=context->recoveryFirmwareResetOwner->Result();
