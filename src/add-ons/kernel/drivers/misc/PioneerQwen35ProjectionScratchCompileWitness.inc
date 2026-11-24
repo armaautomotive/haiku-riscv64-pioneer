@@ -17,6 +17,7 @@
 struct PioneerQ35ScratchHeldCompileScope {
     bool permitted;
     bool QualificationHoldAllowed(const void*,const PioneerQwen35::DataflowServiceOwner&) const { return permitted; }
+    bool QualificationRestoreHeldRoute(const void*,const PioneerQwen35::DataflowServiceOwner&,PioneerSessionIO&) const { return permitted; }
     bool QualificationHeldAllowed(const void*,const PioneerQwen35::DataflowServiceOwner&) const { return permitted; }
     bool QualificationResumeAllowed(const void*,const PioneerQwen35::DataflowServiceOwner&) const { return permitted; }
 };
@@ -83,6 +84,16 @@ public:
     bool QualificationHoldAllowed(const void* p,const PioneerQwen35::DataflowServiceOwner& service) const {
         return permitted && context && p==context->qwen35QualificationOwner.Scratch()
             && &service==context->qwen35DataflowService;
+    }
+    bool QualificationRestoreHeldRoute(const void* p,const PioneerQwen35::DataflowServiceOwner& service,
+        PioneerSessionIO& io) const {
+        return context && &io==&context->io && QualificationHoldAllowed(p,service) && service.ScratchHeld();
+    }
+    bool QualificationRestoreClosedRoute(const PioneerQ35ProjectionScratch& scratch,
+        const PioneerQwen35::DataflowServiceOwner& service,PioneerSessionIO& io) const {
+        return permitted && context && &io==&context->io && &service==context->qwen35DataflowService
+            && service.Closed() && context->qwen35QualificationOwner.Owns(scratch)
+            && context->qwen35QualificationOwner.RetirementPrepared() && scratch.IsRestored();
     }
     bool QualificationHeldAllowed(const void* p,const PioneerQwen35::DataflowServiceOwner& service) const {
         return QualificationHoldAllowed(p,service) && service.ScratchHeld();

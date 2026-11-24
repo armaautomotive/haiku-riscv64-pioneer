@@ -69,6 +69,14 @@ struct CombinedScope : ScratchScope {
         return allowed && !retained && service==&s && s.Ready() && p==owner
             && holder && holder->Scratch()==p && holder->Qualification()->IsAudited();
     }
+    bool QualificationRestoreHeldRoute(const void* p,const DataflowServiceOwner& s,ProjectionServiceIO&) const {
+        return allowed && !retained && service==&s && s.ScratchHeld() && p==owner && holder && holder->Scratch()==p;
+    }
+    bool QualificationRestoreClosedRoute(const PioneerQ35ProjectionScratch& scratch,
+        const DataflowServiceOwner& s,ProjectionServiceIO&) const {
+        return allowed && !retained && service==&s && s.Closed() && holder && holder->Owns(scratch)
+            && holder->RetirementPrepared() && scratch.IsRestored();
+    }
     bool QualificationHeldAllowed(const void* p,const DataflowServiceOwner& s) const {
         return allowed && !retained && service==&s && s.ScratchHeld() && p==owner
             && holder && holder->Scratch()==p;

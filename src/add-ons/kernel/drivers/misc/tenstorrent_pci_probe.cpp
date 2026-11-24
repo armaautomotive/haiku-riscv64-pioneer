@@ -4876,7 +4876,11 @@ public:
 		{
 			QualificationInternalScope admission(qwen35QualificationInternalActive);
 			result=qwen35DataflowService->FinishScratchClose(io,scratch,scope);
-			if (result==PioneerQwen35::DataflowServiceClosed) result=CloseDataflowRewrite();
+			if (result==PioneerQwen35::DataflowServiceClosed) {
+				if (!scope.QualificationRestoreClosedRoute(*scratch,*qwen35DataflowService,io))
+					result=PioneerQwen35::DataflowServiceRestoreFailed;
+				else result=CloseDataflowRewrite();
+			}
 		}
 		// A denied proof has not attempted resume; any failure after the fleet
 		// leaves the held phase is uncertain and retains its resources.

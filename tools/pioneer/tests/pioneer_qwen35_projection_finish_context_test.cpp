@@ -14,7 +14,14 @@ struct Owner {
     bool RetirementPrepared() const { return prepared && !retained; }
     void Retain() { retained=true; }
 };
-struct Scope { bool allowed=true; };
+struct Scope {
+    bool allowed=true,routeAllowed=true;unsigned route=119;
+    template<class ScratchType,class ServiceType,class IOType>
+    bool QualificationRestoreClosedRoute(const ScratchType&,const ServiceType&,IOType&) {
+        if (!routeAllowed) return false;
+        route=0;return true;
+    }
+};
 struct IO {};
 struct Service {
     bool held=true, closed=false, resumeFails=false; unsigned attempts=0;
@@ -53,7 +60,7 @@ int main() {
             && !c.qwen35QualificationOwner.retained && !c.qwen35QualificationInternalActive);
         scope.allowed=true;
         assert(c.FinishDataflowQualificationClose(scope)==DataflowServiceClosed && c.cleanups==1
-            && c.service.attempts==1 && !c.qwen35QualificationOwner.retained);
+            && c.service.attempts==1 && !c.qwen35QualificationOwner.retained && scope.route==0);
         assert(c.FinishDataflowQualificationClose(scope)==DataflowServiceInvalidState && c.service.attempts==1);
     }
     {
@@ -67,6 +74,13 @@ int main() {
         assert(c.FinishDataflowQualificationClose(scope)==DataflowServiceRestoreFailed
             && c.qwen35QualificationOwner.retained && c.cleanups==1 && c.service.attempts==1);
         assert(c.FinishDataflowQualificationClose(scope)==DataflowServiceInvalidState && c.service.attempts==1);
+    }
+    {
+        Context c;Scope failedRoute;failedRoute.routeAllowed=false;
+        assert(c.FinishDataflowQualificationClose(failedRoute)==DataflowServiceRestoreFailed
+            && c.service.closed && c.qwen35QualificationOwner.retained && !c.cleanups && c.service.attempts==1
+            && failedRoute.route==119);
+        assert(c.FinishDataflowQualificationClose(failedRoute)==DataflowServiceInvalidState && c.service.attempts==1);
     }
     std::puts("PASS context finish requires proof and retains uncertain failures; SIMULATED ONLY");
 }

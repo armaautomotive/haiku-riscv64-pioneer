@@ -866,7 +866,9 @@ public:
 			|| !scope.QualificationHoldAllowed(owner,*this)) return DataflowServiceInvalidState;
 		fScratchCloseOwner=owner;
 		const auto result=CloseImpl(io,true);
-		if (result==DataflowServiceScratchHeld && !scope.QualificationHeldAllowed(owner,*this)) {
+		if (result==DataflowServiceScratchHeld
+			&& (!scope.QualificationRestoreHeldRoute(owner,*this,io)
+				|| !scope.QualificationHeldAllowed(owner,*this))) {
 			DataflowWorkerSnapshot snapshot{};
 			SetDiagnostic(DataflowServiceDiagnosticStopAudit,DataflowCoreCount,snapshot);
 			fPhase=PhaseFaulted;

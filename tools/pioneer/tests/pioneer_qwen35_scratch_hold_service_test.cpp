@@ -11,7 +11,13 @@
 
 struct ScratchHoldScope {
     const void* expected=nullptr;
-    bool holdAllowed=false,resumeAllowed=false,heldAllowed=true;
+    bool holdAllowed=false,resumeAllowed=false,heldAllowed=true,heldRouteAllowed=true;
+    unsigned heldRoutes=0,route=119;
+    bool QualificationRestoreHeldRoute(const void* owner,const DataflowServiceOwner& service,MockDataflowIO&) {
+        ++heldRoutes;
+        if (owner!=expected || !heldRouteAllowed || !service.ScratchHeld()) return false;
+        route=0;return true;
+    }
     bool QualificationHoldAllowed(const void* owner,const DataflowServiceOwner& service) const {
         return owner==expected && holdAllowed && service.Ready();
     }
@@ -30,7 +36,7 @@ int main()
     for (unsigned i=0;i<80;i++) dispatch[i]=0x20000000+i;
     const DataflowServiceImageView image={DataflowServiceBootWord,code,96,dispatch,80};
     int scratch=0,other=0;
-    for (unsigned scenario=0;scenario<5;scenario++) {
+    for (unsigned scenario=0;scenario<6;scenario++) {
         auto io=std::make_unique<MockDataflowIO>();
         auto service=std::make_unique<DataflowServiceOwner>();
         ScratchHoldScope scope{&scratch,false,false};
@@ -41,6 +47,7 @@ int main()
         if (scenario==1) io->failStopAudit=true;
         if (scenario==3) io->failRoleRestore=true;
         if (scenario==4) scope.heldAllowed=false;
+        if (scenario==5) scope.heldRouteAllowed=false;
         const auto held=service->CloseForScratch(*io,&scratch,scope);
         if (scenario==1) {
             assert(held==DataflowServiceStopAuditFailed && service->Faulted()
@@ -56,14 +63,16 @@ int main()
                 && io->roleRestores==1);
             continue;
         }
-        if (scenario==4) {
+        if (scenario==4 || scenario==5) {
             assert(held==DataflowServiceStopAuditFailed && service->Faulted()
                 && io->roleRestores==1 && !io->resumeCount
                 && service->Close(*io)==DataflowServiceInvalidState
                 && service->CloseForScratch(*io,&scratch,scope)==DataflowServiceInvalidState);
+            assert(scope.heldRoutes==1 && scope.route==(scenario==5?119U:0U));
             for (unsigned core=0;core<DataflowCoreCount;core++) assert(io->captured[core] && !io->released[core]);
             continue;
         }
+        assert(scope.heldRoutes==1 && scope.route==0);
         assert(held==DataflowServiceScratchHeld && service->ScratchHeld() && !service->Closed()
             && io->roleStops==1 && io->roleRestores==1 && !io->resumeCount);
         for (unsigned core=0;core<DataflowCoreCount;core++) assert(io->captured[core] && !io->released[core]);

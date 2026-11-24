@@ -197,6 +197,38 @@ public:
             && qualification && qualification->IsAudited() && qualification->Program()
             && scratch->IsRunning() && RuntimeReady(*scratch,*qualification->Program());
     }
+    // The service has already completed its held restoration sequence. This
+    // only returns the selected route; the separate held proof remains denied.
+    bool QualificationRestoreHeldRoute(const void* p,const PioneerQwen35::DataflowServiceOwner& service,
+        PioneerSessionIO& io) const {
+        auto* scratch=c.qwen35QualificationOwner.Scratch();
+        auto* qualification=c.qwen35QualificationOwner.Qualification();
+        if (&io!=&c.io || !scratch || p!=scratch || !Identity() || !Owned(p)
+            || !c.qwen35QualificationInternalActive || &service!=c.qwen35DataflowService
+            || !service.ScratchHeld() || c.Unsafe() || !qualification || !qualification->IsAudited()
+            || !scratch->IsRunning() || !scratch->MatchesBankClaimOwner(c.banks,c.baseline.baseline.baseline.baseline.dram)
+            || io.runtimeCore>=PioneerQwen35::DataflowCoreCount || !io.DataflowPanelMappingStable()
+            || !io.SelectRuntimeCore(0) || !io.DataflowPanelMappingStable() || !Identity()) {
+            Retain(p);return false;
+        }
+        return true;
+    }
+    // A successful one-shot resume has completed before this call. No failed
+    // resume or route write is retried here; the owner remains retained.
+    bool QualificationRestoreClosedRoute(const PioneerQ35ProjectionScratch& scratch,
+        const PioneerQwen35::DataflowServiceOwner& service,PioneerSessionIO& io) const {
+        auto* qualification=c.qwen35QualificationOwner.Qualification();
+        if (&io!=&c.io || !Identity() || !Owned(&scratch) || !c.qwen35QualificationInternalActive
+            || &service!=c.qwen35DataflowService || !service.Closed() || c.Unsafe()
+            || !c.qwen35QualificationOwner.RetirementPrepared() || !scratch.IsRestored()
+            || !qualification || !qualification->IsAudited()
+            || !scratch.MatchesBankClaimOwner(c.banks,c.baseline.baseline.baseline.baseline.dram)
+            || io.runtimeCore>=PioneerQwen35::DataflowCoreCount || !io.DataflowPanelMappingStable()
+            || !io.SelectRuntimeCore(0) || !io.DataflowPanelMappingStable() || !Identity()) {
+            Retain(&scratch);return false;
+        }
+        return true;
+    }
     // These require lifetime-spanning held-fleet/NoC and scratch-retirement
     // proofs, which are not yet established by the real Haiku scope.
     bool QualificationHeldAllowed(const void*,const PioneerQwen35::DataflowServiceOwner&) const { return false; }

@@ -260,6 +260,21 @@ int main() {
             for (unsigned i=0;i<1024;i++) assert(page[i]==(0x63000000U^(n*104729U+i*17U)));
         }
     }
+    for (unsigned closed=0;closed<2;closed++) {
+        PioneerStoreContext context;PioneerQwen35RoleBorrowedScopeWitness borrowed;
+        context.io.qwen35BorrowedRoleScope=&borrowed;
+        PioneerQ35ProjectionQualificationScope scope(context);
+        assert(context.qwen35QualificationOwner.Allocate());
+        auto* scratch=context.qwen35QualificationOwner.Scratch();
+        PioneerQwen35::DataflowServiceOwner unstarted;
+        context.qwen35DataflowService=&unstarted;context.qwen35QualificationInternalActive=true;
+        context.io.runtimeCore=context.io.selected=7;
+        const bool result=closed?scope.QualificationRestoreClosedRoute(*scratch,unstarted,context.io)
+            :scope.QualificationRestoreHeldRoute(scratch,unstarted,context.io);
+        assert(!result && !context.io.selects && context.io.runtimeCore==7
+            && context.qwen35QualificationOwner.Retained() && sColdRecoveryRequired);
+        sColdRecoveryRequired=false;
+    }
     std::puts("PASS actual Haiku diagnostic scope identity, fleet-proof denial and retained failure; SIMULATED ONLY");
     return 0;
 }
