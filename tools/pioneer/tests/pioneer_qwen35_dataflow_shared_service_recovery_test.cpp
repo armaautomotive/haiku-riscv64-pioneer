@@ -26,6 +26,7 @@ struct CombinedSharedIO : MockDataflowIO {
         savedRam(DataflowRoleFleetRecoveryOwner::RamWords()) {}
     bool SharedCaptureAndStageHeld() {
         if (!MockDataflowIO::SharedCaptureAndStageHeld()) return false;
+        if (!roleOwner.SelectComputeLocalRamPreservation()) return false;
         if (!roleOwner.CaptureAllStackless(savedCode.data(),savedCode.size(),savedRam.data(),savedRam.size(),roles))
             return false;
         roleCaptured=true;
@@ -95,7 +96,7 @@ int main()
         assert(owner->Install(image,*io)==DataflowServiceComplete && owner->Ready());
         assert(!io->roles.privateRamReads);
         for (unsigned core=0;core<DataflowCoreCount;core++)
-            assert(io->roles.resetDisable[core]==(disableBefore[core]|DataflowRolePreserveResetMask));
+            assert(io->roles.resetDisable[core]==(disableBefore[core]|DataflowSharedPreserveResetMask));
 #ifdef PIONEER_QWEN35_EXPORTED_SHARED_IMAGES
         uint32_t readerBoot=0,writerBoot=0;
         assert(DataflowRoleBootWord(DataflowRoleReader,DataflowRoleReaderShimAddress,readerBoot));

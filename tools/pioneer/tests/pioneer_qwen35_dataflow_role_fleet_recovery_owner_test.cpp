@@ -221,6 +221,21 @@ int main()
     std::vector<uint32_t> ramSnapshot(DataflowRoleFleetRecoveryOwner::RamWords());
     const uint32_t codeA[]={1,2,3},codeB[]={4,5},shimA[]={6,7},shimB[]={8,9};
     {
+        RecoveryIO io; const auto original=io.resetDisable;
+        DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.SelectComputeLocalRamPreservation() && owner.ComputeLocalRamPreservationSelected());
+        assert(!owner.SelectComputeLocalRamPreservation());
+        assert(owner.CaptureAll(codeSnapshot.data(),codeSnapshot.size(),ramSnapshot.data(),ramSnapshot.size(),io));
+        assert(owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
+        assert(owner.PreparePossibleRelease(io));
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++)
+            assert(io.resetDisable[core]==(original[core]|DataflowSharedPreserveResetMask));
+        io.resetDisable[119]&=~uint32_t(DataflowComputeLocalRamPreserveResetMask);
+        assert(!owner.BeginReleaseAttempt(io) && owner.RestorationRequired());
+        assert(owner.RestoreAll(io) && owner.VerifyAfterResidentRestore(io));
+        assert(io.resetDisable==original);
+    }
+    {
         RecoveryIO io; const auto originalRam=io.ram,originalCode=io.code,originalBoots=io.boots,
             originalShims=io.shims,originalDisable=io.resetDisable;
         DataflowRoleFleetRecoveryOwner owner;

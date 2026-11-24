@@ -154,11 +154,13 @@ int main()
         assert(platform.writes==before);
         memory[DataflowRolePhysicalControl][0x224/4]=0x15;
         assert(!views.WriteResetDisable(3,0x14,0x3d4,guard));
-        assert(!views.WriteResetDisable(3,0x15,0x3d4,guard)); // changes unrelated bit
+        assert(!views.WriteResetDisable(3,0x15,0x3d7,guard)); // changes T0 debug bit
         guard.control=false; assert(!views.WriteResetDisable(3,0x15,0x3d5,guard));
         guard.control=true; assert(views.WriteResetDisable(3,0x15,0x3d5,guard));
         assert(memory[DataflowRolePhysicalControl][0x224/4]==0x3d5);
         assert(views.WriteResetDisable(3,0x3d5,0x15,guard));
+        assert(views.WriteResetDisable(3,0x15,0x14,guard)); // T0 RAM bit only
+        assert(views.WriteResetDisable(3,0x14,0x15,guard));
         guard.write=false; assert(!views.WriteWords(3,DataflowRolePhysicalExtraCode,0,words,4,guard));
         assert(views.ImageWritesConfirmed()); // refused before the store
         guard.write=true; platform.driftAfter=platform.writes+1;

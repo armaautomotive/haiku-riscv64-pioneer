@@ -14,6 +14,11 @@ namespace PioneerQwen35 {
 enum : unsigned {
     // Blackhole DISABLE_RESET bits for B/NC local RAM and debug registers.
     DataflowRolePreserveResetMask=0x3c0,
+    // T0 uses an L1 stack, but leaving reset otherwise clears its private
+    // RAM. The shared compute service must preserve it across release.
+    DataflowComputeLocalRamPreserveResetMask=0x001,
+    DataflowSharedPreserveResetMask=DataflowRolePreserveResetMask
+        |DataflowComputeLocalRamPreserveResetMask,
     // Proposed low-L1 startup shims sit above the TRISC0 stack top and below
     // its source windows. The existing snapshot covers them, but its PCI
     // write gate does not currently admit them.

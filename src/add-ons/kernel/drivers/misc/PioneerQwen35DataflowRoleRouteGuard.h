@@ -51,7 +51,7 @@ public:
     bool ProveControlWriteAllowed(unsigned core,uint32_t expected,uint32_t desired) {
         using namespace PioneerQwen35;
         return core<DataflowBarrierWorkers && fScope.ProveExclusiveRewrite(fIO)
-            && !((expected^desired)&~uint32_t(DataflowRolePreserveResetMask))
+            && !((expected^desired)&~uint32_t(DataflowSharedPreserveResetMask))
             && fScope.ProveRoleControlWriteSafe(fIO,core,expected,desired);
     }
 #endif

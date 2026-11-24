@@ -163,13 +163,14 @@ public:
         }
         return true;
     }
-    // Only reset-preservation bits 6..9 may change, and only from the exact
+    // Only B/NC preservation bits 6..9 and T0 RAM preservation bit 0 may
+    // change, and only from the exact
     // expected value under the caller's retained-snapshot proof. Soft reset
     // itself is deliberately not writable through this interface.
     template<class Guard> bool WriteResetDisable(unsigned core,uint32_t expected,uint32_t desired,Guard& guard) {
         const unsigned which=DataflowRolePhysicalControl,offset=0x224;
         if (!fOpen || core>=DataflowBarrierWorkers || fArea[which]<0 || !fView[which]
-            || ((expected^desired)&~uint32_t(DataflowRolePreserveResetMask))
+            || ((expected^desired)&~uint32_t(DataflowSharedPreserveResetMask))
             || !DataflowRolePhysicalWriteRange(which,offset,4) || !Route(core,guard)
             || !guard.ProveControlWriteAllowed(core,expected,desired)
             || !Route(core,guard) || fPlatform.ReadWord(fView[which]+offset/4)!=expected

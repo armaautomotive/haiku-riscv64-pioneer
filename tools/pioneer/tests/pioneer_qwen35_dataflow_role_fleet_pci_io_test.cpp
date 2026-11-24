@@ -407,7 +407,7 @@ int main()
     assert(!io.WriteRam(7,DataflowRoleCount,DataflowRoleBriscLocalRam,words,4));
     const uint32_t original=gMemory[DataflowRolePhysicalControl][0x224/4];
     assert(io.WriteResetDisable(7,original|DataflowRolePreserveResetMask));
-    assert(!io.WriteResetDisable(7,(original|DataflowRolePreserveResetMask)^1));
+    assert(!io.WriteResetDisable(7,(original|DataflowRolePreserveResetMask)^2));
     assert(io.WriteResetDisable(7,original));
     scope.write=false;
     assert(!io.Write(7,DataflowRoleExtraL1Address,words,4)); scope.write=true;
@@ -442,6 +442,9 @@ int main()
     gMemory[DataflowRolePhysicalControl][0x224/4]&=~uint32_t(DataflowRolePreserveResetMask);
     assert(!io.ReleaseCore(8,attempted) && !attempted && !context.io.sharedResetWrites);
     gMemory[DataflowRolePhysicalControl][0x224/4]|=DataflowRolePreserveResetMask;
+    gMemory[DataflowRolePhysicalControl][0x224/4]&=~uint32_t(DataflowComputeLocalRamPreserveResetMask);
+    assert(!io.ReleaseCore(8,attempted) && !attempted && !context.io.sharedResetWrites);
+    gMemory[DataflowRolePhysicalControl][0x224/4]|=DataflowComputeLocalRamPreserveResetMask;
     assert(io.ReleaseCore(8,attempted) && attempted && context.io.sharedResetWrites==1
         && context.io.reset==0x6000);
     assert(!io.ReleaseCore(8,attempted) && context.io.sharedResetWrites==1);

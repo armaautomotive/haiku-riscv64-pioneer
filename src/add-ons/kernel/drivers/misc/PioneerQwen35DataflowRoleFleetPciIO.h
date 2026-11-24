@@ -212,7 +212,7 @@ public:
         uint32_t first=0,second=0;
         if (!fViews.Read(core,DataflowRolePhysicalControl,0x224,first,fGuard)
             || !fViews.Read(core,DataflowRolePhysicalControl,0x224,second,fGuard)
-            || first!=second || (first&DataflowRolePreserveResetMask)!=DataflowRolePreserveResetMask
+            || first!=second || (first&DataflowSharedPreserveResetMask)!=DataflowSharedPreserveResetMask
             || !fScope.ProveRoleReleaseSafe(fIO,core) || !fGuard.ProveSelectedRoute(core)
             || fIO.ResetRead()!=0x47800 || fIO.ResetRead()!=0x47800) return false;
         attempted=true;

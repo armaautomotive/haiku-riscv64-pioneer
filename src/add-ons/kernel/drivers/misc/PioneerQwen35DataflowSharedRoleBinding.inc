@@ -124,6 +124,9 @@ public:
     explicit PioneerQwen35SharedRoleBinding(PioneerStoreContext& context)
         :fContext(context),fViews(fPlatform) {
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        // This service releases T0 alongside B/NC. Its compute image uses
+        // an L1 stack; preserve T0 private RAM across the release as well.
+        (void)fOwner.SelectComputeLocalRamPreservation();
         fCodeSnapshot=(uint32_t*)malloc(sizeof(uint32_t)*PioneerQwen35::DataflowRoleFleetRecoveryOwner::CodeWords());
         fRamSnapshot=(uint32_t*)malloc(sizeof(uint32_t)*PioneerQwen35::DataflowRoleFleetRecoveryOwner::RamWords());
 #endif
@@ -135,7 +138,7 @@ public:
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         return RoleImage().Valid();
 #else
-        return fCodeSnapshot && fRamSnapshot;
+        return fCodeSnapshot && fRamSnapshot && fOwner.ComputeLocalRamPreservationSelected();
 #endif
     }
     bool StacklessCopiesCaptured(unsigned core) const {

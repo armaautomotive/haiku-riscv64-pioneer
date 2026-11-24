@@ -6,8 +6,10 @@
 #include "PioneerQwen35DataflowRoleRestoreHandoffOwner.h"
 namespace PioneerQwen35 {
 // Blackhole RISCV_DEBUG_REG_DISABLE_RESET bits 6..9 preserve BRISC/NC local
-// RAM and debug registers on soft-reset exit. Other bits, including TRISC
-// settings, must remain exactly as found. This owner still needs exclusive
+// RAM and debug registers on soft-reset exit. Shared compute can additionally
+// preserve T0 local RAM (bit 0); all other bits remain exactly as found. This
+// does not capture T0 registers, CSR state or prove that its program leaves
+// private RAM untouched. This owner still needs exclusive
 // hardware ownership and independently proved held/quiet routes.
 // Offline composition for 120 tiles' additional code, low shims, boot words
 // and B/NC private RAM. It does not release or stop RISCs, reset hardware,
@@ -24,6 +26,7 @@ class DataflowRoleFleetRecoveryOwner {
     DataflowRoleFleetLocalRamOwner fRam;
     uint32_t fResetDisable[DataflowBarrierWorkers]{};
     bool fResetDisableCaptured=false,fResetDisableTouched=false;
+    uint32_t fPreserveResetMask=DataflowRolePreserveResetMask;
     bool fStackless=false;
     bool fCoreLocalRestoreMode=false;
     bool fAutoRestoreMode=false;
@@ -109,7 +112,7 @@ class DataflowRoleFleetRecoveryOwner {
         for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
             uint32_t first=0,second=0;
             const uint32_t expected=fResetDisable[core]
-                |(preserved?DataflowRolePreserveResetMask:0U);
+                |(preserved?fPreserveResetMask:0U);
             if (!io.AllRolesHeld(core) || !io.ReadResetDisable(core,first)
                 || !io.ReadResetDisable(core,second) || first!=expected || second!=expected)
                 return false;
@@ -122,7 +125,7 @@ class DataflowRoleFleetRecoveryOwner {
         // failed PCI write can have partially completed or hit another tile.
         fResetDisableTouched=true;
         for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
-            const uint32_t desired=fResetDisable[core]|DataflowRolePreserveResetMask;
+            const uint32_t desired=fResetDisable[core]|fPreserveResetMask;
             uint32_t observed=0;
             if (!io.AllRolesHeld(core) || !io.WriteResetDisable(core,desired)
                 || !io.ReadResetDisable(core,observed) || observed!=desired) return false;
@@ -148,6 +151,16 @@ public:
     DataflowRoleFleetRecoveryOwner& operator=(const DataflowRoleFleetRecoveryOwner&)=delete;
     static constexpr unsigned CodeWords() { return DataflowRoleFleetImagesOwner::RequiredWords(); }
     static constexpr unsigned RamWords() { return DataflowRoleFleetLocalRamOwner::RequiredWords(); }
+    // Select before capture, for the shared service that releases T0 as well
+    // as B/NC. This preserves its RAM from reset; it is not a RAM snapshot or
+    // authority to run a T0 image which writes that RAM.
+    bool SelectComputeLocalRamPreservation() {
+        if (fPhase!=Empty || fPreserveResetMask!=DataflowRolePreserveResetMask) return false;
+        fPreserveResetMask=DataflowSharedPreserveResetMask;return true;
+    }
+    bool ComputeLocalRamPreservationSelected() const {
+        return fPreserveResetMask==DataflowSharedPreserveResetMask;
+    }
     bool ReleaseLedgerPrepared() const { return fPhase==Armed
         && (fStackless?fRam.StacklessCapturePrepared():fRam.MarkedForPossibleRelease()); }
     bool RestorationRequired() const {
