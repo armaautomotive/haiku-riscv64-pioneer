@@ -8,7 +8,9 @@ been implemented or tried on this Pioneer. A context-owned queue adapter and
 the eight RISC reset-unit writes and a 120-worker unicast soft-reset pass have
 been implemented and simulated, but no live recovery controller constructs the
 owner yet. Unicast coverage and the expected all-ones reset-unit readback remain
-unverified on the card. The reported
+unverified on the card. The owner also requires an automatic-clock baseline,
+250 MHz in forced mode, and automatic mode after release; configurations
+without automatic clock mode are currently rejected. The reported
 v18.5.0 firmware family is not proof
 that the installed binary matches the source.
 

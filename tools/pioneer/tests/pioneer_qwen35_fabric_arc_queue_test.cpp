@@ -15,6 +15,12 @@ struct FabricQueue : StrictQueue {
             At(base+20)=(At(base+4)+1)%8;At(base+24)++;
             At(response)=badReply?0xff:0;
             for (unsigned w=1;w<8;w++) At(response+4*w)=0;
+            if (observedMessage==0x33) {
+                clock=observedArgument?observedArgument:800;
+                mode=observedArgument?2:3;
+            } else if (observedMessage==0x34) {
+                At(response+4)=clock;At(response+8)=mode;
+            }
             if (changed) At(base+4)=(At(base+4)+2)%8;
         }
         return At(address);
@@ -27,7 +33,7 @@ int main()
 {
     const auto arc=FabricQueue::Arc();const auto health=FabricQueue::Health();
     unsigned totalWrites=0,totalTlb=0;
-    const uint32_t commands[][2]={{0x33,250},{0xaf,0},{0x20,0},{0x33,0}};
+    const uint32_t commands[][2]={{0x34,0},{0x33,250},{0xaf,0},{0x20,0},{0x33,0}};
     for (const auto& command:commands) for (unsigned req=0;req<8;req++) for (unsigned resp=0;resp<8;resp++) {
         FabricQueue io(req,resp,0);Queue queue(io);tt_arc_queue_result r{};
         assert(queue.Message(arc,health,r,command[0],command[1]));
@@ -43,10 +49,10 @@ int main()
             assert(io.observedMessage==command[0] && io.observedArgument==command[1]
                 && io.Restored());
         }
-        assert(io.notifications==4 && !queue.Unsafe());
+        assert(io.notifications==5 && !queue.Unsafe());
     }
     const uint32_t invalid[][2]={{0x33,1},{0x33,251},{0x20,1},{0xaf,250},
-        {0x34,0},{0x52,0},{0x54,0},{0x56,3},{0xa0,0},{0x90,0}};
+        {0x34,1},{0x52,0},{0x54,0},{0x56,3},{0xa0,0},{0x90,0}};
     for (const auto& command:invalid) {
         FabricQueue io(0,0,0);Queue queue(io);tt_arc_queue_result r{};
         assert(!queue.Message(arc,health,r,command[0],command[1]));

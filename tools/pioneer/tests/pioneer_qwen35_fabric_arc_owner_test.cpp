@@ -7,11 +7,12 @@ enum { B_OK=0,B_PAGE_SIZE=4096,B_ANY_KERNEL_ADDRESS=0,B_UNCACHED_MEMORY=1,
 static FabricQueue* device=nullptr;
 static uint32 msiPage[1024]{};
 static uint32 resetPage[1024]{};
-static uint32 tilePage[1024]{},nocPage[1024]{},tileReset[120]{};
+static uint32 tilePage[1024]{},nocPage[0x12000/4]{},tileReset[120]{};
 static unsigned tileReads[120]{};
 static int dropReset=-1;
 static int dropTile=-1;
 static int wrongTileId=-1,changeOnAudit=-1;
+static int disabledClockCore=-1,disabledClockNoc=-1,fifoBusyCore=-1,fifoBusyNoc=-1;
 static unsigned PioneerWorkerX(unsigned core) {
     const unsigned x[]={1,2,3,4,5,6,7,10,11,12,13,14};return x[core/10];
 }
@@ -52,7 +53,15 @@ static uint32 PioneerRead32(const volatile uint32* p) {
         const unsigned core=SelectedCore();device->io++;
         if (p==nocPage+0x44/4) return (PioneerWorkerX(core)^(int(core)==wrongTileId?1U:0U))
             |(PioneerWorkerY(core)<<6)|(17U<<12)|(12U<<19);
-        assert(p==nocPage+0x48/4);return 0x10000;
+        if (p==nocPage+0x48/4) return 0x10000;
+        const unsigned offset=unsigned(a-nb),network=offset/0x10000,reg=offset%0x10000;
+        assert(network<2);
+        if (reg==0x148) return PioneerWorkerX(core)|(PioneerWorkerY(core)<<6);
+        if (reg==0x100) return (int(core)==disabledClockCore && int(network)==disabledClockNoc?1U<<12:0)
+            | (int(core)==fifoBusyCore && int(network)==fifoBusyNoc?1U<<16:0);
+        if (reg==0x64) return 0;
+        if (reg==0x68) return 0;
+        assert(false);return 0;
     }
     const uintptr_t tb=(uintptr_t)tilePage;
     if (a>=tb && a<tb+sizeof(tilePage)) {
@@ -115,7 +124,7 @@ static int Validate(uint64 ticket) { return ticket==123 && ticketValid?B_OK:-1; 
 using Owner=PioneerQ35FabricArcOwner<Guard>;
 struct Scope {
     Owner* expected=nullptr;PioneerPostResetMapping* mapping=nullptr;
-    bool allowed=true,phaseReady=true,resetAllowed=true,tilesHeld=true;
+    bool allowed=true,phaseReady=true,resetAllowed=true,tilesHeld=true,clockAllowed=true;
     unsigned calls=0,denyAt=0;
     bool FabricArcAllowed(const Owner& owner,const PioneerPostResetMapping& m,uint64 ticket,Owner::Phase phase) {
         if (++calls==denyAt) allowed=false;
@@ -123,6 +132,9 @@ struct Scope {
     }
     bool FabricArcPhaseReady(const Owner& owner,const PioneerPostResetMapping& m,uint64 ticket,Owner::Phase phase) {
         return phaseReady && FabricArcAllowed(owner,m,ticket,phase);
+    }
+    bool FabricClockQueryAllowed(const Owner& owner,const PioneerPostResetMapping& m,uint64 ticket,Owner::Phase phase) {
+        return clockAllowed && FabricArcAllowed(owner,m,ticket,phase);
     }
     bool FabricResetUnitAllowed(const Owner& owner,const PioneerPostResetMapping& m,uint64 ticket,Owner::Phase phase,bool) {
         return resetAllowed && FabricArcAllowed(owner,m,ticket,phase);
@@ -134,11 +146,17 @@ struct Scope {
         return core<120 && tilesHeld && FabricArcAllowed(owner,m,ticket,owner.CurrentPhase());
     }
 };
+static bool ForceClock(Owner& owner,Guard& guard,Scope& scope,const tt_arc_scratch_result& arc,
+    tt_arc_queue_result& result) {
+    return owner.CheckClock(&guard,scope,arc,result) && owner.SendNext(&guard,scope,arc,result)
+        && owner.CheckClock(&guard,scope,arc,result);
+}
 static void ResetUnit() {
     memset(resetPage,0,sizeof(resetPage));resetPage[0x408/4]=5;
     for (unsigned i=0;i<8;i++) resetPage[0x40/4+i]=UINT32_MAX;
     memset(tileReset,0,sizeof(tileReset));memset(tileReads,0,sizeof(tileReads));
     dropReset=dropTile=wrongTileId=changeOnAudit=-1;
+    disabledClockCore=disabledClockNoc=fifoBusyCore=fifoBusyNoc=-1;
 }
 int main() {
     Guard guard{Validate};const auto arc=FabricQueue::Arc();tt_arc_queue_result result{};
@@ -149,9 +167,13 @@ int main() {
     assert(!owner.Open(&guard,scope) && mapCount==4);
     scope.phaseReady=false;assert(!owner.SendNext(&guard,scope,arc,result) && !fake.io);
     scope.phaseReady=true;
+    scope.clockAllowed=false;assert(!owner.CheckClock(&guard,scope,arc,result) && !fake.io);scope.clockAllowed=true;
+    assert(owner.CheckClock(&guard,scope,arc,result) && result.clock_mode==3);
     assert(owner.SendNext(&guard,scope,arc,result) && owner.CurrentPhase()==Owner::ClockForced
         && fake.observedMessage==0x33 && fake.observedArgument==250);
     assert(!owner.SendNext(&guard,scope,arc,result));
+    assert(!owner.SetRiscReset(&guard,scope,true));
+    assert(owner.CheckClock(&guard,scope,arc,result) && result.clock_mode==2 && result.clock_mhz==250);
     scope.resetAllowed=false;assert(!owner.SetRiscReset(&guard,scope,true));scope.resetAllowed=true;
     assert(owner.SetRiscReset(&guard,scope,true) && owner.CurrentPhase()==Owner::RiscsHeld
         && owner.ResetWrites()==0xff);
@@ -171,6 +193,7 @@ int main() {
     for (unsigned i=0;i<8;i++) assert(resetPage[0x40/4+i]==UINT32_MAX);
     assert(owner.SendNext(&guard,scope,arc,result) && owner.CurrentPhase()==Owner::ClockReleased
         && fake.observedMessage==0x33 && fake.observedArgument==0 && fake.Restored());
+    assert(owner.CheckClock(&guard,scope,arc,result) && owner.ClockRestored() && result.clock_mode==3);
     const unsigned io=fake.io;assert(!owner.SendNext(&guard,scope,arc,result) && fake.io==io);
     // Partial mapping and uncertain command outcomes cannot be replayed or unmapped.
     for (int failed=0;failed<4;failed++) {
@@ -185,22 +208,41 @@ int main() {
         assert(!o.Open(&guard,s) && o.CurrentPhase()==Owner::Failed && m.queueUnsafe && mapCount==4);
     }
     {
+        FabricQueue fault(0,0,0);device=&fault;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};mapCount=0;ResetUnit();
+        fault.mode=2;assert(o.Open(&guard,s) && !o.CheckClock(&guard,s,arc,result)
+            && o.CurrentPhase()==Owner::Failed && !o.ResetWrites() && m.queueUnsafe);
+    }
+    {
+        FabricQueue fault(0,0,0);device=&fault;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};mapCount=0;ResetUnit();
+        assert(o.Open(&guard,s) && o.CheckClock(&guard,s,arc,result) && o.SendNext(&guard,s,arc,result));
+        fault.clock=249;assert(!o.CheckClock(&guard,s,arc,result) && o.CurrentPhase()==Owner::Failed
+            && !o.ResetWrites() && m.queueUnsafe);
+    }
+    {
+        FabricQueue fault(0,0,0);device=&fault;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};mapCount=0;ResetUnit();
+        assert(o.Open(&guard,s) && ForceClock(o,guard,s,arc,result) && o.SetRiscReset(&guard,s,true));
+        assert(o.SendNext(&guard,s,arc,result) && o.SendNext(&guard,s,arc,result) && o.HoldAllTiles(&guard,s)
+            && o.SetRiscReset(&guard,s,false) && o.SendNext(&guard,s,arc,result));
+        fault.mode=2;assert(!o.CheckClock(&guard,s,arc,result) && o.CurrentPhase()==Owner::Failed
+            && !o.ClockRestored() && m.queueUnsafe);
+    }
+    {
         FabricQueue fault(0,0,0);device=&fault;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};mapCount=0;
-        assert(o.Open(&guard,s));assert(o.SendNext(&guard,s,arc,result));
+        assert(o.Open(&guard,s) && ForceClock(o,guard,s,arc,result));
         ResetUnit();assert(o.SetRiscReset(&guard,s,true));
         fault.timeout=true;assert(!o.SendNext(&guard,s,arc,result) && o.CurrentPhase()==Owner::Failed && m.queueUnsafe);
         const unsigned before=fault.io;assert(!o.SendNext(&guard,s,arc,result) && fault.io==before);
     }
     for (int word=0;word<8;word++) {
         FabricQueue fault(0,0,0);device=&fault;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};mapCount=0;ResetUnit();
-        assert(o.Open(&guard,s) && o.SendNext(&guard,s,arc,result));
+        assert(o.Open(&guard,s) && ForceClock(o,guard,s,arc,result));
         dropReset=word;assert(!o.SetRiscReset(&guard,s,true) && o.CurrentPhase()==Owner::Failed && m.queueUnsafe);
         assert(o.ResetWrites()==((1U<<(word+1))-1U));
         const unsigned before=fault.io;assert(!o.SetRiscReset(&guard,s,true) && fault.io==before);
     }
     for (int core:{0,31,32,63,64,95,96,119}) {
         FabricQueue fault(0,0,0);device=&fault;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};mapCount=0;ResetUnit();
-        assert(o.Open(&guard,s) && o.SendNext(&guard,s,arc,result) && o.SetRiscReset(&guard,s,true));
+        assert(o.Open(&guard,s) && ForceClock(o,guard,s,arc,result) && o.SetRiscReset(&guard,s,true));
         assert(o.SendNext(&guard,s,arc,result) && o.SendNext(&guard,s,arc,result));
         dropTile=core;assert(!o.HoldAllTiles(&guard,s) && o.CurrentPhase()==Owner::Failed
             && o.FailedTile()==unsigned(core) && (o.TileWrites(core/32)&(1U<<(core%32))) && m.queueUnsafe);
@@ -208,16 +250,25 @@ int main() {
     }
     for (bool audit:{false,true}) {
         FabricQueue fault(0,0,0);device=&fault;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};mapCount=0;ResetUnit();
-        assert(o.Open(&guard,s) && o.SendNext(&guard,s,arc,result) && o.SetRiscReset(&guard,s,true));
+        assert(o.Open(&guard,s) && ForceClock(o,guard,s,arc,result) && o.SetRiscReset(&guard,s,true));
         assert(o.SendNext(&guard,s,arc,result) && o.SendNext(&guard,s,arc,result));
         if (audit) changeOnAudit=17;else wrongTileId=17;
         assert(!o.HoldAllTiles(&guard,s) && o.CurrentPhase()==Owner::Failed && o.FailedTile()==17 && m.queueUnsafe);
         if (audit) assert(o.TileWrites(3)==0xffffff);
         else assert(!(o.TileWrites(0)&(1U<<17)));
     }
+    for (int network=0;network<2;network++) for (bool busyFifo:{false,true}) {
+        FabricQueue fault(0,0,0);device=&fault;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};mapCount=0;ResetUnit();
+        assert(o.Open(&guard,s) && ForceClock(o,guard,s,arc,result) && o.SetRiscReset(&guard,s,true));
+        assert(o.SendNext(&guard,s,arc,result) && o.SendNext(&guard,s,arc,result));
+        if (busyFifo) { fifoBusyCore=17;fifoBusyNoc=network; }
+        else { disabledClockCore=17;disabledClockNoc=network; }
+        assert(!o.HoldAllTiles(&guard,s) && o.CurrentPhase()==Owner::Failed && o.FailedTile()==17
+            && !(o.TileWrites(0)&(1U<<17)) && !tileReads[17] && m.queueUnsafe);
+    }
     for (int word=0;word<8;word++) {
         FabricQueue fault(0,0,0);device=&fault;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};mapCount=0;ResetUnit();
-        assert(o.Open(&guard,s) && o.SendNext(&guard,s,arc,result) && o.SetRiscReset(&guard,s,true));
+        assert(o.Open(&guard,s) && ForceClock(o,guard,s,arc,result) && o.SetRiscReset(&guard,s,true));
         assert(o.SendNext(&guard,s,arc,result) && o.SendNext(&guard,s,arc,result)
             && o.HoldAllTiles(&guard,s));
         dropReset=word;assert(!o.SetRiscReset(&guard,s,false) && o.CurrentPhase()==Owner::Failed && m.queueUnsafe);
@@ -226,19 +277,19 @@ int main() {
     }
     {
         FabricQueue fault(0,0,0);device=&fault;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};mapCount=0;ResetUnit();
-        assert(o.Open(&guard,s) && o.SendNext(&guard,s,arc,result));resetPage[0x40/4+3]=0;
+        assert(o.Open(&guard,s) && ForceClock(o,guard,s,arc,result));resetPage[0x40/4+3]=0;
         assert(!o.SetRiscReset(&guard,s,true) && o.CurrentPhase()==Owner::Failed && !o.ResetWrites());
     }
     {
         FabricQueue fault(0,0,0);device=&fault;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};mapCount=0;ResetUnit();
-        assert(o.Open(&guard,s) && o.SendNext(&guard,s,arc,result));resetPage[0x408/4]=UINT32_MAX;
+        assert(o.Open(&guard,s) && ForceClock(o,guard,s,arc,result));resetPage[0x408/4]=UINT32_MAX;
         assert(!o.SetRiscReset(&guard,s,true) && o.CurrentPhase()==Owner::Failed && !o.ResetWrites());
     }
     {
         FabricQueue fault(0,0,0);device=&fault;PioneerPostResetMapping m;Owner o(m,123);Scope s{&o,&m};mapCount=0;
         assert(o.Open(&guard,s));s.denyAt=s.calls+12;
-        assert(!o.SendNext(&guard,s,arc,result) && !s.allowed && o.CurrentPhase()==Owner::Failed && m.queueUnsafe);
-        const unsigned before=fault.io;assert(!o.SendNext(&guard,s,arc,result) && fault.io==before);
+        assert(!o.CheckClock(&guard,s,arc,result) && !s.allowed && o.CurrentPhase()==Owner::Failed && m.queueUnsafe);
+        const unsigned before=fault.io;assert(!o.CheckClock(&guard,s,arc,result) && fault.io==before);
     }
     puts("PASS retained Q35 fabric ARC owner: fixed phases, scoped ticket, real mapping adapter and fault retention; SIMULATED ONLY");
 }

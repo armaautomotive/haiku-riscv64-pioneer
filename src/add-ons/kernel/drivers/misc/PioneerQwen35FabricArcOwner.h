@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_QWEN35_FABRIC_ARC_OWNER_H
 #define PIONEER_QWEN35_FABRIC_ARC_OWNER_H
+#include "PioneerQwen35DataflowNocSafetySample.h"
 
 // The real post-reset mapping and v2 guard are supplied by the retained Q35
 // recovery context. This owner never unmaps or restores device state in its
@@ -17,6 +18,7 @@ private:
     const uint64 fTicket;
     Phase fPhase=Fresh;
     bool fOpenAttempted=false,fOpen=false;
+    bool fClockBaseline=false,fClockForced=false,fClockRestored=false;
     area_id fResetArea=-1;
     volatile uint32* fResetView=NULL;
     area_id fTileArea=-1;
@@ -73,6 +75,7 @@ public:
     Phase CurrentPhase() const { return fPhase; }
     uint64 Ticket() const { return fTicket; }
     bool Opened() const { return fOpen; }
+    bool ClockRestored() const { return fClockRestored; }
     uint32 ResetWrites() const { return fResetWrites; }
     uint32 TileWrites(unsigned word) const { return word<4?fTileWrites[word]:0; }
     unsigned FailedTile() const { return fFailedTile; }
@@ -133,7 +136,8 @@ public:
     // message. Queue uncertainty poisons the owner and retains all mappings.
     template<class Scope> bool SendNext(Guard* guard,Scope& scope,
         const tt_arc_scratch_result& arc,tt_arc_queue_result& result) {
-        if (!fOpen || (fPhase!=Fresh && fPhase!=RiscsHeld && fPhase!=TensixToggled
+        if (!fOpen || (fPhase==Fresh && !fClockBaseline)
+            || (fPhase!=Fresh && fPhase!=RiscsHeld && fPhase!=TensixToggled
                 && fPhase!=RiscsReleased) || !Allowed(guard,scope)
             || !scope.FabricArcPhaseReady(*this,fMapping,fTicket,fPhase)) return false;
         const uint32 command=fPhase==Fresh?0x33U:fPhase==RiscsHeld?0xafU:
@@ -151,12 +155,38 @@ public:
         return true;
     }
 
+    // Check the original automatic clock mode before forcing, the actual
+    // forced 250 MHz before holding RISCs, and the restored automatic mode
+    // after release. A successful firmware command alone does not establish
+    // that the requested clock state was applied.
+    template<class Scope> bool CheckClock(Guard* guard,Scope& scope,
+        const tt_arc_scratch_result& arc,tt_arc_queue_result& result) {
+        if (!fOpen || (fPhase!=Fresh && fPhase!=ClockForced && fPhase!=ClockReleased)
+            || (fPhase==Fresh && fClockBaseline) || (fPhase==ClockForced && fClockForced)
+            || (fPhase==ClockReleased && fClockRestored) || !Allowed(guard,scope)
+            || !scope.FabricClockQueryAllowed(*this,fMapping,fTicket,fPhase)) return false;
+        Transport<Scope> transport{*this,guard,scope};
+        PioneerQ38ArcQueue<Transport<Scope>,false,false,true> queue(transport);
+        if (!queue.Message(arc,fMapping.firmwareTelemetry,result,0x34U) || queue.Unsafe()
+            || !Allowed(guard,scope)
+            || !scope.FabricClockQueryAllowed(*this,fMapping,fTicket,fPhase)) {
+            fPhase=Failed;return false;
+        }
+        const bool clockOkay=fPhase==ClockForced?(result.clock_mode==2 && result.clock_mhz==250)
+            :(result.clock_mode==3 && result.clock_mhz>=200 && result.clock_mhz<=1400);
+        if (!clockOkay) { fPhase=Failed;return false; }
+        if (fPhase==Fresh) fClockBaseline=true;
+        else if (fPhase==ClockForced) fClockForced=true;
+        else fClockRestored=true;
+        return true;
+    }
+
     // Assert the eight reset-unit words only after forcing the clock, then
     // release them only after a separate all-tile soft-reset audit. Route,
     // boot and each word are checked; a partially applied write or route
     // change is retained and is never automatically replayed.
     template<class Scope> bool SetRiscReset(Guard* guard,Scope& scope,bool hold) {
-        if (!fOpen || !fResetView || (hold?fPhase!=ClockForced:fPhase!=TilesHeld)
+        if (!fOpen || !fResetView || (hold?(fPhase!=ClockForced || !fClockForced):fPhase!=TilesHeld)
             || !Allowed(guard,scope)
             || !scope.FabricResetUnitAllowed(*this,fMapping,fTicket,fPhase,hold)) return false;
         auto access=[&]() {
@@ -247,16 +277,32 @@ public:
                 const uint32 id=PioneerRead32(fMapping.noc+0x44/4);
                 const uint32 endpoint=PioneerRead32(fMapping.noc+0x48/4);
                 const uint32 expected=BlackholeDramSourceX(fMapping.topology.source,x)|(y<<6);
-                return (id&0xfffU)==expected && ((id>>12)&127U)==17U
-                    && ((id>>19)&127U)==12U && (endpoint&0xffffff00U)==0x10000U && access(core);
+                if ((id&0xfffU)!=expected || ((id>>12)&127U)!=17U
+                    || ((id>>19)&127U)!=12U || (endpoint&0xffffff00U)!=0x10000U) return false;
+                for (unsigned network=0;network<2;network++) {
+                    uint32 local=0;
+                    if (!PioneerQwen35::DataflowNocDecodeLocalRoute(PioneerRead32(fMapping.noc
+                            +(network*0x10000U+PioneerQwen35::DataflowNocLogicalIdOffset)/4),local)
+                        || !PioneerQwen35::DataflowNocRouteMatchesWorker(local,core)) return false;
+                }
+                return access(core);
             };
-            if (!route() || !route()) return fail();
+            auto tileClockAndFifos=[&]() {
+                return route() && PioneerQwen35SampleNocFifosAndClock([&](unsigned offset) {
+                    if (!route()) return uint32(UINT32_MAX);
+                    const uint32 value=PioneerRead32(fMapping.noc+offset/4);
+                    return route()?value:uint32(UINT32_MAX);
+                }) && route();
+            };
+            // Never touch a tile RISC register unless both NIUs have stable,
+            // enabled tile clocks and any enabled request FIFOs are empty.
+            if (!tileClockAndFifos()) return fail();
             if (!pass) {
                 fTileWrites[core/32]|=1U<<(core%32); // before the uncertain write
                 PioneerWrite32(fTileView+0x1b0/4,0x47800U);
             }
-            if (!route() || PioneerRead32(fTileView+0x1b0/4)!=0x47800U
-                || !route() || PioneerRead32(fTileView+0x1b0/4)!=0x47800U) return fail();
+            if (!tileClockAndFifos() || PioneerRead32(fTileView+0x1b0/4)!=0x47800U
+                || !tileClockAndFifos() || PioneerRead32(fTileView+0x1b0/4)!=0x47800U) return fail();
         }
         for (unsigned i=0;i<3;i++) {
             if (!access(119)) return fail();

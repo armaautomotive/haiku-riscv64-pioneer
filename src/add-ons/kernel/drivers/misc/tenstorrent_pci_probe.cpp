@@ -4071,6 +4071,8 @@ struct PioneerQ35FabricArcCompileScope {
 		uint64,PioneerQ35FabricArcCompileOwner::Phase) { return false; }
 	bool FabricArcPhaseReady(const PioneerQ35FabricArcCompileOwner&,const PioneerPostResetMapping&,
 		uint64,PioneerQ35FabricArcCompileOwner::Phase) { return false; }
+	bool FabricClockQueryAllowed(const PioneerQ35FabricArcCompileOwner&,const PioneerPostResetMapping&,
+		uint64,PioneerQ35FabricArcCompileOwner::Phase) { return false; }
 	bool FabricResetUnitAllowed(const PioneerQ35FabricArcCompileOwner&,const PioneerPostResetMapping&,
 		uint64,PioneerQ35FabricArcCompileOwner::Phase,bool) { return false; }
 	bool FabricTileCoverage(const PioneerQ35FabricArcCompileOwner&,const PioneerPostResetMapping&,
@@ -4081,6 +4083,9 @@ struct PioneerQ35FabricArcCompileScope {
 template bool PioneerQ35FabricArcCompileOwner::Open<PioneerQ35FabricArcCompileScope>(
 	pioneer_driver_recovery_guard_v2_info*,PioneerQ35FabricArcCompileScope&);
 template bool PioneerQ35FabricArcCompileOwner::SendNext<PioneerQ35FabricArcCompileScope>(
+	pioneer_driver_recovery_guard_v2_info*,PioneerQ35FabricArcCompileScope&,
+	const tt_arc_scratch_result&,tt_arc_queue_result&);
+template bool PioneerQ35FabricArcCompileOwner::CheckClock<PioneerQ35FabricArcCompileScope>(
 	pioneer_driver_recovery_guard_v2_info*,PioneerQ35FabricArcCompileScope&,
 	const tt_arc_scratch_result&,tt_arc_queue_result&);
 template bool PioneerQ35FabricArcCompileOwner::SetRiscReset<PioneerQ35FabricArcCompileScope>(

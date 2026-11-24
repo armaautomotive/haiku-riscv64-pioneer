@@ -8,8 +8,8 @@
 // A native caller MUST retain its context/cookie/PCI/ALL mappings and host
 // leases, and latch cold recovery. This object alone cannot do that.
 // RecoveryTest is a separate, opt-in kernel-channel firmware liveness check.
-// Q35FabricRecovery permits only the four fixed message/argument pairs used
-// by the Q35 fabric recovery controller. The queue does not enforce their
+// Q35FabricRecovery permits only a read-only clock query and the four fixed
+// message/argument pairs used by the Q35 fabric recovery controller. It does not enforce their
 // sequence, prove exclusive fabric ownership, or authorize a reset itself.
 template<class IO,bool RecoveryState0=false,bool RecoveryTest=false,bool Q35FabricRecovery=false> class PioneerQ38ArcQueue {
 	static_assert(unsigned(RecoveryState0)+unsigned(RecoveryTest)+unsigned(Q35FabricRecovery)<=1,
@@ -36,6 +36,7 @@ public:
 		r={}; r.version=1; r.request_restored=r.tlb_restored=1;
 		if ((RecoveryState0 ? message!=0xa0 || argument : RecoveryTest ? message!=0x90 || argument
 				: Q35FabricRecovery ? !((message==0x33 && (argument==0 || argument==250))
+					|| (message==0x34 && !argument)
 					|| ((message==0x20 || message==0xaf) && !argument))
 				: (argument || (message!=0x34 && message!=0x52 && message!=0x54)))
 			|| arc.version!=1 || arc.state!=TT_ARC_SCRATCH_READY || arc.tlb_restored!=1
