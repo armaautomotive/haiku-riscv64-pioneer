@@ -18,14 +18,39 @@ struct ModelCommit {
 
 struct CloseAuditIO {
 	unsigned previous;
+	int failedCore=-1;
+	bool acknowledged=false;
 	bool FenceGraphHostWrites() { return true; }
 	void Pause() {}
-	bool ReadWorkerSnapshot(unsigned,DataflowWorkerSnapshot& s) {
+	bool ReadWorkerSnapshot(unsigned core,DataflowWorkerSnapshot& s) {
+		if (int(core)==failedCore) {
+			const unsigned trigger=previous+1;
+			s=acknowledged?DataflowWorkerSnapshot{trigger,trigger,trigger,DataflowWorkerReady,0,0,0,0}
+				:DataflowWorkerSnapshot{trigger,previous,trigger,DataflowWorkerFailed,1,5,0,0};
+			return true;
+		}
 		s={previous,previous,previous,DataflowWorkerReady,0,0,0,0};return true;
 	}
 	bool AuditGraphRecoveryCore(unsigned,const DataflowWorkerSnapshot&) { return true; }
-	bool Acknowledge(unsigned,unsigned) { assert(false);return false; }
+	bool Acknowledge(unsigned core,unsigned sequence) {
+		if (int(core)!=failedCore || sequence!=previous+1 || acknowledged) return false;
+		acknowledged=true;return true;
+	}
 };
+
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+struct PartialCloseIO : MockDataflowIO {
+	DataflowServiceOwner* owner=nullptr;
+	bool sawFaultStop=false,sawCleanStop=false;
+	bool SharedStopAndHoldAll(unsigned& stage,unsigned& core) {
+		sawFaultStop=owner && owner->SharedSnapshotFaultStopPending();
+		sawCleanStop=owner && owner->SharedSnapshotCleanStopPending();
+		return MockDataflowIO::SharedStopAndHoldAll(stage,core);
+	}
+};
+#else
+using PartialCloseIO=MockDataflowIO;
+#endif
 
 int main() {
 	(void)&q35_service_fixture_main;(void)&q35_publisher_fixture_main;
@@ -88,7 +113,10 @@ int main() {
 	assert(!badService->CommitGraph(unpublished,unaudited,mustNotRun)
 		&& badService->Faulted() && !mustNotRun.calls && badService->NextSequence()==0);
 	assert(badService->Close(*badIO)==DataflowServiceInvalidState);
-	auto partialIO=std::make_unique<MockDataflowIO>();auto partialService=std::make_unique<DataflowServiceOwner>();
+	auto partialIO=std::make_unique<PartialCloseIO>();auto partialService=std::make_unique<DataflowServiceOwner>();
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+	partialIO->owner=partialService.get();
+#endif
 	DataflowGraphPublisher partialPublisher;
 	assert(partialService->Install(image,*partialIO)==DataflowServiceComplete && partialService->BeginGraph(partialPublisher,trigger));
 	DataflowGraphRunTicket partialTicket{};assert(issuer.Issue(545,partialTicket));
@@ -111,9 +139,37 @@ int main() {
 	partialIO->failStopAudit=true;
 	assert(partialService->Close(*partialIO)==DataflowServiceStopAuditFailed
 		&& partialService->OwnsRetainedFaultGraph(partialPublisher));
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+	assert(partialIO->sawFaultStop && !partialIO->sawCleanStop
+		&& partialService->SharedSnapshotFaultStopPending());
+#endif
 	partialIO->failStopAudit=false;
 	assert(partialService->Close(*partialIO)==DataflowServiceClosed && partialService->Closed());
+	#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+	assert(partialIO->sawFaultStop && !partialIO->sawCleanStop
+		&& !partialService->SharedSnapshotFaultStopPending());
+	#endif
 	assert(!partialService->OwnsRetainedFaultGraph(partialPublisher));
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+	// Exercise a published graph with a failed worker, not just a failure
+	// while staging: audit and acknowledge the terminal worker before close.
+	auto faultIO=std::make_unique<PartialCloseIO>();
+	auto faultService=std::make_unique<DataflowServiceOwner>();faultIO->owner=faultService.get();
+	DataflowGraphPublisher faultPublisher;
+	assert(faultService->Install(image,*faultIO)==DataflowServiceComplete
+		&& faultService->BeginGraph(faultPublisher,trigger));
+	DataflowGraphRunTicket faultTicket{};assert(issuer.Issue(545,faultTicket));
+	auto faultPubIO=std::make_unique<PublisherIO>();faultPubIO->previous=0;
+	assert(faultPublisher.Start(*plan,f->routes,token,faultTicket,trigger,3,0,*faultPubIO,scratch)
+		==DataflowGraphPublished);
+	faultService->RetainFaultedGraph();
+	DataflowGraphFaultAudit faultAudit;
+	CloseAuditIO faultAuditIO{0};faultAuditIO.failedCore=3;
+	assert(faultAudit.Settle(faultPublisher,3,faultAuditIO)==DataflowGraphFaultAuditSettled
+		&& faultAuditIO.acknowledged && faultService->PermitFaultedGraphClose(faultPublisher,faultAudit));
+	assert(faultService->Close(*faultIO)==DataflowServiceClosed && faultIO->sawFaultStop
+		&& !faultIO->sawCleanStop && !faultService->SharedSnapshotFaultStopPending());
+#endif
 	puts("PASS graph service lifecycle: exclusive execution, audited commit, sequence adoption and fault retention; SIMULATED ONLY");
 	return 0;
 }

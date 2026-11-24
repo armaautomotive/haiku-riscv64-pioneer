@@ -56,11 +56,13 @@ struct FakeService {
     bool capturePending=false;
     bool graphRunning=false;
     bool cleanStopPending=false;
+    bool faultStopPending=false;
     bool Ready() const { return ready; }
     bool SharedRoleCapturePending() const { return capturePending; }
     bool GraphRunning() const { return graphRunning; }
     bool SharedDedicatedCleanStopPending() const { return cleanStopPending; }
     bool SharedSnapshotCleanStopPending() const { return cleanStopPending; }
+    bool SharedSnapshotFaultStopPending() const { return faultStopPending; }
 };
 struct FakeGraph { bool retained=false; const void* run=nullptr; bool closePermitted=false; unsigned ackCore=UINT32_MAX; };
 struct PioneerSessionIO {
@@ -744,6 +746,21 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
                 assert(scope.PromoteRetainedFaultClose(context->io) && scope.FaultCloseAuthorized(context->io));
                 assert(!scope.RetainedFaultAuditActive(context->io));
                 assert(!scope.FaultAcknowledgementAuthorized(context->io,3));
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+                context->qwen35DataflowService->faultStopPending=true;
+                context->io.firmwareMatches=true;
+                assert(scope.CanInspectSnapshotFaultClose(context->io,0)
+                    && !scope.CanInspectSnapshotFaultClose(context->io,DataflowBarrierWorkers));
+                graph->closePermitted=false;
+                assert(!scope.CanInspectSnapshotFaultClose(context->io,0));graph->closePermitted=true;
+                context->io.firmwareMatches=false;
+                assert(!scope.CanInspectSnapshotFaultClose(context->io,0));context->io.firmwareMatches=true;
+                assert(!scope.CanObserveSnapshotFaultStop(context->io,0)
+                    && !scope.ProveRoleStopSafe(context->io,0,true)
+                    && !scope.ProveRolePostStopSafe(context->io,0)
+                    && !scope.ProveComputeStopSafe(context->io,0)); // independent fault proof denied
+                context->qwen35DataflowService->faultStopPending=false;
+#endif
                 assert(!scope.ProveRoleMemoryWriteSafe(context->io,0,0,0,4));
                 graph->run=&otherRun;assert(!scope.ProveExclusiveRewrite(context->io));graph->run=&run;
                 context->qwen35GraphOwner=&other;assert(!scope.ProveExclusiveRewrite(context->io));

@@ -152,6 +152,7 @@ class DataflowServiceOwner {
 	const void* fScratchCloseOwner=nullptr;
 	bool fScratchResumeAttempted=false;
 	bool fSnapshotCleanStopPending=false;
+	bool fSnapshotFaultStopPending=false;
 #endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 	bool fSharedAttempted=false;
@@ -333,6 +334,12 @@ public:
 	// owned images, running roles, NoCs and route before a stop write.
 	bool SharedSnapshotCleanStopPending() const {
 		return fSnapshotCleanStopPending && !fCloseRestored && fPhase==PhaseFaulted;
+	}
+	// Set only after the exact retained graph passed the fault audit and its
+	// owner permitted close. The physical scope still verifies its own owner,
+	// firmware, routes and settled roles before any stop or hold operation.
+	bool SharedSnapshotFaultStopPending() const {
+		return fSnapshotFaultStopPending && !fCloseRestored && fPhase==PhaseFaulted;
 	}
 #endif
 	bool Started() const { return fPhase!=PhaseEmpty; }
@@ -794,6 +801,12 @@ public:
 		// Preserve the origin of a clean close across a partial stop. A
 		// failed install or graph close must not inherit this admission.
 		if (fPhase==PhaseReady) fSnapshotCleanStopPending=fSharedAttempted;
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+		// GraphClosing is reachable only via PermitFaultedGraphClose after
+		// the retained publisher's all-core fault audit has settled. Keep
+		// this distinct from clean close across a partial-stop retry.
+		if (fPhase==PhaseGraphClosing) fSnapshotFaultStopPending=fSharedAttempted && fGraphPublisher;
+#endif
 #endif
 		fPhase=PhaseFaulted;
 		if (!fCloseRestored) {

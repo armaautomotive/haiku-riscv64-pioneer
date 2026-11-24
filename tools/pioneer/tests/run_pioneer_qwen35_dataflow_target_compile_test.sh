@@ -1248,6 +1248,11 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_graph_service_owner_test.cpp" \
 	-o "$temporary/graph-service-owner-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/graph-service-owner-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	-DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS \
+	-DPIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS "$directory/pioneer_qwen35_graph_service_owner_test.cpp" \
+	-o "$temporary/snapshot-graph-service-owner-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/snapshot-graph-service-owner-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_graph_model_transaction_test.cpp" \
 	-o "$temporary/graph-model-transaction-test"

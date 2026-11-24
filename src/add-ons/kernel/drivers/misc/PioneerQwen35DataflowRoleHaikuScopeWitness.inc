@@ -403,11 +403,33 @@ public:
         (void)io;(void)core;return false;
 #endif
     }
+    // A settled graph remains retained until this close restores the fleet.
+    // Its exact owner and run must have promoted the audited close. Physical
+    // fault-scope proof is still independent and currently denies this path.
+    bool CanInspectSnapshotFaultClose(PioneerSessionIO& io,unsigned core) const {
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+        auto* service=fContext?fContext->qwen35DataflowService:NULL;
+        return core<PioneerQwen35::DataflowBarrierWorkers && service
+            && service->SharedSnapshotFaultStopPending() && FaultCloseAuthorized(io)
+            && io.SharedRoleFirmwareMatches();
+#else
+        (void)io;(void)core;return false;
+#endif
+    }
+    bool CanObserveSnapshotFaultStop(PioneerSessionIO& io,unsigned core) const {
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+        return CanInspectSnapshotFaultClose(io,core) && ProveRoleFaultAuditSafe(io,core);
+#else
+        (void)io;(void)core;return false;
+#endif
+    }
     bool ProveRoleStopSafe(PioneerSessionIO& io,unsigned core,bool fault) const {
-        return !fault && (CanObserveDedicatedCleanStop(io,core) || CanObserveSnapshotCleanStop(io,core));
+        return CanObserveSnapshotFaultStop(io,core)
+            || (!fault && (CanObserveDedicatedCleanStop(io,core) || CanObserveSnapshotCleanStop(io,core)));
     }
     bool ProveRolePostStopSafe(PioneerSessionIO& io,unsigned core) const {
-        return CanObserveDedicatedCleanStop(io,core) || CanObserveSnapshotCleanStop(io,core);
+        return CanObserveDedicatedCleanStop(io,core) || CanObserveSnapshotCleanStop(io,core)
+            || CanObserveSnapshotFaultStop(io,core);
     }
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
     // A parked receipt is an observation, not lifetime exclusion of a later
@@ -419,15 +441,17 @@ public:
     bool ProveRoleAutoRestoreRetirementSafe(PioneerSessionIO&,unsigned,const uint32_t*,const uint32_t*,bool) const { return false; }
 #endif
     bool ProveComputeStopSafe(PioneerSessionIO& io,unsigned core) const {
-        return CanObserveDedicatedCleanStop(io,core) || CanObserveSnapshotCleanStop(io,core);
+        return CanObserveDedicatedCleanStop(io,core) || CanObserveSnapshotCleanStop(io,core)
+            || CanObserveSnapshotFaultStop(io,core);
     }
     bool ProveComputePostStopSafe(PioneerSessionIO& io,unsigned core) const {
-        return CanObserveDedicatedCleanStop(io,core) || CanObserveSnapshotCleanStop(io,core);
+        return CanObserveDedicatedCleanStop(io,core) || CanObserveSnapshotCleanStop(io,core)
+            || CanObserveSnapshotFaultStop(io,core);
     }
     bool ProveRoleHoldSafe(PioneerSessionIO& io,unsigned core) const {
         if (CanObserveDedicatedCleanStop(io,core)) return true;
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
-        return CanObserveSnapshotCleanStop(io,core)
+        return (CanObserveSnapshotCleanStop(io,core) || CanObserveSnapshotFaultStop(io,core))
             && PioneerQ35SharedRoleSnapshotHoldTransition(fContext->qwen35SharedRoleBinding,core,false);
 #else
         return false;
@@ -436,7 +460,7 @@ public:
     bool ProveRoleHeldAfterAttempt(PioneerSessionIO& io,unsigned core) const {
         if (CanObserveDedicatedCleanStop(io,core)) return true;
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
-        return CanObserveSnapshotCleanStop(io,core)
+        return (CanObserveSnapshotCleanStop(io,core) || CanObserveSnapshotFaultStop(io,core))
             && PioneerQ35SharedRoleSnapshotHoldTransition(fContext->qwen35SharedRoleBinding,core,true);
 #else
         return false;
