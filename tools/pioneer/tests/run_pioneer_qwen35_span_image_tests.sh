@@ -12,7 +12,7 @@ for forbidden in PIONEER_QWEN35_RECOVERY_QUALIFY PIONEER_QWEN35_DEVICE_DISPATCH_
   printf 'Q35 span guard failed to reject %s\n' "$forbidden" >&2
   exit 1
  fi
- rg -q 'restricted to the non-loadable rewrite witness' "$temporary/guard.err"
+ rg -q 'requires the rewrite witness or restricted qualification' "$temporary/guard.err"
 done
 ${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
  -DPIONEER_Q38_SPAN_FAST -DPIONEER_QWEN35_SUPPORTED_SPAN \
