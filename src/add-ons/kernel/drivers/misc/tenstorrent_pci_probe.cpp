@@ -4933,6 +4933,7 @@ public:
 				qwen35QualificationOwner.Retain();return false;
 			}
 			if (!AbandonDataflowQualification(scope)) qwen35QualificationOwner.Retain();
+			else cleaned=true;
 			return false;
 		};
 		auto retainFailure=[&]() { qwen35QualificationOwner.Retain();return false; };
@@ -10336,9 +10337,12 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 				PioneerQ35ProjectionQualificationScope scope(*c);
 				uint32_t stage=0,routeStage=0,routeCore=0xff;bool output=false,cleaned=false;
 				const bool okay=c->RunDataflowQualificationTransaction(scope,stage,routeStage,routeCore,output,cleaned);
+				// A successful scratch retirement is insufficient if another
+				// resource still reports unsafe or an owner remains active.
+				if (cleaned && (c->qwen35QualificationOwner.Active() || c->Unsafe())) cleaned=false;
 				r.stage=stage+1;r.route_stage=routeStage;r.route_core=routeCore;
 				r.output_verified=output;r.cleanup_complete=cleaned;
-				r.operation_status=okay?B_OK:B_DEV_NOT_READY;
+				r.operation_status=okay && cleaned?B_OK:B_DEV_NOT_READY;
 				if (!cleaned && (c->qwen35QualificationOwner.Active() || c->Unsafe())) {
 					c->qwen35QualificationOwner.Retain();
 					tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);

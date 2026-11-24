@@ -73,8 +73,8 @@ int main() {
             assert((c.calls==std::vector<unsigned>{1,2,3,4,5,6,7,8,9,10,11,12,13,14}));
         } else if (failure==10) {
             assert(!result && !output && cleaned && stage==14 && !c.qwen35QualificationOwner.retained);
-        } else if (failure<=6) {
-            assert(!result && !output && !cleaned && !c.qwen35QualificationOwner.retained);
+		} else if (failure<=6) {
+			assert(!result && !output && cleaned==(failure!=1) && !c.qwen35QualificationOwner.retained);
             assert(c.abandoned==(failure!=1));
             if (failure>=4) assert(c.calls.back()==11);
         } else {

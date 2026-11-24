@@ -32,8 +32,8 @@ struct PioneerStoreContext {
     bool Unsafe() const { return unsafe; }
     bool RunDataflowQualificationTransaction(PioneerQ35ProjectionQualificationScope&,
         uint32_t& stage,uint32_t& routeStage,uint32_t& routeCore,bool& output,bool& cleaned) {
-        ++runCalls;stage=runMode==0?14:runMode==1?0:6;routeStage=2;routeCore=7;
-        output=runMode==0;cleaned=runMode==0 || runMode==3;
+        ++runCalls;stage=(runMode==0 || runMode==3)?14:runMode==1?0:runMode==4?2:6;routeStage=2;routeCore=7;
+        output=runMode==0;cleaned=runMode==0 || runMode==3 || runMode==4;
         qwen35QualificationOwner.active=runMode==2;
         unsafe=unsafeAfterRun;
         return runMode==0;
@@ -101,14 +101,15 @@ int main() {
         assert(Control(&cookie,TT_PCI_PROBE_Q35_PROJECTION_QUALIFY,&r,sizeof(r))==B_OK
             && r.operation_status==B_DEV_NOT_READY && r.stage==1 && retains==1 && sColdRecoveryRequired);
     }
-    for (unsigned mode=0;mode<=3;mode++) {
+    for (unsigned mode=0;mode<=4;mode++) {
         PioneerStoreContext c;PioneerProbeCookie cookie;Reset(cookie,c);runMode=mode;
         auto r=Request();
         assert(Control(&cookie,TT_PCI_PROBE_Q35_PROJECTION_QUALIFY,&r,sizeof(r))==B_OK
             && prepareCalls==1 && runCalls==1 && locks==1 && unlocks==1
             && r.build_tag==PIONEER_DRIVER_BUILD_TAG && r.generation==3);
         assert((r.operation_status==B_OK)==(mode==0));
-        assert(r.output_verified==(mode==0) && r.cleanup_complete==(mode==0 || mode==3));
+        assert(r.output_verified==(mode==0) && r.cleanup_complete==(mode==0 || mode==3 || mode==4));
+        if (mode==4) assert(r.stage==3 && r.operation_status==B_DEV_NOT_READY);
         assert((retains==1)==(mode==2) && sColdRecoveryRequired==(mode==2));
         if (mode==2) assert(c.qwen35QualificationOwner.retained);
     }
@@ -117,6 +118,19 @@ int main() {
         auto r=Request();
         assert(Control(&cookie,TT_PCI_PROBE_Q35_PROJECTION_QUALIFY,&r,sizeof(r))==B_OK
             && r.operation_status==B_DEV_NOT_READY && retains==1 && sColdRecoveryRequired);
+    }
+    {
+        PioneerStoreContext c;PioneerProbeCookie cookie;Reset(cookie,c);runMode=4;unsafeAfterRun=true;
+        auto r=Request();
+        assert(Control(&cookie,TT_PCI_PROBE_Q35_PROJECTION_QUALIFY,&r,sizeof(r))==B_OK
+            && r.operation_status==B_DEV_NOT_READY && !r.cleanup_complete && retains==1 && sColdRecoveryRequired);
+    }
+    {
+        PioneerStoreContext c;PioneerProbeCookie cookie;Reset(cookie,c);unsafeAfterRun=true;
+        auto r=Request();
+        assert(Control(&cookie,TT_PCI_PROBE_Q35_PROJECTION_QUALIFY,&r,sizeof(r))==B_OK
+            && r.operation_status==B_DEV_NOT_READY && r.output_verified && !r.cleanup_complete
+            && retains==1 && sColdRecoveryRequired);
     }
     {
         PioneerStoreContext c;PioneerProbeCookie cookie;Reset(cookie,c);detachAllowed=false;

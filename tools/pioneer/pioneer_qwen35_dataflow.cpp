@@ -937,8 +937,12 @@ static bool QualifyFixedProjection(uint64_t expectedTag,uint64_t expectedGenerat
 			const bool identity=replied && result.version==1 && !result.reserved
 				&& result.expected_tag==expectedTag && result.expected_generation==expectedGeneration
 				&& result.build_tag==expectedTag && result.generation==expectedGeneration;
-			cleanReply=identity && result.cleanup_complete==1 && result.stage==15
-				&& result.output_verified<=1;
+			// An early error can also be clean: the transaction restores and
+			// abandons its unrun scratch before reporting stages 2 through 6.
+			const bool cleanPrelaunch=result.stage>=2 && result.stage<=6
+				&& result.operation_status!=B_OK && !result.output_verified;
+			const bool cleanFinished=result.stage==15 && result.output_verified<=1;
+			cleanReply=identity && result.cleanup_complete==1 && (cleanPrelaunch || cleanFinished);
 			okay=cleanReply && result.operation_status==B_OK && result.stage==15
 				&& result.output_verified==1;
 			fprintf(stderr,"P100A_Q35_FIXED_PROJECTION replied=%u status=%ld stage=%u "

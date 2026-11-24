@@ -46,6 +46,9 @@ static bool Call(int fd,uint32_t op,void* data,size_t) {
         if (mode==10) r.stage=14;
         if (mode==11) r.output_verified=2;
         if (mode==17) r.reserved=1;
+        if (mode==18) { r.stage=3;r.operation_status=-1;r.output_verified=0; }
+        if (mode==19) { r.stage=3;r.operation_status=B_OK;r.output_verified=0; }
+        if (mode==20) { r.stage=7;r.operation_status=-1;r.output_verified=0; }
         return true;
     }
     assert(op==TT_PCI_PROBE_Q38_BANK_END);++endCalls;
@@ -56,7 +59,7 @@ static bool Call(int fd,uint32_t op,void* data,size_t) {
 }
 #include "pioneer_projection_client.inc"
 int main() {
-    for (mode=1;mode<=17;mode++) {
+    for (mode=1;mode<=20;mode++) {
         statusCalls=beginCalls=projectionCalls=endCalls=closeCalls=0;
         assert(QualifyFixedProjection(Tag,Generation)==(mode==1));
         if (mode==2 || mode==3 || mode==16) assert(!beginCalls && !projectionCalls && !endCalls);
@@ -64,6 +67,7 @@ int main() {
         if (mode>=6 && mode<=11) assert(projectionCalls==1 && endCalls==(mode==7?1U:0U));
         if (mode==12 || mode==13 || mode==17) assert(projectionCalls==1 && !endCalls);
         if (mode==14 || mode==15) assert(projectionCalls==1 && endCalls==1);
+        if (mode>=18) assert(projectionCalls==1 && endCalls==(mode==18?1U:0U));
         assert(closeCalls==(mode==16?0U:1U));
     }
     statusCalls=beginCalls=projectionCalls=endCalls=closeCalls=0;
