@@ -24,6 +24,13 @@ class DataflowProjectionQualificationService {
         DataflowProjectionQualificationService& owner;IO& io;Scope& scope;Scratch& scratch;
         bool Safe() { return owner.scratchIdentity==&scratch
             && scope.QualificationExecutionSafe(scratch,owner.program); }
+        bool AfterIO(bool okay) {
+            // A successful per-core access can leave a nonzero route selected.
+            // An unsuccessful access may have left a partial route write, so
+            // never issue another selection under this transaction's authority.
+            if (okay && scope.QualificationRestoreRuntimeRoute(scratch,owner.program,io)) return true;
+            scope.RetainQualification(&owner,&scratch);return false;
+        }
         bool AuthorizeProjection(const DataflowProjectionProgram& p) {
             return owner.Admits(p,scratch,scope);
         }
@@ -32,22 +39,22 @@ class DataflowProjectionQualificationService {
             owner.phase=Running;return true;
         }
         bool ReadWorkerSnapshot(unsigned c,DataflowWorkerSnapshot& s) {
-            return Safe() && io.ReadWorkerSnapshot(c,s);
+            return Safe() && AfterIO(io.ReadWorkerSnapshot(c,s));
         }
-        bool CoreReady(unsigned c,const DataflowWorkerSnapshot& s) { return Safe() && io.CoreReady(c,s); }
-        bool WriteInvocation(unsigned c,const DataflowCoreInvocation& v) { return Safe() && io.WriteInvocation(c,v); }
-        bool InvocationMatches(unsigned c,const DataflowCoreInvocation& v) { return Safe() && io.InvocationMatches(c,v); }
-        bool PublishCommand(unsigned c,unsigned sequence) { return Safe() && io.PublishCommand(c,sequence); }
+        bool CoreReady(unsigned c,const DataflowWorkerSnapshot& s) { return Safe() && AfterIO(io.CoreReady(c,s)); }
+        bool WriteInvocation(unsigned c,const DataflowCoreInvocation& v) { return Safe() && AfterIO(io.WriteInvocation(c,v)); }
+        bool InvocationMatches(unsigned c,const DataflowCoreInvocation& v) { return Safe() && AfterIO(io.InvocationMatches(c,v)); }
+        bool PublishCommand(unsigned c,unsigned sequence) { return Safe() && AfterIO(io.PublishCommand(c,sequence)); }
         bool WaitForCompletion(unsigned c,unsigned sequence,DataflowWorkerSnapshot& s) {
-            return Safe() && io.WaitForCompletion(c,sequence,s);
+            return Safe() && AfterIO(io.WaitForCompletion(c,sequence,s));
         }
         bool AuditProjection(const DataflowProjectionProgram& p,unsigned sequence,
             const DataflowWorkerSnapshot (&receipts)[DataflowCoreCount]) {
             if (owner.phase!=Running || &p!=&owner.program || !Safe()
-                || !scope.AuditQualification(io,p,sequence,receipts)) return false;
+                || !AfterIO(scope.AuditQualification(io,p,sequence,receipts))) return false;
             owner.receiptAudited=true;return true;
         }
-        bool Acknowledge(unsigned c,unsigned sequence) { return Safe() && io.Acknowledge(c,sequence); }
+        bool Acknowledge(unsigned c,unsigned sequence) { return Safe() && AfterIO(io.Acknowledge(c,sequence)); }
         bool CompleteProjection(const DataflowProjectionProgram& p,unsigned sequence) {
             if (owner.phase!=Running || &p!=&owner.program || !sequence
                 || !owner.receiptAudited || !Safe()) return false;

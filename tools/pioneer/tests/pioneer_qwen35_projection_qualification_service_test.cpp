@@ -28,6 +28,10 @@ struct QualificationScope {
         return safe && &s==expected && (s.staged || s.running) && p.Valid()
             && (!failAfterPublish || (io && !io->mailbox[0].commandSequence));
     }
+    bool QualificationRestoreRuntimeRoute(const QualificationScratch& s,const DataflowProjectionProgram& p,
+        ProjectionServiceIO& actual) const {
+        return safe && &s==expected && &actual==io && p.Valid();
+    }
     bool AuditQualification(ProjectionServiceIO& io,const DataflowProjectionProgram& p,unsigned seq,
         const DataflowWorkerSnapshot (&receipts)[DataflowCoreCount]) {
         audits++;

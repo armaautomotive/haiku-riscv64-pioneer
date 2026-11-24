@@ -28,6 +28,11 @@ struct CombinedScope : ScratchScope {
         return allowed && executionAllowed && owner==&s && (s.IsStaged() || s.IsRunning()) && p.Valid()
             && s.MatchesBankClaimOwner(device.banks,device.dram);
     }
+    bool QualificationRestoreRuntimeRoute(const PioneerQ35ProjectionScratch& s,
+        const DataflowProjectionProgram& p,ProjectionServiceIO&) const {
+        return allowed && !retained && owner==&s && p.Valid()
+            && s.MatchesBankClaimOwner(device.banks,device.dram);
+    }
     bool AuditQualification(ProjectionServiceIO& io,const DataflowProjectionProgram& p,unsigned seq,
         const DataflowWorkerSnapshot (&receipts)[DataflowCoreCount]) {
         if (!allowed || !io.MockDataflowIO::AuditProjection(p,seq,receipts)) return false;

@@ -149,6 +149,21 @@ public:
     }
     bool QualificationExecutionSafe(const PioneerQ35ProjectionScratch& scratch,
         const PioneerQwen35::DataflowProjectionProgram& program) const { return RuntimeReady(scratch,program); }
+    // Called only after a successful per-core operation under this same
+    // locked owner. The next fleet check and scratch transfer require root.
+    // This does not establish the still-missing runtime or firmware proof.
+    bool QualificationRestoreRuntimeRoute(const PioneerQ35ProjectionScratch& scratch,
+        const PioneerQwen35::DataflowProjectionProgram& program,PioneerSessionIO& io) const {
+        if (&io!=&c.io || !Identity() || !Owned(&scratch) || !c.qwen35QualificationInternalActive
+            || !c.qwen35DataflowService || !c.qwen35DataflowService->Ready() || c.Unsafe(true)
+            || !program.Valid() || !(scratch.IsStaged() || scratch.IsRunning())
+            || !scratch.MatchesBankClaimOwner(c.banks,c.baseline.baseline.baseline.baseline.dram)
+            || io.runtimeCore>=PioneerQwen35::DataflowCoreCount || !io.DataflowPanelMappingStable()
+            || !io.SelectRuntimeCore(0) || !io.DataflowPanelMappingStable() || !Identity()) {
+            Retain(&scratch);return false;
+        }
+        return true;
+    }
     bool ScratchRunAllowed(const void* p) const {
         auto* qualification=c.qwen35QualificationOwner.Qualification();
         auto* scratch=c.qwen35QualificationOwner.Scratch();

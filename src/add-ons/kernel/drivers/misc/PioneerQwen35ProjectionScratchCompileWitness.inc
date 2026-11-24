@@ -131,6 +131,11 @@ public:
         return permitted && context && (scratch.IsStaged() || scratch.IsRunning()) && program.Valid()
             && scratch.MatchesBankClaimOwner(context->banks,context->baseline.baseline.baseline.baseline.dram);
     }
+    bool QualificationRestoreRuntimeRoute(const PioneerQ35ProjectionScratch& scratch,
+        const PioneerQwen35::DataflowProjectionProgram& program,PioneerSessionIO& io) const {
+        return permitted && context && &io==&context->io && (scratch.IsStaged() || scratch.IsRunning())
+            && program.Valid();
+    }
     bool AuditQualification(PioneerSessionIO& io,const PioneerQwen35::DataflowProjectionProgram& program,
         unsigned sequence,const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount]) {
         return permitted && PioneerQwen35DataflowAuditProjectionReceipts(io,program,sequence,receipts);
