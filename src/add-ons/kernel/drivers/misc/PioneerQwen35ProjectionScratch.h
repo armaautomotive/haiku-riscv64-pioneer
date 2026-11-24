@@ -51,7 +51,7 @@ class PioneerQ35ProjectionScratch {
     uint32_t* saved=nullptr;
     uint32_t page[Fixture::PageBytes/sizeof(uint32_t)]{};
     PioneerQ35StreamBankRange ranges[PioneerQwen35::DataflowCoreCount]{};
-    bool outputVerified=false,transferFailed=false;
+    bool outputChecked=false,outputVerified=false,transferFailed=false;
     PioneerQ35ScratchFailure failure{};
 
     void RecordFailure(unsigned kind,unsigned index,bool write,const PioneerResidentLease& lease,
@@ -243,7 +243,10 @@ public:
     bool VerifyOutput(IO& io,Scope& scope,const tt_dram_samples_result& dram,
         const tt_compute_noc_result& noc,const tt_host_page_result& host,
         PioneerResidentLease& lease,PioneerResidentBanks& banks) {
-        if (phase!=Stopped || outputVerified || !scope.ScratchOutputAllowed(this)) return false;
+        if (phase!=Stopped || outputChecked || !scope.ScratchOutputAllowed(this)) return false;
+        // A bad result belongs to this run: a later buffer change must not
+        // turn the same qualification into a pass. Restoration remains open.
+        outputChecked=true;
         bool valid=true;
         for (unsigned n=0;n<Fixture::OutputPages;n++) {
             if (!Transfer(io,scope,dram,noc,host,lease,banks,Fixture::WeightPages+Fixture::InputPages+n,false,page)) return false;

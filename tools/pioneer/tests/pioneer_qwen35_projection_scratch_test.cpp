@@ -169,8 +169,9 @@ int main()
         firstOutput[0]^=1;
         assert(!device->Verify(*owner) && !owner->OutputVerified());
         device->SetOutput();
-        assert(device->Verify(*owner) && owner->OutputVerified());
-        assert(device->Restore(*owner) && owner->IsRestored() && !device->scope.retained);
+        assert(!device->Verify(*owner) && !owner->OutputVerified());
+        assert(device->Restore(*owner) && owner->IsRestored() && !device->scope.retained
+            && !owner->OutputVerified());
         for (unsigned n=0;n<Fixture::ScratchPages;n++) {
             const auto& data=device->io.memory.at(device->io.Key(18|(12<<6),Fixture::ScratchAddress+n*4096));
             for (unsigned i=0;i<1024;i++) assert(data[i]==device->original[n*1024+i]);
