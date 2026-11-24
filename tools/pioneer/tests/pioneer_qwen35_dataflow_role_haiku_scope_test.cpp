@@ -733,6 +733,9 @@ static status_t Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32_t mode,v
                     && !scope.FaultAcknowledgementAuthorized(context->io,4));
                 assert(!scope.ProveRoleFaultAuditSafe(context->io,0)
                     && !scope.ProveRoleFaultAckSafe(context->io,0));
+                context->qwen35DataflowService->capturePending=false;
+                assert(!scope.ProveRoleImageInspectionAllowed(context->io,context->io.runtimeCore));
+                context->qwen35DataflowService->capturePending=true;
                 assert(!scope.PromoteRetainedFaultClose(context->io));
                 graph->closePermitted=true;
                 assert(scope.PromoteRetainedFaultClose(context->io) && scope.FaultCloseAuthorized(context->io));

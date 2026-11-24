@@ -183,11 +183,15 @@ public:
             && fContext->qwen35DataflowService->SharedRoleCapturePending()
             && io.SharedRoleFirmwareMatches();
     }
-    // Read-only image comparison during the locked installation callback.
-    // This does not establish that an image is stable or authorize writes.
+    // Read-only image comparison during installation or a separately
+    // authorized retained-fault audit. Neither admits writes or proves that
+    // another agent cannot change an image after it has been sampled.
     bool ProveRoleImageInspectionAllowed(PioneerSessionIO& io,unsigned core) const {
         return core<PioneerQwen35::DataflowBarrierWorkers && io.runtimeCore==core
-            && io.DataflowPanelMappingStable() && ProveRoleStatusInspectionAllowed(io);
+            && io.DataflowPanelMappingStable()
+            && (ProveRoleStatusInspectionAllowed(io)
+                || (RetainedFaultAuditActive(io) && io.SharedRoleFirmwareMatches()
+                    && ProveRoleFaultAuditSafe(io,core)));
     }
 #endif
     bool ProveRoleMemoryWriteSafe(PioneerSessionIO& io,unsigned core,unsigned which,unsigned offset,unsigned bytes) const {

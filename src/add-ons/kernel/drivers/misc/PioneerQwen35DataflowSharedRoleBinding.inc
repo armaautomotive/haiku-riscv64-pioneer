@@ -411,6 +411,7 @@ public:
         return (fault?io.FaultRuntimeStable(core,textWords,dispatchWords)
             :io.RuntimeStable(core,textWords,dispatchWords)) && io.RunningRolePcs(core,RoleBounds(),fault);
     }
+// PIONEER_Q35_FAULT_CORE_SETTLED_BEGIN
     __attribute__((noinline)) bool FaultCoreSettled(unsigned core,const PioneerQwen35::DataflowWorkerSnapshot& snapshot) {
         auto* scope=Scope();
         if (!scope || core>=PioneerQwen35::DataflowBarrierWorkers || !fReleaseConfirmed[core]
@@ -421,8 +422,10 @@ public:
         Adapter io(fContext.io,*scope,fViews);
         return io.FaultSettled(core,snapshot,sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
             sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t))
+            && io.InspectRunningRoleImages(core,RoleImage())
             && io.RunningRolePcs(core,RoleBounds(),true);
     }
+// PIONEER_Q35_FAULT_CORE_SETTLED_END
     __attribute__((noinline)) bool CoreIdleForWrite(unsigned core,unsigned address,unsigned bytes) {
         using namespace PioneerQwen35;
         auto* scope=Scope();
