@@ -5,19 +5,19 @@
 
 // The real post-reset mapping and v2 guard are supplied by the retained Q35
 // recovery context. This owner never unmaps or restores device state in its
-// destructor. Its four phases cover only the ARC messages; the scope must
-// independently prove the intervening RISC reset-unit and tile transitions.
+// destructor. Its phases cover the ARC messages and the fixed reset-unit and
+// tile transitions; the scope must independently authorize those operations.
 // A successful message is not a fabric-reset or recovery proof.
 template<class Guard> class PioneerQ35FabricArcOwner {
     static_assert(PIONEER_POST_RESET_CORES==120,"fabric reset requires the admitted 120-worker topology");
 public:
     enum Phase { Fresh=0,ClockForced=1,RiscsHeld=2,TensixToggled=3,NocReinitialized=4,
-        TilesHeld=5,RiscsReleased=6,ClockReleased=7,Failed=8 };
+        TilesHeld=5,RiscsReleased=6,ClockReleased=7,Failed=8,Retired=9 };
 private:
     PioneerPostResetMapping& fMapping;
     const uint64 fTicket;
     Phase fPhase=Fresh;
-    bool fOpenAttempted=false,fOpen=false;
+    bool fOpenAttempted=false,fOpen=false,fRetirementAttempted=false;
     bool fClockBaseline=false,fClockForced=false,fClockRestored=false;
     area_id fResetArea=-1;
     volatile uint32* fResetView=NULL;
@@ -177,7 +177,12 @@ public:
         if (!clockOkay) { fPhase=Failed;return false; }
         if (fPhase==Fresh) fClockBaseline=true;
         else if (fPhase==ClockForced) fClockForced=true;
-        else fClockRestored=true;
+        else {
+            // Any pre-existing audits predate the completed reset sequence.
+            // Fresh fleet and DMA audits are required before retirement.
+            fMapping.fleetAudited=false;fMapping.dmaAudited=false;
+            fClockRestored=true;
+        }
         return true;
     }
 
@@ -311,6 +316,50 @@ public:
         }
         if (!access(119) || !scope.FabricTileCoverage(*this,fMapping,fTicket)) return fail();
         fFailedTile=120;fPhase=TilesHeld;return true;
+    }
+
+    // The surrounding locked recovery transaction must run fresh fleet and
+    // host-DMA audits after the last clock check. Its scope must separately
+    // prove ARC queue completion, writer exclusion, ticket ownership and the
+    // post-reset identities throughout retirement. No hardware is accessed
+    // after an uncertain deletion or lost proof; the remaining mappings and
+    // the original owner are retained for recovery, never retried here.
+    template<class Scope> bool Retire(Guard* guard,Scope& scope) {
+        if (!fOpen || fRetirementAttempted || fPhase!=ClockReleased || !fClockRestored
+            || !fMapping.queueUnsafe || !fMapping.fleetAudited || !fMapping.dmaAudited
+            || !fMapping.savedValid || fMapping.selected>=PIONEER_POST_RESET_CORES
+            || !fResetView || !fTileView || !fMapping.queueView || !fMapping.queueMsi
+            || fResetArea<B_OK || fTileArea<B_OK || fMapping.queueArea<B_OK || fMapping.queueMsiArea<B_OK
+            || !Allowed(guard,scope) || !scope.FabricRetirementAllowed(*this,fMapping,fTicket)) return false;
+        const unsigned core=fMapping.selected;
+        auto access=[&]() {
+            return fMapping.fleetAudited && fMapping.dmaAudited && fMapping.selected==core
+                && Allowed(guard,scope) && scope.FabricRetirementAllowed(*this,fMapping,fTicket)
+                && fMapping.SourceStable() && Allowed(guard,scope)
+                && scope.FabricRetirementAllowed(*this,fMapping,fTicket);
+        };
+        fRetirementAttempted=true;
+        auto fail=[&]() { fPhase=Failed;return false; };
+        for (unsigned word=0;word<3;word++) {
+            if (!access()) return fail();
+            const uint32 expected=BlackholeDramFixedTlbWord(0xffa00000U,
+                PioneerWorkerX(core),PioneerWorkerY(core),true,word);
+            if (fMapping.TlbRead(word)!=expected || !access() || fMapping.TlbRead(word)!=expected)
+                return fail();
+        }
+        if (!access()) return fail();
+        area_id* areas[]={&fTileArea,&fResetArea,&fMapping.queueMsiArea,&fMapping.queueArea};
+        for (unsigned i=0;i<4;i++) {
+            if (!access() || delete_area(*areas[i])!=B_OK) return fail();
+            *areas[i]=-1;
+            if (i==0) fTileView=NULL;
+            else if (i==1) fResetView=NULL;
+            else if (i==2) fMapping.queueMsi=NULL;
+            else fMapping.queueView=NULL;
+        }
+        if (!access()) return fail();
+        fMapping.queueBase=fMapping.queueRequest=0;
+        fMapping.queueUnsafe=false;fOpen=false;fPhase=Retired;return true;
     }
 };
 #endif
