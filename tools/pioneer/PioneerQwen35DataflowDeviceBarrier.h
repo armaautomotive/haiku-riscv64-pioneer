@@ -240,6 +240,15 @@ class DataflowBlackholeBarrierIO {
 	}
 public:
 	explicit DataflowBlackholeBarrierIO(unsigned worker):core(worker) {}
+	// Resident graph requests carry data even on success, so unlike the
+	// optimized graph barrier they always publish payload before commit.
+	// The fixed parent/child route and existing two release slots are reused.
+	bool SendResidentDispatch(unsigned source,unsigned worker,
+		const DataflowBarrierPacket& payload,const DataflowBarrierPacket& commit) {
+		return source==core && DataflowBarrierReleaseEdge(core,worker)
+			&& Send(worker,DataflowBarrierReleasePayload,payload)
+			&& Send(worker,DataflowBarrierReleaseCommit,commit);
+	}
 	bool SendArrival(unsigned worker,const DataflowBarrierPacket& payload,const DataflowBarrierPacket& commit)
 	{
 		const unsigned parent=DataflowBarrierReleaseParent(worker);

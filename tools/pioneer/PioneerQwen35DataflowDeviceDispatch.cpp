@@ -5,6 +5,7 @@
 #include "PioneerQwen35DataflowGraphAuthorization.h"
 #include "PioneerQwen35DataflowGraphTrace.h"
 #include "PioneerQwen35DataflowGraphProfile.h"
+#include "PioneerQwen35DataflowResidentDispatch.h"
 #ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
 #include "PioneerQwen35DataflowResidentStreamCache.h"
 static_assert(unsigned(PioneerQwen35::DataflowResidentStreamCacheEntries)>=unsigned(PioneerQwen35::DataflowGraphDecodeSteps),

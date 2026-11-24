@@ -50,6 +50,10 @@ case "$dispatch" in
 		-c "$directory/tests/pioneer_qwen35_dataflow_device_stream_target_probe.cpp" -o "$output/device-stream.o"
 	"$cross-g++" $flags -O2 $graph_flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 		-c "$directory/tests/pioneer_qwen35_dataflow_device_barrier_target_probe.cpp" -o "$output/device-barrier.o"
+	# Type-check the new resident token fanout against the actual RV32 NoC
+	# transport. It is not linked into the service until lifecycle integration.
+	"$cross-g++" $flags -O2 $graph_flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+		-c "$directory/tests/pioneer_qwen35_resident_dispatch_target_probe.cpp" -o "$output/resident-dispatch-probe.o"
 	"$cross-g++" $flags -O2 $graph_flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 		-c "$directory/PioneerQwen35DataflowDeviceDispatch.cpp" -o "$output/device-graph.o"
 	if [ "$role_graph" = 1 ]; then
