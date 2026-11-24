@@ -431,6 +431,11 @@ case "${PIONEER_QWEN35_SNAPSHOT_TAKEOVER_COMPILE_ONLY:-0}" in
     extra="$extra -DPIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS";;
  *) exit 2;;
 esac
+case "${PIONEER_QWEN35_RESIDENT_SERVICE_COMPILE_ONLY:-0}" in
+ 0) ;;
+ 1) [ "$variant:${PIONEER_QWEN35_SNAPSHOT_TAKEOVER_COMPILE_ONLY:-0}:${PIONEER_QWEN35_RECOVERY_QUALIFY:-0}:${PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL:-0}" = 60:1:0:0 ] || exit 2;;
+ *) exit 2;;
+esac
 case "${PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_COMPILE_ONLY:-0}" in
  0) ;;
  1) [ "$variant:${PIONEER_QWEN35_SHARED_ROLE_OWNER_COMPILE_ONLY:-0}:${PIONEER_QWEN35_RECOVERY_COMPILE_ONLY:-0}:${PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL:-0}" = 60:1:1:0 ] || exit 2
@@ -856,6 +861,12 @@ if [ "$variant" = 60 ]; then
 	fi
 	dataflow_image="$output/qwen35-dataflow-service-image"
 	sh "$project/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$dataflow_image"
+	if [ "${PIONEER_QWEN35_RESIDENT_SERVICE_COMPILE_ONLY:-0}" = 1 ]; then
+		resident_image="$output/qwen35-resident-service-image"
+		sh "$project/tools/pioneer/build_qwen35_resident_service_witness.sh" "$build" "$dataflow_image" "$resident_image"
+		python3 -B "$project/tools/pioneer/build_qwen35_resident_service_header.py" "$resident_image" "$resident_image/PioneerQwen35DataflowServiceImage.h"
+		set -- "$@" -I"$resident_image"
+	fi
 	set -- "$@" -I"$dataflow_image"
 	if [ "${PIONEER_QWEN35_SHARED_ROLE_OWNER_COMPILE_ONLY:-0}" = 1 ]; then
 		role_image="$output/qwen35-shared-role-images"

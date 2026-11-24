@@ -423,6 +423,8 @@ def main():
                         help='compile dedicated role staging with release disabled')
     parser.add_argument('--compile-snapshot-takeover-prototype', action='store_true',
                         help='compile held dedicated fleet with role snapshot/restore; non-loadable')
+    parser.add_argument('--compile-resident-service-prototype', action='store_true',
+                        help='embed the resident service in the non-loadable snapshot witness')
     parser.add_argument('--compile-supported-span-prototype', action='store_true',
                         help='compile the supported-counter Q35 preload into the non-loadable rewrite')
     parser.add_argument('--build-device-dispatch-trial', action='store_true',
@@ -524,6 +526,9 @@ def main():
     if args.compile_snapshot_takeover_prototype and (not args.compile_shared_role_owner_prototype
             or args.compile_exclusive_takeover_prototype):
         parser.error('snapshot takeover requires shared-role owner and excludes destructive takeover')
+    if args.compile_resident_service_prototype and (not args.compile_snapshot_takeover_prototype
+            or args.build_recovery_qualification or args.build_device_dispatch_trial):
+        parser.error('resident service requires the non-loadable snapshot takeover witness')
     if args.compile_supported_span_prototype and (not args.compile_device_dispatch_prototype
             or (args.build_recovery_qualification and not args.build_span_qualification)
             or args.build_device_dispatch_trial):
@@ -566,6 +571,8 @@ def main():
         driver_env['PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_COMPILE_ONLY'] = '1'
     if args.compile_snapshot_takeover_prototype:
         driver_env['PIONEER_QWEN35_SNAPSHOT_TAKEOVER_COMPILE_ONLY'] = '1'
+    if args.compile_resident_service_prototype:
+        driver_env['PIONEER_QWEN35_RESIDENT_SERVICE_COMPILE_ONLY'] = '1'
     if args.compile_supported_span_prototype:
         driver_env['PIONEER_QWEN35_SUPPORTED_SPAN_COMPILE_ONLY'] = '1'
     if args.build_span_qualification:
@@ -605,6 +612,14 @@ def main():
                                args.build_role_prestack_qualification, args.build_span_qualification)
     if args.compile_snapshot_takeover_prototype:
         verify_snapshot_witness_refuses_load(build, driver / 'tenstorrent_pci_probe-driver60')
+    if args.compile_resident_service_prototype:
+        driver_bytes = (driver / 'tenstorrent_pci_probe-driver60').read_bytes()
+        resident = driver / 'qwen35-resident-service-image'
+        for section in ('text', 'dispatch'):
+            image_bytes = (resident / (section + '.bin')).read_bytes()
+            if driver_bytes.count(image_bytes) != 1:
+                raise RuntimeError('resident ' + section + ' image is not embedded exactly once')
+        print('resident service images embedded exactly once; non-loadable witness only')
 
     cxx = build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-g++'
     objects = build / 'objects/haiku/riscv64'
