@@ -13,13 +13,13 @@ using Fixture=PioneerQwen35::DataflowProjectionQualification;
 
 struct ScratchScope {
     const void* owner=nullptr;
-    bool allowed=true,stopped=false,retained=false;
+    bool allowed=true,transferAllowed=true,stopped=false,retained=false;
     bool ScratchReserveAllowed(const void* p,unsigned bank,unsigned offset,unsigned bytes) {
         if (!allowed || owner || bank!=0 || offset!=Fixture::ScratchOffset || bytes!=Fixture::ScratchBytes) return false;
         owner=p;return true;
     }
     bool ScratchTransferAllowed(const void* p,unsigned bank,unsigned offset,bool) const {
-        return allowed && p==owner && bank==0 && offset>=Fixture::ScratchOffset
+        return allowed && transferAllowed && p==owner && bank==0 && offset>=Fixture::ScratchOffset
             && offset<Fixture::ScratchOffset+Fixture::ScratchBytes && !(offset&4095);
     }
     bool ScratchStageAllowed(const void* p) const { return allowed && p==owner; }
@@ -141,17 +141,50 @@ int main()
     {
         auto owner=std::make_unique<PioneerQ35ProjectionScratch>();
         auto device=std::make_unique<ScratchDevice<>>();
-        assert(device->Capture(*owner));
         device->io.failRequest=device->io.doorbells+1;
+        assert(!device->Capture(*owner) && device->scope.retained && owner->FailedTransfer());
+        const auto& failure=owner->Failure();
+        assert(failure.kind==PioneerQ35ScratchFailureTransfer && failure.phase==PioneerQ35ScratchCapturing
+            && failure.page==0 && !failure.write && !failure.capturedPages && !failure.dirtyPages
+            && failure.leasePending && failure.leaseRecoveryRequired && failure.transfer.phase==1
+            && failure.transfer.requests==1 && !failure.transfer.completed && !failure.transfer.wrote_device);
+    }
+    for (unsigned failedStep=1;failedStep<=2;failedStep++) {
+        auto owner=std::make_unique<PioneerQ35ProjectionScratch>();
+        auto device=std::make_unique<ScratchDevice<>>();
+        assert(device->Capture(*owner));
+        device->io.failRequest=device->io.doorbells+failedStep;
         assert(!device->Stage(*owner) && owner->FailedTransfer() && device->scope.retained);
+        const auto& failure=owner->Failure();
+        assert(failure.kind==PioneerQ35ScratchFailureTransfer && failure.phase==PioneerQ35ScratchStaging
+            && failure.bank==0 && failure.page==0
+            && failure.offset==Fixture::ScratchOffset && failure.write==1
+            && failure.capturedPages==Fixture::ScratchPages && failure.dirtyPages==1
+            && failure.leasePending && failure.leaseRecoveryRequired
+            && failure.transfer.phase==failedStep && failure.transfer.requests==failedStep
+            && failure.transfer.completed==failedStep-1 && failure.transfer.polls[failedStep-1]==256
+            && failure.transfer.wrote_device==unsigned(failedStep==2));
         assert(!device->Restore(*owner) && device->banks.Q35StreamClaimed());
+    }
+    {
+        auto owner=std::make_unique<PioneerQ35ProjectionScratch>();
+        auto device=std::make_unique<ScratchDevice<>>();
+        assert(device->Capture(*owner));device->scope.transferAllowed=false;
+        assert(!device->Stage(*owner) && device->scope.retained && !owner->FailedTransfer());
+        const auto& failure=owner->Failure();
+        assert(failure.kind==PioneerQ35ScratchFailureAdmission && failure.phase==PioneerQ35ScratchStaging
+            && failure.page==0 && failure.write==1
+            && failure.capturedPages==Fixture::ScratchPages && failure.dirtyPages==1
+            && !failure.leasePending && !failure.leaseRecoveryRequired && !failure.transfer.requests);
     }
     {
         auto owner=std::make_unique<PioneerQ35ProjectionScratch>();
         auto device=std::make_unique<ScratchDevice<CrossCorruptBanksMock>>();
         assert(device->Capture(*owner) && device->Stage(*owner));
         device->io.corruptDuringRestore=true;
-        assert(!device->Restore(*owner) && !owner->IsRestored() && device->scope.retained);
+        assert(!device->Restore(*owner) && !owner->IsRestored() && device->scope.retained
+            && owner->Failure().kind==PioneerQ35ScratchFailureRestoreMismatch
+            && owner->Failure().phase==PioneerQ35ScratchRestoring && owner->Failure().page==0);
         assert(device->banks.Q35StreamClaimed());
     }
     std::puts("PASS private 680-page Q4_K scratch capture, stage, output and verified restoration; SIMULATED DEVICE");

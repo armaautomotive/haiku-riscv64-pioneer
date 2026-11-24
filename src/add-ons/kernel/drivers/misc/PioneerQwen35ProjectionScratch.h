@@ -9,6 +9,23 @@
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowProjectionQualification.h"
 #include <string.h>
 
+enum PioneerQ35ScratchFailureKind : unsigned {
+    PioneerQ35ScratchFailureNone=0, PioneerQ35ScratchFailureAdmission=1,
+    PioneerQ35ScratchFailureTransfer=2, PioneerQ35ScratchFailureFill=3,
+    PioneerQ35ScratchFailureRestoreMismatch=4
+};
+enum PioneerQ35ScratchPhase : unsigned {
+    PioneerQ35ScratchEmpty=0, PioneerQ35ScratchCapturing=1, PioneerQ35ScratchCaptured=2,
+    PioneerQ35ScratchStaging=3, PioneerQ35ScratchStaged=4, PioneerQ35ScratchRunning=5,
+    PioneerQ35ScratchStopped=6, PioneerQ35ScratchRestoring=7, PioneerQ35ScratchRestored=8,
+    PioneerQ35ScratchFailed=9
+};
+struct PioneerQ35ScratchFailure {
+    unsigned kind=0,phase=0,bank=0,page=0,offset=0,write=0,capturedPages=0,dirtyPages=0;
+    bool leasePending=false,leaseRecoveryRequired=false;
+    tt_resident_store_result transfer{};
+};
+
 // Heap-owned by the exclusive diagnostic session until its entire bank
 // context is destroyed. ReserveQ35Stream is sticky: even after successful
 // restoration this object must outlive the bank claim. Scope must prove the
@@ -19,13 +36,26 @@
 // This is not authority to start a worker or an inference fallback.
 class PioneerQ35ProjectionScratch {
     using Fixture=PioneerQwen35::DataflowProjectionQualification;
-    enum Phase { Empty, Capturing, Captured, Staging, Staged, Running, Stopped, Restoring, Restored, Failed };
+    enum Phase { Empty=PioneerQ35ScratchEmpty, Capturing=PioneerQ35ScratchCapturing,
+        Captured=PioneerQ35ScratchCaptured, Staging=PioneerQ35ScratchStaging, Staged=PioneerQ35ScratchStaged,
+        Running=PioneerQ35ScratchRunning, Stopped=PioneerQ35ScratchStopped, Restoring=PioneerQ35ScratchRestoring,
+        Restored=PioneerQ35ScratchRestored, Failed=PioneerQ35ScratchFailed };
     Phase phase=Empty;
-    unsigned bank=0,firstOffset=0,dirtyPages=0;
+    unsigned bank=0,firstOffset=0,capturedPages=0,dirtyPages=0;
     uint32_t* saved=nullptr;
     uint32_t page[Fixture::PageBytes/sizeof(uint32_t)]{};
     PioneerQ35StreamBankRange ranges[PioneerQwen35::DataflowCoreCount]{};
     bool outputVerified=false,transferFailed=false;
+    PioneerQ35ScratchFailure failure{};
+
+    void RecordFailure(unsigned kind,unsigned index,bool write,const PioneerResidentLease& lease,
+        const tt_resident_store_result* result=nullptr) {
+        failure.kind=kind;failure.phase=unsigned(phase);failure.bank=bank;failure.page=index;
+        failure.offset=index<Fixture::ScratchPages?firstOffset+index*Fixture::PageBytes:0;
+        failure.write=write;failure.capturedPages=capturedPages;failure.dirtyPages=dirtyPages;
+        failure.leasePending=lease.pending;failure.leaseRecoveryRequired=lease.recovery_required;
+        if (result) failure.transfer=*result;
+    }
 
     template<class IO,class Scope>
     bool Transfer(IO& io,Scope& scope,const tt_dram_samples_result& dram,
@@ -34,6 +64,7 @@ class PioneerQ35ProjectionScratch {
         bool write,uint32_t* words) {
         if (index>=Fixture::ScratchPages || !words
             || !scope.ScratchTransferAllowed(this,bank,firstOffset+index*Fixture::PageBytes,write)) {
+            RecordFailure(PioneerQ35ScratchFailureAdmission,index,write,lease);
             phase=Failed;scope.RetainScratch(this);return false;
         }
         tt_resident_store_result result{};
@@ -43,6 +74,7 @@ class PioneerQ35ProjectionScratch {
         if (!okay) {
             // A failed transfer can leave a posted operation. Never retry or
             // free the claim/snapshot under this transaction's own authority.
+            RecordFailure(PioneerQ35ScratchFailureTransfer,index,write,lease,&result);
             transferFailed=true;phase=Failed;scope.RetainScratch(this);
         }
         return okay;
@@ -78,6 +110,7 @@ public:
     bool IsRunning() const { return phase==Running; }
     bool IsRestored() const { return phase==Restored; }
     bool FailedTransfer() const { return transferFailed; }
+    const PioneerQ35ScratchFailure& Failure() const { return failure; }
     bool OutputVerified() const { return outputVerified; }
     bool MatchesStagedLease(unsigned whichBank,unsigned address,unsigned bytes) const {
         return phase==Staged && whichBank==bank && address==PioneerResidentBanks::Base+firstOffset
@@ -124,9 +157,11 @@ public:
         if (!banks.ReserveQ35Stream(dram,this,ranges,PioneerQwen35::DataflowCoreCount,
             initialized,initializedPages)) return false;
         bank=whichBank;firstOffset=offset;saved=snapshot;phase=Capturing;
-        for (unsigned n=0;n<Fixture::ScratchPages;n++)
+        for (unsigned n=0;n<Fixture::ScratchPages;n++) {
             if (!Transfer(io,scope,dram,noc,host,lease,banks,n,false,saved+n*(Fixture::PageBytes/4)))
                 return false;
+            capturedPages=n+1;
+        }
         phase=Captured;return true;
     }
 
@@ -137,7 +172,10 @@ public:
         if (phase!=Captured || !scope.ScratchStageAllowed(this)) return false;
         phase=Staging;
         for (unsigned n=0;n<Fixture::ScratchPages;n++) {
-            if (!FillPage(n)) { phase=Failed;scope.RetainScratch(this);return false; }
+            if (!FillPage(n)) {
+                RecordFailure(PioneerQ35ScratchFailureFill,n,true,lease);
+                phase=Failed;scope.RetainScratch(this);return false;
+            }
             // Mark before the attempted store; a failed write can be posted.
             dirtyPages=n+1;
             if (!Transfer(io,scope,dram,noc,host,lease,banks,n,true,page)) return false;
@@ -182,6 +220,7 @@ public:
         for (unsigned n=0;n<Fixture::ScratchPages;n++) {
             if (!Transfer(io,scope,dram,noc,host,lease,banks,n,false,page)) return false;
             if (memcmp(page,saved+n*(Fixture::PageBytes/4),Fixture::PageBytes)!=0) {
+                RecordFailure(PioneerQ35ScratchFailureRestoreMismatch,n,false,lease);
                 phase=Failed;scope.RetainScratch(this);return false;
             }
         }

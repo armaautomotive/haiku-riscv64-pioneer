@@ -163,6 +163,9 @@ int main()
         assert(failedHolder->Active() && failedHolder->Retained() && failedScope.retained
             && !failedHolder->AbandonUnclaimed(failedScope,failedDevice->banks)
             && failedDevice->banks.Q35StreamClaimed());
+        assert(failedHolder->Scratch()==failedScratch
+            && failedScratch->Failure().kind==PioneerQ35ScratchFailureTransfer
+            && failedScratch->Failure().leasePending && failedScratch->Failure().transfer.requests==1);
     }
     std::puts("PASS claimed scratch, 120-worker resident projection, result and full restoration; SIMULATED ONLY");
     return 0;
