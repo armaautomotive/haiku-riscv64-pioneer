@@ -1,0 +1,13 @@
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+LOCK_ABSENT
+PROCESS_SCAN_CLEAR
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+adbc86495803654471b83330ea8f2591f0433f8d71e083d6e9f790685bc985a4  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+89ac5cfae3d116b8b2ffdaced5f1e56e672c877918a309d11a8bb48736ae8e95  /boot/home/pioneer-q35-role-fleet-20261124-ac/candidate
+5b7278b870007299331dffa2d34b930f05b3e152bc2eac347eacf02a4e9618c8  /boot/home/pioneer-q35-role-fleet-20261124-ac/client
+4861bcc240b97819da93d2f2f58fa7f30d157f405a55a2d1a1a7a4785d563a00  /boot/home/pioneer-q35-role-fleet-20261124-ac/qualify.sh
+0cf751df4a50f82d1a5d5edc0452839a39ac00f0d89c45078518c62f807840d7  /boot/home/pioneer-q35-role-fleet-20261124-ac/restore-after-power-cycle.sh
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-q35-role-fleet-20261124-ac/stable.recovery
+0:1:600:2740937888 /boot/home/pioneer-qwen35-4b-225/Qwen3.5-4B-Q4_K_M.gguf
+0:1:600:18973870528 /boot/home/models/Qwen3.8-27B-Q4_K_M.gguf
+TAG_UNUSED
