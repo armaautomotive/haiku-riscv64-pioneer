@@ -87,10 +87,15 @@ template<class C> static bool PioneerQ38SpanPrepareService(C& c)
 	auto& dram=c.baseline.baseline.baseline.baseline.dram; auto& noc=c.baseline.baseline.baseline.noc;
 	bool ready=c.lease.ready;
 	if (!ready && !c.lease.saved) ready=PioneerResidentLeaseBegin(c.io,noc,c.lease);
+	PIONEER_Q35_SPAN_TRACE(ready?"service_resident_lease_ready":"service_resident_lease_failed");
 	if (ready) ready=c.io.SelectRuntimeCore(0) && c.io.MapBulk();
+	PIONEER_Q35_SPAN_TRACE(ready?"service_bulk_mapped":"service_bulk_map_failed");
 	if (ready && !c.bulkHost.allocated) ready=PioneerPrepareOutputBuffer(c.io,c.host,c.bulkHost);
+	PIONEER_Q35_SPAN_TRACE(ready?"service_bulk_host_ready":"service_bulk_host_failed");
 	ready=ready && c.bulkHost.ready && PioneerBulkUploadPrepare(c.io,dram,noc,c.host,c.lease,c.bulkHost,c.bulk);
+	PIONEER_Q35_SPAN_TRACE(ready?"service_bulk_prepared":"service_bulk_prepare_failed");
 	if (ready && !c.wideHost.allocated) ready=PioneerPrepareWideOutput(c.io,c.host,c.bulkHost,c.wideHost);
+	PIONEER_Q35_SPAN_TRACE(ready?"service_wide_host_ready":"service_wide_host_failed");
 	return ready && c.io.SelectRuntimeCore(0) && c.io.MapQ38Panel()
 		&& PioneerQ38SpanPrepare(c.io,dram,noc,c.banks,c.host,c.lease,c.bulk,c.bulkHost,c.wideHost,*c.q38Span);
 }
@@ -126,6 +131,7 @@ template<class C,bool Work=false
 	if (!receipt || !receipt->Before(&c,c.hashes,c.initialized,c.q38Span,request.bank,request.offset,request.bytes)) return false;
 #endif
 	if (!PioneerQ38SpanPrepareService(c)) {
+		PIONEER_Q35_SPAN_TRACE("service_prepare_failed");
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 		if (receipt) receipt->Abort();
 #endif
@@ -137,6 +143,7 @@ template<class C,bool Work=false
 	request.result={result.version,result.state,result.bytes,result.pages,result.nonce,result.started,result.completed,
 		result.held,result.host_exact,result.matched_words,result.recovery_required,0};
 	if (!passed) {
+		PIONEER_Q35_SPAN_TRACE("service_upload_failed");
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
 		if (receipt) receipt->Abort();
 #endif

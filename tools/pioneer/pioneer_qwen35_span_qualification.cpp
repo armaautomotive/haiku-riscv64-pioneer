@@ -29,6 +29,17 @@ struct Transport {
     void Failure(const char* stage,unsigned bank) {
         std::fprintf(stderr,"P100A_Q35_SUPPORTED_SPAN failed_stage=%s bank=%u\n",stage,bank);
     }
+    void SpanFailure(const tt_q38_span_upload& q,bool replied) {
+        if (!replied) {
+            std::fprintf(stderr,"P100A_Q35_SUPPORTED_SPAN no_upload_reply\n");
+            return;
+        }
+        const auto& r=q.result;
+        std::fprintf(stderr,"P100A_Q35_SUPPORTED_SPAN upload_result version=%u state=%u bytes=%u pages=%u nonce=%u "
+            "started=%u completed=%u held=%u host_exact=%u matched=%u recovery=%u reserved=%u\n",
+            r.version,r.state,r.bytes,r.pages,r.nonce,r.started,r.completed,r.held,
+            r.host_exact,r.matched_words,r.recovery_required,r.reserved);
+    }
     int Close(int fd) { return close(fd); }
 };
 int main(int argc,char** argv)

@@ -29,9 +29,12 @@ template<class IO> static bool PioneerQwen35SpanQualificationClient(IO& io)
     for (unsigned bank=0;bank<7;bank++) {
         *request={}; request->version=1; request->bank=bank; request->bytes=4096;
         for (unsigned i=0;i<1024;i++) request->data[i]=0x7fc00000U+(i+bank*271U)*0x9e3779b9U;
-        if (!io.Call(fd,TT_PCI_PROBE_Q38_SPAN_UPLOAD,request.get(),sizeof(*request))
-            || !PioneerQwen35SpanQualificationRequest(*request,bank)
-            || !PioneerQwen35::VerifiedSpanReply(*request,bank,0,4096,bank+1)) return fail("span_upload",bank);
+        const bool replied=io.Call(fd,TT_PCI_PROBE_Q38_SPAN_UPLOAD,request.get(),sizeof(*request));
+        if (!replied || !PioneerQwen35SpanQualificationRequest(*request,bank)
+            || !PioneerQwen35::VerifiedSpanReply(*request,bank,0,4096,bank+1)) {
+            io.SpanFailure(*request,replied);
+            return fail("span_upload",bank);
+        }
     }
     tt_q38_span_end spanEnd={1,0,0,0};
     if (!io.Call(fd,TT_PCI_PROBE_Q38_SPAN_END,&spanEnd,sizeof(spanEnd))

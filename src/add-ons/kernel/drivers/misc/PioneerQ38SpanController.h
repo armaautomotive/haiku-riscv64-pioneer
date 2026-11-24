@@ -9,6 +9,12 @@
 #include "PioneerRuntimeMatvec.h"
 #include "PioneerBulkUpload.h"
 #include "PioneerWideOutput.h"
+#if defined(PIONEER_QWEN35_SPAN_QUALIFY) && defined(_KERNEL_MODE)
+#include <KernelExport.h>
+#define PIONEER_Q35_SPAN_TRACE(stage) dprintf("P100A_Q35_SPAN_TRACE %s\n",stage)
+#else
+#define PIONEER_Q35_SPAN_TRACE(stage) ((void)0)
+#endif
 // Lease/result/descriptor/physical addresses are KERNEL-PRIVATE,not a wire
 // request. The adapter forbids any cohort/legacy compute while this lease
 // is open,and retains the entire context/cookie/ALL host owners after
@@ -104,15 +110,18 @@ template<class IO> bool PioneerQ38SpanPrepare(IO& io,const tt_dram_samples_resul
 	PioneerResidentBanks& banks,const tt_host_page_result& input,PioneerResidentLease& store,PioneerBulkUploadLease& bulk,
 	PioneerOutputBufferLease& transfer,PioneerWideOutputLease& wide,PioneerQ38SpanLease& lease)
 {
+	PIONEER_Q35_SPAN_TRACE("prepare_enter");
 	if (lease.saved || lease.dirty || lease.ready || lease.running || lease.unsafe || lease.closed
 		|| !io.SpanBeforeCohort() || !banks.Matches(dram) || wide.pending) return false;
 	uint32_t* saved=io.Q38PanelSavedWords();
 	if (!saved || !io.SpanViewCapacity(TT_Q38_SPAN_VIEW_WORDS+1)) return false;
 	if (!io.SpanOtherCoresHeld() || !PioneerQ38SpanSources(io,dram,noc,banks,input,store,bulk,transfer,wide,lease,0x47800,0x402))
 		return PioneerQ38SpanFail(io,banks,store,bulk,transfer,wide,lease);
+	PIONEER_Q35_SPAN_TRACE("prepare_sources_verified");
 	saved[0]=io.RuntimeCodeRead(0);
 	for (unsigned w=0;w<TT_Q38_SPAN_VIEW_WORDS;w++) saved[w+1]=io.Q38PanelRead(TT_Q38_SPAN_VIEW_BASE+w*4);
 	lease.saved=true;
+	PIONEER_Q35_SPAN_TRACE("prepare_snapshot_captured");
 	if (!PioneerQ38SpanSources(io,dram,noc,banks,input,store,bulk,transfer,wide,lease,0x47800,0x402))
 		return PioneerQ38SpanFail(io,banks,store,bulk,transfer,wide,lease);
 	lease.dirty=true;
@@ -120,6 +129,7 @@ template<class IO> bool PioneerQ38SpanPrepare(IO& io,const tt_dram_samples_resul
 	io.RuntimeCodeWrite(0,TT_Q38_SPAN_BOOT);
 	if (!PioneerQ38SpanCodeMatches(io) || !PioneerQ38SpanSources(io,dram,noc,banks,input,store,bulk,transfer,wide,lease,0x47800,0x402))
 		return PioneerQ38SpanFail(io,banks,store,bulk,transfer,wide,lease);
+	PIONEER_Q35_SPAN_TRACE("prepare_image_verified");
 	lease.ready=true; return true;
 }
 template<class IO,bool Work=false> bool PioneerQ38SpanUpload(IO& io,const tt_dram_samples_result& dram,const tt_compute_noc_result& noc,
@@ -137,11 +147,13 @@ template<class IO,bool Work=false> bool PioneerQ38SpanUpload(IO& io,const tt_dra
 		|| lease.nonce>=0x7ffffffe || !io.SpanBeforeCohort()
 		|| !PioneerQ38SpanAuthorize(banks,dram,initialized,initializedPages,bank,offset,bytes,e)) return false;
 	auto fail=[&]() {
+		PIONEER_Q35_SPAN_TRACE("upload_failed_retained");
 		r.state=TT_RUNTIME_COMPLETION_FAILED; r.recovery_required=1; r.pages=r.host_exact=0;
 		return PioneerQ38SpanFail(io,banks,store,bulk,transfer,wide,lease);
 	};
 	if (!io.SpanOtherCoresHeld() || !PioneerQ38SpanSources(io,dram,noc,banks,input,store,bulk,transfer,wide,lease,0x47800,0x402)
 		|| !PioneerQ38SpanLiveCode<IO,Work>(io)) return fail();
+	PIONEER_Q35_SPAN_TRACE("upload_sources_verified");
 	io.WideHostFence();
 	for (unsigned w=0;w<dataWords;w++) io.WideHostStore(w,data[w]);
 	io.WideHostFence();
@@ -161,6 +173,7 @@ template<class IO,bool Work=false> bool PioneerQ38SpanUpload(IO& io,const tt_dra
 	for (unsigned w=0;w<3;w++) io.RuntimeStatusWrite(w,0);
 	for (unsigned w=0;w<3;w++) if (io.RuntimeStatusRead(w)) return fail();
 	if (!PioneerQ38SpanSources(io,dram,noc,banks,input,store,bulk,transfer,wide,lease,0x47800,0x402)) return fail();
+	PIONEER_Q35_SPAN_TRACE("upload_descriptor_verified");
 	for (unsigned w=0;w<8;w++) {
 #ifdef PIONEER_QWEN35_SUPPORTED_SPAN
 		if (w==1) { r.before[w]=0;continue; }
@@ -175,6 +188,7 @@ template<class IO,bool Work=false> bool PioneerQ38SpanUpload(IO& io,const tt_dra
 	io.RuntimeResetWrite(0x87ffff); io.Pause();
 	if (!PioneerQ38SpanSources(io,dram,noc,banks,input,store,bulk,transfer,wide,lease,0x87ffff,0x406)) return fail();
 	r.started=1; io.RuntimeResetWrite(0x46800);
+	PIONEER_Q35_SPAN_TRACE("upload_release_attempted");
 	if (io.ResetRead()!=0x46800) return fail();
 	const uint64_t deadline=io.Q38CohortNow()+UINT64_C(30000000);
 	while (io.Q38CohortNow()<deadline) {
@@ -190,6 +204,7 @@ template<class IO,bool Work=false> bool PioneerQ38SpanUpload(IO& io,const tt_dra
 	}
 	if (!r.completed || !PioneerQ38SpanSources(io,dram,noc,banks,input,store,bulk,transfer,wide,lease,0x46800,0x406)
 		|| !PioneerQ38SpanLiveCode<IO,Work>(io)) return fail();
+	PIONEER_Q35_SPAN_TRACE("upload_terminal_verified");
 	for (unsigned w=0;w<8;w++) {
 #ifdef PIONEER_QWEN35_SUPPORTED_SPAN
 		if (w==1) { r.after[w]=0;continue; }
@@ -202,6 +217,7 @@ template<class IO,bool Work=false> bool PioneerQ38SpanUpload(IO& io,const tt_dra
 #else
 	if (!PioneerQ38SpanSummary(r.summary,d,r.before,r.after)) return fail();
 #endif
+	PIONEER_Q35_SPAN_TRACE("upload_summary_verified");
 	for (unsigned w=0;w<64;w++) if (io.BulkL1Read(w)!=d[w]) return fail();
 	unsigned last=(bytes-1)&~16383U;
 	const uint32_t command[]={Work?0x144000:d[7]+last,Work?0U:d[8],Work?129U:1555U,
@@ -229,6 +245,7 @@ template<class IO,bool Work=false> bool PioneerQ38SpanUpload(IO& io,const tt_dra
 	io.RuntimeResetWrite(0x47800); io.Pause();
 	if (!PioneerQ38SpanSources(io,dram,noc,banks,input,store,bulk,transfer,wide,lease,0x47800,0x402)) return fail();
 	lease.running=false; wide.pending=false; r.held=1; r.host_exact=Work?0:1; r.pages=e.pages; r.state=TT_RUNTIME_PASSED;
+	PIONEER_Q35_SPAN_TRACE("upload_held_complete");
 	return true; // ONLY future kernel handler may now commit ALL initialized pages
 }
 template<class IO> bool PioneerQ38SpanClose(IO& io,const tt_dram_samples_result& dram,const tt_compute_noc_result& noc,

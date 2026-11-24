@@ -13,8 +13,6 @@ stdout](wrapper.stdout), [wrapper stderr](wrapper.stderr), [state](state) and
 
 The current qualification routes no recovery ioctl, and its retained owner
 cannot be retired by normal hot reload. The pre-staged recovery script and
-both stable-driver copies matched their expected hashes. A single authorized
-front-panel OFF hold was sent; restoration remains in progress. Do not reuse
-tag0015 or send a second OFF pulse. This does not establish whether device
+both stable-driver copies matched their expected hashes. A single authorized front-panel OFF/ON cycle and the pinned Fedora NVMe-to-Haiku handoff were used. The staged script restored stable driver55 generation2; independent postflight confirmed idle, the expected stable/guard hashes, no lock and no diagnostic process. See [Linux handoff](linux-handoff.txt), [restore](restore.txt) and [postflight](postflight.txt). The full post-recovery model hashes are running. Do not reuse tag0015. This does not establish whether device
 execution started, the underlying transfer failure, inference correctness,
 no-reboot recovery, or throughput.
