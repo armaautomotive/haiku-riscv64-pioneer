@@ -69,6 +69,14 @@ int main() {
             ranges[core]={0,Fixture::ScratchOffset+core*Fixture::PageBytes,pages*Fixture::PageBytes};
         }
         assert(oldDevice->banks.Q35StreamClaimMatches(scratch.get(),ranges,PioneerQwen35::DataflowCoreCount));
+        if (!scenario) {
+            auto alternative=fresh->dram;
+            alternative.source[15]^=1; // independently valid, but not the saved source
+            PioneerResidentBanks alternativeBanks;
+            assert(alternativeBanks.Bind(alternative) && alternativeBanks.Matches(alternative));
+            assert(!oldDevice->banks.Q35RecoveryRoutesMatch(oldDevice->dram,alternativeBanks,alternative));
+            assert(oldDevice->banks.Q35RecoveryRoutesMatch(oldDevice->dram,fresh->banks,fresh->dram));
+        }
         ranges[119].offset+=Fixture::PageBytes;
         assert(!oldDevice->banks.Q35StreamClaimMatches(scratch.get(),ranges,PioneerQwen35::DataflowCoreCount));
         ResetScope scope;scope.owner=scratch.get();scope.expectedTicket=ticket;
