@@ -3779,6 +3779,13 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		if (value==0x87ffff || value==0x46800 || value==0x47800) PioneerWrite32(runtimeControl+0x1b0/4,value);
 	}
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
+	// Blackhole's matrix-unit soft-reset bit is not a general hang recovery
+	// mechanism. Keep these dedicated role transitions independent of the
+	// broad legacy reset value used by other paths.
+	enum : uint32 { SharedRoleMatrixReset=0x400, SharedRoleReleaseValue=0x6000,
+		SharedRolePrestackValue=0x7000, SharedRoleHoldValue=0x47800 };
+	static_assert(((SharedRoleReleaseValue|SharedRolePrestackValue|SharedRoleHoldValue)
+		& SharedRoleMatrixReset)==0, "Q35 role transitions must not assert matrix reset");
 	bool SharedRoleFirmwareMatches() const;
 	bool SharedHostDmaMapped() const {
 		return hdmaArea>=B_OK && hdma && PioneerMmioIO::area>=B_OK && nodeID
@@ -3795,19 +3802,19 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	// RAM, and records the attempt before calling this fixed transition.
 	bool SharedRoleReleaseReset() {
 		if (!runtimeMapped || !runtimeControl) return false;
-		PioneerWrite32(runtimeControl+0x1b0/4,0x6000); return true;
+		PioneerWrite32(runtimeControl+0x1b0/4,SharedRoleReleaseValue); return true;
 	}
 #if defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
 	// Qualification or non-loadable recovery witness only: release B/NC
 	// while T0, T1 and T2 remain held. The adapter owns admission and replay.
 	bool SharedRolePrestackReleaseReset() {
 		if (!runtimeMapped || !runtimeControl) return false;
-		PioneerWrite32(runtimeControl+0x1b0/4,0x7000); return true;
+		PioneerWrite32(runtimeControl+0x1b0/4,SharedRolePrestackValue); return true;
 	}
 #endif
 	bool SharedRoleHoldReset() {
 		if (!runtimeMapped || !runtimeControl) return false;
-		PioneerWrite32(runtimeControl+0x1b0/4,0x47800); return true;
+		PioneerWrite32(runtimeControl+0x1b0/4,SharedRoleHoldValue); return true;
 	}
 	uint32 SharedRolePcRead(unsigned role) {
 		if (!runtimeMapped || !runtimePc || role>=2) return UINT32_MAX;
