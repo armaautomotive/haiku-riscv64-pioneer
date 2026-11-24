@@ -33,7 +33,8 @@ def run_case(case, variant='l'):
                     'y':'2c43af6bbe0e709ae20c03f4e48e3d0fb33a13f39e53662537e14a530b4b6475',
                     'z':'dde75fc1700b9c542ffc6b21aef8d6920d7ce27603ce984fe041782b21732011',
                     'A':'0dcabe55d701e1288ad97fb3a8ac61500b9d1b09b804582c36303de644973109',
-                    'B':'df25adf3c02ad8fe30a01233ea84797e1b6ad6dec21d9123c57b0a1be0d944e4'}
+                    'B':'df25adf3c02ad8fe30a01233ea84797e1b6ad6dec21d9123c57b0a1be0d944e4',
+                    'C':'89ac5cfae3d116b8b2ffdaced5f1e56e672c877918a309d11a8bb48736ae8e95'}
         clients={'l':CLIENT,'m':'4e890c6ed33ebeeebb07b6259e78343b722b9de36579e3e8635dbcbdbefad3dd',
                  'n':'ef76ebfa01d675dd43449f9aa8b7b128477f8962a3ecd093975af1c666d85e1d',
                  'o':'a914af54a1cac088aeed7558f422c425fd6536600dcf96f047ae4adc1b8cf216',
@@ -49,8 +50,9 @@ def run_case(case, variant='l'):
                  'y':'696c41afab92c7808fe0a34ff4aa7ffeb3e4028e2149032a1479d2c80c803676',
                  'z':'696c41afab92c7808fe0a34ff4aa7ffeb3e4028e2149032a1479d2c80c803676',
                  'A':'dfb25a19e906bf7031e5dbb22ce093edff12b5cd672cd2dcbd2f09d2ce016842',
-                 'B':'069bc9a37aa36c193b6b337a3ef73e475f41d2ee8a692b13900d24a735a67089'}
-        tags={'l':'2026112300030003','m':'2026112300030004','n':'2026112300030005','o':'2026112300030006','p':'2026112300030007','q':'2026112300030008','r':'2026112300030009','s':'2026112300030010','t':'2026112300030011','u':'2026112300030012','v':'2026112300030013','w':'2026112300030014','x':'2026112300030015','y':'2026112300030016','z':'2026112300030017','A':'2026112300030018','B':'2026112300030019'}
+                 'B':'069bc9a37aa36c193b6b337a3ef73e475f41d2ee8a692b13900d24a735a67089',
+                 'C':'5b7278b870007299331dffa2d34b930f05b3e152bc2eac347eacf02a4e9618c8'}
+        tags={'l':'2026112300030003','m':'2026112300030004','n':'2026112300030005','o':'2026112300030006','p':'2026112300030007','q':'2026112300030008','r':'2026112300030009','s':'2026112300030010','t':'2026112300030011','u':'2026112300030012','v':'2026112300030013','w':'2026112300030014','x':'2026112300030015','y':'2026112300030016','z':'2026112300030017','A':'2026112300030018','B':'2026112300030019','C':'2026112300030020'}
         scripts={'l':SCRIPT,'m':common.ROOT/'tools/pioneer/pioneer_qwen35_fleet_inspection_qualify_m.sh',
                  'n':common.ROOT/'tools/pioneer/pioneer_qwen35_role_stage_qualify.sh',
                  'o':common.ROOT/'tools/pioneer/pioneer_qwen35_role_prestack_qualify.sh',
@@ -66,9 +68,10 @@ def run_case(case, variant='l'):
                  'y':common.ROOT/'tools/pioneer/pioneer_qwen35_span_qualify_y.sh',
                  'z':common.ROOT/'tools/pioneer/pioneer_qwen35_span_qualify_z.sh',
                  'A':common.ROOT/'tools/pioneer/pioneer_qwen35_model_preload_qualify_aa.sh',
-                 'B':common.ROOT/'tools/pioneer/pioneer_qwen35_role_fleet_qualify_ab.sh'}
+                 'B':common.ROOT/'tools/pioneer/pioneer_qwen35_role_fleet_qualify_ab.sh',
+                 'C':common.ROOT/'tools/pioneer/pioneer_qwen35_role_fleet_qualify_ac.sh'}
         candidate,client,tag,script=candidates[variant],clients[variant],tags[variant],scripts[variant]
-        stage=home/('pioneer-q35-role-fleet-20261124-ab' if variant=='B' else 'pioneer-q35-model-preload-20261124-aa' if variant=='A' else (('pioneer-q35-supported-span-20261124-' if variant in ('y','z')
+        stage=home/('pioneer-q35-role-fleet-20261124-ac' if variant=='C' else 'pioneer-q35-role-fleet-20261124-ab' if variant=='B' else 'pioneer-q35-model-preload-20261124-aa' if variant=='A' else (('pioneer-q35-supported-span-20261124-' if variant in ('y','z')
                      else 'pioneer-q35-supported-span-20261123-' if variant in ('w','x')
                      else 'pioneer-q35-role-fault-20261123-' if variant=='v'
                      else 'pioneer-q35-role-service-20261123-' if variant=='u'
@@ -86,7 +89,8 @@ def run_case(case, variant='l'):
         admin.write_text(admin.read_text().replace("'2026112300030016')", "'2026112300030016','2026112300030017')"))
         admin.write_text(admin.read_text().replace("'2026112300030017')", "'2026112300030017','2026112300030018')"))
         admin.write_text(admin.read_text().replace("'2026112300030018')", "'2026112300030018','2026112300030019')"))
-        if variant in ('t','u','v','w','x','y','z','A','B'):
+        admin.write_text(admin.read_text().replace("'2026112300030019')", "'2026112300030019','2026112300030020')"))
+        if variant in ('t','u','v','w','x','y','z','A','B','C'):
             # The production wrapper hashes both pinned models. Keep the fake
             # sparse fixtures cheap, while still testing a mismatched hash.
             common.put(root/'bin/sha256sum', '''#!/usr/bin/env python3
@@ -133,7 +137,7 @@ print('P100A_Q35_FLEET_INSPECTION clean_end=1',file=sys.stderr)
         wrapper=root/'inspect.sh';common.put(wrapper,source)
         run_env=dict(env,MOCK_CASE=case,MOCK_BAD_MODEL='1' if case=='bad_model' else '0',
                      MOCK_MODEL4=str(home/'pioneer-qwen35-4b-225/Qwen3.5-4B-Q4_K_M.gguf'),
-                     MOCK_ROLE='8' if variant=='B' else '7' if variant=='A' else '6' if variant in ('w','x','y','z') else '5' if variant=='v' else '4' if variant=='u' else '3' if variant=='t' else '2' if variant in ('o','p','q','r','s') else '1' if variant=='n' else '0')
+                     MOCK_ROLE='8' if variant in ('B','C') else '7' if variant=='A' else '6' if variant in ('w','x','y','z') else '5' if variant=='v' else '4' if variant=='u' else '3' if variant=='t' else '2' if variant in ('o','p','q','r','s') else '1' if variant=='n' else '0')
         result=subprocess.run(['bash',str(wrapper),'2'],env=run_env,
                               stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
         lock=home/'.pioneer-q35-dataflow-exclusive'
@@ -167,18 +171,18 @@ print('P100A_Q35_FLEET_INSPECTION clean_end=1',file=sys.stderr)
         else:
             assert (result.returncode==0)==(case=='success'),(result.stdout,result.stderr)
             assert installed.read_text()=='stable' and not lock.exists(),result.stderr
-            prefix='ROLE_FLEET_SERVICE' if variant=='B' else 'MODEL_PRELOAD' if variant=='A' else 'SUPPORTED_SPAN' if variant in ('w','x','y','z') else 'ROLE_SERVICE_FAULT' if variant=='v' else 'ROLE_SERVICE' if variant=='u' else 'ROLE_LOCAL_RESTORE' if variant=='t' else 'ROLE_PRESTACK' if variant in ('o','p','q','r','s') else 'ROLE_STAGE' if variant=='n' else 'FLEET_INSPECTION'
+            prefix='ROLE_FLEET_SERVICE' if variant in ('B','C') else 'MODEL_PRELOAD' if variant=='A' else 'SUPPORTED_SPAN' if variant in ('w','x','y','z') else 'ROLE_SERVICE_FAULT' if variant=='v' else 'ROLE_SERVICE' if variant=='u' else 'ROLE_LOCAL_RESTORE' if variant=='t' else 'ROLE_PRESTACK' if variant in ('o','p','q','r','s') else 'ROLE_STAGE' if variant=='n' else 'FLEET_INSPECTION'
             expected=prefix+('_PASSED_STABLE_RESTORED' if case=='success' else '_FAILED_STABLE_RESTORED')
             assert (stage/'state').read_text().strip()==expected
 
 
-variants=tuple(os.environ.get('Q35_TEST_VARIANTS','lmnopqrstuvwxyzAB'))
+variants=tuple(os.environ.get('Q35_TEST_VARIANTS','lmnopqrstuvwxyzABC'))
 for variant in variants:
     for scenario in ('success','clean_failure','invalid','retained','busy'):
         run_case(scenario,variant)
 for scenario in ('bad_model','busy_27b'):
-    for variant in (v for v in variants if v in ('t','u','v','w','x','y','z','A','B')):
+    for variant in (v for v in variants if v in ('t','u','v','w','x','y','z','A','B','C')):
         run_case(scenario,variant)
-if 'B' in variants:
-    run_case('retained_running','B')
+for variant in (v for v in variants if v in ('B','C')):
+    run_case('retained_running',variant)
 print('PASS one-shot fleet inspection, clean restore, busy preflight and retained recovery; SIMULATED HOST ONLY')

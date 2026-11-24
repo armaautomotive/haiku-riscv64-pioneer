@@ -54,7 +54,7 @@ with tempfile.TemporaryDirectory(prefix='q35-service-guard-') as temp:
             env=dict(fault, **change), stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL, timeout=25)
         assert result.returncode != 0 and not output.exists(), change
-    fleet = dict(base, PIONEER_DRIVER_BUILD_TAG='2026112300030019',
+    fleet = dict(base, PIONEER_DRIVER_BUILD_TAG='2026112300030020',
         PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY='1')
     fleet_cases = [
         {'PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY': '0'},
@@ -68,6 +68,7 @@ with tempfile.TemporaryDirectory(prefix='q35-service-guard-') as temp:
         {'PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL': '1'},
         {'PIONEER_DRIVER_BUILD_TAG': '2026112300030012'},
         {'PIONEER_DRIVER_BUILD_TAG': '2026112300030018'},
+        {'PIONEER_DRIVER_BUILD_TAG': '2026112300030019'}, # consumed fleet tag
     ]
     for number, change in enumerate(fleet_cases):
         output = Path(temp)/('fleet-'+str(number))
