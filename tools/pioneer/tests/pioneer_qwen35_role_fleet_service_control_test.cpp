@@ -1,0 +1,115 @@
+/* SPDX-License-Identifier: MIT */
+// Actual fleet controller and PCI adapter against simulated per-tile state.
+#define PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY 1
+#define PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY 1
+#define PIONEER_QWEN35_ROLE_SERVICE_QUALIFY 1
+#define PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY 1
+#define TEST_ROLE_PRESTACK_CONTROL 1
+#include "PioneerQwen35LocalRestoreProbeImages.h"
+#include "PioneerQwen35RoleServiceProbeImages.h"
+#include "pioneer_qwen35_role_stage_control_test.cpp"
+
+int main()
+{
+    (void)&EndGuard;(void)&Qwen35DataflowGenerate;
+    {
+    Fixture f;assert(f.Run()==B_OK && f.request.operation_status==B_OK);
+    ResetMaps();gAllowWrite=true;gPerCoreRoleWindows=true;
+    gRoleWindowCore=gRoleSelectedCore=f.context.io.runtimeCore;
+    f.context.io.perCoreReset=true;
+    for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+        f.context.io.tileReset[core]=0x47800;
+        f.context.io.roleHandoffs[core]={0x1000+core,0x2000+core,0x3000+core};
+        auto& box=f.context.io.roleBoxes[core];
+        auto* words=reinterpret_cast<uint32_t*>(&box);
+        for (unsigned i=0;i<sizeof(box)/sizeof(uint32_t);i++) words[i]=0x48000000U+core*32+i;
+    }
+    for (unsigned noc=0;noc<2;noc++) f.context.io.nocAvailable[noc]=0x10101010U;
+    f.context.io.simulateService=true;f.context.io.requireAllServicesBeforeStop=true;
+    auto r=Request();r.version=6;
+    assert(Qwen35RoleStageControl(&f.cookie,&r,sizeof(r))==B_OK);
+    if (r.operation_status!=B_OK) std::fprintf(stderr,"fleet failed status=%d stage=%u capture=%u stage_image=%u restore=%u close=%u starts=%u stops=%u reset=%u hold=%u core=%u\n",
+        r.operation_status,r.stage,r.captured,r.staged,r.restored,r.mappings_closed,
+        f.context.io.serviceStarts,f.context.io.serviceStops,f.context.io.sharedResetWrites,
+        f.context.io.holdWrites,f.context.io.runtimeCore);
+    if (r.operation_status!=B_OK && f.context.qwen35RoleStageQualification) {
+        const auto& state=f.context.qwen35RoleStageQualification->fleetPrestack[f.context.io.runtimeCore];
+        std::fprintf(stderr,"state copies=%d stop=%d verified=%d reset_restore=%d complete=%d reset=0x%x\n",
+            state.copiesCaptured,state.serviceStopped,state.copiesVerified,state.resetRestoreAttempted,
+            state.complete,f.context.io.reset);
+    }
+    assert(r.operation_status==B_OK && r.stage==TT_Q35_ROLE_FLEET_SERVICE_COMPLETE
+        && r.captured && r.staged && r.restored && r.mappings_closed);
+    assert(f.context.io.sharedResetWrites==DataflowBarrierWorkers
+        && f.context.io.serviceStarts==DataflowBarrierWorkers
+        && f.context.io.serviceStops==DataflowBarrierWorkers
+        && f.context.io.holdWrites==DataflowBarrierWorkers);
+    assert(!f.context.qwen35RoleStageQualification && !sColdRecoveryRequired && !gRetains);
+    for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+        const auto handoff=f.context.io.roleHandoffs[core];
+        assert(handoff.readerReady==0x1000+core && handoff.writerReady==0x2000+core
+            && handoff.release==0x3000+core);
+        const auto* words=reinterpret_cast<const uint32_t*>(&f.context.io.roleBoxes[core]);
+        for (unsigned i=0;i<sizeof(DataflowRoleMailbox)/sizeof(uint32_t);i++)
+            assert(words[i]==0x48000000U+core*32+i);
+        assert(f.context.io.SelectRuntimeCore(core) && f.context.io.reset==0x47800);
+    }
+    assert(f.context.io.SelectRuntimeCore(0));
+    for (unsigned core=0;core<DataflowBarrierWorkers;core++)
+        for (unsigned which=0;which<=DataflowRolePhysicalControl;which++)
+            for (uint32_t word:gRoleTileWindows[core][which])
+                assert(word==RoleWindowInitial(core,which));
+    gPerCoreRoleWindows=false;gAllowWrite=false;
+    for (auto& windows:gRoleTileWindows) windows.clear();
+    }
+    {
+    Fixture f;assert(f.Run()==B_OK && f.request.operation_status==B_OK);
+    ResetMaps();gAllowWrite=true;gPerCoreRoleWindows=true;
+    gRoleWindowCore=gRoleSelectedCore=f.context.io.runtimeCore;
+    f.context.io.perCoreReset=true;
+    for (unsigned core=0;core<DataflowBarrierWorkers;core++) f.context.io.tileReset[core]=0x47800;
+    for (unsigned noc=0;noc<2;noc++) f.context.io.nocAvailable[noc]=0x10101010U;
+    f.context.io.simulateService=true;f.context.io.dropPrestackReleaseCore=7;
+    auto r=Request();r.version=6;
+    assert(Qwen35RoleStageControl(&f.cookie,&r,sizeof(r))==B_OK);
+    assert(r.operation_status==B_DEV_NOT_READY && r.stage==9 && r.captured && r.staged
+        && !r.restored && !r.mappings_closed && f.context.io.sharedResetWrites==8
+        && f.context.io.serviceStarts==7 && !f.context.io.serviceStops);
+    auto* owner=f.context.qwen35RoleStageQualification;
+    assert(owner && owner->fleetPrestack[7].releaseAttempted
+        && !owner->fleetPrestack[7].serviceStarted && !owner->fleetPrestack[8].attempted
+        && f.context.dispatchOwnerRetained && sColdRecoveryRequired && gRetains==1);
+    // Free only the fake test state. A real uncertain release stays retained.
+    assert(acquire_sem(sLock)==B_OK && owner->views.Close() && release_sem(sLock)==B_OK);
+    delete owner;f.context.qwen35RoleStageQualification=nullptr;
+    gPerCoreRoleWindows=false;gAllowWrite=false;sColdRecoveryRequired=false;
+    for (auto& windows:gRoleTileWindows) windows.clear();
+    }
+    {
+    Fixture f;assert(f.Run()==B_OK && f.request.operation_status==B_OK);
+    ResetMaps();gAllowWrite=true;gPerCoreRoleWindows=true;
+    gRoleWindowCore=gRoleSelectedCore=f.context.io.runtimeCore;
+    f.context.io.perCoreReset=true;
+    for (unsigned core=0;core<DataflowBarrierWorkers;core++) f.context.io.tileReset[core]=0x47800;
+    for (unsigned noc=0;noc<2;noc++) f.context.io.nocAvailable[noc]=0x10101010U;
+    f.context.io.simulateService=true;
+    f.context.io.pauseHook=[](PioneerSessionIO* io) {
+        if (io->serviceStarts==DataflowBarrierWorkers) {
+            io->roleBoxes[7].started[DataflowRoleWriter]=0;
+            io->pauseHook=nullptr;
+        }
+    };
+    auto r=Request();r.version=6;
+    assert(Qwen35RoleStageControl(&f.cookie,&r,sizeof(r))==B_OK);
+    assert(r.operation_status==B_DEV_NOT_READY && r.stage==9 && r.captured && r.staged
+        && !r.restored && !r.mappings_closed && f.context.io.serviceStarts==DataflowBarrierWorkers
+        && !f.context.io.serviceStops && f.context.dispatchOwnerRetained && sColdRecoveryRequired);
+    auto* owner=f.context.qwen35RoleStageQualification;
+    assert(owner && owner->fleetPrestack[7].serviceStarted && !owner->fleetPrestack[7].serviceStopped);
+    assert(acquire_sem(sLock)==B_OK && owner->views.Close() && release_sem(sLock)==B_OK);
+    delete owner;f.context.qwen35RoleStageQualification=nullptr;
+    gPerCoreRoleWindows=false;gAllowWrite=false;sColdRecoveryRequired=false;
+    for (auto& windows:gRoleTileWindows) windows.clear();
+    }
+    std::puts("PASS 120 resident reader/writer pairs started concurrently and restored; SIMULATED ONLY");
+}

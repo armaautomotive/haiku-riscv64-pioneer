@@ -5,6 +5,9 @@
 #if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 #error Projection scratch compile witness requires the non-loadable recovery driver
 #endif
+#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
+#error Projection scratch compile witness must not be included in a loadable qualification driver
+#endif
 #include "PioneerQwen35ProjectionScratch.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowProjectionQualificationService.h"
 

@@ -99,6 +99,9 @@ struct PioneerSessionIO {
     unsigned restoreReceiptWrites=0; bool dropRestoreReceiptWrite=false;
     unsigned computeStopWrites=0,holdWrites=0; bool dropComputeStopWrite=false,dropHoldWrite=false;
     uint32_t rolePc[2]{};
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+    uint32_t fleetRolePc[DataflowBarrierWorkers][2]{};
+#endif
     unsigned rolePcReads[2]{},rolePcChangeAt[2]{UINT32_MAX,UINT32_MAX};
     uint32_t rolePcChanged[2]{};
     uint32_t computePc=0;
@@ -187,6 +190,10 @@ struct PioneerSessionIO {
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
     bool simulateService=false,dropServiceStop=false;
     unsigned serviceStarts=0,serviceStops=0;
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+    bool requireAllServicesBeforeStop=false;
+    unsigned dropPrestackReleaseCore=UINT32_MAX;
+#endif
 #ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
     uint32_t faultInvocationWord=0xabcddcbaU;
     bool dropFaultReceipt=false,injectFaultNoc=false,dropFaultRestore=false,dropFaultInit=false;
@@ -196,6 +203,9 @@ struct PioneerSessionIO {
 #endif
     bool SharedRolePrestackReleaseReset() {
         ++sharedResetWrites;
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+        if (runtimeCore==dropPrestackReleaseCore) return true;
+#endif
         if (dropPrestackRelease) return true;
         reset=0x7000;
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
@@ -222,7 +232,11 @@ struct PioneerSessionIO {
     uint32_t SharedRolePcRead(unsigned role) {
         if (role>=2) return UINT32_MAX;
         const unsigned count=rolePcReads[role]++;
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+        return count==rolePcChangeAt[role]?rolePcChanged[role]:fleetRolePc[runtimeCore][role];
+#else
         return count==rolePcChangeAt[role]?rolePcChanged[role]:rolePc[role];
+#endif
     }
     bool ReadCoreMemory(unsigned core,unsigned address,void* output,unsigned bytes) {
         if (core>=DataflowBarrierWorkers || !output) return false;
@@ -297,6 +311,9 @@ struct PioneerSessionIO {
             }
 #endif
             if (reset==0x7000 && simulateService && offset==offsetof(DataflowRoleMailbox,stopRequest) && value==1) {
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+                if (requireAllServicesBeforeStop) assert(serviceStarts==DataflowBarrierWorkers);
+#endif
                 ++serviceStops;
                 if (!dropServiceStop) {
                     assert(DataflowRoleMailboxObserveStop(box,DataflowRoleReader)
@@ -308,6 +325,10 @@ struct PioneerSessionIO {
                     handoff.writerReady=PIONEER_Q35_ROLE_RESTORE_WRITER_DONE;
                     rolePc[DataflowRoleReader]=DataflowServiceProbeReaderParkAddress;
                     rolePc[DataflowRoleWriter]=DataflowServiceProbeWriterParkAddress;
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+                    fleetRolePc[runtimeCore][DataflowRoleReader]=rolePc[DataflowRoleReader];
+                    fleetRolePc[runtimeCore][DataflowRoleWriter]=rolePc[DataflowRoleWriter];
+#endif
                 }
             }
             return;
@@ -327,6 +348,10 @@ struct PioneerSessionIO {
                         && DataflowRoleMailboxPublishStarted(box,DataflowRoleWriter));
                     rolePc[DataflowRoleReader]=DataflowRoleReaderCodeAddress+4;
                     rolePc[DataflowRoleWriter]=DataflowRoleWriterCodeAddress+4;
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+                    fleetRolePc[runtimeCore][DataflowRoleReader]=rolePc[DataflowRoleReader];
+                    fleetRolePc[runtimeCore][DataflowRoleWriter]=rolePc[DataflowRoleWriter];
+#endif
                     ++serviceStarts;
                 }
 #endif
@@ -536,7 +561,12 @@ static int gRoleMisrouteCountdown=-1;
 static bool gRoleMisrouteInjected=false;
 static std::vector<std::vector<uint32_t>> gRoleTileWindows[DataflowBarrierWorkers];
 static uint32_t RoleWindowInitial(unsigned core,unsigned window) {
-    return (0x76540000U+window) ^ (core*0x10001U);
+    const uint32_t value=(0x76540000U+window) ^ (core*0x10001U);
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+    // The modeled reset-PC overrides are disabled on every tile.
+    if (window==DataflowRolePhysicalControl) return value&~1U;
+#endif
+    return value;
 }
 #ifdef TEST_ROLE_STAGE_QUALIFY
 static bool gFailAfterStageWrite=false,gStageWriteFailureInjected=false,gFailStageWriteOnce=false;
@@ -570,7 +600,12 @@ static void SelectRoleTestWindows(unsigned previous,unsigned next) {
         }
     }
     if (gRoleWindowCore!=actual) {
-        for (unsigned window=0;window<=DataflowRolePhysicalExtraCode;window++) {
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+        constexpr unsigned lastWindow=DataflowRolePhysicalControl;
+#else
+        constexpr unsigned lastWindow=DataflowRolePhysicalExtraCode;
+#endif
+        for (unsigned window=0;window<=lastWindow;window++) {
             if (!gMapped[window]) continue;
             auto& oldTile=gRoleTileWindows[gRoleWindowCore][window];
             const auto& newTile=gRoleTileWindows[actual][window];
@@ -609,10 +644,15 @@ area_id map_physical_memory(const char*,phys_addr_t physical,size_t bytes,uint32
     if (int(index)==gFailMap) return -1;
     gMemory[index].assign(bytes/4,0x76540000U+index); gMapped[index]=true;
 #if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
-    if (gPerCoreRoleWindows && index<=DataflowRolePhysicalExtraCode) {
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+    constexpr unsigned lastWindow=DataflowRolePhysicalControl;
+#else
+    constexpr unsigned lastWindow=DataflowRolePhysicalExtraCode;
+#endif
+    if (gPerCoreRoleWindows && index<=lastWindow) {
         for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
             if (gRoleTileWindows[core].empty())
-                gRoleTileWindows[core].resize(DataflowRolePhysicalExtraCode+1);
+                gRoleTileWindows[core].resize(lastWindow+1);
             gRoleTileWindows[core][index].assign(bytes/4,RoleWindowInitial(core,index));
         }
         const auto& selected=gRoleTileWindows[gRoleWindowCore][index];

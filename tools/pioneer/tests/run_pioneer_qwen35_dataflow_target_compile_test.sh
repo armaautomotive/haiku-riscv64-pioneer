@@ -866,6 +866,34 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/rol
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     -I"$directory/role_haiku_stubs" -I"$temporary/shared-role-images" -I"$temporary/shared-graph-service" \
     -I"$temporary/local-restore-probe-images" -I"$temporary/role-service-probe-images" -I"$temporary" \
+    "$directory/pioneer_qwen35_role_fleet_service_control_test.cpp" -o "$temporary/role-fleet-service-control-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-fleet-service-control-test"
+if ${CXX:-c++} -x c++ -std=c++17 -E -D_KERNEL_MODE -DPIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY \
+    -DPIONEER_QWEN35_ROLE_SERVICE_QUALIFY -DPIONEER_QWEN35_ROLE_PRESTACK_QUALIFY \
+    -DPIONEER_QWEN35_ROLE_STAGE_QUALIFY -I"$directory/role_haiku_stubs" \
+    "$root/src/add-ons/kernel/drivers/misc/PioneerQwen35RolePrestackProbe.h" \
+    >"$temporary/fleet-service-guard.out" 2>"$temporary/fleet-service-guard.err"; then
+    echo 'unqualified fleet service accepted a kernel build' >&2
+    exit 1
+fi
+if ! grep -q 'Fleet service startup is not yet qualified for a loadable driver' "$temporary/fleet-service-guard.err"; then
+    echo 'fleet service kernel rejection did not come from its qualification guard' >&2
+    exit 1
+fi
+if ${CXX:-c++} -x c++ -std=c++17 -E -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+    -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_QUALIFY \
+    -I"$directory/role_haiku_stubs" "$root/src/add-ons/kernel/drivers/misc/PioneerQwen35ProjectionScratchCompileWitness.inc" \
+    >"$temporary/projection-witness-guard.out" 2>"$temporary/projection-witness-guard.err"; then
+    echo 'loadable qualification accepted the projection compile witness' >&2
+    exit 1
+fi
+if ! grep -q 'Projection scratch compile witness must not be included' "$temporary/projection-witness-guard.err"; then
+    echo 'projection witness rejection did not come from its qualification guard' >&2
+    exit 1
+fi
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -I"$directory/role_haiku_stubs" -I"$temporary/shared-role-images" -I"$temporary/shared-graph-service" \
+    -I"$temporary/local-restore-probe-images" -I"$temporary/role-service-probe-images" -I"$temporary" \
     "$directory/pioneer_qwen35_role_fault_control_test.cpp" -o "$temporary/role-fault-control-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-fault-control-test"
 if ${CXX:-c++} -std=c++17 -E -D_KERNEL_MODE -DPIONEER_QWEN35_ROLE_FAULT_QUALIFY \

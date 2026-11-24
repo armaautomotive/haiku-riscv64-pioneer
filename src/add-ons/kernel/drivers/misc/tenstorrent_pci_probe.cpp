@@ -4843,10 +4843,12 @@ public:
 #include "PioneerQwen35DataflowDriverBinding.inc"
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 #include "PioneerQwen35DataflowRoleHaikuScopeWitness.inc"
+#ifndef PIONEER_QWEN35_RECOVERY_QUALIFY
 #if defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) && defined(PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY)
 #include "PioneerQwen35ProjectionQualificationScope.inc"
 #endif
 #include "PioneerQwen35ProjectionScratchCompileWitness.inc"
+#endif
 #endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 #include "PioneerQwen35ActiveRootLease.h"

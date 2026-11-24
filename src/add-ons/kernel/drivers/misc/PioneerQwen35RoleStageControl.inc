@@ -33,9 +33,21 @@ public:
     PioneerQwen35RolePrestackState prestack;
 #endif
     uint32_t* snapshot;
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+    PioneerQwen35RolePrestackState* fleetPrestack;
+#endif
     PioneerQ35RoleStageQualification():views(platform),snapshot(
-        static_cast<uint32_t*>(malloc(sizeof(uint32_t)*PioneerQwen35::DataflowRoleFleetImagesOwner::RequiredWords()))) {}
-    ~PioneerQ35RoleStageQualification() { free(snapshot); }
+        static_cast<uint32_t*>(malloc(sizeof(uint32_t)*PioneerQwen35::DataflowRoleFleetImagesOwner::RequiredWords())))
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+        ,fleetPrestack(new(std::nothrow) PioneerQwen35RolePrestackState[PioneerQwen35::DataflowBarrierWorkers])
+#endif
+        {}
+    ~PioneerQ35RoleStageQualification() {
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+        delete[] fleetPrestack;
+#endif
+        free(snapshot);
+    }
     PioneerQ35RoleStageQualification(const PioneerQ35RoleStageQualification&)=delete;
     PioneerQ35RoleStageQualification& operator=(const PioneerQ35RoleStageQualification&)=delete;
 };
@@ -86,7 +98,11 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
             } else {
                 r.stage=2;PioneerQ35RoleStageProgress(r.stage);
                 auto* owner=new(std::nothrow) PioneerQ35RoleStageQualification;
-                if (!owner || !owner->snapshot) { delete owner;r.operation_status=B_NO_MEMORY; }
+                if (!owner || !owner->snapshot
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+                    || !owner->fleetPrestack
+#endif
+                    ) { delete owner;r.operation_status=B_NO_MEMORY; }
                 else {
                     // Publish retained ownership before the first mapping or
                     // device image access; BANK_END refuses this owner.
@@ -113,6 +129,14 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         if (okay) {
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+                            if (r.version==6) okay=owner->images.StageAll(DataflowServiceProbeReaderCodeWords,
+                                sizeof(DataflowServiceProbeReaderCodeWords)/sizeof(uint32_t),
+                                DataflowServiceProbeWriterCodeWords,sizeof(DataflowServiceProbeWriterCodeWords)/sizeof(uint32_t),
+                                DataflowServiceProbeReaderShimWords,sizeof(DataflowServiceProbeReaderShimWords)/sizeof(uint32_t),
+                                DataflowServiceProbeWriterShimWords,sizeof(DataflowServiceProbeWriterShimWords)/sizeof(uint32_t),adapter);
+                            else
+#endif
                             if (r.version==4 || r.version==5) okay=owner->images.StageOne(0,DataflowServiceProbeReaderCodeWords,
                                 sizeof(DataflowServiceProbeReaderCodeWords)/sizeof(uint32_t),
                                 DataflowServiceProbeWriterCodeWords,sizeof(DataflowServiceProbeWriterCodeWords)/sizeof(uint32_t),
@@ -144,6 +168,41 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         r.staged=okay;
                     }
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+                    if (okay && r.version==6) {
+                        r.stage=9;PioneerQ35RoleStageProgress(r.stage);
+                        for (unsigned core=0;okay && core<DataflowBarrierWorkers;core++) {
+                            PioneerQwen35RolePrestackProbe<PioneerSessionIO,PioneerQ35FleetInspectionScope,
+                                DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>,decltype(adapter)>
+                                worker(c->io,scope,owner->views,adapter,owner->fleetPrestack[core],core);
+                            okay=worker.StartFleetService(65536);
+#ifdef _KERNEL_MODE
+                            if (!okay) dprintf("P100A_Q35_FLEET_SERVICE_FAILURE phase=start core=%u\n",core);
+#endif
+                        }
+                        // Each pair must still be running after the final
+                        // startup and before any stop request is published.
+                        for (unsigned core=0;okay && core<DataflowBarrierWorkers;core++) {
+                            PioneerQwen35RolePrestackProbe<PioneerSessionIO,PioneerQ35FleetInspectionScope,
+                                DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>,decltype(adapter)>
+                                worker(c->io,scope,owner->views,adapter,owner->fleetPrestack[core],core);
+                            okay=worker.AuditFleetService();
+#ifdef _KERNEL_MODE
+                            if (!okay) dprintf("P100A_Q35_FLEET_SERVICE_FAILURE phase=audit core=%u\n",core);
+#endif
+                        }
+                        for (unsigned core=0;okay && core<DataflowBarrierWorkers;core++) {
+                            PioneerQwen35RolePrestackProbe<PioneerSessionIO,PioneerQ35FleetInspectionScope,
+                                DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>,decltype(adapter)>
+                                worker(c->io,scope,owner->views,adapter,owner->fleetPrestack[core],core);
+                            okay=worker.StopFleetService(DataflowServiceProbeReaderParkAddress,
+                                DataflowServiceProbeWriterParkAddress,65536);
+#ifdef _KERNEL_MODE
+                            if (!okay) dprintf("P100A_Q35_FLEET_SERVICE_FAILURE phase=stop core=%u\n",core);
+#endif
+                        }
+                    }
+#endif
                     if (okay && (r.version==2
 #ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
                             || r.version==3
@@ -175,6 +234,16 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         okay=owner->images.RestoreAll(adapter);r.restored=okay;
                     }
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+                    if (okay && r.version==6) {
+                        for (unsigned core=0;okay && core<DataflowBarrierWorkers;core++) {
+                            PioneerQwen35RolePrestackProbe<PioneerSessionIO,PioneerQ35FleetInspectionScope,
+                                DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap>,decltype(adapter)>
+                                worker(c->io,scope,owner->views,adapter,owner->fleetPrestack[core],core);
+                            okay=worker.VerifyAfterImages();
+                        }
+                    }
+#endif
                     if (okay && (r.version==2
 #ifdef PIONEER_QWEN35_ROLE_LOCAL_RESTORE_QUALIFY
                             || r.version==3
@@ -221,6 +290,9 @@ Qwen35RoleStageControl(PioneerProbeCookie* cookie,void* data,size_t length)
                         r.stage=
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+                            r.version==6?TT_Q35_ROLE_FLEET_SERVICE_COMPLETE:
+#endif
                             r.version==5?TT_Q35_ROLE_SERVICE_FAULT_COMPLETE:
                             r.version==4?TT_Q35_ROLE_SERVICE_COMPLETE:
 #endif

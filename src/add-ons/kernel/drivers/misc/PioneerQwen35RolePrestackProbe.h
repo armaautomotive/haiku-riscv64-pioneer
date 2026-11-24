@@ -4,6 +4,12 @@
 #if !defined(PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY) || !defined(PIONEER_QWEN35_ROLE_STAGE_QUALIFY)
 #error This bounded startup probe is only for the restricted qualification build
 #endif
+#if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) && !defined(PIONEER_QWEN35_ROLE_SERVICE_QUALIFY)
+#error Fleet role qualification requires the resident service images
+#endif
+#if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) && defined(_KERNEL_MODE)
+#error Fleet service startup is not yet qualified for a loadable driver
+#endif
 #if defined(PIONEER_QWEN35_ROLE_FAULT_QUALIFY) && defined(_KERNEL_MODE) \
     && (!defined(PIONEER_QWEN35_ROLE_SERVICE_QUALIFY) || !defined(PIONEER_DRIVER_BUILD_TAG) \
         || PIONEER_DRIVER_BUILD_TAG != 0x2026112300030013ULL)
@@ -58,7 +64,11 @@ class PioneerQwen35RolePrestackProbe {
     Adapter& fAdapter;
     PioneerQwen35RoleRouteGuard<IO,Scope> fGuard;
     PioneerQwen35RolePrestackState& fState;
-    static constexpr unsigned Core=0;
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+    const unsigned fCore;
+#else
+    static constexpr unsigned fCore=0;
+#endif
     static constexpr uint32_t Held=0x47800,Running=0x7000;
     static void Progress(unsigned phase) {
 #ifdef _KERNEL_MODE
@@ -77,11 +87,11 @@ class PioneerQwen35RolePrestackProbe {
 #endif
     }
 
-    bool Select(uint32_t reset) {
-        return fScope.PrestackAdmission(fIO) && fIO.SelectRuntimeCore(Core)
+    __attribute__((noinline)) bool Select(uint32_t reset) {
+        return fScope.PrestackAdmission(fIO,fCore) && fIO.SelectRuntimeCore(fCore)
             && fIO.MapQ38Panel() && fIO.DataflowPanelMappingStable()
-            && fGuard.ProveSelectedRoute(Core)
-            && PioneerQwen35WithSelectedClock(fIO,Core,[&]() {
+            && fGuard.ProveSelectedRoute(fCore)
+            && PioneerQwen35WithSelectedClock(fIO,fCore,[&]() {
                 return fIO.ResetRead()==reset && fIO.ResetRead()==reset;
             });
     }
@@ -96,7 +106,7 @@ class PioneerQwen35RolePrestackProbe {
         bool ProveSelectedRoute(unsigned core) { return fProbe.fGuard.ProveSelectedRoute(core); }
         bool ProveReadAllowed(unsigned core,unsigned which,unsigned offset) {
             using namespace PioneerQwen35;
-            return core==Core && which==DataflowRolePhysicalExtraCode
+            return core==fProbe.fCore && which==DataflowRolePhysicalExtraCode
                 && offset>=DataflowRoleReaderRamCopy-DataflowRoleExtraL1Address
                 && offset<DataflowRoleExtraL1Limit-DataflowRoleExtraL1Address
                 && fProbe.Select(Running);
@@ -199,7 +209,7 @@ class PioneerQwen35RolePrestackProbe {
         return true;
     }
 #endif
-    bool ReadMailboxWords(uint32_t reset) {
+    __attribute__((noinline)) bool ReadMailboxWords(uint32_t reset) {
         using namespace PioneerQwen35;
         static_assert(sizeof(DataflowRoleMailbox)==16*sizeof(uint32_t),"fixed mailbox size");
         if (!Select(reset)) return false;
@@ -209,7 +219,7 @@ class PioneerQwen35RolePrestackProbe {
         for (unsigned i=0;i<16;i++) second[i]=fIO.Q38PanelRead(DataflowRoleMailboxAddress+i*4);
         return !memcmp(first,second,sizeof(fState.mailboxReadFirst)) && Select(reset);
     }
-    bool ReadMailbox(uint32_t reset,PioneerQwen35::DataflowRoleMailbox& out) {
+    __attribute__((noinline)) bool ReadMailbox(uint32_t reset,PioneerQwen35::DataflowRoleMailbox& out) {
         if (!ReadMailboxWords(reset)) return false;
         memcpy(&out,fState.mailboxReadSecond,sizeof(out));return true;
     }
@@ -247,12 +257,9 @@ class PioneerQwen35RolePrestackProbe {
             && !memcmp(fState.mailboxReadSecond,fState.mailbox,sizeof(fState.mailbox));
         return fState.mailboxRestored;
     }
-    bool RunIdleService(unsigned polls
-#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
-        ,bool faultProbe
-#endif
-        ) {
+    __attribute__((always_inline)) inline bool StartIdleService(unsigned polls) {
         using namespace PioneerQwen35;
+        if (fState.serviceReleaseAttempted || fState.serviceStarted || !fState.copiesCaptured) return false;
         fState.serviceReleaseAttempted=true;
         if (!WriteHandoff(Running,2,DataflowRoleSnapshotRelease)) return false;
         for (unsigned n=0;n<polls;n++) {
@@ -265,7 +272,15 @@ class PioneerQwen35RolePrestackProbe {
             }
             fIO.Pause();
         }
-        if (!fState.serviceStarted) return false;
+        return fState.serviceStarted;
+    }
+    __attribute__((always_inline)) inline bool StopIdleService(unsigned polls
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+        ,bool faultProbe
+#endif
+        ) {
+        using namespace PioneerQwen35;
+        if (!fState.serviceStarted || fState.serviceStopAttempted || fState.serviceStopped) return false;
         DataflowRoleMailbox box{};
 #ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
         if (!ReadMailbox(Running,box)) return false;
@@ -299,13 +314,24 @@ class PioneerQwen35RolePrestackProbe {
         }
         return false;
     }
+    __attribute__((always_inline)) inline bool RunIdleService(unsigned polls
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+        ,bool faultProbe
+#endif
+        ) {
+        return StartIdleService(polls) && StopIdleService(polls
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+            ,faultProbe
+#endif
+            );
+    }
 #endif
     bool ResetDisable(uint32_t expected) {
         using namespace PioneerQwen35;
         uint32_t first=0,second=0;
         return Select(Held)
-            && fViews.Read(Core,DataflowRolePhysicalControl,0x224,first,fGuard)
-            && fViews.Read(Core,DataflowRolePhysicalControl,0x224,second,fGuard)
+            && fViews.Read(fCore,DataflowRolePhysicalControl,0x224,first,fGuard)
+            && fViews.Read(fCore,DataflowRolePhysicalControl,0x224,second,fGuard)
             && first==expected && second==expected && Select(Held);
     }
     bool CaptureRunningCopies() {
@@ -316,13 +342,13 @@ class PioneerQwen35RolePrestackProbe {
         RunningCopyGuard guard(*this);
         for (unsigned role=0;role<DataflowRoleCount;role++) {
             const unsigned copied=role==DataflowRoleReader?DataflowRoleReaderRamCopy:DataflowRoleWriterRamCopy;
-            if (!fViews.CopyWords(Core,DataflowRolePhysicalExtraCode,copied-DataflowRoleExtraL1Address,
+            if (!fViews.CopyWords(fCore,DataflowRolePhysicalExtraCode,copied-DataflowRoleExtraL1Address,
                     fState.copies[role],DataflowRoleLocalRamWords,guard)) { RamFailure(role,0,5);return false; }
         }
         // Check both complete copies again after all initial reads.
         for (unsigned role=0;role<DataflowRoleCount;role++) {
             const unsigned copied=role==DataflowRoleReader?DataflowRoleReaderRamCopy:DataflowRoleWriterRamCopy;
-            if (!fViews.Matches(Core,DataflowRolePhysicalExtraCode,copied-DataflowRoleExtraL1Address,
+            if (!fViews.Matches(fCore,DataflowRolePhysicalExtraCode,copied-DataflowRoleExtraL1Address,
                     fState.copies[role],DataflowRoleLocalRamWords,guard)) { RamFailure(role,0,6);return false; }
         }
         if (!ReadHandoff(Running,handoff) || handoff[0]!=DataflowRoleSnapshotReaderReady
@@ -334,16 +360,127 @@ class PioneerQwen35RolePrestackProbe {
         if (!fState.copiesCaptured || !Select(Held)) return false;
         for (unsigned role=0;role<DataflowRoleCount;role++) {
             const unsigned copied=role==DataflowRoleReader?DataflowRoleReaderRamCopy:DataflowRoleWriterRamCopy;
-            if (!fViews.Matches(Core,DataflowRolePhysicalExtraCode,copied-DataflowRoleExtraL1Address,
+            if (!fViews.Matches(fCore,DataflowRolePhysicalExtraCode,copied-DataflowRoleExtraL1Address,
                     fState.copies[role],DataflowRoleLocalRamWords,fGuard)) { RamFailure(role,0,7);return false; }
         }
-        if (!fAdapter.AllRolesHeld(Core)) { RamFailure(DataflowRoleCount,0,4);return false; }
+        if (!fAdapter.AllRolesHeld(fCore)) { RamFailure(DataflowRoleCount,0,4);return false; }
         return true;
+    }
+    // Shared by single-worker qualification and the fleet startup path.
+    __attribute__((always_inline)) inline bool PrepareCapturedStart(unsigned polls,bool serviceProbe
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+        ,bool faultProbe
+#endif
+        ) {
+        using namespace PioneerQwen35;
+#ifndef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+        (void)serviceProbe;
+#endif
+        if (fState.attempted || fCore>=PioneerQwen35::DataflowBarrierWorkers || !polls || polls>65536)
+            return false;
+        fState.attempted=true;
+        uint32_t first=0,second=0;
+        if (!fScope.BeginPrestack(fIO,fCore) || !fAdapter.AllRolesHeld(fCore) || !fAdapter.DefaultBootRouting(fCore)
+            || !ReadHandoff(Held,fState.handoff) || !Select(Held)
+            || !fViews.Read(fCore,DataflowRolePhysicalControl,0x224,first,fGuard)
+            || !fViews.Read(fCore,DataflowRolePhysicalControl,0x224,second,fGuard) || first!=second) return false;
+        fState.resetDisable=first;fState.captured=true;Progress(1);
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+        if (serviceProbe && !InitializeMailbox()) return false;
+#endif
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+        if (faultProbe && !PrepareFaultWords()) return false;
+#endif
+        for (unsigned i=0;i<3;i++) {
+            fState.handoffZeroAttempts|=1U<<i;
+            if (!WriteHandoff(Held,i,0)) return false;
+        }
+        const uint32_t preserved=fState.resetDisable|DataflowRolePreserveResetMask;
+        fState.preserveAttempted=true;
+        if (!fViews.WriteResetDisable(fCore,fState.resetDisable,preserved,fGuard) || !ResetDisable(preserved)
+            || !Select(Held)) return false;
+        fState.releaseAttempted=true;
+        Progress(2);
+        if (!fIO.SharedRolePrestackReleaseReset() || !Select(Running)) return false;
+        bool ready=false;
+        for (unsigned n=0;n<polls;n++) {
+            uint32_t handoff[3]{};
+            if (ReadHandoff(Running,handoff) && handoff[0]==DataflowRoleSnapshotReaderReady
+                && handoff[1]==DataflowRoleSnapshotWriterReady && !handoff[2]) { ready=true;break; }
+            fIO.Pause();
+        }
+        if (!ready) return false;
+        Progress(3);
+        if (!CaptureRunningCopies()) return false;
+        return true;
+    }
+    __attribute__((always_inline)) inline bool FinishAfterCancel(uint32_t readerPark,uint32_t writerPark,unsigned polls,
+        bool restoresLocal,bool serviceProbe
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+        ,bool faultProbe
+#endif
+        ) {
+        using namespace PioneerQwen35;
+        const uint32_t preserved=fState.resetDisable|PioneerQwen35::DataflowRolePreserveResetMask;
+        bool parked=false;
+        for (unsigned n=0;n<polls;n++) {
+            uint32_t handoff[3]{};
+            const uint32_t readerDone=restoresLocal?uint32_t(PIONEER_Q35_ROLE_RESTORE_READER_DONE)
+                :uint32_t(DataflowRoleSnapshotReaderCancelled);
+            const uint32_t writerDone=restoresLocal?uint32_t(PIONEER_Q35_ROLE_RESTORE_WRITER_DONE)
+                :uint32_t(DataflowRoleSnapshotWriterCancelled);
+            if (ReadHandoff(Running,handoff) && handoff[0]==readerDone
+                && handoff[1]==writerDone && handoff[2]==(serviceProbe?DataflowRoleSnapshotRelease:DataflowRoleSnapshotCancel)) {
+                const uint32_t r1=fIO.SharedRolePcRead(DataflowRoleReader),w1=fIO.SharedRolePcRead(DataflowRoleWriter);
+                fIO.Pause();
+                const uint32_t r2=fIO.SharedRolePcRead(DataflowRoleReader),w2=fIO.SharedRolePcRead(DataflowRoleWriter);
+                if (r1==readerPark && r2==readerPark && w1==writerPark && w2==writerPark
+                    && Select(Running)) { parked=true;break; }
+            }
+            fIO.Pause();
+        }
+        if (!parked || !Select(Running)) return false;
+        Progress(4);
+        fState.holdAttempted=true;
+        if (!fIO.SharedRoleHoldReset()) return false;
+        Progress(41);
+        if (!Select(Held)) return false;
+        Progress(42);
+        if (!fScope.MarkPrestackHeldAfterCancel(fIO,fCore)) return false;
+        Progress(43);
+        if (!ResetDisable(preserved)) return false;
+        Progress(44);
+        if (!CompareHeldCopies()) return false;
+        fState.copiesVerified=true;Progress(5);
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+        if (faultProbe && !RestoreFaultWords()) return false;
+#endif
+#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
+        if (serviceProbe && !RestoreMailbox()) return false;
+#endif
+        for (unsigned i=0;i<3;i++) {
+            fState.handoffRestoreAttempts|=1U<<i;
+            if (!WriteHandoff(Held,i,fState.handoff[i])) return false;
+        }
+        fState.resetRestoreAttempted=true;
+        if (!fViews.WriteResetDisable(fCore,preserved,fState.resetDisable,fGuard)
+            || !ResetDisable(fState.resetDisable)) return false;
+        uint32_t restored[3]{};
+        if (!ReadHandoff(Held,restored) || memcmp(restored,fState.handoff,sizeof(restored))) return false;
+        fState.complete=true;Progress(6);return true;
     }
 public:
     PioneerQwen35RolePrestackProbe(IO& io,Scope& scope,Views& views,Adapter& adapter,
-        PioneerQwen35RolePrestackState& state)
-        :fIO(io),fScope(scope),fViews(views),fAdapter(adapter),fGuard(io,scope),fState(state) {}
+        PioneerQwen35RolePrestackState& state
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+        ,unsigned core=0
+#endif
+        )
+        :fIO(io),fScope(scope),fViews(views),fAdapter(adapter),fGuard(io,scope),fState(state)
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+        ,fCore(core)
+#endif
+        {}
     PioneerQwen35RolePrestackProbe(const PioneerQwen35RolePrestackProbe&)=delete;
     PioneerQwen35RolePrestackProbe& operator=(const PioneerQwen35RolePrestackProbe&)=delete;
     bool Attempted() const { return fState.attempted; }
@@ -371,44 +508,15 @@ public:
         const unsigned readerLimit=restoresLocal?DataflowRoleReaderCodeLimit:DataflowRoleReaderShimLimit;
         const unsigned writerFirst=restoresLocal?DataflowRoleWriterCodeAddress:DataflowRoleWriterShimAddress;
         const unsigned writerLimit=restoresLocal?DataflowRoleWriterCodeLimit:DataflowRoleWriterShimLimit;
-        if (fState.attempted || !polls || polls>65536
+        if (fState.attempted || fCore>=DataflowBarrierWorkers || !polls || polls>65536
             || (readerPark&3) || readerPark<readerFirst || readerPark>=readerLimit
             || (writerPark&3) || writerPark<writerFirst || writerPark>=writerLimit)
             return false;
-        fState.attempted=true;
-        uint32_t first=0,second=0;
-        if (!fScope.BeginPrestack(fIO) || !fAdapter.AllRolesHeld(Core) || !fAdapter.DefaultBootRouting(Core)
-            || !ReadHandoff(Held,fState.handoff) || !Select(Held)
-            || !fViews.Read(Core,DataflowRolePhysicalControl,0x224,first,fGuard)
-            || !fViews.Read(Core,DataflowRolePhysicalControl,0x224,second,fGuard) || first!=second) return false;
-        fState.resetDisable=first;fState.captured=true;Progress(1);
-#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
-        if (serviceProbe && !InitializeMailbox()) return false;
-#endif
+        if (!PrepareCapturedStart(polls,serviceProbe
 #ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
-        if (faultProbe && !PrepareFaultWords()) return false;
+                ,faultProbe
 #endif
-        for (unsigned i=0;i<3;i++) {
-            fState.handoffZeroAttempts|=1U<<i;
-            if (!WriteHandoff(Held,i,0)) return false;
-        }
-        const uint32_t preserved=fState.resetDisable|DataflowRolePreserveResetMask;
-        fState.preserveAttempted=true;
-        if (!fViews.WriteResetDisable(Core,fState.resetDisable,preserved,fGuard) || !ResetDisable(preserved)
-            || !Select(Held)) return false;
-        fState.releaseAttempted=true;
-        Progress(2);
-        if (!fIO.SharedRolePrestackReleaseReset() || !Select(Running)) return false;
-        bool ready=false;
-        for (unsigned n=0;n<polls;n++) {
-            uint32_t handoff[3]{};
-            if (ReadHandoff(Running,handoff) && handoff[0]==DataflowRoleSnapshotReaderReady
-                && handoff[1]==DataflowRoleSnapshotWriterReady && !handoff[2]) { ready=true;break; }
-            fIO.Pause();
-        }
-        if (!ready) return false;
-        Progress(3);
-        if (!CaptureRunningCopies()) return false;
+                )) return false;
         fState.cancelAttempted=true;
 #ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
         if (serviceProbe) {
@@ -420,53 +528,55 @@ public:
         } else
 #endif
         if (!WriteHandoff(Running,2,DataflowRoleSnapshotCancel)) return false;
-        bool parked=false;
-        for (unsigned n=0;n<polls;n++) {
-            uint32_t handoff[3]{};
-            const uint32_t readerDone=restoresLocal?uint32_t(PIONEER_Q35_ROLE_RESTORE_READER_DONE)
-                :uint32_t(DataflowRoleSnapshotReaderCancelled);
-            const uint32_t writerDone=restoresLocal?uint32_t(PIONEER_Q35_ROLE_RESTORE_WRITER_DONE)
-                :uint32_t(DataflowRoleSnapshotWriterCancelled);
-            if (ReadHandoff(Running,handoff) && handoff[0]==readerDone
-                && handoff[1]==writerDone && handoff[2]==(serviceProbe?DataflowRoleSnapshotRelease:DataflowRoleSnapshotCancel)) {
-                const uint32_t r1=fIO.SharedRolePcRead(DataflowRoleReader),w1=fIO.SharedRolePcRead(DataflowRoleWriter);
-                fIO.Pause();
-                const uint32_t r2=fIO.SharedRolePcRead(DataflowRoleReader),w2=fIO.SharedRolePcRead(DataflowRoleWriter);
-                if (r1==readerPark && r2==readerPark && w1==writerPark && w2==writerPark
-                    && Select(Running)) { parked=true;break; }
-            }
-            fIO.Pause();
-        }
-        if (!parked || !Select(Running)) return false;
-        Progress(4);
-        fState.holdAttempted=true;
-        if (!fIO.SharedRoleHoldReset()) return false;
-        Progress(41);
-        if (!Select(Held)) return false;
-        Progress(42);
-        if (!fScope.MarkPrestackHeldAfterCancel(fIO)) return false;
-        Progress(43);
-        if (!ResetDisable(preserved)) return false;
-        Progress(44);
-        if (!CompareHeldCopies()) return false;
-        fState.copiesVerified=true;Progress(5);
+        return FinishAfterCancel(readerPark,writerPark,polls,restoresLocal,serviceProbe
 #ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
-        if (faultProbe && !RestoreFaultWords()) return false;
+            ,faultProbe
 #endif
-#ifdef PIONEER_QWEN35_ROLE_SERVICE_QUALIFY
-        if (serviceProbe && !RestoreMailbox()) return false;
-#endif
-        for (unsigned i=0;i<3;i++) {
-            fState.handoffRestoreAttempts|=1U<<i;
-            if (!WriteHandoff(Held,i,fState.handoff[i])) return false;
-        }
-        fState.resetRestoreAttempted=true;
-        if (!fViews.WriteResetDisable(Core,preserved,fState.resetDisable,fGuard)
-            || !ResetDisable(fState.resetDisable)) return false;
-        uint32_t restored[3]{};
-        if (!ReadHandoff(Held,restored) || memcmp(restored,fState.handoff,sizeof(restored))) return false;
-        fState.complete=true;Progress(6);return true;
+            );
     }
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+    // Start once, retain the captured state while other workers start, and
+    // stop separately after the owner has audited the complete fleet.
+    bool StartFleetService(unsigned polls) {
+        return PrepareCapturedStart(polls,true
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+            ,false
+#endif
+            ) && StartIdleService(polls);
+    }
+    bool AuditFleetService() {
+        using namespace PioneerQwen35;
+        if (!fState.serviceStarted || fState.serviceStopAttempted || fState.serviceStopped
+            || fState.cancelAttempted || !Select(Running)) return false;
+        DataflowRoleMailbox first{},second{};
+        if (!ReadMailbox(Running,first) || !DataflowRoleMailboxStartupReady(first)) return false;
+        const uint32_t r1=fIO.SharedRolePcRead(DataflowRoleReader),w1=fIO.SharedRolePcRead(DataflowRoleWriter);
+        fIO.Pause();
+        const uint32_t r2=fIO.SharedRolePcRead(DataflowRoleReader),w2=fIO.SharedRolePcRead(DataflowRoleWriter);
+        return r1>=DataflowRoleReaderCodeAddress && r1<DataflowRoleReaderCodeLimit
+            && r2>=DataflowRoleReaderCodeAddress && r2<DataflowRoleReaderCodeLimit
+            && w1>=DataflowRoleWriterCodeAddress && w1<DataflowRoleWriterCodeLimit
+            && w2>=DataflowRoleWriterCodeAddress && w2<DataflowRoleWriterCodeLimit
+            && ReadMailbox(Running,second) && !memcmp(&first,&second,sizeof(first)) && Select(Running);
+    }
+    bool StopFleetService(uint32_t readerPark,uint32_t writerPark,unsigned polls) {
+        using namespace PioneerQwen35;
+        if (!fState.serviceStarted || fState.cancelAttempted || !polls || polls>65536
+            || (readerPark&3) || readerPark<DataflowRoleReaderCodeAddress || readerPark>=DataflowRoleReaderCodeLimit
+            || (writerPark&3) || writerPark<DataflowRoleWriterCodeAddress || writerPark>=DataflowRoleWriterCodeLimit)
+            return false;
+        fState.cancelAttempted=true;
+        return StopIdleService(polls
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+            ,false
+#endif
+            ) && FinishAfterCancel(readerPark,writerPark,polls,true,true
+#ifdef PIONEER_QWEN35_ROLE_FAULT_QUALIFY
+            ,false
+#endif
+            );
+    }
+#endif
     // Called after the containing owner restores the entire saved image fleet.
     bool VerifyAfterImages() {
         uint32_t restored[3]{};
@@ -483,7 +593,7 @@ public:
 #endif
             && ReadHandoff(Held,restored)
             && !memcmp(restored,fState.handoff,sizeof(restored)) && ResetDisable(fState.resetDisable)
-            && fAdapter.AllRolesHeld(Core);
+            && fAdapter.AllRolesHeld(fCore);
         if (okay) Progress(7);
         return okay;
     }

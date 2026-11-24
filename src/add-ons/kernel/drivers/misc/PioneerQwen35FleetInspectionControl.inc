@@ -19,7 +19,22 @@ class PioneerQ35FleetInspectionScope {
 #ifdef PIONEER_QWEN35_ROLE_STAGE_QUALIFY
     bool fStageObserved=false,fStageWritable=false;
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
+#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+    uint32_t fPrestackObserved[4]{},fPrestackHeldAfterCancel[4]{};
+    static bool PrestackBit(const uint32_t (&bits)[4],unsigned core) {
+        return core<PioneerQwen35::DataflowBarrierWorkers && (bits[core/32]&(1U<<(core%32)));
+    }
+    bool PrestackObserved(unsigned core) const { return PrestackBit(fPrestackObserved,core); }
+    bool PrestackHeld(unsigned core) const { return PrestackBit(fPrestackHeldAfterCancel,core); }
+    void RecordPrestackObserved(unsigned core) { fPrestackObserved[core/32]|=1U<<(core%32); }
+    void RecordPrestackHeld(unsigned core) { fPrestackHeldAfterCancel[core/32]|=1U<<(core%32); }
+#else
     bool fPrestackObserved=false,fPrestackHeldAfterCancel=false;
+    bool PrestackObserved(unsigned core) const { return core==0 && fPrestackObserved; }
+    bool PrestackHeld(unsigned core) const { return core==0 && fPrestackHeldAfterCancel; }
+    void RecordPrestackObserved(unsigned) { fPrestackObserved=true; }
+    void RecordPrestackHeld(unsigned) { fPrestackHeldAfterCancel=true; }
+#endif
 #endif
 #endif
 public:
@@ -87,7 +102,7 @@ public:
     bool ProveRoleMemoryReadSafe(PioneerSessionIO& io,unsigned core,unsigned which) const {
         return (which<=PioneerQwen35::DataflowRolePhysicalExtraCode
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
-                || (fPrestackHeldAfterCancel && core==0
+                || (PrestackHeld(core)
                     && which<=PioneerQwen35::DataflowRolePhysicalNcriscRam)
 #endif
             )
@@ -104,7 +119,7 @@ public:
     }
     bool ProveRoleControlWriteSafe(PioneerSessionIO& io,unsigned core,uint32_t expected,uint32_t desired) const {
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
-        return fPrestackObserved && fStageWritable && core==0
+        return PrestackObserved(core) && fStageWritable
             && !((expected^desired)&~uint32_t(PioneerQwen35::DataflowRolePreserveResetMask))
             && ProveRoleMemoryReadSafe(io,core,PioneerQwen35::DataflowRolePhysicalExtraCode);
 #else
@@ -114,16 +129,21 @@ public:
 #ifdef PIONEER_QWEN35_ROLE_PRESTACK_QUALIFY
     // This is a restricted observation-based qualification, not proof of
     // firmware exclusion. Its owner retains all snapshots on any uncertainty.
-    bool BeginPrestack(PioneerSessionIO& io) {
-        if (fPrestackObserved || !fStageWritable || !ProveRoleDedicatedObservedStage(io)) return false;
-        fPrestackObserved=true;return true;
+    bool BeginPrestack(PioneerSessionIO& io,unsigned core) {
+        if (core>=PioneerQwen35::DataflowBarrierWorkers || PrestackObserved(core)
+#ifndef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+            || core!=0
+#endif
+            || !fStageWritable || !ProveRoleDedicatedObservedStage(io)) return false;
+        RecordPrestackObserved(core);return true;
     }
-    bool PrestackAdmission(PioneerSessionIO& io) const {
-        return fPrestackObserved && ProveRoleDedicatedObservedStage(io);
+    bool PrestackAdmission(PioneerSessionIO& io,unsigned core) const {
+        return PrestackObserved(core) && ProveRoleDedicatedObservedStage(io);
     }
-    bool MarkPrestackHeldAfterCancel(PioneerSessionIO& io) {
-        if (fPrestackHeldAfterCancel || !PrestackAdmission(io)) return false;
-        fPrestackHeldAfterCancel=true;return true;
+    bool MarkPrestackHeldAfterCancel(PioneerSessionIO& io,unsigned core) {
+        if (core>=PioneerQwen35::DataflowBarrierWorkers || PrestackHeld(core)
+            || !PrestackAdmission(io,core)) return false;
+        RecordPrestackHeld(core);return true;
     }
 #endif
     bool ProveRoleImageInspectionAllowed(PioneerSessionIO& io,unsigned core) const {

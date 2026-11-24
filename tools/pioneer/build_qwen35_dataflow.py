@@ -23,6 +23,16 @@ SPAN_QUALIFICATION_TAG = '2026112300030017'
 MODEL_PRELOAD_QUALIFICATION_TAG = '2026112300030018'
 
 
+def verify_qualification_excludes_projection_witness(build, driver):
+    nm = build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-nm'
+    symbols = subprocess.check_output([nm, '-C', driver], text=True)
+    for name in ('PioneerQ35ProjectionScratchCompileWitness(',
+                 'PioneerQ35ProjectionScratchHaikuScopeCompileWitness('):
+        if name in symbols:
+            raise RuntimeError('loadable qualification contains compile-only projection witness: ' + name)
+    print('qualification excludes non-loadable projection scratch witnesses')
+
+
 def verify_snapshot_witness_refuses_load(build, driver):
     objdump = build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-objdump'
     for symbol in ('init_hardware', 'init_driver'):
@@ -565,6 +575,8 @@ def main():
         driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL'] = '1'
     subprocess.run(['sh', HERE / 'build_qwen38_banks_driver.sh', build, driver],
                    check=True, env=driver_env)
+    if args.build_recovery_qualification:
+        verify_qualification_excludes_projection_witness(build, driver / 'tenstorrent_pci_probe-driver60')
     verify_kernel_stack_budget(driver, args.build_recovery_qualification,
                                args.build_firmware_recovery_qualification or
                                (args.compile_recovery_prototype and not args.compile_device_dispatch_prototype),
