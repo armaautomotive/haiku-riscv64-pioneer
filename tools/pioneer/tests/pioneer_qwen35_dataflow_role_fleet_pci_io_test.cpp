@@ -527,6 +527,44 @@ int main()
         context.io.dropStackCancelWrite=false;
         uncertain.release=DataflowRoleSnapshotCancel; // delayed write, observed only
         assert(!io.RequestStackCancel(17,cancelAttempted) && context.io.stackCancelWrites==2);
+
+        // A partially started tile can finish the shim copy during cleanup.
+        // Wait for its missing receipt without sending an early cancel.
+        auto& delayed=context.io.roleHandoffs[18];
+        delayed={DataflowRoleSnapshotReaderReady,0,0};
+        context.io.handoffReads=0;cancelAttempted=false;
+        assert(!io.WaitAndRequestStackCancel(18,cancelAttempted,false,0)
+            && !io.WaitAndRequestStackCancel(18,cancelAttempted,false,65537));
+        scope.stackCancel=false;
+        assert(!io.WaitAndRequestStackCancel(18,cancelAttempted,false,3)
+            && !cancelAttempted && context.io.stackCancelWrites==2);
+        scope.stackCancel=true;
+        assert(!io.WaitAndRequestStackCancel(18,cancelAttempted,false,2)
+            && !cancelAttempted && context.io.stackCancelWrites==2);
+        context.io.handoffReads=0;
+        context.io.pauseHook=[](PioneerSessionIO* p) {
+            if (p->handoffReads>=2) p->roleHandoffs[18].writerReady=DataflowRoleSnapshotWriterReady;
+        };
+        assert(io.WaitAndRequestStackCancel(18,cancelAttempted,false,3)
+            && cancelAttempted && context.io.stackCancelWrites==3);
+        context.io.pauseHook=nullptr;
+        assert(!io.WaitAndRequestStackCancel(18,cancelAttempted,false,3)
+            && context.io.stackCancelWrites==3);
+
+        auto& bad=context.io.roleHandoffs[19];
+        bad={DataflowRoleSnapshotReaderReady,0xdead,0};cancelAttempted=false;
+        assert(!io.WaitAndRequestStackCancel(19,cancelAttempted,false,3)
+            && !cancelAttempted && context.io.stackCancelWrites==3);
+        bad.writerReady=DataflowRoleSnapshotWriterReady;
+        scope.stackReleaseDrained=false;
+        assert(!io.WaitAndRequestStackCancel(19,cancelAttempted,true,3)
+            && !cancelAttempted && context.io.stackCancelWrites==3);
+        scope.stackReleaseDrained=true;context.io.dropStackCancelWrite=true;
+        assert(!io.WaitAndRequestStackCancel(19,cancelAttempted,true,3)
+            && cancelAttempted && context.io.stackCancelWrites==4);
+        context.io.dropStackCancelWrite=false;
+        assert(!io.WaitAndRequestStackCancel(19,cancelAttempted,true,3)
+            && context.io.stackCancelWrites==4);
     }
     auto initRoleBox=[&](unsigned core) {
         auto& box=context.io.roleBoxes[core];

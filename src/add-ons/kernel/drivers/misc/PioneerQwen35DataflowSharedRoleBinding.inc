@@ -464,7 +464,7 @@ public:
                     if (fStackReleaseAttempted[i] && !fStackReleaseDrainedAbsent[i])
                         { stage=16;core=i;return false; }
                     if (!fStackCancelAttempted[i]
-                        && !io.RequestStackCancel(i,fStackCancelAttempted[i],fStackReleaseAttempted[i]))
+                        && !io.WaitAndRequestStackCancel(i,fStackCancelAttempted[i],fStackReleaseAttempted[i],65536))
                         { stage=16;core=i;return false; }
                     continue;
                 }

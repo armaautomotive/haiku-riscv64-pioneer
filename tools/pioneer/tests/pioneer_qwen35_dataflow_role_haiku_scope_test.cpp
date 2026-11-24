@@ -91,6 +91,7 @@ struct PioneerSessionIO {
     DataflowRoleMailbox roleBoxes[DataflowBarrierWorkers]{};
     DataflowRoleSnapshotHandoff roleHandoffs[DataflowBarrierWorkers]{};
     unsigned handoffReads=0,handoffChangeAt=UINT32_MAX;
+    void (*pauseHook)(PioneerSessionIO*)=nullptr;
     DataflowWorkerMailbox workerBoxes[DataflowBarrierWorkers]{};
     DataflowQueueControl queueBoxes[DataflowBarrierWorkers][DataflowCircularBufferCount]{};
     unsigned roleStopWrites=0; bool dropRoleStopWrite=false;
@@ -427,7 +428,7 @@ struct PioneerSessionIO {
         if (at>=0x240 && at<0x2c0 && !(at&3)) return nocOutstanding[noc][(at-0x240)/4];
         assert(false); return UINT32_MAX;
     }
-    void Pause() {}
+    void Pause() { if (pauseHook) pauseHook(this); }
 };
 struct PioneerResidentBanks { static constexpr uint64 Total=123456; };
 #ifdef TEST_FLEET_INSPECTION_CONTROL

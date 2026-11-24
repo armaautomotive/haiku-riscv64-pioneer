@@ -313,6 +313,33 @@ public:
         return fGuard.ProveSelectedRoute(core) && fIO.Q38PanelRead(address)==DataflowRoleSnapshotCancel
             && fGuard.ProveSelectedRoute(core);
     }
+    // A partial fleet start can reach cleanup while a shim is still copying
+    // its private RAM. Wait only while both handoff fields have their initial
+    // or ready values and the same scope and route remain valid. Once both
+    // are ready, RequestStackCancel consumes the sole write attempt. A lost
+    // write receipt is returned to the caller and is never reissued here.
+    bool WaitAndRequestStackCancel(unsigned core,bool& attempted,bool releaseWasAttempted,unsigned polls) {
+        using namespace PioneerQwen35;
+        if (attempted || core>=DataflowBarrierWorkers || !polls || polls>65536) return false;
+        for (unsigned n=0;n<polls;n++) {
+            if (!fScope.ProveExclusiveRewrite(fIO)
+                || (releaseWasAttempted && !fScope.ProveRoleStackReleaseWriteDrained(fIO,core))
+                || !fScope.ProveRoleStackCancelSafe(fIO,core) || !SelectForStop(core)) return false;
+            DataflowRoleSnapshotHandoff handoff{};
+            if (!ReadStableStackHandoff(core,handoff) || handoff.release
+                || (handoff.readerReady && handoff.readerReady!=DataflowRoleSnapshotReaderReady)
+                || (handoff.writerReady && handoff.writerReady!=DataflowRoleSnapshotWriterReady)
+                || !fScope.ProveRoleStackCancelSafe(fIO,core)
+                || (releaseWasAttempted && !fScope.ProveRoleStackReleaseWriteDrained(fIO,core))
+                || !fGuard.ProveSelectedRoute(core) || fIO.ResetRead()!=0x6000
+                || fIO.ResetRead()!=0x6000) return false;
+            if (handoff.readerReady==DataflowRoleSnapshotReaderReady
+                && handoff.writerReady==DataflowRoleSnapshotWriterReady)
+                return RequestStackCancel(core,attempted,releaseWasAttempted);
+            fIO.Pause();
+        }
+        return false;
+    }
     // The cancellation receipts are from the stackless shims, not normal
     // role stop receipts. Speculative PC samples are supplemental only: the
     // independent scope proof must exclude writers and in-flight traffic.
