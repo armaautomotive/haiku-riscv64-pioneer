@@ -10,7 +10,7 @@ struct ResetScope {
     const PioneerResidentBanks* oldBanks=nullptr;PioneerResidentBanks* newBanks=nullptr;
     const uint32_t* snapshot=nullptr;
     const tt_compute_noc_result* noc=nullptr;const tt_host_page_result* host=nullptr;PioneerResidentLease* lease=nullptr;
-    bool allowed=true,retained=false,complete=true,quarantineAtComplete=false;
+    bool allowed=true,retained=false,complete=true,quarantineAtComplete=false,changeRouteAtComplete=false;
     unsigned calls=0,failAt=UINT32_MAX,quarantineAt=UINT32_MAX,changeRouteAt=UINT32_MAX,doorbellsAtRouteChange=0;
     tt_dram_samples_result* oldDram=nullptr;
     template<class IO> bool RecoveryAdmissionAllowed(PioneerQ35ProjectionScratch& scratch,IO&,
@@ -37,6 +37,7 @@ struct ResetScope {
         const PioneerResidentBanks& oldOwner,PioneerResidentBanks& newOwner,const tt_compute_noc_result& actualNoc,
         const tt_host_page_result& actualHost,PioneerResidentLease& actualLease,uint64_t ticket,const uint32_t* saved) {
         if (quarantineAtComplete) newOwner.Quarantine();
+        if (changeRouteAtComplete) { assert(oldDram);oldDram->source[0]^=1; }
         return complete && allowed && &scratch==owner && &oldOwner==oldBanks && &newOwner==newBanks
             && &actualNoc==noc && &actualHost==host && &actualLease==lease && ticket==expectedTicket && saved==snapshot;
     }
@@ -55,7 +56,7 @@ static bool Restore(PioneerQ35ProjectionResetRecovery& recovery,PioneerQ35Projec
 int main() {
     (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;
     constexpr uint64_t ticket=37;
-    for (unsigned scenario=0;scenario<8;scenario++) {
+    for (unsigned scenario=0;scenario<9;scenario++) {
         auto scratch=std::make_unique<PioneerQ35ProjectionScratch>();
         auto oldDevice=std::make_unique<ScratchDevice<>>();
         auto fresh=std::make_unique<ScratchDevice<>>();
@@ -114,6 +115,7 @@ int main() {
         if (scenario==5) scope.quarantineAt=4;
         if (scenario==6) scope.quarantineAtComplete=true;
         if (scenario==7) scope.changeRouteAt=4;
+        if (scenario==8) scope.changeRouteAtComplete=true;
         const bool okay=Restore(*recovery,*scratch,ticket,proof,*oldDevice,*fresh,scope);
         if (!scenario) {
             assert(okay && !scope.retained && fresh->banks.Q35StreamClaimed()
