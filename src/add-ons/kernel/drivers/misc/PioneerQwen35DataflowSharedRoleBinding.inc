@@ -19,6 +19,15 @@
 #include "../../../../../tools/pioneer/PioneerQwen35ExclusiveRoleFleet.h"
 #include "../../../../../tools/pioneer/PioneerQwen35ExclusiveRoleStop.h"
 #endif
+#if defined(PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS) && defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)
+#define Q35_SERVICE_TEXT_WORDS (fContext.DataflowSelectedServiceImage().textWordCount)
+#define Q35_SERVICE_DISPATCH_WORDS (fContext.DataflowSelectedServiceImage().dispatchWordCount)
+#define Q35_SERVICE_STOPPED_PARK (fContext.DataflowSelectedServicePark())
+#else
+#define Q35_SERVICE_TEXT_WORDS (sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t))
+#define Q35_SERVICE_DISPATCH_WORDS (sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t))
+#define Q35_SERVICE_STOPPED_PARK (PioneerQwen35::DataflowServiceStoppedParkAddress)
+#endif
 class PioneerQwen35SharedRoleBinding {
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_TEST
     friend struct PioneerQ35SharedRoleBindingTestAccess;
@@ -803,14 +812,14 @@ public:
         // The real runtime proof remains a separate, currently denied check.
         if (fRuntimeObservationCore!=PioneerQwen35::DataflowBarrierWorkers
             || !io.InspectSnapshotRunningReady(core,snapshot,
-                sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
-                sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t))
+                Q35_SERVICE_TEXT_WORDS,
+                Q35_SERVICE_DISPATCH_WORDS)
             || !io.InspectSnapshotRunningRolePcs(core,RoleBounds())) return false;
         fRuntimeObservationCore=core;
 #endif
         const bool ready=io.RunningReady(core,snapshot,
-            sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
-            sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t))
+            Q35_SERVICE_TEXT_WORDS,
+            Q35_SERVICE_DISPATCH_WORDS)
             && io.RunningRolePcs(core,RoleBounds(),false);
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
         fRuntimeObservationCore=PioneerQwen35::DataflowBarrierWorkers;
@@ -827,8 +836,8 @@ public:
 #endif
             || !fReleaseAuthorized || !fViews.Opened()) return false;
         Adapter io(fContext.io,*scope,fViews);
-        const unsigned textWords=sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t);
-        const unsigned dispatchWords=sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t);
+        const unsigned textWords=Q35_SERVICE_TEXT_WORDS;
+        const unsigned dispatchWords=Q35_SERVICE_DISPATCH_WORDS;
         const bool fault=scope->RetainedFaultAuditActive(fContext.io);
         return (fault?io.FaultRuntimeStable(core,textWords,dispatchWords)
             :io.RuntimeStable(core,textWords,dispatchWords)) && io.RunningRolePcs(core,RoleBounds(),fault);
@@ -842,8 +851,14 @@ public:
 #endif
             || !fReleaseAuthorized || !fViews.Opened() || !scope->RetainedFaultAuditActive(fContext.io)) return false;
         Adapter io(fContext.io,*scope,fViews);
-        return io.FaultSettled(core,snapshot,sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
+        return io.FaultSettled(core,snapshot,
+#if defined(PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS) && defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)
+            fContext.DataflowSelectedServiceImage().textWordCount,
+            fContext.DataflowSelectedServiceImage().dispatchWordCount)
+#else
+            sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t),
             sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t))
+#endif
             && io.InspectRunningRoleImages(core,RoleImage())
             && io.RunningRolePcs(core,RoleBounds(),true);
     }
@@ -865,12 +880,12 @@ public:
         const unsigned acknowledgement=DataflowWorkerMailboxAddress+offsetof(DataflowWorkerMailbox,acknowledgedSequence);
         if (scope->RetainedFaultAuditActive(fContext.io))
             return address==acknowledgement && bytes==sizeof(uint32_t)
-                && io.FaultCompletedForAcknowledgement(core,sizeof(DataflowServiceTextWords)/sizeof(uint32_t),
-                    sizeof(DataflowServiceDispatchWords)/sizeof(uint32_t))
+                && io.FaultCompletedForAcknowledgement(core,Q35_SERVICE_TEXT_WORDS,
+                    Q35_SERVICE_DISPATCH_WORDS)
                 && io.RunningRolePcs(core,RoleBounds(),true);
         if (address==acknowledgement && bytes==sizeof(uint32_t))
-            return io.CompletedForAcknowledgement(core,sizeof(DataflowServiceTextWords)/sizeof(uint32_t),
-                sizeof(DataflowServiceDispatchWords)/sizeof(uint32_t))
+            return io.CompletedForAcknowledgement(core,Q35_SERVICE_TEXT_WORDS,
+                Q35_SERVICE_DISPATCH_WORDS)
                 && io.RunningRolePcs(core,RoleBounds(),false);
         DataflowWorkerSnapshot snapshot{};
         return fContext.io.ReadWorkerSnapshot(core,snapshot) && CoreReady(core,snapshot);
@@ -891,7 +906,7 @@ public:
         return fTakeoverStop.StopAndHold(fReleaseAttempted,fReleaseConfirmed,
             PioneerQwen35::DataflowExclusiveReaderParkAddress,
             PioneerQwen35::DataflowExclusiveWriterParkAddress,
-            PioneerQwen35::DataflowServiceStoppedParkAddress,65536,io,stage,core);
+            Q35_SERVICE_STOPPED_PARK,65536,io,stage,core);
 #else
         // The old stop path understands T0 alone. For released tiles publish
         // or observe one role stop request first; the real scope still denies
@@ -976,7 +991,7 @@ public:
                 if (fHoldAttempted[i]) { if (!io.HoldObserved(i)) { stage=11;core=i;return false; } continue; }
                 bool parked=false;
                 for (unsigned poll=0;poll<65536;poll++) {
-                    if (io.ComputeStoppedAndParked(i,PioneerQwen35::DataflowServiceStoppedParkAddress))
+                    if (io.ComputeStoppedAndParked(i,Q35_SERVICE_STOPPED_PARK))
                         { parked=true;break; }
                     fContext.io.Pause();
                 }
@@ -1407,3 +1422,6 @@ bool PioneerSessionIO::SharedFinalizeBeforeResume() {
     return qwen35DataflowContext && qwen35DataflowContext->qwen35SharedRoleBinding
         && qwen35DataflowContext->qwen35SharedRoleBinding->FinalizeBeforeResume();
 }
+#undef Q35_SERVICE_TEXT_WORDS
+#undef Q35_SERVICE_DISPATCH_WORDS
+#undef Q35_SERVICE_STOPPED_PARK

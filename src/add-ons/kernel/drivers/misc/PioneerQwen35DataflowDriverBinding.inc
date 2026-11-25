@@ -73,10 +73,16 @@ PioneerQwen35DataflowQueuesDrained(PioneerSessionIO& io,unsigned core)
 static bool
 PioneerQwen35DataflowServicePc(PioneerSessionIO& io)
 {
+#if defined(PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS) && defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)
+	if (!io.qwen35DataflowContext) return false;
+	const auto image=io.qwen35DataflowContext->DataflowSelectedServiceImage();
+	const unsigned primary=image.textWordCount,dispatch=image.dispatchWordCount;
+#else
 	const unsigned primary=sizeof(PioneerQwen35::DataflowServiceTextWords)/sizeof(uint32_t);
 	unsigned dispatch=0;
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 	dispatch=sizeof(PioneerQwen35::DataflowServiceDispatchWords)/sizeof(uint32_t);
+#endif
 #endif
 	io.Pause();
 	const uint32_t first=io.RuntimePcRead();
@@ -131,6 +137,22 @@ PioneerSessionIO::DataflowInvalidateServiceImage(unsigned core)
 bool
 PioneerSessionIO::DataflowCoreServiceImageMatches(unsigned core)
 {
+#if defined(PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS) && defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)
+	if (!qwen35DataflowContext || core>=PioneerQwen35::DataflowCoreCount) return false;
+	// A failed fresh comparison must invalidate any earlier cached match.
+	qwen35DataflowContext->qwen35DataflowImageVerified[core]=false;
+	const auto image=qwen35DataflowContext->DataflowSelectedServiceImage();
+	if (!image.Valid()
+		|| !SelectRuntimeCore(core) || !MapQ38Panel()
+		|| !DataflowPanelMappingStable() || RuntimeCodeRead(0)!=image.bootWord)
+		return false;
+	for (unsigned i=0;i<image.textWordCount;i++)
+		if (Q38PanelRead(PioneerQwen35::DataflowServiceEntryAddress+i*4)!=image.textWords[i])
+			return false;
+	for (unsigned i=0;i<image.dispatchWordCount;i++)
+		if (Q38PanelRead(PioneerQwen35::DataflowServiceDispatchAddress+i*4)!=image.dispatchWords[i])
+			return false;
+#else
 	if (core>=PioneerQwen35::DataflowCoreCount
 		|| !SelectRuntimeCore(core) || !MapQ38Panel()
 		|| !DataflowPanelMappingStable()
@@ -150,6 +172,7 @@ PioneerSessionIO::DataflowCoreServiceImageMatches(unsigned core)
 			return false;
 	}
 #endif
+#endif
 	qwen35DataflowContext->qwen35DataflowImageVerified[core]=true;
 	return true;
 }
@@ -161,7 +184,11 @@ PioneerSessionIODataflowServiceImageTrusted(PioneerSessionIO& io,unsigned core)
 	return context && core<PioneerQwen35::DataflowCoreCount
 		&& io.SelectRuntimeCore(core) && io.MapQ38Panel()
 		&& io.DataflowPanelMappingStable()
+#if defined(PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS) && defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)
+		&& io.RuntimeCodeRead(0)==context->DataflowSelectedServiceImage().bootWord
+#else
 		&& io.RuntimeCodeRead(0)==PioneerQwen35::DataflowServiceImageBootWord
+#endif
 		&& (context->qwen35DataflowImageVerified[core]
 			|| io.DataflowCoreServiceImageMatches(core));
 }

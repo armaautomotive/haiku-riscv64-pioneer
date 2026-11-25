@@ -282,6 +282,9 @@
 #endif
 #include "PioneerQwen35DataflowPciMemory.h"
 #include "PioneerQwen35DataflowServiceImage.h"
+#if defined(PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS) && defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)
+#include "PioneerQwen35QualificationServiceImage.h"
+#endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 #include "PioneerQwen35SharedRoleImages.h"
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
@@ -4290,6 +4293,35 @@ struct PioneerStoreContext {
 	unsigned qwen35DataflowLocalRoute[PioneerQwen35::DataflowCoreCount]={};
 	bool qwen35DataflowLocalRouteValid[PioneerQwen35::DataflowCoreCount]={};
 	bool qwen35DataflowImageVerified[PioneerQwen35::DataflowCoreCount]={};
+#if defined(PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS) && defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)
+// PIONEER_Q35_SELECTED_SERVICE_IMAGE_BEGIN
+	// Chosen only at installation, before a service or role binding exists.
+	// The matching and parked-PC audits must use exactly this same image.
+	bool qwen35QualificationServiceImage=false;
+	PioneerQwen35::DataflowServiceImageView DataflowSelectedServiceImage() const {
+		using namespace PioneerQwen35;
+		if (qwen35QualificationServiceImage)
+			return {DataflowQualificationServiceBootWord,DataflowQualificationServiceTextWords,
+				unsigned(sizeof(DataflowQualificationServiceTextWords)/sizeof(uint32_t)),
+				DataflowQualificationServiceDispatchWords,
+				unsigned(sizeof(DataflowQualificationServiceDispatchWords)/sizeof(uint32_t))};
+		return {DataflowServiceImageBootWord,DataflowServiceTextWords,
+			unsigned(sizeof(DataflowServiceTextWords)/sizeof(uint32_t)),DataflowServiceDispatchWords,
+			unsigned(sizeof(DataflowServiceDispatchWords)/sizeof(uint32_t))};
+	}
+	unsigned DataflowSelectedServicePark() const {
+		return qwen35QualificationServiceImage?PioneerQwen35::DataflowQualificationServiceStoppedParkAddress
+			:PioneerQwen35::DataflowServiceStoppedParkAddress;
+	}
+	bool SelectDataflowServiceImage(bool fixedQualification) {
+		if (qwen35DataflowMemory || qwen35DataflowService || qwen35SharedRoleBinding)
+			return false;
+		qwen35QualificationServiceImage=fixedQualification;
+		for (bool& verified:qwen35DataflowImageVerified) verified=false;
+		return true;
+	}
+// PIONEER_Q35_SELECTED_SERVICE_IMAGE_END
+#endif
 	bool qwen35DataflowRoutesAudited=false;
 	unsigned qwen35DataflowLastResult=PioneerQwen35::DataflowServiceInvalidState;
 #endif
@@ -4835,6 +4867,10 @@ private:
 #endif
 			|| !qwen35DataflowRoutesAudited)
 			return PioneerQwen35::DataflowServiceInvalidState;
+#if defined(PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS) && defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)
+		if (!SelectDataflowServiceImage(fixedQualification))
+			return PioneerQwen35::DataflowServiceInvalidState;
+#endif
 		qwen35DataflowMemory=new(std::nothrow) PioneerQwen35DataflowPciMemory<PioneerSessionIO>(io);
 		qwen35DataflowService=new(std::nothrow) PioneerQwen35::DataflowServiceOwner;
 		if (!qwen35DataflowMemory || !qwen35DataflowService) {
@@ -4867,6 +4903,9 @@ private:
 #endif
 // PIONEER_Q35_AUTO_RESTORE_SELECT_END
 #endif
+#if defined(PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS) && defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)
+		const auto image=DataflowSelectedServiceImage();
+#else
 		const PioneerQwen35::DataflowServiceImageView image={
 			PioneerQwen35::DataflowServiceImageBootWord,
 			PioneerQwen35::DataflowServiceTextWords,
@@ -4878,6 +4917,7 @@ private:
 				/sizeof(PioneerQwen35::DataflowServiceDispatchWords[0]))
 #endif
 		};
+#endif
 // PIONEER_Q35_INSTALL_ROUTE_BEGIN
 #ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
 		// The one-shot qualification owns a service but deliberately has no

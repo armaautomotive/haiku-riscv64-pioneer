@@ -892,6 +892,9 @@ if [ "$variant" = 60 ]; then
 		resident_image="$output/qwen35-resident-service-image"
 		sh "$project/tools/pioneer/build_qwen35_resident_service_witness.sh" "$build" "$dataflow_image" "$resident_image"
 		python3 -B "$project/tools/pioneer/build_qwen35_resident_service_header.py" "$resident_image" "$resident_image/PioneerQwen35DataflowServiceImage.h"
+		if [ "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1 ]; then
+			python3 -B "$project/tools/pioneer/build_qwen35_qualification_service_header.py" "$dataflow_image" "$resident_image/PioneerQwen35QualificationServiceImage.h"
+		fi
 		set -- "$@" -I"$resident_image"
 	fi
 	set -- "$@" -I"$dataflow_image"
