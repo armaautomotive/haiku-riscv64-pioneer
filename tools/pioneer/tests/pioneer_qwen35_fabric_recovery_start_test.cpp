@@ -64,6 +64,9 @@ struct PioneerQ35FabricHostScope {
             && sQwen35ExclusiveCookie==inspector && guard->validate(ticket)==B_OK;
     }
 };
+template<class IO,class Check> static bool PioneerPreResetDisableMasterGuarded(IO&,Check& check) {
+    return check() && failAt!=4;
+}
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricRecoveryStart.inc"
 struct Fixture {
     PioneerStoreContext context;PioneerProbeCookie cookie;pioneer_driver_recovery_guard_v2_info guard;
@@ -89,6 +92,13 @@ int main() {
             && f.context.recoveryMapping && sColdRecoveryRequired);
         const unsigned before=touches;assert(f.Run()==B_NOT_ALLOWED && touches==before);
         if (failure==3) assert(f.result.detail==8 && f.context.recoveryFabricArcOwner);
+    }
+    {
+        Fixture f;failAt=4;
+        assert(f.Run()==B_DEV_NOT_READY && f.result.stage==PIONEER_RECOVERY_STAGE_DISABLE_MASTER
+            && !touches && f.context.recoveryFabricStartAttempted && f.context.recoveryMapping
+            && f.context.recoveryFabricStartTicket==123 && sColdRecoveryRequired);
+        assert(f.Run()==B_NOT_ALLOWED && !touches);
     }
     for (unsigned denied=0;denied<7;denied++) {
         Fixture f;

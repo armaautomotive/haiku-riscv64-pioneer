@@ -43,6 +43,7 @@ struct PioneerStoreContext {
 };
 struct PioneerQ35FabricArcCompileScope {};
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricHostScope.inc"
+template<class IO,class Check> static bool PioneerPreResetDisableMasterGuarded(IO&,Check& check) { return check(); }
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricRecoveryStart.inc"
 
 struct Fixture {

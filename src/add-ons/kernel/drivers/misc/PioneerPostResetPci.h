@@ -106,6 +106,46 @@ bool PioneerPreResetDisableMaster(IO& io)
 	return io.CardRead(4,2)==0x402 && io.RootRead(4,2)==0x402;
 }
 
+// The retained fabric controller uses the same fixed PCI transition, but
+// checks its ownership ticket around each config access. A lost check is
+// sticky even if a later check would succeed; no more device access follows.
+// This is an operational guard, not a proof that outstanding DMA drained.
+template<class IO,class Check>
+class PioneerGuardedMasterDisableIO {
+	IO& fIO; Check& fCheck; bool fLost=false;
+	bool Allowed() { if (fLost || !fCheck()) { fLost=true; return false; } return true; }
+public:
+	PioneerGuardedMasterDisableIO(IO& io,Check& check) : fIO(io),fCheck(check) {}
+	const auto& Profile() { return fIO.Profile(); }
+	uint32_t CardRead(unsigned offset,unsigned width) {
+		if (!Allowed()) return UINT32_MAX;
+		uint32_t value=fIO.CardRead(offset,width);return Allowed()?value:UINT32_MAX;
+	}
+	uint32_t RootRead(unsigned offset,unsigned width) {
+		if (!Allowed()) return UINT32_MAX;
+		uint32_t value=fIO.RootRead(offset,width);return Allowed()?value:UINT32_MAX;
+	}
+	void CardWrite(unsigned offset,unsigned width,uint32_t value) {
+		if (Allowed()) { fIO.CardWrite(offset,width,value); (void)Allowed(); }
+	}
+	void RootWrite(unsigned offset,unsigned width,uint32_t value) {
+		if (Allowed()) { fIO.RootWrite(offset,width,value); (void)Allowed(); }
+	}
+	bool Quiet() {
+		if (RootRead(0x10,4)!=0 || RootRead(0x14,4)!=0 || (RootRead(0x38,4)&1)!=0
+			|| !Allowed()) return false;
+		return fIO.QuietCached() && Allowed();
+	}
+	bool Valid() { return Allowed(); }
+};
+
+template<class IO,class Check>
+bool PioneerPreResetDisableMasterGuarded(IO& io,Check& check)
+{
+	PioneerGuardedMasterDisableIO<IO,Check> guarded(io,check);
+	return guarded.Valid() && PioneerPreResetDisableMaster(guarded) && guarded.Valid();
+}
+
 // Re-establish only the P100A's fixed active BAR/bridge layout after the ASIC
 // reset marker has cleared. This does not restore all PCI capabilities or
 // establish firmware readiness. The caller retains the exclusive reservation,

@@ -36,6 +36,8 @@ Qwen35FabricRecoveryStartLocked(PioneerProbeCookie* inspector,PioneerProbeCookie
     context->recoveryAttempted=true;
     PioneerQ35FabricHostScope scope(inspector,owner,context,guard,ticket,thread,team);
     auto permit=[&]() { return scope.HostOwnershipValid() && guard->validate(ticket)==B_OK; };
+    result.stage=PIONEER_RECOVERY_STAGE_DISABLE_MASTER;
+    if (!permit() || !PioneerPreResetDisableMasterGuarded(context->io,permit)) return B_DEV_NOT_READY;
     result.stage=PIONEER_RECOVERY_STAGE_FABRIC_PREPARE;
     if (!permit() || !context->recoveryMapping->OpenQ35Guarded(permit)) return B_DEV_NOT_READY;
     tt_arc_scratch_result firmware{};

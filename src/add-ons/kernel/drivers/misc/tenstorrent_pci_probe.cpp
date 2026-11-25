@@ -1921,13 +1921,8 @@ struct PioneerMmioIO : ConfigIO {
 	{
 		sPCI->write_pci_config(profile.root_bus, 0, 0, offset, size, value);
 	}
-	bool Quiet()
+	bool QuietCached()
 	{
-		if (RootRead(0x10, 4) != 0 || RootRead(0x14, 4) != 0
-			|| (RootRead(0x38, 4) & 1) != 0) {
-			dprintf("PIONEER-P100A: root BAR/ROM guard refused\n");
-			return false;
-		}
 		pci_info info;
 		for (long i = 0; sPCI->get_nth_pci_info(i, &info) == B_OK; i++) {
 			if (info.bus != profile.root_bus || info.device != 0 || info.function != 0)
@@ -1941,6 +1936,15 @@ struct PioneerMmioIO : ConfigIO {
 			return quiet;
 		}
 		return false;
+	}
+	bool Quiet()
+	{
+		if (RootRead(0x10, 4) != 0 || RootRead(0x14, 4) != 0
+			|| (RootRead(0x38, 4) & 1) != 0) {
+			dprintf("PIONEER-P100A: root BAR/ROM guard refused\n");
+			return false;
+		}
+		return QuietCached();
 	}
 	bool Map()
 	{
