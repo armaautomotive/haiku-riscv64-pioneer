@@ -14,7 +14,8 @@ with tempfile.TemporaryDirectory() as temporary:
     tmp = Path(temporary)
     (tmp / 'resident-host-fixture.inc').write_text(host.split(marker, 1)[0] + '\n')
     (tmp / 'resident-service-fixture.inc').write_text(service.split(marker, 1)[0] + '\n')
-    for name, flags in (('ordinary', []), ('paired', ['-DPIONEER_QWEN35_PAIRED_RECURRENCE'])):
+    for name, flags in (('ordinary', []), ('paired', ['-DPIONEER_QWEN35_PAIRED_RECURRENCE']),
+                        ('tree-paired', ['-DPIONEER_QWEN35_TREE_SETTLEMENT', '-DPIONEER_QWEN35_PAIRED_RECURRENCE'])):
         binary = tmp / name
         defines = ['-DPIONEER_QWEN35_DEVICE_DISPATCH', '-DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY',
                    '-DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS', '-DPIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS',

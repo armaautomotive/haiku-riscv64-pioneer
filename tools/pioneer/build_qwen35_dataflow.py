@@ -51,7 +51,7 @@ def verify_snapshot_witness_refuses_load(build, driver):
 
 def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_recovery=False,
                                fleet_inspection=False, role_stage=False, role_prestack=False,
-                               span_qualification=False):
+                               span_qualification=False, tree_settlement=False):
     usage_file = driver_directory / 'tenstorrent_pci_probe.su'
     entries = []
     for line in usage_file.read_text().splitlines():
@@ -338,8 +338,11 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
             print(f'qwen35_resident_install_stack_envelope_bytes={resident_total}/18432 '
                   '(includes 4096-byte helper allowance; not a whole-program proof)')
 
-    if any('DataflowResidentOwnedRunner<Handle>::Run(' in name and 'PioneerQ35ResidentDriverOwner::Policy' in name
-           for name, _, _ in entries):
+    have_resident_run = any('DataflowResidentOwnedRunner<Handle>::Run(' in name
+                            and 'PioneerQ35ResidentDriverOwner::Policy' in name for name, _, _ in entries)
+    if tree_settlement and not have_resident_run:
+        raise RuntimeError('missing resident run stack frame for tree settlement')
+    if have_resident_run:
         # The selected resident driver reaches the ioctl through the resident
         # owner rather than the legacy graph-run witness below. Include both
         # metadata preparation and fleet audit frames even though they are
@@ -372,6 +375,16 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
             if not matches or any(kind != 'static' for _, kind in matches):
                 raise RuntimeError('missing or unbounded resident run frame: ' + label)
             resident_run_total += max(frame for frame, _ in matches)
+        tree_audit = [(frame, kind) for name, frame, kind in entries
+                      if 'DataflowResidentTreeAudit::Audit(' in name and 'PioneerSessionIO' in name]
+        if tree_settlement and not tree_audit:
+            raise RuntimeError('missing resident tree audit stack frame')
+        if tree_audit:
+            if any(kind != 'static' for _, kind in tree_audit):
+                raise RuntimeError('unbounded resident tree audit frame')
+            # Conservatively add this mutually exclusive branch rather than
+            # substituting it for the existing full fleet-audit estimate.
+            resident_run_total += max(frame for frame, _ in tree_audit)
         if resident_run_total > 18432:
             raise RuntimeError(f'resident run stack envelope is {resident_run_total} bytes')
         print(f'qwen35_resident_run_stack_envelope_bytes={resident_run_total}/18432 '
@@ -691,7 +704,8 @@ def main():
                                args.build_firmware_recovery_qualification or
                                (args.compile_recovery_prototype and not args.compile_device_dispatch_prototype),
                                args.build_fleet_inspection_qualification, args.build_role_stage_qualification,
-                               args.build_role_prestack_qualification, args.build_span_qualification)
+                               args.build_role_prestack_qualification, args.build_span_qualification,
+                               args.compile_tree_settlement_prototype)
     if args.compile_snapshot_takeover_prototype:
         verify_snapshot_witness_refuses_load(build, driver / 'tenstorrent_pci_probe-driver60')
     if args.compile_resident_service_prototype:

@@ -7,11 +7,17 @@
 #error Resident fleet audit compile witness requires the non-loadable shared-role driver
 #endif
 #include "PioneerQwen35ResidentFleetAuditPci.h"
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowResidentTreeAudit.h"
+#endif
 struct PioneerQ35ResidentFleetAuditCompileScope {
     const volatile bool* permitted=nullptr;
     bool retained=false;
     bool Allowed() const { return permitted && *permitted && !retained; }
     bool ResidentAuditAllowed(PioneerSessionIO&,const PioneerQwen35::DataflowResidentCommand&) const { return Allowed(); }
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+    bool ResidentTreeAuditAllowed(PioneerSessionIO&,const PioneerQwen35::DataflowResidentCommand&) const { return Allowed(); }
+#endif
     bool BeginResidentFleetAudit(PioneerSessionIO&,const PioneerQwen35::DataflowResidentCommand&) const { return Allowed(); }
     bool ResidentAuditReadAllowed(PioneerSessionIO&,const PioneerQwen35::DataflowResidentCommand&,unsigned) const { return Allowed(); }
     bool AuditResidentCoreRuntime(PioneerSessionIO&,const PioneerQwen35::DataflowResidentCommand&,unsigned) const { return Allowed(); }
@@ -24,3 +30,8 @@ using PioneerQ35ResidentFleetAuditCompileIO=PioneerQwen35ResidentFleetAuditPci<
 template class PioneerQwen35ResidentFleetAuditPci<PioneerSessionIO,PioneerQ35ResidentFleetAuditCompileScope>;
 template PioneerQwen35::DataflowResidentFleetAuditResult PioneerQwen35::DataflowResidentFleetAudit::Audit<
     PioneerQ35ResidentFleetAuditCompileIO>(const PioneerQwen35::DataflowResidentCommand&,PioneerQ35ResidentFleetAuditCompileIO&);
+
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+template PioneerQwen35::DataflowResidentFleetAuditResult PioneerQwen35::DataflowResidentTreeAudit::Audit<
+    PioneerQ35ResidentFleetAuditCompileIO>(const PioneerQwen35::DataflowResidentCommand&,PioneerQ35ResidentFleetAuditCompileIO&);
+#endif

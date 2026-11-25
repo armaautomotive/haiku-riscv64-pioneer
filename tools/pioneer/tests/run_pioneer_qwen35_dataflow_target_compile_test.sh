@@ -1233,6 +1233,15 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 	-o "$temporary/resident-fleet-audit-paired-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-fleet-audit-paired-test"
 python3 -B "$directory/pioneer_qwen35_resident_host_fleet_audit_test.py"
+for mode in baseline tree; do
+    version_flags=
+    [ "$mode" = baseline ] || version_flags=-DPIONEER_QWEN35_TREE_SETTLEMENT
+    ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined $version_flags \
+        "$directory/pioneer_qwen35_resident_candidate_version_test.cpp" -o "$temporary/resident-candidate-$mode-test"
+    ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-candidate-$mode-test"
+done
+python3 -B "$directory/pioneer_qwen35_resident_tree_audit_test.py"
+python3 -B "$directory/pioneer_qwen35_resident_tree_host_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_fleet_audit_pci_test.py"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	"$directory/pioneer_qwen35_resident_sender_receipt_test.cpp" -o "$temporary/resident-sender-receipt-test"
@@ -1430,7 +1439,7 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/shared-exported-images-recovery-test"
 echo 'PASS exported reader/writer images staged and restored on all 120 simulated tiles; NO HARDWARE'
 shared_owner_flags='-std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -ffreestanding -fstack-usage -mcmodel=medany -fpic -D_KERNEL_MODE -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS'
-for probe in model session owned_runner fleet_audit close; do
+for probe in model session owned_runner fleet_audit tree_audit close; do
 	"$cxx" $shared_owner_flags -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_PAIRED_RECURRENCE \
 		-DPIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS -DPIONEER_QWEN35_RESIDENT_SERVICE_WITNESS \
 		-I"$sdk/headers" -I"$sdk/headers/os" -I"$sdk/headers/os/support" -idirafter "$sdk/headers/posix" \

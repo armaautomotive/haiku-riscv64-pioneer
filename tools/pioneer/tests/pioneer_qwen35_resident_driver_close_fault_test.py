@@ -37,7 +37,8 @@ with tempfile.TemporaryDirectory() as tmp:
     (d/'resident-driver-permitted-test.inc').write_text(owner)
     (d/'test.cpp').write_text(source)
     defs=['-DPIONEER_QWEN35_DEVICE_DISPATCH','-DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY','-DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS','-DPIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS','-DPIONEER_QWEN35_RESIDENT_SERVICE_WITNESS']
-    for suffix,extra in [('ordinary',[]),('paired',['-DPIONEER_QWEN35_PAIRED_RECURRENCE'])]:
+    for suffix,extra in [('ordinary',[]),('paired',['-DPIONEER_QWEN35_PAIRED_RECURRENCE']),
+                         ('tree-paired',['-DPIONEER_QWEN35_TREE_SETTLEMENT','-DPIONEER_QWEN35_PAIRED_RECURRENCE'])]:
         binary=d/suffix
         subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-I'+str(d),'-I'+str(test),'-I'+str(misc),*defs,*extra,str(d/'test.cpp'),'-o',str(binary)],check=True)
         subprocess.run([str(binary)],check=True,env=dict(os.environ,ASAN_OPTIONS='quarantine_size_mb=32',UBSAN_OPTIONS='halt_on_error=1'))

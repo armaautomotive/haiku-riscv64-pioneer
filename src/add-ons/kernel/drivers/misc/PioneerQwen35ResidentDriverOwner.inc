@@ -8,22 +8,33 @@
 #endif
 #include "PioneerQwen35ResidentHostPci.h"
 #include "PioneerQwen35ResidentFleetAuditPci.h"
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowResidentTreeAudit.h"
+#endif
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowResidentOwnedRunner.h"
 
 class PioneerQ35ResidentDriverOwner {
     using Command=PioneerQwen35::DataflowResidentCommand;
     using Session=PioneerQwen35::DataflowResidentGraphSession;
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+    using ResidentAudit=PioneerQwen35::DataflowResidentTreeAudit;
+#else
+    using ResidentAudit=PioneerQwen35::DataflowResidentFleetAudit;
+#endif
     struct Handle;
     struct Scope {
         PioneerQ35ResidentDriverOwner& owner;
-        PioneerQwen35::DataflowResidentFleetAudit& audit;
+        ResidentAudit& audit;
         Handle* handle=nullptr;
         bool retained=false;
-        Scope(PioneerQ35ResidentDriverOwner& o,PioneerQwen35::DataflowResidentFleetAudit& a):owner(o),audit(a) {}
+        Scope(PioneerQ35ResidentDriverOwner& o,ResidentAudit& a):owner(o),audit(a) {}
         bool ResidentSessionAllowed(PioneerSessionIO& io,const Command& c,unsigned operation) const;
         bool ResidentRootAllowed(PioneerSessionIO& io,const Command& c,unsigned operation) const;
         bool AuditResidentFleet(PioneerSessionIO& io,const Command& c);
         bool ResidentAuditAllowed(PioneerSessionIO& io,const Command& c) const;
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+        bool ResidentTreeAuditAllowed(PioneerSessionIO& io,const Command& c) const;
+#endif
         bool BeginResidentFleetAudit(PioneerSessionIO& io,const Command& c) const;
         bool ResidentAuditReadAllowed(PioneerSessionIO& io,const Command& c,unsigned core) const;
         bool AuditResidentCoreRuntime(PioneerSessionIO& io,const Command& c,unsigned core) const;
@@ -35,7 +46,7 @@ class PioneerQ35ResidentDriverOwner {
     using Host=PioneerQwen35ResidentHostPci<PioneerSessionIO,Scope>;
     using Run=PioneerQwen35::DataflowResidentSessionRun<Host>;
     struct Handle {
-        PioneerQwen35::DataflowResidentFleetAudit audit;
+        ResidentAudit audit;
         Scope scope;
         Host host;
         Run run;
@@ -76,6 +87,11 @@ class PioneerQ35ResidentDriverOwner {
     // both NoCs, all sender receipts and recoverable stop on this hardware.
     // Samples and the non-loadable build do not establish those facts.
     bool PhysicalRuntimeProof(PioneerSessionIO&,const Command&) const { return false; }
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+    // A v2 receipt is trusted only after exact image, NoC route and firmware
+    // exclusion are established; this is not established by metadata tests.
+    bool PhysicalTreeProof(PioneerSessionIO&,const Command&) const { return false; }
+#endif
 
     // Admission stays closed until the exact resident images, root ACK,
     // both NoCs, firmware exclusion and stop/recovery are proven on device.
@@ -190,6 +206,11 @@ bool PioneerQ35ResidentDriverOwner::Scope::AuditResidentFleet(PioneerSessionIO& 
 bool PioneerQ35ResidentDriverOwner::Scope::ResidentAuditAllowed(PioneerSessionIO& io,const Command& c) const {
     return ResidentSessionAllowed(io,c,Host::Audit);
 }
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+bool PioneerQ35ResidentDriverOwner::Scope::ResidentTreeAuditAllowed(PioneerSessionIO& io,const Command& c) const {
+    return ResidentAuditAllowed(io,c) && owner.PhysicalTreeProof(io,c);
+}
+#endif
 bool PioneerQ35ResidentDriverOwner::Scope::BeginResidentFleetAudit(PioneerSessionIO& io,const Command& c) const {
     return ResidentAuditAllowed(io,c);
 }

@@ -4,11 +4,18 @@
 #include "PioneerQwen35DataflowResidentDispatch.h"
 #include "PioneerQwen35DataflowGraphTrace.h"
 namespace PioneerQwen35 {
-// Candidate only: a received tree gather cannot prove each sender observed a
-// successful NoC completion. A separate fault audit must authorize reuse,
-// reporting or release. The installation must clear this record before use.
+// A v1 candidate is only a gather; v2 additionally means the device tree
+// checked each sender receipt. Neither version proves installed-image or
+// external-writer exclusion. A separate qualified audit is still mandatory.
+// The installation must clear this record before use.
 enum : unsigned { DataflowResidentCandidateAddress=0xab310,DataflowResidentCandidateAckAddress=0xab330,
-    DataflowResidentCandidateMagic=0x31435235,DataflowResidentCandidateVersion=1 };
+    DataflowResidentCandidateMagic=0x31435235,
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+    DataflowResidentCandidateVersion=2
+#else
+    DataflowResidentCandidateVersion=1
+#endif
+};
 struct alignas(16) DataflowResidentCandidate {
     uint32_t magic,version,trigger,epoch,firstSequence,count,checksum,commit;
 };

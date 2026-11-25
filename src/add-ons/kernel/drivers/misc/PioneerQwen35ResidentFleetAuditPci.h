@@ -39,6 +39,11 @@ public:
     PioneerQwen35ResidentFleetAuditPci(const PioneerQwen35ResidentFleetAuditPci&)=delete;
     PioneerQwen35ResidentFleetAuditPci& operator=(const PioneerQwen35ResidentFleetAuditPci&)=delete;
     bool ResidentAuditAllowed(const Command& command) { return scope.ResidentAuditAllowed(io,command); }
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+    bool ResidentTreeAuditAllowed(const Command& command) {
+        return scope.ResidentTreeAuditAllowed(io,command);
+    }
+#endif
     bool BeginResidentAudit(const Command& command) {
         if (active || !ResidentAuditAllowed(command)) return false;
         active=&command;

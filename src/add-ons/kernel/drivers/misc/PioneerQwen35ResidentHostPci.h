@@ -128,8 +128,8 @@ public:
         if (phase!=Candidate || !Select(Audit)) return false;
         if (command.count==PioneerQwen35::DataflowGraphDecodeSteps && !ReadOutput()) return Retain();
         const auto firstOutput=output;
-        // The implementation must independently inspect the exact fleet and
-        // retain on any failed, missing or uncertain sender status.
+        // The scope must resolve the exact fleet, either through a complete
+        // scan or a separately qualified tree proof, and retain any fault.
         if (!scope.AuditResidentFleet(io,command) || !Ready(Audit) || !CandidateStillMatches()) return Retain();
         if (haveOutput && (!ReadOutput() || output.token!=firstOutput.token || output.scoreBits!=firstOutput.scoreBits
             || output.sequence!=firstOutput.sequence || output.checksum!=firstOutput.checksum)) return Retain();

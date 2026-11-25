@@ -34,6 +34,7 @@ class DataflowResidentFleetAudit {
     template<class IO> DataflowResidentFleetAuditResult Fail(IO& io) {
         phase=PhaseRetained;io.RetainResidentAudit();return DataflowResidentFleetAuditRetained;
     }
+public:
     static bool ValidSample(const DataflowResidentFleetSample& sample,unsigned core,
         const DataflowResidentCommand& command) {
         const auto& box=sample.worker;
