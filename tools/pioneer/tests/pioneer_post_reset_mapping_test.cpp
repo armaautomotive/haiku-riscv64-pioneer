@@ -45,6 +45,8 @@ static uint32 cardCommand=0x402,rootCommand=0x402;
 #ifdef TEST_Q35_FABRIC_AUDIT
 static bool permitRevoked=false;
 static unsigned deviceAccesses=0,accessesAfterRevoke=0;
+static int dropQ35TlbWrite=-1;
+static unsigned q35TlbWrites=0;
 static void TrackAccess() { ++deviceAccesses;if (permitRevoked) ++accessesAfterRevoke; }
 #else
 static void TrackAccess() {}
@@ -104,6 +106,12 @@ static bool blockTlbRestore=false,blockDbiTlbRestore=false,dropDbiWrite=false;
 static bool fakeQueueTimeout=false,fakeQueueBadReply=false;
 static void PioneerWrite32(volatile uint32* p,uint32 value) {
 	TrackAccess();
+#ifdef TEST_Q35_FABRIC_AUDIT
+	if (p==tlbPage+0x96c/4 || p==tlbPage+0x970/4 || p==tlbPage+0x974/4) {
+		++q35TlbWrites;
+		if (int(q35TlbWrites)==dropQ35TlbWrite) return;
+	}
+#endif
 	if (blockTlbRestore && p==tlbPage+0x96c/4 && value==7) return;
 	if (blockDbiTlbRestore && p==tlbPage+0x960/4 && value==10) return;
 	if (p==dbiPage+0x78/4) {
@@ -135,6 +143,9 @@ static void ResetFake() {
 	memset(resetPage,0,sizeof(resetPage));memset(nocPage,0,sizeof(nocPage));memset(hdmaPage,0,sizeof(hdmaPage));memset(scratchPage,0,sizeof(scratchPage));memset(csmPage,0,sizeof(csmPage));memset(msiPage,0,sizeof(msiPage));
 	memset(dbiPage,0,sizeof(dbiPage));dropDbiWrite=blockDbiTlbRestore=false;
 	mapCalls=unmapCalls=0;failMap=failUnmap=-1;mapFailureStatus=B_NO_MEMORY;wrongNode=false;
+#ifdef TEST_Q35_FABRIC_AUDIT
+	dropQ35TlbWrite=-1;q35TlbWrites=0;
+#endif
 	fakePciPendingPeer=-1;spins=mutateAfter=0;sleeps=firmwareReadyAfter=0;sleepFails=false;blockTlbRestore=false;
 	fakeQueueTimeout=fakeQueueBadReply=false;
 	cardBars[0]=12;cardCommand=rootCommand=0x402;nodePage[0x44/4]=2;resetPage[0x1b0/4]=0x47800;

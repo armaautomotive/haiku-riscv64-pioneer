@@ -3,11 +3,12 @@
 The pinned Tenstorrent system-firmware v18.5.0 source includes a Tensix reset
 sequence in [`app/smc/pytest/e2e_smoke.py`](https://github.com/tenstorrent/tt-system-firmware/blob/80b056af360a58730756467d5cc8df8db789640d/app/smc/pytest/e2e_smoke.py),
 `tensix_reset_sequence`. It is a candidate for recovering a faulted resident
-rewrite without resetting the PCIe endpoint. The complete sequence has **not**
-been implemented or tried on this Pioneer. A context-owned queue adapter and
-the eight RISC reset-unit writes and a 120-worker unicast soft-reset pass have
-been implemented and simulated, but no live recovery controller constructs the
-owner yet. Unicast coverage and the expected all-ones reset-unit readback remain
+rewrite without resetting the PCIe endpoint. The complete sequence is wired
+inside a retained, non-loadable recovery transaction and has been simulated;
+no live recovery controller calls it, and it has not been tried on this
+Pioneer. Its context-owned queue adapter, eight RISC reset-unit writes and
+120-worker unicast soft-reset pass retain the owner on uncertain failure.
+Unicast coverage and the expected all-ones reset-unit readback remain
 unverified on the card. The owner also requires an automatic-clock baseline,
 250 MHz in forced mode, and automatic mode after release; configurations
 without automatic clock mode are currently rejected. The reported
@@ -53,3 +54,9 @@ The normal idle/27B/model-hash/staged-restore preflight remains mandatory.
 A timeout, changed identity, uncertain posted write or failed audit must not be
 reported as successful recovery. Do not use this candidate until its real
 controller, failure handling and bounded trial are ready.
+
+The transaction now rechecks firmware boot, queue identity and pinned
+telemetry after its fleet and DMA audits. It restores the selected route on a
+successful audit and stops on an unconfirmed route write or lost guard; the
+owner and mappings remain retained on failure. This is simulated evidence,
+not a binary identity for the installed firmware or a completed recovery.

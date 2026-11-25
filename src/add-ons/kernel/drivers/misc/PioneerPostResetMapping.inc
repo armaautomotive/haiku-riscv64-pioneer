@@ -35,7 +35,7 @@ struct PioneerPostResetMapping : ConfigIO {
 	bool queueAttempted=false,queueReady=false,queueUnsafe=false;
 	bool fleetAudited=false,dmaAudited=false;
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
-	bool q35CloseAttempted=false,q35CloseComplete=false;
+	bool q35CloseAttempted=false,q35CloseComplete=false,q35FirmwareRevalidated=false;
 #endif
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	area_id dbiArea=-1;
@@ -349,6 +349,60 @@ struct PioneerPostResetMapping : ConfigIO {
 			if (!check() || value!=topology.source[i]) return false;
 		}
 		return check();
+	}
+	// Re-read the firmware's boot and pinned telemetry after the fabric
+	// sequence. The guarded adapter never performs another device access once
+	// permission is lost, including during the underlying route restoration.
+	template<class Check> bool RevalidateQ35FabricFirmware(const tt_arc_scratch_result& baseline,Check& check) {
+		q35FirmwareRevalidated=false;
+		if (!ready || !firmwareReady || !topologyReady || !fleetAudited || !dmaAudited
+			|| !savedValid || !scratch || !csm || baseline.version!=1
+			|| baseline.state!=TT_ARC_SCRATCH_READY || !baseline.tlb_restored
+			|| !baseline.telemetry_present) return false;
+		struct Adapter {
+			PioneerPostResetMapping& m;Check& check;bool lost=false;
+			bool Allowed() { if (lost || !check()) { lost=true;return false; } return true; }
+			uint32 TlbRead(unsigned word) {
+				if (!Allowed()) return UINT32_MAX;
+				const uint32 value=m.TlbRead(word);return Allowed()?value:uint32(UINT32_MAX);
+			}
+			void TlbWrite(unsigned word,uint32 value) {
+				if (!Allowed()) return;
+				m.TlbWrite(word,value);
+				if (!Allowed()) return;
+				const uint32 observed=m.TlbRead(word);
+				if (!Allowed() || observed!=value) lost=true;
+			}
+			uint32 ScratchRead(unsigned word) {
+				if (!Allowed()) return UINT32_MAX;
+				const uint32 value=m.ScratchRead(word);return Allowed()?value:uint32(UINT32_MAX);
+			}
+			uint32 CsmRead(uint32 address) {
+				if (!Allowed()) return UINT32_MAX;
+				const uint32 value=m.CsmRead(address);return Allowed()?value:uint32(UINT32_MAX);
+			}
+		} adapter{*this,check};
+		auto permit=[&]() { return adapter.Allowed(); };
+		if (!SourceStableQ35(permit) || !permit()) return false;
+		uint32 original[3]{};
+		for (unsigned word=0;word<3;word++) original[word]=adapter.TlbRead(word);
+		if (!permit() || (original[2]&0xffffc000)) return false;
+		tt_arc_scratch_result observed{};
+		if (!BlackholeArcScratchProbe(adapter,observed) || !permit()
+			|| observed.message_queue!=baseline.message_queue
+			|| observed.telemetry_data!=baseline.telemetry_data
+			|| observed.telemetry_tags!=baseline.telemetry_tags) return false;
+		tt_arc_telemetry_result telemetry{};
+		if (!BlackholeArcTelemetryProbe(adapter,observed,telemetry) || !permit()
+			|| (telemetry.present_mask&0x3c1)!=0x3c1
+			|| telemetry.table_version!=firmwareTelemetry.table_version
+			|| telemetry.entry_count!=firmwareTelemetry.entry_count) return false;
+		const unsigned pinned[]={0,6,7,8,9};
+		for (unsigned index:pinned)
+			if (telemetry.values[index]!=firmwareTelemetry.values[index]) return false;
+		for (unsigned word=0;word<3;word++) if (adapter.TlbRead(word)!=original[word]) return false;
+		if (!permit() || !SourceStableQ35(permit) || !permit()) return false;
+		q35FirmwareRevalidated=true;return true;
 	}
 	template<class Check> bool AuditQ35Fabric(PioneerPostResetAuditResult& result,Check& check) {
 		result={};fleetAudited=false;dmaAudited=false;

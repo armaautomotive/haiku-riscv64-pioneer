@@ -67,9 +67,9 @@ int main() {
             && sColdRecoveryRequired && !f.mapping.queueUnsafe && f.queue.notifications==7);
         const auto& evidence=f.context.recoveryFabricEvidence;
         assert(f.context.recoveryFabricEvidenceRecorded && evidence.fabric_generation==123
-            && !evidence.firmware_generation && evidence.retained_owners==1
+            && evidence.firmware_generation==123 && evidence.retained_owners==1
             && evidence.core_count==120 && evidence.flags==(PIONEER_FABRIC_PROOF_RESET_SEQUENCE
-                | PIONEER_FABRIC_PROOF_CLOCK_RESTORED | PIONEER_FABRIC_PROOF_ALL_CORES_HELD
+                | PIONEER_FABRIC_PROOF_CLOCK_RESTORED | PIONEER_FABRIC_PROOF_FIRMWARE_READY | PIONEER_FABRIC_PROOF_ALL_CORES_HELD
                 | PIONEER_FABRIC_PROOF_NOC_IDLE | PIONEER_FABRIC_PROOF_HOST_DMA_IDLE)
             && !evidence.Complete() && !evidence.ReadyToRetireOneOwner());
         PioneerDriverReloadState guardState;uint64 generation=0,ticket=0,next=0;uint32 faultEpoch=0;
@@ -98,6 +98,13 @@ int main() {
     {
         Fixture f;f.mapping.queueAttempted=true;
         assert(!f.Run() && f.stage==0 && !f.context.recoveryFabricArcOwner && !f.queue.io);
+    }
+    {
+        Fixture f;f.mapping.corruptFirmwareResult=true;
+        assert(!f.Run() && f.stage==14 && f.context.recoveryFabricArcOwner
+            && !f.mapping.q35FirmwareRevalidated && !f.context.recoveryFabricEvidenceRecorded
+            && sColdRecoveryRequired);
+        const unsigned before=f.queue.io;assert(!f.Run() && f.queue.io==before);
     }
     for (unsigned fault=0;fault<2;fault++) {
         Fixture f;f.mapping.corruptAuditResult=fault==0;f.mapping.corruptL2Result=fault==1;

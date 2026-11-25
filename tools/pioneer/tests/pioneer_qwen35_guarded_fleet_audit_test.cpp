@@ -13,9 +13,11 @@ struct Permit {
         return transient || !permitRevoked;
     }
 };
+static tt_arc_scratch_result baselineFirmware{};
 static void Prepare(PioneerPostResetMapping& mapping) {
     tt_arc_scratch_result arc{};
     permitRevoked=false;ResetFake();assert(mapping.Open() && mapping.ProbeFirmware(3,arc));
+    baselineFirmware=arc;
     deviceAccesses=accessesAfterRevoke=0;
 }
 static void PrepareClose(PioneerPostResetMapping& mapping) {
@@ -101,6 +103,43 @@ int main()
         PioneerPostResetMapping mapping(profile);Prepare(mapping);Permit fleetPermit;PioneerPostResetAuditResult fleet;
         assert(mapping.AuditQ35Fabric(fleet,fleetPermit));fakePciPendingPeer=1;Permit permit;
         assert(!mapping.AuditQ35HostDmaGuarded(permit) && !mapping.dmaAudited && mapping.dmaDiagnostic==0x48020);
+    }
+    unsigned firmwareTotal=0;
+    {
+        PioneerPostResetMapping mapping(profile);PrepareClose(mapping);Permit permit;
+        uint32 before[3]{};for (unsigned i=0;i<3;i++) before[i]=mapping.TlbRead(i);
+        deviceAccesses=accessesAfterRevoke=0;
+        assert(mapping.RevalidateQ35FabricFirmware(baselineFirmware,permit)
+            && mapping.q35FirmwareRevalidated && !accessesAfterRevoke);
+        for (unsigned i=0;i<3;i++) assert(mapping.TlbRead(i)==before[i]);
+        firmwareTotal=permit.calls;assert(firmwareTotal>100 && deviceAccesses>10);
+    }
+    const unsigned firmwareFailures[]={1,2,3,17,50,firmwareTotal/4,firmwareTotal/2,
+        firmwareTotal*3/4,firmwareTotal-1,firmwareTotal};
+    for (unsigned mode=0;mode<2;mode++) for (unsigned failure:firmwareFailures) {
+        PioneerPostResetMapping mapping(profile);PrepareClose(mapping);Permit permit;
+        permit.failAt=failure;permit.transient=mode!=0;deviceAccesses=accessesAfterRevoke=0;
+        assert(!mapping.RevalidateQ35FabricFirmware(baselineFirmware,permit)
+            && permitRevoked && !mapping.q35FirmwareRevalidated && !accessesAfterRevoke);
+    }
+    {
+        PioneerPostResetMapping mapping(profile);PrepareClose(mapping);Permit permit;
+        csmPage[0x1000/4]^=1; // changed firmware bundle
+        assert(!mapping.RevalidateQ35FabricFirmware(baselineFirmware,permit)
+            && !mapping.q35FirmwareRevalidated);
+    }
+    {
+        PioneerPostResetMapping mapping(profile);PrepareClose(mapping);Permit permit;
+        scratchPage[(0x400+11*4)/4]+=4; // changed firmware queue identity
+        assert(!mapping.RevalidateQ35FabricFirmware(baselineFirmware,permit)
+            && !mapping.q35FirmwareRevalidated);
+    }
+    const int droppedWrites[]={2,4};
+    for (int dropped:droppedWrites) {
+        PioneerPostResetMapping mapping(profile);PrepareClose(mapping);Permit permit;
+        q35TlbWrites=0;dropQ35TlbWrite=dropped;
+        assert(!mapping.RevalidateQ35FabricFirmware(baselineFirmware,permit)
+            && !mapping.q35FirmwareRevalidated && q35TlbWrites==unsigned(dropped));
     }
     unsigned closeTotal=0;
     {
