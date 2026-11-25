@@ -23,6 +23,9 @@ public:
     DataflowBarrierReadResult ReadResidentRequest(unsigned completed,unsigned epoch,DataflowResidentCommand& out) {
         const auto* payload=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(DataflowBarrierReleasePayload));
         const auto* marker=reinterpret_cast<const volatile uint32_t*>(static_cast<uintptr_t>(DataflowBarrierReleaseCommit));
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+        if (!worker) return DataflowResidentRootCommandRead(payload,marker,completed,epoch,out);
+#endif
         return DataflowResidentCommandRead(payload,marker,completed,epoch,out);
     }
     bool ExecuteResidentGraph(unsigned core,const DataflowGraphRunDescriptor& d) {

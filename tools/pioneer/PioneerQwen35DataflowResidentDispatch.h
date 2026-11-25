@@ -92,6 +92,31 @@ inline DataflowBarrierReadResult DataflowResidentCommandRead(const volatile uint
         return DataflowBarrierInvalid;
     out=c;return DataflowBarrierReady;
 }
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+// Root inbox only: the host commits a four-word marker after publishing and
+// verifying the command. Child inboxes retain the full 64-byte NoC marker.
+inline bool DataflowResidentRootCommitMatches(const volatile uint32_t* marker,unsigned epoch,unsigned step) {
+    return DataflowLoadAcquire(marker[0])==epoch && DataflowLoadAcquire(marker[1])==~epoch
+        && DataflowLoadAcquire(marker[2])==step && DataflowLoadAcquire(marker[3])==~step;
+}
+inline DataflowBarrierReadResult DataflowResidentRootCommandRead(const volatile uint32_t* source,
+    const volatile uint32_t* marker,unsigned completed,unsigned priorEpoch,DataflowResidentCommand& out) {
+    const unsigned epoch=DataflowLoadAcquire(marker[0]),step=DataflowLoadAcquire(marker[2]);
+    if (!epoch || (step&0xc0000000U)!=DataflowResidentMarkerBit
+        || !DataflowResidentRootCommitMatches(marker,epoch,step)) return DataflowBarrierWaiting;
+    const unsigned trigger=step&DataflowResidentMarkerLimit;
+    if (trigger<=completed && epoch<=priorEpoch) return DataflowBarrierWaiting;
+    DataflowResidentCommand c{};auto* bytes=reinterpret_cast<uint8_t*>(&c);
+    for (unsigned i=0;i<16;i++) {
+        const uint32_t word=DataflowLoadAcquire(source[i]);
+        for (unsigned byte=0;byte<4;byte++) bytes[4*i+byte]=uint8_t(word>>(8*byte));
+    }
+    if (!DataflowResidentRootCommitMatches(marker,epoch,step) || !DataflowResidentCommandValid(c)
+        || c.epoch!=epoch || c.trigger!=trigger || c.epoch<=priorEpoch || c.trigger<=completed)
+        return DataflowBarrierInvalid;
+    out=c;return DataflowBarrierReady;
+}
+#endif
 // IO sends the payload followed by its commit to one fixed child. A failed
 // send may have reached the peer: the operation is one-shot and must retain
 // the fleet rather than replaying any part of the fanout.

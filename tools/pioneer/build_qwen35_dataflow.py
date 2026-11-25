@@ -385,6 +385,15 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
             # Conservatively add this mutually exclusive branch rather than
             # substituting it for the existing full fleet-audit estimate.
             resident_run_total += max(frame for frame, _ in tree_audit)
+        if tree_settlement:
+            for label, marker in (('compact submit', '::Submit('), ('compact batch', '::StoreBatch('),
+                                  ('compact reserved check', '::ReservedPayloadClear(')):
+                matches = [(frame, kind) for name, frame, kind in entries
+                           if 'PioneerQwen35ResidentHostPci<Raw, Scope>' in name
+                           and 'PioneerSessionIO' in name and marker in name]
+                if not matches or any(kind != 'static' for _, kind in matches):
+                    raise RuntimeError('missing or unbounded ' + label + ' stack frame')
+                resident_run_total += max(frame for frame, _ in matches)
         if resident_run_total > 18432:
             raise RuntimeError(f'resident run stack envelope is {resident_run_total} bytes')
         print(f'qwen35_resident_run_stack_envelope_bytes={resident_run_total}/18432 '

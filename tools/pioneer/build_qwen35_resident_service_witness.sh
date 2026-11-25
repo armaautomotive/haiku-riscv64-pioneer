@@ -98,6 +98,16 @@ if tree:
         settlement+=max(frame for frame,_ in matches)
     if settlement>8192: raise SystemExit(f'resident settlement stack envelope {settlement} exceeds 8192 bytes')
     print(f'resident_settlement_stack_envelope_bytes={settlement}/8192 (includes 1024-byte allowance; not whole-program proof)')
+    root_markers=('qwen35_resident_graph_service_main()', 'DataflowResidentServiceRun<IO, BarrierIO>::Tick()',
+        'DataflowResidentRootCommandRead(', 'DataflowResidentRootCommitMatches(', 'DataflowResidentCommandValid(')
+    root_total=1024
+    for marker in root_markers:
+        matches=[(frame,kind) for name,frame,kind in entries if marker in name]
+        if not matches or any(kind!='static' for _,kind in matches):
+            raise SystemExit('missing or unbounded compact root stack frame: '+marker)
+        root_total+=max(frame for frame,_ in matches)
+    if root_total>8192: raise SystemExit(f'compact root stack envelope {root_total} exceeds 8192 bytes')
+    print(f'resident_compact_root_stack_envelope_bytes={root_total}/8192 (includes 1024-byte allowance; not whole-program proof)')
 PY
 shasum -a 256 "$output/boot.bin" "$output/text.bin" "$output/dispatch.bin"
 echo 'OFFLINE resident graph witness only; no driver, card, inference or speed qualification'

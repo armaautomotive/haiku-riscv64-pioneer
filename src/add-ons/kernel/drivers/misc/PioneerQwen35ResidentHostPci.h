@@ -43,6 +43,24 @@ template<class Raw,class Scope> class PioneerQwen35ResidentHostPci {
         io.Q38PanelWrite(address,value);
         return Ready(operation) && io.Q38PanelRead(address)==value && Ready(operation);
     }
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+    // Only after an exclusive lifetime proof: write a bounded group, then
+    // recheck ownership and read back every word before the final commit.
+    bool StoreBatch(unsigned operation,unsigned address,const uint32_t* words,unsigned count) {
+        if (!words || !count || !Ready(operation)) return false;
+        issued=true;
+        for (unsigned i=0;i<count;i++) io.Q38PanelWrite(address+4*i,words[i]);
+        if (!Ready(operation)) return false;
+        for (unsigned i=0;i<count;i++) if (io.Q38PanelRead(address+4*i)!=words[i]) return false;
+        return Ready(operation);
+    }
+    bool ReservedPayloadClear() {
+        if (!Ready(Publish)) return false;
+        for (unsigned i=11;i<16;i++)
+            if (io.Q38PanelRead(PioneerQwen35::DataflowBarrierReleasePayload+4*i)) return false;
+        return Ready(Publish);
+    }
+#endif
     bool Read(unsigned operation,unsigned address,uint32_t& value) {
         if (!Ready(operation)) return false;
         value=io.Q38PanelRead(address);return Ready(operation);
@@ -99,10 +117,16 @@ public:
         // Invalidate the marker before payload changes. Publish word zero last,
         // so the worker cannot accept a partly written sixteen-word commit.
         if (!Store(Publish,DataflowBarrierReleaseCommit,0)) return Retain();
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+        if (!ReservedPayloadClear()
+            || !StoreBatch(Publish,DataflowBarrierReleasePayload,payload.word,11)
+            || !StoreBatch(Publish,DataflowBarrierReleaseCommit+4,commit.word+1,3)) return Retain();
+#else
         for (unsigned i=0;i<16;i++)
             if (!Store(Publish,DataflowBarrierReleasePayload+4*i,payload.word[i])) return Retain();
         for (unsigned i=1;i<16;i++)
             if (!Store(Publish,DataflowBarrierReleaseCommit+4*i,commit.word[i])) return Retain();
+#endif
         if (!Store(Publish,DataflowBarrierReleaseCommit,commit.word[0])) return Retain();
         phase=Published;return true;
     }

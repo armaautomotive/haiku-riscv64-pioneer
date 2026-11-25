@@ -19,6 +19,9 @@ struct ServiceFabric {
 struct ServiceIO {
     ServiceFabric& f;unsigned core;
     DataflowBarrierReadResult ReadResidentRequest(unsigned completed,unsigned epoch,DataflowResidentCommand& out) {
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+        if (!core) return DataflowResidentRootCommandRead(f.payload[core].word,f.marker[core].word,completed,epoch,out);
+#endif
         return DataflowResidentCommandRead(f.payload[core].word,f.marker[core].word,completed,epoch,out);
     }
     bool ResidentBegin(unsigned worker,const DataflowResidentCommand&,const DataflowGraphRunDescriptor& d) {
@@ -126,6 +129,9 @@ struct ServiceFixture {
     void Submit() {
         fabric->payload[0]=DataflowResidentCommandPayload(command);
         fabric->marker[0]=DataflowResidentCommandCommit(command);
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+        for (unsigned i=4;i<16;i++) fabric->marker[0].word[i]=0xa5a5a5a5U;
+#endif
     }
     void Next() {
         const unsigned last=DataflowGraphPromptSteps+DataflowGraphDecodeSteps;

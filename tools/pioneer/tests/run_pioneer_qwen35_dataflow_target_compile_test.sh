@@ -1242,6 +1242,7 @@ for mode in baseline tree; do
 done
 python3 -B "$directory/pioneer_qwen35_resident_tree_audit_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_tree_host_test.py"
+python3 -B "$directory/pioneer_qwen35_resident_compact_host_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_fleet_audit_pci_test.py"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	"$directory/pioneer_qwen35_resident_sender_receipt_test.cpp" -o "$temporary/resident-sender-receipt-test"
