@@ -4191,6 +4191,12 @@ struct PioneerStoreContext {
 	// Non-loadable rewrite only. The context retains this owner and its
 	// mappings until the complete fabric recovery has been audited.
 	PioneerQ35FabricArcOwner<pioneer_driver_recovery_guard_v2_info>* recoveryFabricArcOwner=NULL;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+	// Partial evidence from this exact retained fabric transaction. The old
+	// mappings and owners remain live, so this can never complete the guard.
+	PioneerDriverFabricRecoveryProof recoveryFabricEvidence={};
+	bool recoveryFabricEvidenceRecorded=false;
+#endif
 	bool q35PciReservationHeld=false,q35PciReleaseAttempted=false;
 #endif
 #ifdef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS

@@ -22,6 +22,9 @@ bool RunQ35FabricRecovery(pioneer_driver_recovery_guard_v2_info* guard,uint64 ti
 {
     stage=0;
     if (!guard || !guard->validate || !ticket || !recoveryMapping || recoveryFabricArcOwner
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        || recoveryFabricEvidenceRecorded
+#endif
         || !dispatchOwnerRetained || !q35PciReservationHeld || q35PciReleaseAttempted
         || !sColdRecoveryRequired || !sRuntimeOwner
         || sRuntimeOwner->context!=this || guard->validate(ticket)!=B_OK
@@ -65,5 +68,28 @@ bool RunQ35FabricRecovery(pioneer_driver_recovery_guard_v2_info* guard,uint64 ti
         || !step(15,[&]() { return owner->Retire(guard,scope); })
         || !step(16,[&]() { return mapping->CloseQ35Guarded(valid); })) return false;
     stage=17;
-    return valid() && owner->CurrentPhase()==FabricOwner::Retired && mapping->q35CloseComplete;
+    if (!valid() || owner->CurrentPhase()!=FabricOwner::Retired || !mapping->q35CloseComplete) return false;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    // Record only facts established by this exact completed transaction.
+    // Firmware revalidation, PCIe health, old-mapping disposal, reservation
+    // release and owner retirement need separate evidence and remain unset.
+    if (!owner->ClockRestored() || owner->ResetWrites()!=0xffU
+        || owner->TileWrites(0)!=UINT32_MAX || owner->TileWrites(1)!=UINT32_MAX
+        || owner->TileWrites(2)!=UINT32_MAX || owner->TileWrites(3)!=0x00ffffffU
+        || !mapping->fleetAudited || !mapping->dmaAudited || mapping->queueUnsafe
+        || fleet.failure!=PioneerPostResetAuditNone || fleet.pass!=2
+        || fleet.audited!=2*PIONEER_POST_RESET_CORES || fleet.core!=PIONEER_POST_RESET_CORES
+        || fleet.noc!=PIONEER_POST_RESET_NOCS || fleet.index
+        || !l2.sampled || l2.restoreFailed || (l2.reset&0xf0U) || !valid()) return false;
+    PioneerDriverFabricRecoveryProof evidence{};
+    evidence.flags=PIONEER_FABRIC_PROOF_RESET_SEQUENCE | PIONEER_FABRIC_PROOF_CLOCK_RESTORED
+        | PIONEER_FABRIC_PROOF_ALL_CORES_HELD | PIONEER_FABRIC_PROOF_NOC_IDLE
+        | PIONEER_FABRIC_PROOF_HOST_DMA_IDLE;
+    evidence.core_count=PIONEER_POST_RESET_CORES;evidence.retained_owners=1;
+    evidence.fabric_generation=ticket;
+    recoveryFabricEvidence=evidence;
+    if (!valid()) { recoveryFabricEvidence={};return false; }
+    recoveryFabricEvidenceRecorded=true;
+#endif
+    return true;
 }

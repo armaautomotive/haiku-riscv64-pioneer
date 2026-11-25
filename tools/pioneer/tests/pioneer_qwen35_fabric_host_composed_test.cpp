@@ -8,6 +8,8 @@
 #define PIONEER_QWEN35_DEVICE_DISPATCH 1
 #define PIONEER_QWEN35_RECOVERY_RUN_ENABLE 1
 #define PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS 1
+#define PIONEER_QWEN35_FABRIC_GUARD_WITNESS 1
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadState.h"
 using pioneer_driver_recovery_guard_v2_info=Guard;
 using PioneerQ35FabricArcCompileOwner=Owner;
 using thread_id=int;using team_id=int;
@@ -28,6 +30,8 @@ static bool sColdRecoveryRequired=true,sBankStorageOnly=true,sReloadQuiesced=fal
 struct PioneerStoreContext {
     PioneerPostResetMapping* recoveryMapping=nullptr;
     Owner* recoveryFabricArcOwner=nullptr;
+    PioneerDriverFabricRecoveryProof recoveryFabricEvidence{};
+    bool recoveryFabricEvidenceRecorded=false;
     bool dispatchOwnerRetained=true,q35PciReservationHeld=true,q35PciReleaseAttempted=false;
     bool bankStorageOnly=true;uint64 bytes=PioneerResidentBanks::Total;
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricRecoveryTransaction.inc"
@@ -61,6 +65,18 @@ int main() {
         assert(result && f.stage==17 && f.mapping.q35CloseComplete && f.context.recoveryFabricArcOwner
             && f.context.recoveryFabricArcOwner->CurrentPhase()==Owner::Retired
             && sColdRecoveryRequired && !f.mapping.queueUnsafe && f.queue.notifications==7);
+        const auto& evidence=f.context.recoveryFabricEvidence;
+        assert(f.context.recoveryFabricEvidenceRecorded && evidence.fabric_generation==123
+            && !evidence.firmware_generation && evidence.retained_owners==1
+            && evidence.core_count==120 && evidence.flags==(PIONEER_FABRIC_PROOF_RESET_SEQUENCE
+                | PIONEER_FABRIC_PROOF_CLOCK_RESTORED | PIONEER_FABRIC_PROOF_ALL_CORES_HELD
+                | PIONEER_FABRIC_PROOF_NOC_IDLE | PIONEER_FABRIC_PROOF_HOST_DMA_IDLE)
+            && !evidence.Complete() && !evidence.ReadyToRetireOneOwner());
+        PioneerDriverReloadState guardState;uint64 generation=0,ticket=0,next=0;uint32 faultEpoch=0;
+        assert(guardState.Attach(generation));guardState.Fault(generation);guardState.nextRecoveryTicket=122;
+        assert(guardState.BeginRecovery(generation,3,ticket) && ticket==123);
+        assert(!guardState.CompleteFabricRecovery(ticket,3,evidence,faultEpoch,next)
+            && !next && guardState.cold);
         for (unsigned core=0;core<120;core++) assert(tileReset[core]==0x47800);
         const unsigned before=f.queue.io;assert(!f.Run() && f.queue.io==before);
     }
@@ -68,19 +84,27 @@ int main() {
         Fixture f;dropReset=4;
         assert(!f.Run() && f.stage==5 && f.context.recoveryFabricArcOwner
             && f.context.recoveryFabricArcOwner->CurrentPhase()==Owner::Failed
-            && f.mapping.queueUnsafe && sColdRecoveryRequired);
+            && f.mapping.queueUnsafe && sColdRecoveryRequired && !f.context.recoveryFabricEvidenceRecorded);
         const unsigned before=f.queue.io;assert(!f.Run() && f.queue.io==before);
     }
     {
         Fixture f;dropTile=57;
         assert(!f.Run() && f.stage==8 && f.context.recoveryFabricArcOwner
             && f.context.recoveryFabricArcOwner->CurrentPhase()==Owner::Failed
-            && f.context.recoveryFabricArcOwner->FailedTile()==57 && sColdRecoveryRequired);
+            && f.context.recoveryFabricArcOwner->FailedTile()==57 && sColdRecoveryRequired
+            && !f.context.recoveryFabricEvidenceRecorded);
         const unsigned before=f.queue.io;assert(!f.Run() && f.queue.io==before);
     }
     {
         Fixture f;f.mapping.queueAttempted=true;
         assert(!f.Run() && f.stage==0 && !f.context.recoveryFabricArcOwner && !f.queue.io);
+    }
+    for (unsigned fault=0;fault<2;fault++) {
+        Fixture f;f.mapping.corruptAuditResult=fault==0;f.mapping.corruptL2Result=fault==1;
+        assert(!f.Run() && f.stage==17 && f.context.recoveryFabricArcOwner
+            && f.context.recoveryFabricArcOwner->CurrentPhase()==Owner::Retired
+            && f.mapping.q35CloseComplete && sColdRecoveryRequired
+            && !f.context.recoveryFabricEvidenceRecorded);
     }
     {
         Fixture f;loseTicketOnDelete=0;

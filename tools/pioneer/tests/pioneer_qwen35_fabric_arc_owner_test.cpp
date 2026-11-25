@@ -4,7 +4,8 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerComputeFleet.h"
 using uint32=uint32_t;using uint64=uint64_t;using area_id=int;
 enum { B_OK=0,B_PAGE_SIZE=4096,B_ANY_KERNEL_ADDRESS=0,B_UNCACHED_MEMORY=1,
-    B_KERNEL_READ_AREA=2,B_KERNEL_WRITE_AREA=4,PIONEER_POST_RESET_CORES=120 };
+    B_KERNEL_READ_AREA=2,B_KERNEL_WRITE_AREA=4,PIONEER_POST_RESET_CORES=120,PIONEER_POST_RESET_NOCS=2,
+    PioneerPostResetAuditNone=0 };
 static FabricQueue* device=nullptr;
 static uint32 msiPage[1024]{};
 static uint32 resetPage[1024]{};
@@ -129,8 +130,11 @@ static void PioneerWrite32(volatile uint32* p,uint32 value) {
 static bool failSnooze=false;
 static int snooze(int) { if (failSnooze) return -1;device->Pause();return B_OK; }
 struct Profile { uint64 bar0_host_start=0x100000000ULL; };
-struct PioneerPostResetAuditResult {};
-struct PioneerQ35PostResetL2Result {};
+struct PioneerPostResetAuditResult {
+    unsigned failure=PioneerPostResetAuditNone,pass=0,core=PIONEER_POST_RESET_CORES;
+    unsigned noc=PIONEER_POST_RESET_NOCS,index=0,audited=0;
+};
+struct PioneerQ35PostResetL2Result { uint32 reset=UINT32_MAX;bool sampled=false,restoreFailed=false; };
 struct PioneerPostResetMapping {
     Profile profile;bool ready=true,firmwareReady=true,topologyReady=true,savedValid=true;
     bool queueAttempted=false,queueUnsafe=false,dmaModified=false;
@@ -146,14 +150,16 @@ struct PioneerPostResetMapping {
     uint32 queueBase=0,queueRequest=0;
     uint32 saved[3]={1,2,3};
     tt_arc_telemetry_result firmwareTelemetry=FabricQueue::Health();
-    bool pciReady=true;unsigned sourceReads=0;
+    bool pciReady=true,corruptAuditResult=false,corruptL2Result=false;unsigned sourceReads=0;
     bool PciReady() const { return pciReady; }
     bool SourceStable() { ++sourceReads;return pciReady; }
     template<class Check> bool PciReadyQ35(Check& check) { return check() && PciReady() && check(); }
     template<class Check> bool SourceStableQ35(Check& check) { return check() && SourceStable() && check(); }
     uint32 TlbRead(unsigned w) { return device->TlbRead(w); }
     void TlbWrite(unsigned w,uint32 value) { device->TlbWrite(w,value); }
-    bool Audit(PioneerPostResetAuditResult&) {
+    bool Audit(PioneerPostResetAuditResult& result) {
+        result={};result.pass=2;result.audited=2*PIONEER_POST_RESET_CORES;
+        if (corruptAuditResult) --result.audited;
         fleetAudited=true;dmaAudited=false;selected=119;
         for (unsigned word=0;word<3;word++) device->tlb[word]=BlackholeDramFixedTlbWord(0xffa00000U,
             PioneerWorkerX(selected),PioneerWorkerY(selected),true,word);
@@ -162,7 +168,9 @@ struct PioneerPostResetMapping {
     template<class Check> bool AuditQ35Fabric(PioneerPostResetAuditResult& result,Check& check) {
         return check() && Audit(result) && check();
     }
-    bool AuditQ35L2CpuHeld(PioneerQ35PostResetL2Result&) { return fleetAudited; }
+    bool AuditQ35L2CpuHeld(PioneerQ35PostResetL2Result& result) {
+        result.reset=0;result.sampled=!corruptL2Result;return fleetAudited;
+    }
     template<class Check> bool AuditQ35L2CpuHeldGuarded(PioneerQ35PostResetL2Result& result,Check& check) {
         return check() && AuditQ35L2CpuHeld(result) && check();
     }
