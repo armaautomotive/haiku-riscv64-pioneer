@@ -2060,6 +2060,7 @@ static bool PioneerQ35ResidentDriverRetained(const PioneerQ35ResidentDriverOwner
 static bool PioneerQ35ResidentDriverReleaseAfterReset(PioneerQ35ResidentDriverOwner*,const PioneerDriverRecoveryProof&,uint64_t,pioneer_driver_recovery_guard_v2_info*);
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
 static bool PioneerQ35ResidentDriverReleaseAfterFabric(PioneerQ35ResidentDriverOwner*,const PioneerDriverFabricRecoveryProof&,uint64_t,pioneer_driver_recovery_guard_v2_info*);
+static bool PioneerQ35ResidentDriverFabricRetired(const PioneerQ35ResidentDriverOwner*,uint64_t);
 #endif
 #endif
 static bool PioneerQ35ResidentDriverDestroy(PioneerQ35ResidentDriverOwner*&);
@@ -2566,6 +2567,14 @@ public:
 		retiredAfterFault=true;bound=false;return true;
 #else
 		(void)proof;(void)ticket;(void)guard;return false;
+#endif
+	}
+	bool FabricGraphRetired(uint64_t ticket) const {
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+		return fabricParentRestored && retiredAfterFault && !bound
+			&& PioneerQ35ResidentDriverFabricRetired(residentDriver,ticket);
+#else
+		(void)ticket;return false;
 #endif
 	}
 #endif

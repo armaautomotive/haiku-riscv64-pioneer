@@ -290,6 +290,12 @@ public:
         pioneer_driver_recovery_guard_v2_info* guard) {
         return RetireAfterVerifiedRecovery(proof,ticket,2,guard);
     }
+    bool FabricRetirementRecorded(uint64_t ticket) const {
+        return ticket && recoveryRetiredKind==2 && recoveryRetiredTicket==ticket
+            && !runner.Retained() && !active && !scopeRetained && !reservationRetained
+            && context.qwen35DataflowService
+            && context.qwen35DataflowService->ResidentRecoveredForRetirement(&session);
+    }
 #endif
 #endif
     PioneerQwen35::DataflowResidentSessionResult RunToken(unsigned position,unsigned token,bool decode,unsigned polls,
@@ -362,6 +368,9 @@ static bool PioneerQ35ResidentDriverReleaseAfterReset(PioneerQ35ResidentDriverOw
 static bool PioneerQ35ResidentDriverReleaseAfterFabric(PioneerQ35ResidentDriverOwner* owner,
     const PioneerDriverFabricRecoveryProof& proof,uint64_t ticket,pioneer_driver_recovery_guard_v2_info* guard) {
     return owner && owner->ReleaseAfterVerifiedFabric(proof,ticket,guard);
+}
+static bool PioneerQ35ResidentDriverFabricRetired(const PioneerQ35ResidentDriverOwner* owner,uint64_t ticket) {
+    return owner && owner->FabricRetirementRecorded(ticket);
 }
 #endif
 #endif

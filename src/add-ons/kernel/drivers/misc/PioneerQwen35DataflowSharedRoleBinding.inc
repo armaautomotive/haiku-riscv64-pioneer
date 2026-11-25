@@ -43,6 +43,7 @@ class PioneerQwen35SharedRoleBinding {
     const void* fFabricVerifiedSession=nullptr;
     const void* fFabricVerifiedGraph=nullptr;
     uint64 fFabricVerifiedTicket=0;
+    bool fFabricRetirementRecorded=false;
     PioneerQwen35::DataflowFabricCoreRecoverySequence fFabricCoreSequence;
     template<class Scope,class Check> struct FabricRecoveryAdapter
         : PioneerQwen35RoleFleetPciIO<PioneerSessionIO,Scope,Views,
@@ -426,6 +427,28 @@ public:
             && fContext.q35PciReservationHeld && !fContext.q35PciReleaseAttempted
             && fCodeSnapshot && fRamSnapshot && fOwner.CoveredStateRestored()
             && fViews.FabricFreshCloseComplete() && !fViews.HasMappings();
+    }
+    // The role snapshot owner remains allocated while the fresh session and
+    // graph refer to it. This records only the checked retirement evidence.
+    template<class Check> bool RecordFabricRetirement(uint64 ticket,Check& check) {
+        auto* session=fContext.recoveryFreshSession;
+        auto* graph=fContext.qwen35GraphOwner;
+        auto ready=[&]() {
+            return !fFabricRetirementRecorded && !fFabricConversionAuthorityLost
+                && ticket && ticket==fFabricVerifiedTicket && session && session==fFabricVerifiedSession
+                && session==fContext.recoveryFreshSession && session->RoleOwnerRetirementReady(ticket)
+                && graph && graph==fFabricVerifiedGraph && graph==fContext.qwen35GraphOwner
+                && graph->FabricParentRestored() && graph->FabricGraphRetired(ticket)
+                && fContext.qwen35SharedRoleBinding==this && fContext.recoveryFabricStartTicket==ticket
+                && fContext.recoveryFabricEvidenceRecorded && fContext.recoveryFabricEvidence.ReadyToRetireOneOwner()
+                && fContext.io.fabricHostDisposeComplete && fContext.q35PciReservationHeld
+                && !fContext.q35PciReleaseAttempted && fCodeSnapshot && fRamSnapshot
+                && fOwner.CoveredStateRestored() && fViews.FabricFreshCloseComplete() && !fViews.HasMappings();
+        };
+        if (!check() || !ready() || !check() || !ready()) return false;
+        fFabricRetirementRecorded=true;
+        if (!check()) { fFabricRetirementRecorded=false;return false; }
+        return true;
     }
     bool FabricCoreRecoveryUsable() const {
         return !fFabricConversionAuthorityLost && fContext.recoveryFabricRoleViewsDisposed && fOwner.FabricCoreRecoveryActive()
@@ -1039,6 +1062,12 @@ PioneerQ35FabricRoleRestorationMatches(const PioneerStoreContext& context,
 {
     return context.recoveryFreshSession && ticket && context.recoveryFreshSession->Ticket()==ticket
         && context.qwen35SharedRoleBinding && context.qwen35SharedRoleBinding->FabricRolesAfterParentVerified();
+}
+template<class Check> static bool
+PioneerQ35RecordFabricRoleRetirement(PioneerStoreContext& context,uint64 ticket,Check& check)
+{
+    return context.qwen35SharedRoleBinding
+        && context.qwen35SharedRoleBinding->RecordFabricRetirement(ticket,check);
 }
 #endif
 

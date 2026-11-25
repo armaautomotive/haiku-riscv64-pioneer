@@ -50,6 +50,7 @@ bool PioneerQ35RestoreFabricRoleSequence(Session& session,Context& old,Guard* gu
         || !allowed() || !session.PublishRoleMappingsDisposed(guard,scope)
         || !allowed() || !session.RetireRoleGraph(guard,scope)
         || !allowed() || !session.ReleaseRoleFreshHostPage(guard,scope)
+        || !allowed() || !session.RecordRoleOwnerRetirement(guard,scope)
         || !allowed()) return fail();
     return true;
 }

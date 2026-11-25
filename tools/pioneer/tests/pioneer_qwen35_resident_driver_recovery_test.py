@@ -73,6 +73,7 @@ static void Scenario(unsigned mode) {
     asic.flags=PIONEER_RECOVERY_PROOF_REQUIRED & ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;
     asic.core_count=120;asic.retained_owners=1;asic.reset_generation=asic.firmware_generation=9;
     auto& fp=context->recoveryFabricEvidence;
+    assert(!PioneerQ35ResidentDriverFabricRetired(owner,9));
     fp.flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
     fp.core_count=120;fp.retained_owners=1;fp.fabric_generation=fp.firmware_generation=9;
     auto retire=[&](uint64_t ticket) {
@@ -112,6 +113,8 @@ static void Scenario(unsigned mode) {
     }
     assert(retire(9) && !PioneerQ35ResidentDriverRetained(owner)
         && service->ResidentRecoveredForRetirement(stream.reserved) && retire(9));
+    assert(PioneerQ35ResidentDriverFabricRetired(owner,9)==fabric
+        && !PioneerQ35ResidentDriverFabricRetired(owner,8));
     assert(!(fabric?PioneerQ35ResidentDriverReleaseAfterReset(owner,asic,9,&guard):PioneerQ35ResidentDriverReleaseAfterFabric(owner,fp,9,&guard)));
     assert(!retire(8) && PioneerQ35ResidentDriverDestroy(owner) && !owner);
     delete authority;sRuntimeOwner=nullptr;

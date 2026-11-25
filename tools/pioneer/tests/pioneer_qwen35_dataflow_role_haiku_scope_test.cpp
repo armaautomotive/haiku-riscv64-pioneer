@@ -40,6 +40,7 @@ struct MockRecoverySession {
     PioneerStoreContext* Fresh() const { return fresh; }
     bool RoleReady() const { return roleReady; }
     uint64 Ticket() const { return ticket; }
+    bool RoleOwnerRetirementReady(uint64 requested) const { (void)requested;return false; }
 };
 #endif
 #if defined(TEST_SHARED_POST_RESET) && (defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS))
@@ -102,11 +103,12 @@ struct FakeService {
     bool SharedSnapshotFaultStopPending() const { return faultStopPending; }
 };
 struct FakeGraph { bool retained=false; const void* run=nullptr; bool closePermitted=false; unsigned ackCore=UINT32_MAX;
-    bool fabricParentRestored=false;bool FabricParentRestored() const { return fabricParentRestored; } };
+    bool fabricParentRestored=false;bool FabricParentRestored() const { return fabricParentRestored; }
+    bool FabricGraphRetired(uint64) const { return false; } };
 #ifdef TEST_SHARED_FABRIC_VIEWS
 struct PioneerHostPageIO { int32_t area=-1; };
 struct PioneerSessionIO : PioneerHostPageIO {
-    bool fabricOldMmioDisposeComplete=false;
+    bool fabricOldMmioDisposeComplete=false,fabricHostDisposeComplete=false;
     int32_t outputArea=-1,wideArea=-1;
 #else
 struct PioneerSessionIO {

@@ -29,7 +29,7 @@ public:
         ScratchRestoring=8,ScratchVerified=9,Closing=10,LeaseClosed=11,FleetAudited=12,
         PciClosed=13,TransportClosed=14,Retiring=15,HostReleased=16,OwnerRetired=17,Retained=18,
         RoleVerified=19,RoleHostDisposed=20,RoleMappingsProved=21,RoleGraphRetired=22,
-        RoleFreshHostReleased=23 };
+        RoleFreshHostReleased=23,RoleOwnerRetired=24 };
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     struct RoleRestorationReceipt { const void* binding=nullptr;const void* graph=nullptr;uint64 ticket=0; };
 #endif
@@ -153,6 +153,16 @@ public:
             && fOld->recoveryFabricRoleViewsDisposed && fRoleBinding && fGraphOwner
             && fOld->recoveryFreshSession==this && fOld->qwen35SharedRoleBinding==fRoleBinding
             && fOld->qwen35GraphOwner==fGraphOwner;
+    }
+    // Software identity only; caller must validate the ticket and physical
+    // exclusion separately. The old graph and role remain owned here.
+    bool RoleOwnerRetirementReady(uint64 ticket) const {
+        return fRole && fFabric && ticket && ticket==fTicket && fStage==RoleFreshHostReleased
+            && fRoleMappingsEvidencePublished && fRoleGraphRetireAttempted && fRoleFreshHostReleaseAttempted
+            && fOld && fFresh && fOld->recoveryFreshSession==this
+            && fOld->qwen35SharedRoleBinding==fRoleBinding && fOld->qwen35GraphOwner==fGraphOwner
+            && fFresh->host.released && fFresh->host.release_status==B_OK
+            && fFresh->io.FreshRecoveryHostReleased();
     }
 #endif
     template<class Scope> void RetainUncertain(Scope& scope) {
@@ -644,6 +654,20 @@ public:
             || !TicketValid(guard) || !fFresh->host.released || fFresh->host.release_status!=B_OK
             || !fFresh->io.FreshRecoveryHostReleased()) return Retain(scope,RoleFreshHostReleased);
         fStage=RoleFreshHostReleased;return true;
+    }
+    // Record role-owner retirement without destroying it: TicketValid and
+    // the graph still reference this owner until the session is detached.
+    template<class Scope>
+    bool RecordRoleOwnerRetirement(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        if (!RoleOwnerRetirementReady(fTicket)) return false;
+        auto allowed=[&]() {
+            return TicketValid(guard) && RoleOwnerRetirementReady(fTicket)
+                && scope.FreshRoleOwnerRetirementAllowed(*this,*fOld,*fFresh,fRoleReceipt)
+                && TicketValid(guard) && RoleOwnerRetirementReady(fTicket);
+        };
+        if (!allowed() || !PioneerQ35RecordFabricRoleRetirement(*fOld,fTicket,allowed)
+            || !allowed()) return Retain(scope,RoleOwnerRetired);
+        fStage=RoleOwnerRetired;return true;
     }
 #endif
 

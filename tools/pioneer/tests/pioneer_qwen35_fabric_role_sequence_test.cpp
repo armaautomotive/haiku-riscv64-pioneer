@@ -26,6 +26,7 @@ struct Session {
     bool PublishRoleMappingsDisposed(Guard*,Scope&) { return Step(10); }
     bool RetireRoleGraph(Guard*,Scope&) { return Step(11); }
     bool ReleaseRoleFreshHostPage(Guard*,Scope&) { return Step(12); }
+    bool RecordRoleOwnerRetirement(Guard*,Scope&) { return Step(13); }
 };
 struct RoleScope {};struct ParentScope {};struct Bar {};
 struct Role {
@@ -67,11 +68,11 @@ int main() {
         failCheck=failure;
         const bool okay=PioneerQ35RestoreFabricRoleSequence(session,old,&guard,scope,rs,ps,bar,5);
         if (!failure) {
-            assert(okay && !session.retained && operations==std::vector<unsigned>({1,2,3,4,5,6,7,8,9,10,11,12}));
+            assert(okay && !session.retained && operations==std::vector<unsigned>({1,2,3,4,5,6,7,8,9,10,11,12,13}));
             guardChecks=checks;assert(guardChecks>24);
         } else assert(!okay && session.retained);
     }
-    for (unsigned failure=1;failure<=12;failure++) {
+    for (unsigned failure=1;failure<=13;failure++) {
         Reset();Context old,fresh;Role role;Graph graph;Session session;Guard guard;Scope scope;RoleScope rs;ParentScope ps;Bar bar;
         session.fresh=&fresh;old.recoveryFreshSession=&session;old.qwen35SharedRoleBinding=&role;old.qwen35GraphOwner=&graph;
         failStep=failure;

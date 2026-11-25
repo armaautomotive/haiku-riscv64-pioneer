@@ -351,6 +351,7 @@ static void ExerciseFabricViewRetirement(PioneerSessionIO& io)
         && !binding->CanDestroy() && PioneerQ35SharedRoleBindingTestAccess::CodeSnapshot(*binding)==code
         && PioneerQ35SharedRoleBindingTestAccess::RamSnapshot(*binding)==ram);
     assert(!PioneerQ35FabricRoleRestorationMatches(*context,9)); // close alone is not restoration
+    assert(!PioneerQ35RecordFabricRoleRetirement(*context,9,permit)); // no retirement receipt
     // Test teardown only: these mappings and snapshots are simulated.
     delete binding;binding=nullptr;context->recoveryFabricEvidenceRecorded=false;
     context->recoveryFabricPcieAudited=false;context->recoveryFabricPciIdle=false;
