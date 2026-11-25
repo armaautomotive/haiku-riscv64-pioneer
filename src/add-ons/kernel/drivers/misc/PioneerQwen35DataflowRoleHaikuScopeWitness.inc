@@ -205,9 +205,12 @@ public:
         // during service installation still requires separate admission.
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
     && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
-        // The held scratch admission is not authority to map or write role
-        // images. Their staging and restoration have separate owners.
-        if (fContext && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)) return false;
+        // The locked fixed-projection installer may snapshot the selected
+        // held tile's image windows, but not private RAM. Staging and
+        // restoration writes require a separate retained-image authority.
+        if (fContext && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)
+            && (!fContext->qwen35DataflowService || !fContext->qwen35SharedRoleBinding
+                || !fContext->qwen35DataflowService->SharedRoleCapturePending())) return false;
 #endif
         return which<=PioneerQwen35::DataflowRolePhysicalExtraCode
             && core<PioneerQwen35::DataflowBarrierWorkers && io.runtimeCore==core
@@ -255,6 +258,12 @@ public:
     }
 #endif
     bool ProveRoleMemoryWriteSafe(PioneerSessionIO& io,unsigned core,unsigned which,unsigned offset,unsigned bytes) const {
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
+    && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+        // Image-read authority during fixed qualification never implies a
+        // retained snapshot, image-write permission or safe restoration.
+        if (fContext && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)) return false;
+#endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         return which<=PioneerQwen35::DataflowRolePhysicalExtraCode
             && PioneerQwen35::DataflowRolePhysicalWriteRange(which,offset,bytes)
@@ -268,6 +277,9 @@ public:
 // PIONEER_Q35_SCOPE_RESET_CONTROL_BEGIN
     bool ProveRoleControlWriteSafe(PioneerSessionIO& io,unsigned core,uint32_t expected,uint32_t desired) const {
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+        if (fContext && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)) return false;
+#endif
         return ProveRoleMemoryReadSafe(io,core,PioneerQwen35::DataflowRolePhysicalExtraCode)
             && PioneerQ35SharedRoleResetTransition(fContext->qwen35SharedRoleBinding,core,expected,desired)
             && ProveRoleMemoryReadSafe(io,core,PioneerQwen35::DataflowRolePhysicalExtraCode);

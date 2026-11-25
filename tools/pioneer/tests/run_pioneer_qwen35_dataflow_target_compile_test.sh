@@ -848,6 +848,18 @@ awk '/PIONEER_Q35_AUTO_RESTORE_SELECT_BEGIN/ {copying=1;next} /PIONEER_Q35_AUTO_
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     -I"$temporary" "$directory/pioneer_qwen35_auto_restore_install_test.cpp" -o "$temporary/auto-restore-install-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/auto-restore-install-test"
+awk '/PIONEER_Q35_INSTALL_QUALIFICATION_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q35_INSTALL_QUALIFICATION_GUARD_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_install_qualification_guard.inc"
+awk '/PIONEER_Q35_INSTALL_ROUTE_BEGIN/ {copying=1;next} /PIONEER_Q35_INSTALL_ROUTE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_install_route.inc"
+for resident_install in 0 1; do
+    resident_flag=
+    [ "$resident_install" = 0 ] || resident_flag=-DPIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+    ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+        $resident_flag -I"$temporary" "$directory/pioneer_qwen35_qualification_install_route_test.cpp" \
+        -o "$temporary/qualification-install-route-$resident_install"
+    ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/qualification-install-route-$resident_install"
+done
 awk '/PIONEER_Q35_INSTALL_CLEANUP_BEGIN/ {copying=1;next} /PIONEER_Q35_INSTALL_CLEANUP_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_install_cleanup.inc"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \

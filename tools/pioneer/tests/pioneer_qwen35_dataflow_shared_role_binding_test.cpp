@@ -363,8 +363,44 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
     for (unsigned core=0;core<DataflowBarrierWorkers;core++)
         assert(io.SelectRuntimeCore(core) && scope->ProveRoleFleetHeldAndQuiet(io,core));
     assert(io.SelectRuntimeCore(7) && scope->ProveRoleFleetHeldAndQuiet(io,7));
-    assert(!scope->ProveRoleMemoryReadSafe(io,7,DataflowRolePhysicalExtraCode)
+    context->qwen35DataflowService->capturePending=false;
+    assert(!scope->ProveRoleMemoryReadSafe(io,7,DataflowRolePhysicalExtraCode));
+    context->qwen35DataflowService->capturePending=true;
+    assert(scope->ProveRoleMemoryReadSafe(io,7,DataflowRolePhysicalExtraCode)
+        && !scope->ProveRoleMemoryReadSafe(io,7,DataflowRolePhysicalBriscRam)
+        && !scope->ProveRoleMemoryReadSafe(io,8,DataflowRolePhysicalExtraCode)
         && !scope->ProveRoleMemoryWriteSafe(io,7,DataflowRolePhysicalExtraCode,0,4));
+    for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+        assert(io.SelectRuntimeCore(core)
+            && scope->ProveRoleMemoryReadSafe(io,core,DataflowRolePhysicalExtraCode)
+            && !scope->ProveRoleMemoryWriteSafe(io,core,DataflowRolePhysicalExtraCode,0,4)
+            && !scope->ProveRoleControlWriteSafe(io,core,0,DataflowRolePreserveResetMask));
+    }
+    {
+        ResetMaps();gAllowWrite=true;
+        PioneerQwen35RoleHaikuMap platform;
+        DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap> views(platform);
+        PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness> route(io,*scope);
+        assert(views.Open(io.profile.bar0_host_start,io.profile.bar0_host_end,route));
+        PioneerQwen35RoleFleetPciIO<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness,decltype(views)>
+            fleet(io,*scope,views);
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            uint32_t saved=0,shim=0,boot=0,replacement=0x11223344;
+            assert(fleet.Read(core,DataflowRoleExtraL1Address,&saved,sizeof(saved))
+                && saved==0x76540000U+DataflowRolePhysicalExtraCode
+                && fleet.ReadShim(core,DataflowRoleReaderShimAddress,&shim,sizeof(shim))
+                && shim==0x76540000U+DataflowRolePhysicalShim
+                && fleet.ReadBoot(core,DataflowRoleBriscBootAddress,boot)
+                && boot==0x76540000U+DataflowRolePhysicalBriscBoot
+                && !fleet.Write(core,DataflowRoleExtraL1Address,&replacement,sizeof(replacement))
+                && gMemory[DataflowRolePhysicalExtraCode][0]==saved);
+        }
+        assert(views.Close());ResetMaps();
+    }
+    assert(io.SelectRuntimeCore(7));
+    auto* binding=context->qwen35SharedRoleBinding;context->qwen35SharedRoleBinding=nullptr;
+    assert(!scope->ProveRoleMemoryReadSafe(io,7,DataflowRolePhysicalExtraCode));
+    context->qwen35SharedRoleBinding=binding;
     assert(!scope->ProveRoleFleetHeldAndQuiet(io,8));
     io.nocOutstanding[1][3]=1;assert(!scope->ProveRoleFleetHeldAndQuiet(io,7));io.nocOutstanding[1][3]=0;
     io.reset=0x6000;assert(!scope->ProveRoleFleetHeldAndQuiet(io,7));io.reset=0x47800;
