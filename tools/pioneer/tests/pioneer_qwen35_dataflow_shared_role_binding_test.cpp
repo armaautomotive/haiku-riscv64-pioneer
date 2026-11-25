@@ -71,6 +71,13 @@ struct PioneerQ35SharedRoleBindingTestAccess {
     }
     static bool CloseViews(PioneerQwen35SharedRoleBinding& binding) { return binding.fViews.Close(); }
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    static bool SelectCaptureRoot(PioneerQwen35SharedRoleBinding& binding) {
+        auto* scope=binding.Scope();
+        if (!scope) return false;
+        PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness>
+            route(binding.fContext.io,*scope);
+        return binding.SelectQualificationCaptureRoot(*scope,route);
+    }
     static void ExerciseSnapshotHoldLedger(PioneerQwen35SharedRoleBinding& b) {
         constexpr unsigned core=7;
         assert(!PioneerQ35SharedRoleSnapshotHoldTransition(&b,core,false));
@@ -333,6 +340,46 @@ static void ExerciseBinding(PioneerSessionIO& io)
     assert(PioneerQ35DestroySharedRoleBinding(context->qwen35SharedRoleBinding));
     context->qwen35SharedRoleBinding=nullptr;
 }
+
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET) \
+    && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+static void ExerciseQualificationCaptureRoot(PioneerSessionIO& io)
+{
+    auto* context=io.qwen35DataflowContext;
+    assert(context && io.qwen35BorrowedRoleScope && context->qwen35DataflowService);
+    ResetMaps();gAllowWrite=true;
+    context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
+    auto* binding=context->qwen35SharedRoleBinding;assert(binding);
+    io.simulateArc=true;io.simulateHdma=true;io.firmwareMatches=true;
+    context->qwen35DataflowService->capturePending=true;
+    assert(io.SelectRuntimeCore(119));
+    gQualificationHeldOwnerAllowed=false;
+    const unsigned before=io.selectCalls;
+    assert(!PioneerQ35SharedRoleBindingTestAccess::SelectCaptureRoot(*binding)
+        && io.runtimeCore==119 && io.selectCalls==before);
+    gQualificationHeldOwnerAllowed=true;
+    assert(PioneerQ35SharedRoleBindingTestAccess::SelectCaptureRoot(*binding) && io.runtimeCore==0);
+    const unsigned selectedRoot=io.selectCalls;
+    assert(PioneerQ35SharedRoleBindingTestAccess::SelectCaptureRoot(*binding)
+        && io.selectCalls==selectedRoot);
+    assert(io.SelectRuntimeCore(119));io.tlb0Override=true;
+    const unsigned invalidRoute=io.selectCalls;
+    assert(!PioneerQ35SharedRoleBindingTestAccess::SelectCaptureRoot(*binding)
+        && io.selectCalls==invalidRoute && !sColdRecoveryRequired);
+    assert(io.SelectRuntimeCore(119));io.failNextSelection=true;
+    assert(!PioneerQ35SharedRoleBindingTestAccess::SelectCaptureRoot(*binding)
+        && sColdRecoveryRequired && io.tlb0Override && io.runtimeCore==119);
+    sColdRecoveryRequired=false; // simulated external repair of the partial TLB write
+    assert(io.SelectRuntimeCore(119));
+    // The real inspector restores worker 119, then the binding must select
+    // worker zero before held inspection. Later preparation remains denied.
+    assert(!io.SharedCaptureAndStageHeld() && io.runtimeCore==0 && !sColdRecoveryRequired
+        && gMapCalls==DataflowRolePhysicalControl+1);
+    assert(io.SharedFinalizeBeforeResume() && PioneerQ35DestroySharedRoleBinding(binding));
+    context->qwen35SharedRoleBinding=nullptr;gQualificationHeldOwnerAllowed=false;
+    io.simulateArc=false;io.simulateHdma=false;ResetMaps();
+}
+#endif
 
 static void ExerciseStatusSampling(PioneerSessionIO& io)
 {
@@ -847,6 +894,11 @@ int main()
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
     gBorrowedScopeHook=ExerciseStatusSampling;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET) \
+    && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+    gBorrowedScopeHook=ExerciseQualificationCaptureRoot;
+    assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+#endif
     ResetMaps();gBorrowedScopeHook=ExerciseInspectionRestoreFailure;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK && sColdRecoveryRequired);
     sColdRecoveryRequired=false; // simulated external recovery, not a driver operation

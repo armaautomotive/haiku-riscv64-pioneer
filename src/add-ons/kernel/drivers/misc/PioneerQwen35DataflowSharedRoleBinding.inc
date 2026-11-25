@@ -66,6 +66,23 @@ class PioneerQwen35SharedRoleBinding {
         auto* scope=fContext.io.qwen35BorrowedRoleScope;
         return scope && scope->ProveExclusiveRewrite(fContext.io)?scope:NULL;
     }
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) \
+    && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+    // The inspection restores its incoming route, which can be worker 119
+    // after the service's hold loop. Select root before asking for its
+    // selected-worker held proof. A failed TLB selection is not retried.
+    bool SelectQualificationCaptureRoot(PioneerQwen35RoleBorrowedScopeWitness& scope,
+        PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness>& route) {
+        auto& io=fContext.io;
+        if (!scope.CanSelectRoleHeldCore(io,0) || !route.ProveSelectedRoute(io.runtimeCore)) return false;
+        if (io.runtimeCore==0) return true;
+        if (!io.SelectRuntimeCore(0) || !io.DataflowPanelMappingStable()
+            || !route.ProveSelectedRoute(0) || !scope.CanSelectRoleHeldCore(io,0)) {
+            sColdRecoveryRequired=true;return false;
+        }
+        return true;
+    }
+#endif
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
 public:
     // A fresh sample is visible only during the same locked CoreReady call.
@@ -320,6 +337,9 @@ public:
         // This does not establish absence of firmware writes or enable release.
         if (!scope->BeginDedicatedObservedStage(fContext.io) || !OpenForRecovery(*scope)) return false;
 #else
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE)
+        if (!SelectQualificationCaptureRoot(*scope,route)) return false;
+#endif
         if (!scope->ProveRoleFleetHeldAndQuiet(fContext.io,0) || !OpenForRecovery(*scope)) return false;
 #endif
         Adapter io(fContext.io,*scope,fViews);
