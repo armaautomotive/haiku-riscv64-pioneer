@@ -81,6 +81,9 @@ struct PioneerQ35SharedRoleBindingTestAccess {
     static bool HeldImagesCaptured(const PioneerQwen35SharedRoleBinding& binding) {
         return binding.fOwner.StacklessHeldImagesCaptured();
     }
+    static void MarkReleaseAttempt(PioneerQwen35SharedRoleBinding& binding,unsigned core,bool value) {
+        binding.fReleaseAttempted[core]=value;
+    }
     static void ExerciseSnapshotHoldLedger(PioneerQwen35SharedRoleBinding& b) {
         constexpr unsigned core=7;
         assert(!PioneerQ35SharedRoleSnapshotHoldTransition(&b,core,false));
@@ -382,8 +385,20 @@ static void ExerciseQualificationCaptureRoot(PioneerSessionIO& io)
         && PioneerQ35SharedRoleBindingTestAccess::HeldImagesCaptured(*binding)
         && io.sharedResetWrites==resetWrites
         && gMemory[DataflowRolePhysicalExtraCode][0]==0x76540000U+DataflowRolePhysicalExtraCode);
+    assert(!PioneerQ35CanAbortUnstagedQualification(binding));
+    context->qwen35DataflowService->capturePending=false;
+    context->qwen35DataflowService->faulted=true;
+    assert(PioneerQ35CanAbortUnstagedQualification(binding));
+    PioneerQ35SharedRoleBindingTestAccess::MarkReleaseAttempt(*binding,119,true);
+    assert(!PioneerQ35CanAbortUnstagedQualification(binding));
+    PioneerQ35SharedRoleBindingTestAccess::MarkReleaseAttempt(*binding,119,false);
+    io.reset=0x6000;assert(!PioneerQ35CanAbortUnstagedQualification(binding));io.reset=0x47800;
+    io.tlb0Override=true;assert(!PioneerQ35CanAbortUnstagedQualification(binding));io.tlb0Override=false;
+    sColdRecoveryRequired=true;assert(!PioneerQ35CanAbortUnstagedQualification(binding));sColdRecoveryRequired=false;
+    assert(PioneerQ35CanAbortUnstagedQualification(binding));
     assert(io.SharedFinalizeBeforeResume() && PioneerQ35DestroySharedRoleBinding(binding));
     context->qwen35SharedRoleBinding=nullptr;gQualificationHeldOwnerAllowed=false;
+    context->qwen35DataflowService->faulted=false;context->qwen35DataflowService->capturePending=true;
     io.simulateArc=false;io.simulateHdma=false;ResetMaps();
 }
 #endif

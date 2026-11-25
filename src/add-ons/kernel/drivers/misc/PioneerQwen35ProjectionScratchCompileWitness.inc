@@ -68,6 +68,11 @@ public:
             && scratch.MatchesStagedLease(0,Fixture::ScratchAddress,Fixture::ScratchBytes)
             && scratch.MatchesBankClaim(context->banks,context->baseline.baseline.baseline.baseline.dram);
     }
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) \
+    && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+    bool QualificationRestoreUnstagedRoute(const PioneerQ35ProjectionScratch&,
+        const PioneerStoreContext&) const { return false; }
+#endif
     bool QualificationInstallationAllowed(const PioneerQ35ProjectionScratch& scratch,
         const PioneerStoreContext& requested) const {
         return QualificationPrepareRoutesAllowed(scratch,requested) && context->qwen35DataflowRoutesAudited;

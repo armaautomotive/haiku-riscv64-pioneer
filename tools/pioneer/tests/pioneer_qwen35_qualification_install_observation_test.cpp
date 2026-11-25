@@ -41,6 +41,9 @@ struct InstallationIO : MockDataflowIO {
 
 int main() {
     PioneerStoreContext context;
+    PioneerQwen35RoleBorrowedScopeWitness borrowed;borrowed.held=true;
+    context.io.qwen35BorrowedRoleScope=&borrowed;
+    PioneerQ35ProjectionQualificationScope scope(context);
     assert(context.qwen35QualificationOwner.Allocate());
     context.qwen35QualificationInternalActive=true;
     FakeRoleBinding binding;
@@ -56,5 +59,15 @@ int main() {
     assert(service.Faulted() && context.Unsafe() && context.UnsafeForQ35HeldObservation()
         && !PioneerQ35QualificationHeldOwnerAllowed(context,context.io));
     assert(io->startCount==0 && io->roleStages==0);
-    std::puts("PASS actual install callback, held observation admission and fault denial; SIMULATED ONLY");
+    assert(service.Close(*io)==DataflowServiceClosed && service.Closed()
+        && io->restoreCount==DataflowCoreCount && io->resumeCount==1);
+    context.qwen35SharedRoleBinding=nullptr;context.qwen35DataflowMemory=nullptr;
+    assert(context.io.SelectRuntimeCore(119));
+    auto* scratch=context.qwen35QualificationOwner.Scratch();assert(scratch);
+    assert(scope.QualificationRestoreUnstagedRoute(*scratch,context) && context.io.runtimeCore==0);
+    assert(context.io.SelectRuntimeCore(119));
+    context.io.failSelection=0;context.io.failSelectionAfter=context.io.selects;
+    assert(!scope.QualificationRestoreUnstagedRoute(*scratch,context)
+        && context.qwen35QualificationOwner.Retained() && sColdRecoveryRequired);
+    std::puts("PASS install denial, audited service close and unstaged route restoration; SIMULATED ONLY");
 }

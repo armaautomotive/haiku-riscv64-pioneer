@@ -38,6 +38,7 @@ class PioneerQwen35SharedRoleBinding {
     bool fAutoRestoreOnStop=false;
     unsigned fRuntimeObservationCore=PioneerQwen35::DataflowBarrierWorkers;
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    bool fUnstagedQualificationAbort=false;
     bool fSnapshotFleetParked=false;
 #endif
     bool fAutoRestoreParked[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -85,6 +86,28 @@ class PioneerQwen35SharedRoleBinding {
 #endif
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
 public:
+    // This admits only an attempted cleanup, not a completed restoration.
+    // The service's normal close still audits and restores every worker.
+    bool CanAbortUnstagedQualification() {
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+        auto* scope=Scope();auto& io=fContext.io;
+        if (!fUnstagedQualificationAbort || !scope || sColdRecoveryRequired
+            || fContext.qwen35SharedRoleBinding!=this || !fContext.qwen35DataflowService
+            || !fContext.qwen35DataflowService->Faulted() || !fCaptureAttempted
+            || fReleaseAuthorized || !fViews.Opened() || !fViews.ImageWritesConfirmed()
+            || !fCodeSnapshot || !fRamSnapshot || !fOwner.StacklessHeldImagesCaptured()
+            || io.runtimeCore>=PioneerQwen35::DataflowBarrierWorkers) return false;
+        for (unsigned core=0;core<PioneerQwen35::DataflowBarrierWorkers;core++)
+            if (fReleaseAttempted[core] || fStackReleaseAttempted[core] || fHoldAttempted[core]) return false;
+        PioneerQwen35RoleRouteGuard<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness> route(io,*scope);
+        return route.ProveSelectedRoute(io.runtimeCore)
+            && PioneerQwen35WithSelectedClock(io,io.runtimeCore,[&]() {
+                return io.ResetRead()==0x47800 && io.ResetRead()==0x47800;
+            }) && route.ProveSelectedRoute(io.runtimeCore) && Scope()==scope;
+#else
+        return false;
+#endif
+    }
     // A fresh sample is visible only during the same locked CoreReady call.
     bool RuntimeObservationActive(unsigned core) const {
         return core<PioneerQwen35::DataflowBarrierWorkers && fRuntimeObservationCore==core
@@ -352,7 +375,12 @@ public:
                     fRamSnapshot,DataflowRoleFleetRecoveryOwner::RamWords(),io)) return false;
             // The held-image capture itself does not prove staging, prior
             // private-RAM preservation, or partial-release recovery.
-            if (!scope->ProveRoleStacklessFleetPreparationSafe(fContext.io,fContext.io.runtimeCore)) return false;
+            if (!scope->ProveRoleStacklessFleetPreparationSafe(fContext.io,fContext.io.runtimeCore)) {
+                fUnstagedQualificationAbort=fViews.ImageWritesConfirmed()
+                    && scope->CanSelectRoleHeldCore(fContext.io,fContext.io.runtimeCore)
+                    && route.ProveSelectedRoute(fContext.io.runtimeCore);
+                return false;
+            }
         } else
 #endif
         if (!fOwner.CaptureAllStackless(fCodeSnapshot,DataflowRoleFleetRecoveryOwner::CodeWords(),
@@ -770,6 +798,13 @@ PioneerQ35SharedRoleSnapshotHoldTransition(const PioneerQwen35SharedRoleBinding*
 }
 
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+static bool
+PioneerQ35CanAbortUnstagedQualification(PioneerQwen35SharedRoleBinding* binding)
+{
+    return binding && binding->CanAbortUnstagedQualification();
+}
+#endif
 static bool
 PioneerQ35SharedRoleProjectionInFlightLedger(const PioneerQwen35SharedRoleBinding* binding)
 {

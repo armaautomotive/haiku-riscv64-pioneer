@@ -860,6 +860,12 @@ for resident_install in 0 1; do
         -o "$temporary/qualification-install-route-$resident_install"
     ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/qualification-install-route-$resident_install"
 done
+awk '/PIONEER_Q35_QUALIFICATION_INSTALL_FAILURE_BEGIN/ {copying=1;next} /PIONEER_Q35_QUALIFICATION_INSTALL_FAILURE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+    "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_qualification_install_failure.inc"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -I"$temporary" "$directory/pioneer_qwen35_qualification_unstaged_abort_test.cpp" \
+    -o "$temporary/qualification-unstaged-abort-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/qualification-unstaged-abort-test"
 awk '/PIONEER_Q35_INSTALL_CLEANUP_BEGIN/ {copying=1;next} /PIONEER_Q35_INSTALL_CLEANUP_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_install_cleanup.inc"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \

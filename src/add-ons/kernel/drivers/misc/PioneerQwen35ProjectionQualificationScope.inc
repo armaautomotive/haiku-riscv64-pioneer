@@ -222,6 +222,32 @@ public:
         },false);
 #endif
     }
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) \
+    && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+    // The service closed before staging. Restore the worker-zero route for
+    // scratch rollback only if the same qualification still owns a held
+    // tile; an uncertain selection retains the session instead of retrying.
+    bool QualificationRestoreUnstagedRoute(const PioneerQ35ProjectionScratch& scratch,
+        const PioneerStoreContext& requested) const {
+        auto* scope=Borrowed();auto& io=c.io;
+        if (&requested!=&c || !scope || !Identity() || !Owned(&scratch)
+            || !c.qwen35QualificationInternalActive || !c.qwen35DataflowService
+            || !c.qwen35DataflowService->Closed() || c.qwen35DataflowMemory
+            || c.qwen35SharedRoleBinding || !PioneerQ35QualificationHeldOwnerAllowed(c,io)
+            || io.runtimeCore>=PioneerQwen35::DataflowCoreCount
+            || !scope->ProveRoleFleetHeldAndQuiet(io,io.runtimeCore)) {
+            Retain(&scratch);return false;
+        }
+        if (io.runtimeCore!=0 && (!io.SelectRuntimeCore(0) || !io.DataflowPanelMappingStable())) {
+            Retain(&scratch);return false;
+        }
+        if (!Identity() || Borrowed()!=scope || !PioneerQ35QualificationHeldOwnerAllowed(c,io)
+            || !scope->ProveRoleFleetHeldAndQuiet(io,0)) {
+            Retain(&scratch);return false;
+        }
+        return true;
+    }
+#endif
     bool QualificationLeaseMatches(const PioneerQ35ProjectionScratch& scratch,unsigned bank,unsigned address,
         unsigned bytes,const unsigned (&routes)[2][PioneerQwen35::Banks]) const {
         if (!Identity() || !Owned(&scratch) || !c.qwen35QualificationInternalActive

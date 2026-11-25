@@ -55,11 +55,13 @@ struct FakeService {
     bool ready=true;
     bool capturePending=false;
     bool graphRunning=false;
+    bool faulted=false;
     bool cleanStopPending=false;
     bool faultStopPending=false;
     bool Ready() const { return ready; }
     bool SharedRoleCapturePending() const { return capturePending; }
     bool GraphRunning() const { return graphRunning; }
+    bool Faulted() const { return faulted; }
     bool SharedDedicatedCleanStopPending() const { return cleanStopPending; }
     bool SharedSnapshotCleanStopPending() const { return cleanStopPending; }
     bool SharedSnapshotFaultStopPending() const { return faultStopPending; }

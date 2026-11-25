@@ -4166,6 +4166,9 @@ static bool PioneerQ35DestroySharedRoleBinding(PioneerQwen35SharedRoleBinding* b
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 static bool PioneerQ35SelectSharedRoleAutoRestore(PioneerQwen35SharedRoleBinding* binding);
 static bool PioneerQ35SharedRoleProjectionRestored(const PioneerQwen35SharedRoleBinding* binding);
+#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+static bool PioneerQ35CanAbortUnstagedQualification(PioneerQwen35SharedRoleBinding* binding);
+#endif
 #endif
 #endif
 #ifdef PIONEER_QWEN35_ROLE_STAGE_QUALIFY
@@ -4972,8 +4975,22 @@ public:
 		if (!scope.QualificationInstallationAllowed(scratch,*this))
 			return PioneerQwen35::DataflowServiceInvalidState;
 		const auto result=InstallDataflowServiceResources(true);
+// PIONEER_Q35_QUALIFICATION_INSTALL_FAILURE_BEGIN
 		if (result!=PioneerQwen35::DataflowServiceComplete
-			&& qwen35DataflowService && qwen35DataflowService->Started()) qwen35QualificationOwner.Retain();
+			&& qwen35DataflowService && qwen35DataflowService->Started()) {
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) \
+	&& defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+			// Only a fully captured, unmodified role fleet can use the normal
+			// audited close and return to the scratch rollback path.
+			if (!PioneerQ35CanAbortUnstagedQualification(qwen35SharedRoleBinding)
+				|| CloseDataflowRewrite()!=PioneerQwen35::DataflowServiceClosed
+				|| !scope.QualificationRestoreUnstagedRoute(scratch,*this))
+				qwen35QualificationOwner.Retain();
+#else
+			qwen35QualificationOwner.Retain();
+#endif
+		}
+// PIONEER_Q35_QUALIFICATION_INSTALL_FAILURE_END
 		return result;
 	}
 // PIONEER_Q35_PROJECTION_RUN_BEGIN
