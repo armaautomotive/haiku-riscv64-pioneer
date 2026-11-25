@@ -99,6 +99,19 @@ int main() {
 		assert(io.DisposeFabricOldMmio(permit)==B_BAD_VALUE && deleted.empty()
 			&& !io.fabricOldMmioDisposeAttempted && io.PioneerHostPageIO::area==20);
 	}
+	for (int roleArea:{11,12,13,20,21,22}) {
+		deleted.clear();failArea=-1;FakeIO io;FabricAreas(io);Permit permit;
+		authorityLive=&permit.live;
+		auto overlaps=[&](area_id area) { return area==roleArea; };
+		assert(io.DisposeFabricOldMmio(permit,overlaps)==B_BAD_VALUE && deleted.empty()
+			&& !io.fabricOldMmioDisposeAttempted && !io.fabricOldMmioDisposeComplete);
+	}
+	{
+		deleted.clear();FakeIO io;FabricAreas(io);Permit permit;authorityLive=&permit.live;
+		auto revoked=[&](area_id) { permit.live=false;return false; };
+		assert(io.DisposeFabricOldMmio(permit,revoked)==B_DEV_NOT_READY && deleted.empty()
+			&& !io.fabricOldMmioDisposeAttempted && !io.fabricOldMmioDisposeComplete);
+	}
 	authorityLive=nullptr;
 	puts("PASS post-reset owner area retirement: proof, duplicate refusal, host-last order and partial-failure retention; SIMULATED OS ONLY");
 }

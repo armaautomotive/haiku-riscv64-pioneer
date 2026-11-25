@@ -546,7 +546,9 @@ struct PioneerStoreContext {
 #endif
 #ifdef TEST_SHARED_FABRIC_VIEWS
     bool recoveryFabricEvidenceRecorded=false,recoveryFabricPcieAudited=false;
+    bool recoveryFabricPciIdle=false,recoveryFabricAuditReleased=false;
     bool q35PciReservationHeld=true,q35PciReleaseAttempted=false;
+    uint64 recoveryFabricStartTicket=0;
     PioneerDriverFabricRecoveryProof recoveryFabricEvidence{};
 #endif
     FakeService* qwen35DataflowService=nullptr; FakeGraph* qwen35GraphOwner=nullptr;

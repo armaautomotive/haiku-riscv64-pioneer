@@ -79,6 +79,10 @@ public:
     }
     bool HostOwnershipValid() const { return HostOwnershipValidForMapping(false); }
     bool HostOwnershipValidAfterAuditRelease() const { return HostOwnershipValidForMapping(true); }
+    bool OwnsAfterAuditRelease(const PioneerStoreContext& context,
+        const pioneer_driver_recovery_guard_v2_info* guard,uint64 ticket) const {
+        return &context==fContext && guard==fGuard && ticket==fTicket && HostOwnershipValidAfterAuditRelease();
+    }
 
     // This is an operational admission for the fixed reset sequence, not a
     // lifetime guarantee about firmware. The caller must have already opened

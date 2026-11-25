@@ -43,6 +43,11 @@ public:
         for (auto mapped:fArea) if (mapped==area) return true;
         return false;
     }
+    bool FabricAreaLayoutValid() const {
+        for (unsigned i=0;i<Count;i++) if (fArea[i]>=0)
+            for (unsigned j=0;j<i;j++) if (fArea[i]==fArea[j]) return false;
+        return true;
+    }
     bool FabricCloseAttempted() const { return fFabricCloseAttempted; }
     bool FabricCloseComplete() const { return fFabricCloseComplete; }
     // Only CPU mappings are removed. The owner and its RAM/code snapshots
@@ -51,9 +56,9 @@ public:
     // other mapping owners. A partial attempt is never replayed here.
     template<class Check,class Protected> bool CloseForFabricRecovery(Check& check,Protected& protectedArea) {
         if (fFabricCloseAttempted || !check()) return false;
+        if (!FabricAreaLayoutValid()) return false;
         for (unsigned i=0;i<Count;i++) if (fArea[i]>=0) {
             if (protectedArea(fArea[i])) return false;
-            for (unsigned j=0;j<i;j++) if (fArea[i]==fArea[j]) return false;
         }
         if (!check()) return false;
         fFabricCloseAttempted=true;fOpen=false;

@@ -49,7 +49,7 @@ status_t DisposeAfterVerifiedReset(const PioneerDriverRecoveryProof& proof)
 // Host DMA buffers, role-owner mappings, bank claims and scratch snapshots
 // remain allocated. The caller's check supplies the exact locked owner and
 // ticket; this operation does not claim complete mapping disposal or recovery.
-template<class Check> status_t DisposeFabricOldMmio(Check& check)
+template<class Check,class Protected> status_t DisposeFabricOldMmio(Check& check,Protected& protectedArea)
 {
 	if (fabricOldMmioDisposeAttempted || postResetDisposeAttempted) return B_NOT_ALLOWED;
 	if (!check()) return B_DEV_NOT_READY;
@@ -64,8 +64,18 @@ template<class Check> status_t DisposeFabricOldMmio(Check& check)
 	area_id* host[]={&this->PioneerHostPageIO::area,&outputArea,&wideArea};
 	const unsigned count=sizeof(mmio)/sizeof(mmio[0]);
 	for (unsigned i=0;i<count;i++) {
+		if (*mmio[i]>=B_OK) {
+			if (!check()) return B_DEV_NOT_READY;
+			if (protectedArea(*mmio[i])) return B_BAD_VALUE;
+			if (!check()) return B_DEV_NOT_READY;
+		}
 		for (unsigned j=0;j<i;j++) if (*mmio[i]>=B_OK && *mmio[i]==*mmio[j]) return B_BAD_VALUE;
 		for (area_id* buffer:host) if (*mmio[i]>=B_OK && *mmio[i]==*buffer) return B_BAD_VALUE;
+	}
+	for (area_id* buffer:host) if (*buffer>=B_OK) {
+		if (!check()) return B_DEV_NOT_READY;
+		if (protectedArea(*buffer)) return B_BAD_VALUE;
+		if (!check()) return B_DEV_NOT_READY;
 	}
 	fabricOldMmioDisposeAttempted=true;
 	for (unsigned i=0;i<count;i++) if (*mmio[i]>=B_OK) {
@@ -77,5 +87,10 @@ template<class Check> status_t DisposeFabricOldMmio(Check& check)
 	}
 	if (!check()) return B_DEV_NOT_READY;
 	runtimeMapped=false;fabricOldMmioDisposeComplete=true;return B_OK;
+}
+template<class Check> status_t DisposeFabricOldMmio(Check& check)
+{
+	auto noProtectedAreas=[](area_id) { return false; };
+	return DisposeFabricOldMmio(check,noProtectedAreas);
 }
 #endif

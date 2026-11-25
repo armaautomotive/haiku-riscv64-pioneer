@@ -384,6 +384,7 @@ public:
     // Mapping metadata is exposed so the caller can check role areas against
     // the old session areas *before* either owner removes any mappings.
     bool FabricViewsReferenceArea(int32_t area) const { return fViews.ReferencesArea(area); }
+    bool FabricViewsLayoutValid() const { return fViews.FabricAreaLayoutValid(); }
     bool FabricViewsDisposed() const { return fViews.FabricCloseComplete(); }
     template<class Check> bool DisposeFabricViews(Check& check) {
         if (fContext.qwen35SharedRoleBinding!=this || !sColdRecoveryRequired
@@ -990,6 +991,36 @@ static bool PioneerQ35SharedRoleCopiesCaptured(const PioneerQwen35SharedRoleBind
     return binding && binding->StacklessCopiesCaptured(core);
 }
 static_assert(alignof(PioneerQwen35SharedRoleBinding)<=alignof(void*),"shared role binding requires ordinary kernel allocation");
+
+#ifdef PIONEER_QWEN35_FABRIC_HOST_CONTROLLER
+static bool
+PioneerQ35FabricRoleViewsLayoutValid(PioneerStoreContext& context)
+{
+    return !context.qwen35SharedRoleBinding || context.qwen35SharedRoleBinding->FabricViewsLayoutValid();
+}
+static bool
+PioneerQ35FabricRoleViewsReferenceArea(PioneerStoreContext& context,int32_t area)
+{
+    return context.qwen35SharedRoleBinding && context.qwen35SharedRoleBinding->FabricViewsReferenceArea(area);
+}
+static bool
+PioneerQ35FabricDisposeRoleViews(PioneerStoreContext& context,PioneerQ35FabricHostScope& scope,
+    pioneer_driver_recovery_guard_v2_info* guard,uint64 ticket)
+{
+    auto* binding=context.qwen35SharedRoleBinding;
+    auto check=[&]() {
+        return context.qwen35SharedRoleBinding==binding && scope.OwnsAfterAuditRelease(context,guard,ticket)
+            && context.recoveryFabricPciIdle && context.recoveryFabricAuditReleased
+            && context.recoveryFabricPcieAudited && context.recoveryFabricEvidenceRecorded
+            && context.recoveryFabricStartTicket==ticket && context.recoveryFabricEvidence.fabric_generation==ticket
+            && context.recoveryFabricEvidence.firmware_generation==ticket
+            && context.recoveryFabricEvidence.ReadyForScratchRestore();
+    };
+    if (!check()) return false;
+    if (!binding) return check();
+    return binding->DisposeFabricViews(check) && check() && binding->FabricViewsDisposed() && !binding->CanDestroy();
+}
+#endif
 
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
 // Compile the real binding with the fabric-only methods. The synthetic

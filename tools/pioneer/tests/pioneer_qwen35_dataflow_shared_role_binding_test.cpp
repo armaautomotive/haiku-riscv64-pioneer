@@ -27,6 +27,18 @@
 #define main qwen35_haiku_scope_test_main
 #include "pioneer_qwen35_dataflow_role_haiku_scope_test.cpp"
 #undef main
+#ifdef TEST_SHARED_FABRIC_VIEWS
+struct pioneer_driver_recovery_guard_v2_info {};
+struct PioneerQ35FabricHostScope {
+    PioneerStoreContext* context=nullptr;pioneer_driver_recovery_guard_v2_info* guard=nullptr;
+    uint64 ticket=0;bool allowed=true;
+    bool OwnsAfterAuditRelease(const PioneerStoreContext& requested,
+        const pioneer_driver_recovery_guard_v2_info* requestedGuard,uint64 requestedTicket) const {
+        return allowed && context==&requested && guard==requestedGuard && ticket==requestedTicket;
+    }
+};
+#define PIONEER_QWEN35_FABRIC_HOST_CONTROLLER 1
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35DataflowSharedRoleBinding.inc"
 
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
@@ -296,25 +308,33 @@ static void ExerciseFabricViewRetirement(PioneerSessionIO& io)
     const void* ram=PioneerQ35SharedRoleBindingTestAccess::RamSnapshot(*binding);
     assert(code && ram && binding->FabricViewsReferenceArea(0));
     sColdRecoveryRequired=true;
-    auto permit=[]() { return true; };
-    assert(!binding->DisposeFabricViews(permit) && !gUnmapCalls);
+    pioneer_driver_recovery_guard_v2_info guard,otherGuard;
+    PioneerQ35FabricHostScope scope{context,&guard,9,true};
+    assert(PioneerQ35FabricRoleViewsLayoutValid(*context)
+        && PioneerQ35FabricRoleViewsReferenceArea(*context,0));
+    assert(!PioneerQ35FabricDisposeRoleViews(*context,scope,&guard,9) && !gUnmapCalls);
     auto& proof=context->recoveryFabricEvidence;
     proof.flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
         | PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
     proof.core_count=DataflowBarrierWorkers;proof.retained_owners=1;
     proof.fabric_generation=proof.firmware_generation=9;
     context->recoveryFabricEvidenceRecorded=context->recoveryFabricPcieAudited=true;
+    context->recoveryFabricPciIdle=context->recoveryFabricAuditReleased=true;
+    context->recoveryFabricStartTicket=9;
     io.fabricOldMmioDisposeComplete=true;io.PioneerHostPageIO::area=0;
-    assert(!binding->DisposeFabricViews(permit) && !gUnmapCalls); // host-page alias
+    assert(!PioneerQ35FabricDisposeRoleViews(*context,scope,&otherGuard,9) && !gUnmapCalls);
+    assert(!PioneerQ35FabricDisposeRoleViews(*context,scope,&guard,8) && !gUnmapCalls);
+    assert(!PioneerQ35FabricDisposeRoleViews(*context,scope,&guard,9) && !gUnmapCalls); // host-page alias
     io.PioneerHostPageIO::area=-1;
-    assert(binding->DisposeFabricViews(permit) && binding->FabricViewsDisposed() && gUnmapCalls);
+    assert(PioneerQ35FabricDisposeRoleViews(*context,scope,&guard,9) && binding->FabricViewsDisposed() && gUnmapCalls);
     assert(!binding->CanDestroy() && context->qwen35SharedRoleBinding==binding
         && PioneerQ35SharedRoleBindingTestAccess::CodeSnapshot(*binding)==code
         && PioneerQ35SharedRoleBindingTestAccess::RamSnapshot(*binding)==ram);
-    assert(!binding->DisposeFabricViews(permit));
+    assert(!PioneerQ35FabricDisposeRoleViews(*context,scope,&guard,9));
     // Test teardown only: these mappings and snapshots are simulated.
     delete binding;binding=nullptr;context->recoveryFabricEvidenceRecorded=false;
-    context->recoveryFabricPcieAudited=false;io.fabricOldMmioDisposeComplete=false;
+    context->recoveryFabricPcieAudited=false;context->recoveryFabricPciIdle=false;
+    context->recoveryFabricAuditReleased=false;context->recoveryFabricStartTicket=0;io.fabricOldMmioDisposeComplete=false;
     sColdRecoveryRequired=false;gAllowWrite=false;
 }
 #endif

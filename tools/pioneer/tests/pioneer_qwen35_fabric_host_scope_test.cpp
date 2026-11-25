@@ -65,6 +65,12 @@ int main() {
     assert(!live.HostOwnershipValidAfterAuditRelease());
     context.recoveryMapping=nullptr;
     assert(!live.HostOwnershipValid() && live.HostOwnershipValidAfterAuditRelease());
+    PioneerStoreContext otherContext;
+    pioneer_driver_recovery_guard_v2_info otherGuard;
+    assert(live.OwnsAfterAuditRelease(context,&guard,42)
+        && !live.OwnsAfterAuditRelease(otherContext,&guard,42)
+        && !live.OwnsAfterAuditRelease(context,&otherGuard,42)
+        && !live.OwnsAfterAuditRelease(context,&guard,41));
     PioneerQ35FabricArcCompileOwner attached;
     context.recoveryFabricArcOwner=&attached;assert(!live.HostOwnershipValidAfterAuditRelease());
     context.recoveryFabricArcOwner=nullptr;ticketValid=false;assert(!live.HostOwnershipValidAfterAuditRelease());

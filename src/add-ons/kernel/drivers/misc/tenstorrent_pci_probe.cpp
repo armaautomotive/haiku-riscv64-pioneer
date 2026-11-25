@@ -5273,7 +5273,13 @@ PioneerSessionIO::SharedHostDmaPciSourceStable()
 	return HostPciRead(0,4,2)==0x402 && HostPciRead(1,4,2)==0x402
 		&& BlackholeHostPcieStatus(*this,0,status) && BlackholeHostPcieStatus(*this,1,status);
 }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+#define PIONEER_QWEN35_FABRIC_HOST_CONTROLLER 1
+#endif
 #include "PioneerQwen35DataflowSharedRoleBinding.inc"
+#ifdef PIONEER_QWEN35_FABRIC_HOST_CONTROLLER
+#undef PIONEER_QWEN35_FABRIC_HOST_CONTROLLER
+#endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 static bool
 PioneerQ35AuditedDescriptorContinuity(PioneerStoreContext& context,unsigned core)

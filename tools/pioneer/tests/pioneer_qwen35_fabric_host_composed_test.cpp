@@ -31,11 +31,13 @@ static bool sColdRecoveryRequired=true,sBankStorageOnly=true,sReloadQuiesced=fal
 struct PioneerStoreContext {
     Profile profile;struct {
         void* qwen35BorrowedRoleScope=nullptr;bool fabricOldMmioDisposeComplete=false;
-        template<class Check> status_t DisposeFabricOldMmio(Check& check) {
-            if (!check()) return B_DEV_NOT_READY;
+        template<class Check,class Protected> status_t DisposeFabricOldMmio(Check& check,Protected& protectedArea) {
+            if (!check() || protectedArea(11) || protectedArea(20) || !check()) return B_DEV_NOT_READY;
             fabricOldMmioDisposeComplete=true;return check()?B_OK:B_DEV_NOT_READY;
         }
     } io;
+    int fakeRoleArea=-1;bool fakeRoleLayout=true,fakeRoleActive=false,fakeRoleDisposed=false;
+    bool fakeRoleFail=false,fakeRoleLoseTicket=false;
     bool recoveryFabricStartAttempted=false,recoveryAttempted=false;uint64 recoveryFabricStartTicket=0;
     bool recoveryFabricPciIdleAttempted=false,recoveryFabricPciIdle=false;
     bool recoveryFabricAuditReleaseAttempted=false,recoveryFabricAuditReleased=false;
@@ -69,6 +71,15 @@ template<class IO,class Saved,class Check> static bool PioneerQ35PcieIdleAudit(I
     if (!check() || failPcieAudit) return false;
     result.samples=3;if (loseTicketAfterPcie) { ticketValid=false;return true; }return check();
 }
+static bool PioneerQ35FabricRoleViewsLayoutValid(PioneerStoreContext& c) { return c.fakeRoleLayout; }
+static bool PioneerQ35FabricRoleViewsReferenceArea(PioneerStoreContext& c,int32_t area) { return c.fakeRoleArea==area; }
+static bool PioneerQ35FabricDisposeRoleViews(PioneerStoreContext& c,PioneerQ35FabricHostScope& scope,Guard* guard,uint64 ticket) {
+    if (!scope.OwnsAfterAuditRelease(c,guard,ticket)) return false;
+    if (c.fakeRoleFail) return false;
+    c.fakeRoleDisposed=c.fakeRoleActive;
+    if (c.fakeRoleLoseTicket) ticketValid=false;
+    return scope.OwnsAfterAuditRelease(c,guard,ticket);
+}
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricRecoveryStart.inc"
 
 struct Fixture {
@@ -95,8 +106,8 @@ int main() {
         cookie.context=&context;sRuntimeOwner=sQwen35ExclusiveCookie=&cookie;sReloadQuiesced=false;sOpenCookies=1;
         tt_pioneer_recovery_run result{};
         assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_DEV_NOT_READY
-            && result.stage==PIONEER_RECOVERY_STAGE_FABRIC_PCIE_AUDIT
-            && result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_PCIE_AUDITED
+            && result.stage==PIONEER_RECOVERY_STAGE_FABRIC_ROLE_VIEWS
+            && result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_ROLE_VIEWS_DISPOSED
             && context.recoveryFabricStartAttempted && context.recoveryFabricStartTicket==123
             && context.recoveryFabricEvidenceRecorded && !context.recoveryFabricArcOwner
             && !context.recoveryMapping && context.recoveryFabricAuditReleased
@@ -118,8 +129,30 @@ int main() {
         sRuntimeOwner=&owner;sQwen35ExclusiveCookie=&inspector;sReloadQuiesced=false;sOpenCookies=1;
         tt_pioneer_recovery_run result{};
         assert(Qwen35FabricRecoveryStartLocked(&inspector,&owner,&context,&guard,123,10,20,result)==B_DEV_NOT_READY
-            && result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_PCIE_AUDITED && context.recoveryFabricEvidenceRecorded
+            && result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_ROLE_VIEWS_DISPOSED && context.recoveryFabricEvidenceRecorded
             && !context.recoveryMapping && !context.recoveryFabricArcOwner && context.recoveryFabricAuditReleased && sColdRecoveryRequired);
+        delete context.recoveryMapping;context.recoveryMapping=nullptr;
+    }
+    for (unsigned scenario=0;scenario<6;scenario++) {
+        FabricQueue queue{0,0,0};PioneerStoreContext context;PioneerProbeCookie cookie;Guard guard{Validate};
+        device=&queue;mapCount=deleteCount=0;failMap=failDelete=loseTicketOnDelete=-1;
+        changeQueueOnRead=loseTicketOnRead=-1;ticketValid=sColdRecoveryRequired=true;ResetUnit();
+        cookie.context=&context;sRuntimeOwner=sQwen35ExclusiveCookie=&cookie;sReloadQuiesced=false;sOpenCookies=1;
+        context.fakeRoleActive=true;
+        if (scenario==1) context.fakeRoleArea=11; // old MMIO area alias
+        if (scenario==2) context.fakeRoleArea=20; // retained host buffer alias
+        if (scenario==3) context.fakeRoleLayout=false;
+        if (scenario==4) context.fakeRoleFail=true;
+        if (scenario==5) context.fakeRoleLoseTicket=true;
+        tt_pioneer_recovery_run result{};
+        assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_DEV_NOT_READY);
+        if (!scenario) assert(context.fakeRoleDisposed && context.recoveryFabricPcieAudited
+            && result.stage==PIONEER_RECOVERY_STAGE_FABRIC_ROLE_VIEWS && sColdRecoveryRequired);
+        else if (scenario<4) assert(!context.fakeRoleDisposed && !context.io.fabricOldMmioDisposeComplete
+            && result.stage==PIONEER_RECOVERY_STAGE_FABRIC_OLD_MMIO && sColdRecoveryRequired);
+        else assert(result.stage==PIONEER_RECOVERY_STAGE_FABRIC_ROLE_VIEWS && context.recoveryFabricPcieAudited
+            && context.recoveryFabricAuditReleased && sColdRecoveryRequired
+            && context.fakeRoleDisposed==(scenario==5));
         delete context.recoveryMapping;context.recoveryMapping=nullptr;
     }
     {

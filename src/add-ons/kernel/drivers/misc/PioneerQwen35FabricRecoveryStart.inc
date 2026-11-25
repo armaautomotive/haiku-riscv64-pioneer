@@ -8,6 +8,14 @@
 #error Fabric recovery start is restricted to the non-loadable snapshot witness
 #endif
 #include "PioneerRecoveryProtocol.h"
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+// Implemented by the real role binding after its class definition. These
+// inspect metadata or dispose only CPU mappings; snapshots stay retained.
+static bool PioneerQ35FabricRoleViewsLayoutValid(PioneerStoreContext&);
+static bool PioneerQ35FabricRoleViewsReferenceArea(PioneerStoreContext&,int32_t);
+static bool PioneerQ35FabricDisposeRoleViews(PioneerStoreContext&,PioneerQ35FabricHostScope&,
+    pioneer_driver_recovery_guard_v2_info*,uint64);
+#endif
 static status_t
 Qwen35FabricRecoveryStartLocked(PioneerProbeCookie* inspector,PioneerProbeCookie* owner,
     PioneerStoreContext* context,pioneer_driver_recovery_guard_v2_info* guard,uint64 ticket,
@@ -67,7 +75,14 @@ Qwen35FabricRecoveryStartLocked(PioneerProbeCookie* inspector,PioneerProbeCookie
             && context->recoveryFabricArcOwner && context->recoveryMapping
             && permit();
     };
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    if (!cleanupPermit() || !PioneerQ35FabricRoleViewsLayoutValid(*context) || !cleanupPermit())
+        return B_DEV_NOT_READY;
+    auto roleArea=[&](int32_t area) { return PioneerQ35FabricRoleViewsReferenceArea(*context,area); };
+    const status_t disposed=context->io.DisposeFabricOldMmio(cleanupPermit,roleArea);
+#else
     const status_t disposed=context->io.DisposeFabricOldMmio(cleanupPermit);
+#endif
     if (disposed!=B_OK || !cleanupPermit()) { result.detail=uint32_t(disposed);return B_DEV_NOT_READY; }
     result.stage=PIONEER_RECOVERY_STAGE_FABRIC_AUDIT_RELEASE;
     if (!cleanupPermit() || !context->io.fabricOldMmioDisposeComplete
@@ -106,6 +121,10 @@ Qwen35FabricRecoveryStartLocked(PioneerProbeCookie* inspector,PioneerProbeCookie
     }
     context->recoveryFabricPcieAudited=true;
     result.detail=PIONEER_RECOVERY_DETAIL_FABRIC_PCIE_AUDITED;
+    result.stage=PIONEER_RECOVERY_STAGE_FABRIC_ROLE_VIEWS;
+    if (!PioneerQ35FabricDisposeRoleViews(*context,scope,guard,ticket) || !afterReleasePermit())
+        return B_DEV_NOT_READY;
+    result.detail=PIONEER_RECOVERY_DETAIL_FABRIC_ROLE_VIEWS_DISPOSED;
 #endif
     return B_DEV_NOT_READY; // retained scratch/owners and cold state are not yet restored
 }
