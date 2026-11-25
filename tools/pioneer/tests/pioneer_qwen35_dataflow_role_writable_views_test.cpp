@@ -218,4 +218,5 @@ int main()
         assert(views.Close() && !views.HasMappings());
     }
     std::puts("PASS scoped writable role views, reset-mask restrictions and cleanup faults; SIMULATED ONLY");
+    return 0;
 }

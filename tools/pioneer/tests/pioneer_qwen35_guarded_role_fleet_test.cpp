@@ -20,9 +20,16 @@ struct GuardedFleetIO : PioneerSessionIO {
 };
 struct FleetCheck {
     GuardedFleetIO& io;unsigned calls=0,failAt=0,accessesAtFailure=0;
+    const unsigned* imageReads=nullptr;
     bool operator()() {
-        if (++calls==failAt) { accessesAtFailure=io.accesses;return false; }
+        if (++calls==failAt) { accessesAtFailure=io.accesses+(imageReads?*imageReads:0);return false; }
         return true;
+    }
+};
+struct CountingRoleMap : PioneerQwen35RoleHaikuMap {
+    unsigned reads=0;
+    uint32_t ReadWord(const volatile uint32_t* address) {
+        ++reads;return PioneerQwen35RoleHaikuMap::ReadWord(address);
     }
 };
 int main() {
@@ -54,6 +61,34 @@ int main() {
             && trialDevice.accesses==trialCheck.accessesAtFailure);
         assert(!trial.RoleSelectionAuthorityValid() && trialDevice.accesses==trialCheck.accessesAtFailure);
     }
+    // Exercise the actual adapter -> views -> route guard -> ticket path,
+    // not merely an isolated views guard. Count both route and image reads.
+    ResetMaps();gAllowWrite=true;
+    CountingRoleMap imagePlatform;DataflowRoleWritableViews<CountingRoleMap> imageViews(imagePlatform);
+    GuardedFleetIO mapDevice;
+    PioneerQwen35RoleRouteGuard<GuardedFleetIO,FleetPciTestScope> mapGuard(mapDevice,scope);
+    assert(imageViews.Open(mapDevice.profile.bar0_host_start,mapDevice.profile.bar0_host_end,mapGuard));
+    constexpr unsigned words=130;
+    for (unsigned i=0;i<words;i++) gMemory[DataflowRolePhysicalExtraCode][i]=0x34000000U+i;
+    uint32_t output[words];
+    GuardedFleetIO imageDevice;FleetCheck imageCheck{imageDevice};imageCheck.imageReads=&imagePlatform.reads;
+    PioneerQwen35RoleFleetPciIO<GuardedFleetIO,FleetPciTestScope,decltype(imageViews),Selector>
+        imageFleet(imageDevice,scope,imageViews,imageCheck);
+    assert(imageFleet.Read(119,DataflowRoleExtraL1Address,output,sizeof(output)));
+    for (unsigned i=0;i<words;i++) assert(output[i]==0x34000000U+i);
+    const unsigned imageBoundaries=imageCheck.calls;
+    assert(imageBoundaries>words*2);
+    for (unsigned failure=1;failure<=imageBoundaries;failure++) {
+        GuardedFleetIO trialDevice;FleetCheck trialCheck{trialDevice};
+        trialCheck.failAt=failure;trialCheck.imageReads=&imagePlatform.reads;imagePlatform.reads=0;
+        PioneerQwen35RoleFleetPciIO<GuardedFleetIO,FleetPciTestScope,decltype(imageViews),Selector>
+            trial(trialDevice,scope,imageViews,trialCheck);
+        assert(!trial.Read(119,DataflowRoleExtraL1Address,output,sizeof(output))
+            && trialCheck.calls==failure
+            && trialDevice.accesses+imagePlatform.reads==trialCheck.accessesAtFailure);
+    }
+    assert(imageViews.Close());
     gLocked=false;
-    std::printf("PASS actual held-fleet adapter stops on all %u simulated authority boundaries\n",boundaries);
+    std::printf("PASS actual held-fleet and image adapter stop at all %u/%u simulated authority boundaries\n",
+        boundaries,imageBoundaries);
 }

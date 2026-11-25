@@ -36,6 +36,7 @@ public:
     template<class Selector>
     PioneerQwen35RoleRouteGuard(IO& io,Scope& scope,Selector& selector)
         :fIO(io),fScope(scope),fAccess(io,selector) {}
+    bool RecoveryWordAccessAllowed() { return fAccess.Allowed(); }
     bool ProvePinnedBar(uint64_t start,uint64_t end) {
         return fAccess.Allowed() && fScope.ProveExclusiveRewrite(fIO) && fAccess.Allowed() && fIO.fleetEnabled
             && PioneerMinimumBarLayoutMatches(fIO.profile)

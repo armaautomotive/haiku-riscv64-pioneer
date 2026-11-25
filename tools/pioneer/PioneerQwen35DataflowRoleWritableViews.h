@@ -23,6 +23,13 @@ template<class Platform> class DataflowRoleWritableViews {
     unsigned fBytes[Count]{};
     uint64_t fBarStart=0,fBarEnd=0;
     bool fAttempted=false,fOpen=false,fImageWriteUnconfirmed=false,fControlWriteUnconfirmed=false;
+    // Ordinary guards predate retained-ticket recovery. Recovery guards add
+    // this optional sticky check so a revoked ticket stops within a chunk.
+    template<class Guard>
+    static auto WordAccessAllowed(Guard& guard,int) -> decltype(guard.RecoveryWordAccessAllowed()) {
+        return guard.RecoveryWordAccessAllowed();
+    }
+    template<class Guard> static bool WordAccessAllowed(Guard&,long) { return true; }
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     bool fFabricCloseAttempted=false,fFabricCloseComplete=false;
     bool fFabricFreshOpenAttempted=false,fFabricFreshOpenComplete=false;
@@ -198,8 +205,9 @@ public:
         output=value; return true;
     }
     // Read-only comparison of fixed, contiguous image windows. Route and
-    // access authority are checked around each bounded chunk; the caller
-    // must serialize TLB selection and exclude concurrent image writers.
+    // access authority are checked around each bounded chunk; a recovery
+    // guard also checks its retained ticket before and after each word. The
+    // caller must serialize TLB selection and exclude image writers.
     template<class Guard> bool Matches(unsigned core,unsigned which,unsigned offset,
         const uint32_t* expected,unsigned words,Guard& guard) {
         if (!fOpen || !expected || !words || words>UINT32_MAX/4 || core>=DataflowBarrierWorkers
@@ -212,8 +220,11 @@ public:
             const unsigned start=offset+first*4,end=start+(count-1)*4;
             if (!Route(core,guard) || !guard.ProveReadAllowed(core,which,start)
                 || !guard.ProveReadAllowed(core,which,end) || !Route(core,guard)) return false;
-            for (unsigned i=0;i<count;i++)
-                if (fPlatform.ReadWord(fView[which]+start/4+i)!=expected[first+i]) return false;
+            for (unsigned i=0;i<count;i++) {
+                if (!WordAccessAllowed(guard,0)) return false;
+                const uint32_t value=fPlatform.ReadWord(fView[which]+start/4+i);
+                if (!WordAccessAllowed(guard,0) || value!=expected[first+i]) return false;
+            }
             if (!guard.ProveReadAllowed(core,which,start) || !guard.ProveReadAllowed(core,which,end)
                 || !Route(core,guard)) return false;
             first+=count;
@@ -234,8 +245,12 @@ public:
             const unsigned start=offset+first*4,end=start+(count-1)*4;
             if (!Route(core,guard) || !guard.ProveReadAllowed(core,which,start)
                 || !guard.ProveReadAllowed(core,which,end) || !Route(core,guard)) return false;
-            for (unsigned i=0;i<count;i++)
-                output[first+i]=fPlatform.ReadWord(fView[which]+start/4+i);
+            for (unsigned i=0;i<count;i++) {
+                if (!WordAccessAllowed(guard,0)) return false;
+                const uint32_t value=fPlatform.ReadWord(fView[which]+start/4+i);
+                if (!WordAccessAllowed(guard,0)) return false;
+                output[first+i]=value;
+            }
             if (!guard.ProveReadAllowed(core,which,start) || !guard.ProveReadAllowed(core,which,end)
                 || !Route(core,guard)) return false;
             first+=count;

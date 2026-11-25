@@ -54,6 +54,7 @@ class PioneerQwen35RoleFleetPciIO {
         PioneerQwen35RoleFleetPciIO& fOwner;
     public:
         explicit ImageReadGuard(PioneerQwen35RoleFleetPciIO& owner):fOwner(owner) {}
+        bool RecoveryWordAccessAllowed() { return fOwner.fGuard.RecoveryWordAccessAllowed(); }
         bool ProvePinnedBar(uint64_t start,uint64_t end) { return fOwner.fGuard.ProvePinnedBar(start,end); }
         bool ProveSelectedRoute(unsigned core) { return fOwner.fGuard.ProveSelectedRoute(core); }
         bool ProveReadAllowed(unsigned core,unsigned which,unsigned offset) {
