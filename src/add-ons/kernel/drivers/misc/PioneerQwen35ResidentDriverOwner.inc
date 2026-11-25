@@ -8,6 +8,9 @@
 #endif
 #include "PioneerQwen35ResidentHostPci.h"
 #include "PioneerQwen35ResidentFleetAuditPci.h"
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+#include "PioneerQ35GraphRecoveryProof.h"
+#endif
 #ifdef PIONEER_QWEN35_TREE_SETTLEMENT
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowResidentTreeAudit.h"
 #endif
@@ -65,6 +68,10 @@ class PioneerQ35ResidentDriverOwner {
     Handle* idleHandle=nullptr;
     PioneerQwen35::DataflowProjectionAuthority* idleCandidate=nullptr;
     bool bound=false,scopeRetained=false,reservationRetained=false;
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+    unsigned recoveryRetiredKind=0;
+    uint64_t recoveryRetiredTicket=0;
+#endif
 
     bool BaseSafe() const {
         auto* role=context.io.qwen35BorrowedRoleScope;
@@ -175,6 +182,65 @@ class PioneerQ35ResidentDriverOwner {
         }
         void Pause() { owner.context.io.Pause(); }
     };
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+    bool RecoveryOwnerMatches() const {
+        return graph && context.qwen35GraphOwner==graph && context.qwen35DataflowService
+            && context.qwen35DataflowAuthority && context.recoveryAttempted && context.dispatchOwnerRetained
+            && context.q35PciReservationHeld && !context.q35PciReleaseAttempted
+            && sColdRecoveryRequired && !sReloadQuiesced && sReloadGeneration && sRuntimeOwner
+            && sRuntimeOwner->magic==0x50313030 && sRuntimeOwner->context==&context
+            && sBankStorageOnly && context.bankStorageOnly && context.bytes==PioneerResidentBanks::Total;
+    }
+    bool RecoveryEvidenceMatches(const PioneerDriverRecoveryProof& proof,uint64_t ticket,
+        pioneer_driver_recovery_guard_v2_info* guard) const {
+        return guard && guard->version==2 && guard->validate && guard->validate(ticket)==B_OK
+            && RecoveryOwnerMatches() && context.recoveryFinishPending && context.recoveryFinishTicket==ticket
+            && !memcmp(&proof,&context.recoveryFinishProof,sizeof(proof))
+            && PioneerQ35GraphRecoveryProofMatches(proof,ticket,context.recoveryMapping==NULL,
+                context.io.postResetDisposeComplete) && guard->validate(ticket)==B_OK;
+    }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    bool RecoveryEvidenceMatches(const PioneerDriverFabricRecoveryProof& proof,uint64_t ticket,
+        pioneer_driver_recovery_guard_v2_info* guard) const {
+        return guard && guard->version==2 && guard->validate && guard->validate(ticket)==B_OK
+            && RecoveryOwnerMatches() && context.recoveryFabricEvidenceRecorded
+            && context.recoveryFabricStartTicket==ticket
+            && !memcmp(&proof,&context.recoveryFabricEvidence,sizeof(proof))
+            && PioneerQ35GraphRecoveryProofMatches(proof,ticket,context.recoveryMapping==NULL,
+                context.io.postResetDisposeComplete) && guard->validate(ticket)==B_OK;
+    }
+#endif
+    template<class Proof> struct RecoveryPolicy {
+        PioneerQ35ResidentDriverOwner& owner;const Proof& proof;uint64_t ticket;
+        pioneer_driver_recovery_guard_v2_info* guard;
+        bool ResidentFleetRestored(const Session& requested,const PioneerQwen35::DataflowServiceOwner& service,
+            const Handle& handle,PioneerQwen35::DataflowProjectionAuthority* live,
+            PioneerQwen35::DataflowProjectionAuthority* candidate,PioneerQwen35::DataflowProjectionAuthority*) const {
+            return &requested==&owner.session && &service==owner.context.qwen35DataflowService
+                && &handle==owner.active && live==owner.context.qwen35DataflowAuthority && candidate
+                && owner.scopeRetained && !owner.reservationRetained && owner.RecoveryEvidenceMatches(proof,ticket,guard);
+        }
+        void DeleteResidentRun(Handle* handle) { Policy policy{owner};policy.DeleteResidentRun(handle); }
+        void DeleteResidentCandidate(PioneerQwen35::DataflowProjectionAuthority* p) {
+            Policy policy{owner};policy.DeleteResidentCandidate(p);
+        }
+    };
+    template<class Proof> bool RetireAfterVerifiedRecovery(const Proof& proof,uint64_t ticket,unsigned kind,
+        pioneer_driver_recovery_guard_v2_info* guard) {
+        if (recoveryRetiredKind) return recoveryRetiredKind==kind && recoveryRetiredTicket==ticket
+            && !runner.Retained() && !active && !scopeRetained && !reservationRetained
+            && RecoveryEvidenceMatches(proof,ticket,guard) && context.qwen35DataflowService
+            && context.qwen35DataflowService->ResidentRecoveredForRetirement(&session);
+        if (!bound || !runner.Retained() || !active || reservationRetained
+            || !RecoveryEvidenceMatches(proof,ticket,guard)) return false;
+        RecoveryPolicy<Proof> policy{*this,proof,ticket,guard};
+        if (!runner.ReleaseRetainedAfterRestoration(session,*context.qwen35DataflowService,
+                context.qwen35DataflowAuthority,policy)) return false;
+        if (!context.qwen35DataflowService->ResidentRecoveredForRetirement(&session)
+            || !RecoveryEvidenceMatches(proof,ticket,guard)) return false;
+        scopeRetained=false;recoveryRetiredKind=kind;recoveryRetiredTicket=ticket;return true;
+    }
+#endif
 public:
     PioneerQ35ResidentDriverOwner(PioneerStoreContext& c,PioneerQ35GraphOwner* g,PioneerQ35StreamRecordingWitness& s)
         :context(c),graph(g),stream(s) {}
@@ -206,8 +272,24 @@ public:
     }
     bool CanDestroy() const {
         return !Retained() && !active && (!idleCandidate || idleCandidate!=context.qwen35DataflowAuthority) && (!bound
-            || (context.qwen35DataflowService && context.qwen35DataflowService->Closed()));
+            || (context.qwen35DataflowService && (context.qwen35DataflowService->Closed()
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+                || (session.Faulted() && context.qwen35DataflowService->ResidentRecoveredForRetirement(&session))
+#endif
+            )));
     }
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+    bool ReleaseAfterVerifiedReset(const PioneerDriverRecoveryProof& proof,uint64_t ticket,
+        pioneer_driver_recovery_guard_v2_info* guard) {
+        return RetireAfterVerifiedRecovery(proof,ticket,1,guard);
+    }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    bool ReleaseAfterVerifiedFabric(const PioneerDriverFabricRecoveryProof& proof,uint64_t ticket,
+        pioneer_driver_recovery_guard_v2_info* guard) {
+        return RetireAfterVerifiedRecovery(proof,ticket,2,guard);
+    }
+#endif
+#endif
     PioneerQwen35::DataflowResidentSessionResult RunToken(unsigned position,unsigned token,bool decode,unsigned polls,
         PioneerQwen35::DataflowArgmaxResult& output,unsigned& stage) {
         output={PioneerQwen35::Vocabulary,0,0,0};stage=PioneerQwen35::DataflowDecoderSequenceInvalidRequest;
@@ -269,6 +351,12 @@ static bool PioneerQ35ResidentDriverReady(const PioneerQ35ResidentDriverOwner* o
 static bool PioneerQ35ResidentDriverRetained(const PioneerQ35ResidentDriverOwner* owner) {
     return owner && owner->Retained();
 }
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+static bool PioneerQ35ResidentDriverReleaseAfterReset(PioneerQ35ResidentDriverOwner* owner,
+    const PioneerDriverRecoveryProof& proof,uint64_t ticket,pioneer_driver_recovery_guard_v2_info* guard) {
+    return owner && owner->ReleaseAfterVerifiedReset(proof,ticket,guard);
+}
+#endif
 static PioneerQwen35::DataflowServiceResult PioneerQ35ResidentDriverClose(PioneerQ35ResidentDriverOwner* owner) {
     return owner?owner->Close():PioneerQwen35::DataflowServiceInvalidState;
 }

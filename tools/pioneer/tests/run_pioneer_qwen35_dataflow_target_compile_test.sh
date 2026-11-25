@@ -1271,6 +1271,7 @@ python3 -B "$directory/pioneer_qwen35_resident_owned_runner_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_driver_owner_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_driver_close_fault_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_driver_cache_test.py"
+python3 -B "$directory/pioneer_qwen35_resident_driver_recovery_test.py"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	"$directory/pioneer_qwen35_resident_fleet_audit_test.cpp" -o "$temporary/resident-fleet-audit-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-fleet-audit-test"

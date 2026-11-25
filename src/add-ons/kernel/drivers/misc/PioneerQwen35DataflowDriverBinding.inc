@@ -2053,6 +2053,9 @@ static PioneerQ35ResidentDriverOwner* PioneerQ35ResidentDriverCreate(PioneerStor
 static bool PioneerQ35ResidentDriverBind(PioneerQ35ResidentDriverOwner*);
 static bool PioneerQ35ResidentDriverReady(const PioneerQ35ResidentDriverOwner*,unsigned);
 static bool PioneerQ35ResidentDriverRetained(const PioneerQ35ResidentDriverOwner*);
+#ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+static bool PioneerQ35ResidentDriverReleaseAfterReset(PioneerQ35ResidentDriverOwner*,const PioneerDriverRecoveryProof&,uint64_t,pioneer_driver_recovery_guard_v2_info*);
+#endif
 static bool PioneerQ35ResidentDriverDestroy(PioneerQ35ResidentDriverOwner*&);
 static PioneerQwen35::DataflowServiceResult PioneerQ35ResidentDriverClose(PioneerQ35ResidentDriverOwner*);
 static PioneerQwen35::DataflowGraphSessionResult PioneerQ35ResidentDriverRun(PioneerQ35ResidentDriverOwner*,
@@ -2487,10 +2490,13 @@ public:
 #endif
 	}
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
-	bool ReleaseAfterVerifiedReset(const PioneerDriverRecoveryProof& proof,uint64_t ticket) {
+	bool ReleaseAfterVerifiedReset(const PioneerDriverRecoveryProof& proof,uint64_t ticket,pioneer_driver_recovery_guard_v2_info* guard) {
 #ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
-		(void)proof;(void)ticket;return !residentDriver && !runner.Retained();
+		if (!residentDriver) return !runner.Retained();
+		if (runner.Retained() || !PioneerQ35ResidentDriverReleaseAfterReset(residentDriver,proof,ticket,guard)) return false;
+		retiredAfterFault=true;bound=false;return true;
 #else
+		(void)guard;
 		if (!runner.Retained()) return true;
 		PioneerQ35GraphBackend backend(context,stream,&proof,ticket);
 		return runner.ReleaseRetainedAfterRestoration(context.qwen35DataflowAuthority,backend);
@@ -2550,9 +2556,9 @@ static bool PioneerQ35GraphOwnerFaultAckPermitted(const PioneerQ35GraphOwner* ow
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 static bool
 PioneerQ35GraphOwnerReleaseAfterReset(PioneerQ35GraphOwner* owner,
-	const PioneerDriverRecoveryProof& proof,uint64_t ticket)
+	const PioneerDriverRecoveryProof& proof,uint64_t ticket,pioneer_driver_recovery_guard_v2_info* guard)
 {
-	return !owner || owner->ReleaseAfterVerifiedReset(proof,ticket);
+	return !owner || owner->ReleaseAfterVerifiedReset(proof,ticket,guard);
 }
 #endif
 

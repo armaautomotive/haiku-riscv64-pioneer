@@ -12155,7 +12155,7 @@ Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* contex
 	if (status!=B_OK) return retain(status);
 #endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
-	if (!PioneerQ35GraphOwnerReleaseAfterReset(context->qwen35GraphOwner,proof,ticket))
+	if (!PioneerQ35GraphOwnerReleaseAfterReset(context->qwen35GraphOwner,proof,ticket,guard))
 		return retain(B_DEV_NOT_READY);
 	status=guard->validate(ticket);
 	if (status!=B_OK) return retain(status);

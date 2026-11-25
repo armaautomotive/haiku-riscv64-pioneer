@@ -319,8 +319,9 @@ static bool PioneerQ35ReleaseSharedRoleAfterReset(FakeSharedRoleOwner*& owner,
 	owner=nullptr;return true;
 }
 static bool PioneerQ35GraphOwnerReleaseAfterReset(FakeGraphOwner* owner,
-	const PioneerDriverRecoveryProof& proof,uint64 ticket) {
+	const PioneerDriverRecoveryProof& proof,uint64 ticket,pioneer_driver_recovery_guard_v2_info* guard) {
 	if (!owner) return true;
+	assert(guard==&recoveryGuardV2);
 	if (graphReleased) return true;
 	assert(owner && proof.ReadyToRetireOneOwner() && proof.reset_generation==ticket
 		&& proof.firmware_generation==ticket && ticket==9);
