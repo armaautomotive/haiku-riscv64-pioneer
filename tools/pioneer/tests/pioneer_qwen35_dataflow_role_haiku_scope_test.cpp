@@ -41,6 +41,7 @@ struct MockRecoverySession {
     bool RoleReady() const { return roleReady; }
     uint64 Ticket() const { return ticket; }
     bool RoleOwnerRetirementReady(uint64 requested) const { (void)requested;return false; }
+    bool RoleSessionRetirementReady(uint64 requested) const { (void)requested;return false; }
 };
 #endif
 #if defined(TEST_SHARED_POST_RESET) && (defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS))

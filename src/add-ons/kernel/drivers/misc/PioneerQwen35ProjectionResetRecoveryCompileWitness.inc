@@ -47,6 +47,8 @@ struct PioneerQ35FreshRecoveryCompileScope {
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
     template<class Receipt> bool FreshRoleOwnerRetirementAllowed(PioneerQ35FreshRecoverySession&,
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRoleSessionRetirementAllowed(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
     bool FreshRecoverySetupAccessAllowed(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&,unsigned) const { return allowed; }
 #endif
@@ -121,6 +123,7 @@ PioneerQ35FreshRecoveryCompileWitness(PioneerQ35FreshRecoverySession* session,
     if (action==12) return session->RetireRoleGraph(guard,scope);
     if (action==13) return session->ReleaseRoleFreshHostPage(guard,scope);
     if (action==14) return session->RecordRoleOwnerRetirement(guard,scope);
+    if (action==15) return session->RetireRoleSession(guard,scope);
 #endif
     return action==4 && PioneerQ35RunModifiedRecoveryTransaction<PioneerQ35FreshRecoverySession>(owner,&old,guard,scope)==B_OK;
 }

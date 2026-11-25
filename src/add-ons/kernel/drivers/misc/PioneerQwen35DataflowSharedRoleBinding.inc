@@ -450,6 +450,19 @@ public:
         if (!check()) { fFabricRetirementRecorded=false;return false; }
         return true;
     }
+    bool FabricRetirementRecordedForSession(uint64 ticket) const {
+        auto* session=fContext.recoveryFreshSession;
+        auto* graph=fContext.qwen35GraphOwner;
+        return fFabricRetirementRecorded && !fFabricConversionAuthorityLost
+            && ticket && ticket==fFabricVerifiedTicket && session && session==fFabricVerifiedSession
+            && session->RoleSessionRetirementReady(ticket) && graph && graph==fFabricVerifiedGraph
+            && graph->FabricParentRestored() && graph->FabricGraphRetired(ticket)
+            && fContext.qwen35SharedRoleBinding==this && fContext.recoveryFabricStartTicket==ticket
+            && fContext.recoveryFabricEvidenceRecorded && fContext.recoveryFabricEvidence.ReadyToRetireOneOwner()
+            && fContext.io.fabricHostDisposeComplete && fContext.q35PciReservationHeld
+            && !fContext.q35PciReleaseAttempted && fCodeSnapshot && fRamSnapshot
+            && fOwner.CoveredStateRestored() && fViews.FabricFreshCloseComplete() && !fViews.HasMappings();
+    }
     bool FabricCoreRecoveryUsable() const {
         return !fFabricConversionAuthorityLost && fContext.recoveryFabricRoleViewsDisposed && fOwner.FabricCoreRecoveryActive()
             && fOwner.RestorationRequired() && fViews.FabricFreshOpenComplete()
@@ -1068,6 +1081,12 @@ PioneerQ35RecordFabricRoleRetirement(PioneerStoreContext& context,uint64 ticket,
 {
     return context.qwen35SharedRoleBinding
         && context.qwen35SharedRoleBinding->RecordFabricRetirement(ticket,check);
+}
+static bool
+PioneerQ35FabricRoleRetirementMatches(const PioneerStoreContext& context,uint64 ticket)
+{
+    return context.qwen35SharedRoleBinding
+        && context.qwen35SharedRoleBinding->FabricRetirementRecordedForSession(ticket);
 }
 #endif
 

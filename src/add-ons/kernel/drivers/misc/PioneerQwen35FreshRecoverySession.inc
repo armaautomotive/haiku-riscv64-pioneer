@@ -164,6 +164,17 @@ public:
             && fFresh->host.released && fFresh->host.release_status==B_OK
             && fFresh->io.FreshRecoveryHostReleased();
     }
+    bool RoleSessionRetirementReady(uint64 ticket) const {
+        return fRole && fFabric && ticket && ticket==fTicket && fStage==RoleOwnerRetired
+            && fRoleMappingsEvidencePublished && fRoleGraphRetireAttempted && fRoleFreshHostReleaseAttempted
+            && fOld && fFresh && fOld->recoveryFreshSession==this
+            && fOld->qwen35SharedRoleBinding==fRoleBinding && fOld->qwen35GraphOwner==fGraphOwner
+            && !fFresh->recoveryMapping && fFresh->Pci().restored && !fFresh->transaction.config_attempted
+            && !fFresh->lease.ready && !fFresh->lease.pending && !fFresh->lease.recovery_required
+            && fFresh->lease.l1_restored && fFresh->lease.niu_restored && fFresh->lease.tlb_restored
+            && fFresh->host.released && fFresh->host.release_status==B_OK
+            && fFresh->io.FreshRecoveryHostReleased();
+    }
 #endif
     template<class Scope> void RetainUncertain(Scope& scope) {
         if (fStage==Retained) {
@@ -668,6 +679,25 @@ public:
         if (!allowed() || !PioneerQ35RecordFabricRoleRetirement(*fOld,fTicket,allowed)
             || !allowed()) return Retain(scope,RoleOwnerRetired);
         fStage=RoleOwnerRetired;return true;
+    }
+    // Detach only after both retained owners independently confirm their
+    // matching retirement receipts. The role, graph, snapshots, old bank and
+    // PCI reservation remain with the old context. The metadata-only scope
+    // must prove no remaining reference to fresh-session memory and continuing
+    // physical exclusion; it must not access hardware in its callback.
+    // On success this deletes the session and its fresh context; the caller
+    // must discard the pointer and separately complete owner/reservation cleanup.
+    template<class Scope>
+    bool RetireRoleSession(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        if (!RoleSessionRetirementReady(fTicket)) return false;
+        auto ready=[&]() {
+            return TicketValid(guard) && RoleSessionRetirementReady(fTicket)
+                && PioneerQ35FabricRoleRetirementMatches(*fOld,fTicket);
+        };
+        if (!ready() || !scope.FreshRoleSessionRetirementAllowed(*this,*fOld,*fFresh,fRoleReceipt)
+            || !ready()) return Retain(scope,RoleOwnerRetired);
+        fOld->recoveryFreshSession=nullptr;
+        delete this;return true;
     }
 #endif
 

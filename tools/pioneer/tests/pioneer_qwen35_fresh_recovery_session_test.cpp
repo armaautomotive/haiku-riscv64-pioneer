@@ -265,9 +265,14 @@ static bool PioneerQ35FabricRoleRestorationMatches(const PioneerStoreContext& ol
     return old.fabricRoleRestorationReady && old.recoveryFreshSession && old.qwen35SharedRoleBinding
         && old.qwen35GraphOwner && ticket==kTicket;
 }
-static bool roleRetirementSucceeds=true;
+static bool roleRetirementSucceeds=true,roleRetirementRecorded=false;
 template<class Check> static bool PioneerQ35RecordFabricRoleRetirement(PioneerStoreContext&,uint64 ticket,Check& check) {
-    return ticket==kTicket && check() && roleRetirementSucceeds && Step(24) && check();
+    if (ticket!=kTicket || !check() || !roleRetirementSucceeds || !Step(24) || !check()) return false;
+    roleRetirementRecorded=true;return true;
+}
+static bool PioneerQ35FabricRoleRetirementMatches(const PioneerStoreContext& old,uint64 ticket) {
+    return roleRetirementRecorded && ticket==kTicket && old.recoveryFreshSession
+        && old.qwen35SharedRoleBinding && old.qwen35GraphOwner;
 }
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FreshRecoverySession.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35ModifiedRecoveryTransaction.inc"
@@ -282,6 +287,7 @@ struct Scope {
     bool roleGraphAdmission=true,roleGraphComplete=true;
     bool roleFreshHostAdmission=true,roleFreshHostComplete=true;
     bool roleOwnerRetirementAllowed=true;
+    bool roleSessionRetirementAllowed=true,dropRoleRetirement=false;
     bool replaceRoleAtAdmission=false,replaceGraphAtAdmission=false;
     unsigned auditChecks=0,failAuditAt=0,leaseChecks=0,failLeaseAt=0;
     unsigned setupChecks=0,failSetupAt=0,pciChecks=0,failPciAt=0;
@@ -328,6 +334,11 @@ struct Scope {
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) { return roleFreshHostComplete; }
     template<class Receipt> bool FreshRoleOwnerRetirementAllowed(PioneerQ35FreshRecoverySession&,
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) { return roleOwnerRetirementAllowed; }
+    template<class Receipt> bool FreshRoleSessionRetirementAllowed(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) {
+        if (dropRoleRetirement) roleRetirementRecorded=false;
+        return roleSessionRetirementAllowed;
+    }
     bool FreshRecoverySetupAccessAllowed(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&,unsigned) { return ++setupChecks!=failSetupAt; }
     bool FreshRecoveryAdmission(PioneerQ35FreshRecoverySession&,PioneerProbeCookie*,PioneerStoreContext&,uint64 ticket) {
@@ -379,7 +390,7 @@ struct Scope {
 };
 static void Reset() {
     failedOperation=guardCalls=failGuardAt=0;failFreshAllocation=false;auditSourceMismatch=false;operations.clear();
-    roleRetirementSucceeds=true;
+    roleRetirementSucceeds=true;roleRetirementRecorded=false;
     sColdRecoveryRequired=true;sReloadQuiesced=false;sBankStorageOnly=true;sOpenCookies=1;
 }
 static void CheckRetained(PioneerQ35FreshRecoverySession* session,PioneerStoreContext& old,Scope& scope) {
@@ -717,6 +728,53 @@ int main() {
         PioneerQ35FreshRecoverySession::DisposeSimulated(session);
     }
     std::printf("PASS role-owner receipt: %u simulated ticket-loss boundaries, ownership retained\n",roleOwnerChecks);
+    unsigned roleSessionChecks=0;
+    for (unsigned failure=0;;failure++) {
+        if (failure && failure>roleSessionChecks) break;
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
+        int role=1,graph=2;old.qwen35SharedRoleBinding=&role;old.qwen35GraphOwner=&graph;
+        old.qwen35QualificationOwner.active=false;old.qwen35QualificationOwner.retained=false;
+        old.io.fabricOldMmioDisposeComplete=true;
+        old.recoveryFabricEvidenceRecorded=old.recoveryFabricPciIdleAttempted=old.recoveryFabricPciIdle=true;
+        old.recoveryFabricAuditReleaseAttempted=old.recoveryFabricAuditReleased=old.recoveryFabricRoleViewsDisposed=true;
+        Scope scope;auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(session->PrepareFabricRole(&owner,old,&guard,scope) && session->VerifyRoleRestoration(&guard,scope)
+            && session->CloseRoleTransport(&guard,scope) && session->DisposeRoleOldHostBuffers(&guard,scope)
+            && session->PublishRoleMappingsDisposed(&guard,scope) && session->RetireRoleGraph(&guard,scope)
+            && session->ReleaseRoleFreshHostPage(&guard,scope) && session->RecordRoleOwnerRetirement(&guard,scope)
+            && session->RoleSessionRetirementReady(kTicket));
+        const unsigned before=guardCalls;if (failure) failGuardAt=before+failure;
+        const bool retired=session->RetireRoleSession(&guard,scope);
+        if (!failure) {
+            assert(retired && !old.recoveryFreshSession && old.qwen35SharedRoleBinding==&role
+                && old.qwen35GraphOwner==&graph && old.q35PciReservationHeld && !scope.retained);
+            roleSessionChecks=guardCalls-before;assert(roleSessionChecks>=2);
+        } else {
+            assert(!retired && scope.retained && old.recoveryFreshSession==session && old.q35PciReservationHeld
+                && session->CurrentStage()==PioneerQ35FreshRecoverySession::Retained);
+            assert(!session->RetireRoleSession(&guard,scope));
+            PioneerQ35FreshRecoverySession::DisposeSimulated(session);
+        }
+    }
+    for (unsigned denial=0;denial<2;denial++) {
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
+        int role=1,graph=2;old.qwen35SharedRoleBinding=&role;old.qwen35GraphOwner=&graph;
+        old.qwen35QualificationOwner.active=false;old.qwen35QualificationOwner.retained=false;
+        old.io.fabricOldMmioDisposeComplete=true;
+        old.recoveryFabricEvidenceRecorded=old.recoveryFabricPciIdleAttempted=old.recoveryFabricPciIdle=true;
+        old.recoveryFabricAuditReleaseAttempted=old.recoveryFabricAuditReleased=old.recoveryFabricRoleViewsDisposed=true;
+        Scope scope;auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(session->PrepareFabricRole(&owner,old,&guard,scope) && session->VerifyRoleRestoration(&guard,scope)
+            && session->CloseRoleTransport(&guard,scope) && session->DisposeRoleOldHostBuffers(&guard,scope)
+            && session->PublishRoleMappingsDisposed(&guard,scope) && session->RetireRoleGraph(&guard,scope)
+            && session->ReleaseRoleFreshHostPage(&guard,scope) && session->RecordRoleOwnerRetirement(&guard,scope));
+        if (denial==0) scope.roleSessionRetirementAllowed=false;else scope.dropRoleRetirement=true;
+        assert(!session->RetireRoleSession(&guard,scope) && scope.retained
+            && old.recoveryFreshSession==session && old.q35PciReservationHeld
+            && session->CurrentStage()==PioneerQ35FreshRecoverySession::Retained);
+        PioneerQ35FreshRecoverySession::DisposeSimulated(session);
+    }
+    std::printf("PASS fresh role-session retirement: %u simulated ticket-loss boundaries; owners retained\n",roleSessionChecks);
     unsigned roleCloseGuardChecks=0;
     for (unsigned failAt=0;;failAt++) {
         if (failAt && failAt>roleCloseGuardChecks) break;
