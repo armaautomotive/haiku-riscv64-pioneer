@@ -36,7 +36,10 @@ struct PioneerStoreContext;
 #ifdef TEST_SHARED_FABRIC_VIEWS
 struct MockRecoverySession {
     PioneerStoreContext* fresh=nullptr;
+    bool roleReady=true;uint64 ticket=9;
     PioneerStoreContext* Fresh() const { return fresh; }
+    bool RoleReady() const { return roleReady; }
+    uint64 Ticket() const { return ticket; }
 };
 #endif
 #if defined(TEST_SHARED_POST_RESET) && (defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS))
@@ -553,6 +556,7 @@ struct PioneerStoreContext {
 #ifdef TEST_SHARED_FABRIC_VIEWS
     bool recoveryFabricEvidenceRecorded=false,recoveryFabricPcieAudited=false;
     bool recoveryFabricPciIdle=false,recoveryFabricAuditReleased=false;
+    bool recoveryFabricRoleViewsDisposed=false;
     bool q35PciReservationHeld=true,q35PciReleaseAttempted=false;
     uint64 recoveryFabricStartTicket=0;
     MockRecoverySession* recoveryFreshSession=nullptr;

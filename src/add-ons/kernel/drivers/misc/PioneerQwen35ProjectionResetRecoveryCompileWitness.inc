@@ -11,6 +11,10 @@ struct PioneerQ35FreshRecoveryCompileScope {
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     bool FabricRecoveryTransactionAdmission(PioneerProbeCookie*,PioneerStoreContext&,
         pioneer_driver_recovery_guard_v2_info*) const { return allowed; }
+    bool FreshRoleRecoveryAdmission(PioneerQ35FreshRecoverySession&,PioneerProbeCookie*,
+        PioneerStoreContext&,uint64) const { return allowed; }
+    bool FreshRoleRecoveryRestored(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
+        PioneerStoreContext&) const { return allowed; }
 #endif
     bool FreshRecoveryAdmission(PioneerQ35FreshRecoverySession&,PioneerProbeCookie*,
         PioneerStoreContext&,uint64) const { return allowed; }
@@ -71,6 +75,8 @@ PioneerQ35FreshRecoveryCompileWitness(PioneerQ35FreshRecoverySession* session,
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     if (action==5) return session->PrepareFabric(owner,old,guard,scope);
     if (action==6) return PioneerQ35RunModifiedFabricRecoveryTransaction<PioneerQ35FreshRecoverySession>(owner,&old,guard,scope)==B_OK;
+    if (action==7) return session->PrepareFabricRole(owner,old,guard,scope);
+    if (action==8) return session->VerifyRoleRestoration(guard,scope);
 #endif
     return action==4 && PioneerQ35RunModifiedRecoveryTransaction<PioneerQ35FreshRecoverySession>(owner,&old,guard,scope)==B_OK;
 }

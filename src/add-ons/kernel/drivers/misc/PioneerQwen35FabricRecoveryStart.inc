@@ -33,6 +33,7 @@ Qwen35FabricRecoveryStartLocked(PioneerProbeCookie* inspector,PioneerProbeCookie
         || context->recoveryFabricAuditReleaseAttempted || context->recoveryFabricAuditReleased
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
         || context->recoveryFabricPcieAuditAttempted || context->recoveryFabricPcieAudited
+        || context->recoveryFabricRoleViewsDisposed
 #endif
         || context->recoveryAttempted || context->recoveryMapping || context->recoveryFabricArcOwner
         || !sColdRecoveryRequired || !context->dispatchOwnerRetained || !context->q35PciReservationHeld
@@ -124,6 +125,8 @@ Qwen35FabricRecoveryStartLocked(PioneerProbeCookie* inspector,PioneerProbeCookie
     result.stage=PIONEER_RECOVERY_STAGE_FABRIC_ROLE_VIEWS;
     if (!PioneerQ35FabricDisposeRoleViews(*context,scope,guard,ticket) || !afterReleasePermit())
         return B_DEV_NOT_READY;
+    context->recoveryFabricRoleViewsDisposed=true;
+    if (!afterReleasePermit()) { context->recoveryFabricRoleViewsDisposed=false;return B_DEV_NOT_READY; }
     result.detail=PIONEER_RECOVERY_DETAIL_FABRIC_ROLE_VIEWS_DISPOSED;
 #endif
     return B_DEV_NOT_READY; // retained scratch/owners and cold state are not yet restored

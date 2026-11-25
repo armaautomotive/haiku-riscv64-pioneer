@@ -401,9 +401,10 @@ public:
     bool FabricRecoveryViewsOpen() const { return fViews.FabricFreshOpenComplete(); }
     bool FabricRecoveryViewsClosed() const { return fViews.FabricFreshCloseComplete(); }
     bool FabricCoreRecoveryUsable() const {
-        return !fFabricConversionAuthorityLost && fOwner.FabricCoreRecoveryActive()
+        return !fFabricConversionAuthorityLost && fContext.recoveryFabricRoleViewsDisposed && fOwner.FabricCoreRecoveryActive()
             && fOwner.RestorationRequired() && fViews.FabricFreshOpenComplete()
-            && fContext.recoveryFreshSession;
+            && fContext.recoveryFreshSession && fContext.recoveryFreshSession->RoleReady()
+            && fContext.recoveryFreshSession->Ticket()==fContext.recoveryFabricStartTicket;
     }
     bool FabricCoreAlreadyRestored(unsigned core) const {
         return FabricCoreRecoveryUsable() && fOwner.FabricCoreAlreadyRestored(core);
@@ -426,7 +427,10 @@ public:
     // method proves physical writer exclusion or restores any role state.
     template<class Guard,class Check,class Protected>
     bool OpenFabricRecoveryViews(Guard& guard,Check& check,Protected& freshProtectedArea) {
-        if (fContext.qwen35SharedRoleBinding!=this || !sColdRecoveryRequired || !fContext.recoveryFreshSession
+        auto* session=fContext.recoveryFreshSession;
+        if (fContext.qwen35SharedRoleBinding!=this || !sColdRecoveryRequired || !fContext.recoveryFabricRoleViewsDisposed
+            || !session || !session->RoleReady()
+            || session->Ticket()!=fContext.recoveryFabricStartTicket
             || !fCodeSnapshot || !fRamSnapshot || !FabricViewsDisposed()
             || !fContext.recoveryFabricEvidenceRecorded || !fContext.recoveryFabricPcieAudited
             || !fContext.recoveryFabricEvidence.ReadyForScratchRestore()
@@ -440,7 +444,10 @@ public:
     }
     template<class Check,class Protected>
     bool CloseFabricRecoveryViews(Check& check,Protected& freshProtectedArea) {
-        if (fContext.qwen35SharedRoleBinding!=this || !sColdRecoveryRequired || !fContext.recoveryFreshSession
+        auto* session=fContext.recoveryFreshSession;
+        if (fContext.qwen35SharedRoleBinding!=this || !sColdRecoveryRequired || !fContext.recoveryFabricRoleViewsDisposed
+            || !session || !session->RoleReady()
+            || session->Ticket()!=fContext.recoveryFabricStartTicket
             || !fViews.FabricFreshOpenComplete() || !fContext.q35PciReservationHeld
             || fContext.q35PciReleaseAttempted || !check()) return false;
         auto protectedArea=[&](int32_t area) {
@@ -457,7 +464,9 @@ public:
     bool BeginFabricCoreRecovery(PioneerSessionIO& freshIO,Scope& scope,Check& check) {
         auto* session=fContext.recoveryFreshSession;
         if (fFabricConversionAuthorityLost || fContext.qwen35SharedRoleBinding!=this
-            || !sColdRecoveryRequired || !session || !session->Fresh() || &session->Fresh()->io!=&freshIO
+            || !sColdRecoveryRequired || !fContext.recoveryFabricRoleViewsDisposed || !session || !session->RoleReady()
+            || session->Ticket()!=fContext.recoveryFabricStartTicket
+            || !session->Fresh() || &session->Fresh()->io!=&freshIO
             || &freshIO==&fContext.io || !fViews.FabricFreshOpenComplete()
             || !fContext.recoveryFabricEvidenceRecorded || !fContext.recoveryFabricPcieAudited
             || !fContext.recoveryFabricEvidence.ReadyForScratchRestore()

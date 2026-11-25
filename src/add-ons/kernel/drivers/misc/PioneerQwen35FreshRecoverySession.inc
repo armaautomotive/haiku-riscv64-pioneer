@@ -23,7 +23,8 @@ class PioneerQ35FreshRecoverySession {
 public:
     enum Stage { Unstarted=0,Attached=1,Mapped=2,Baseline=3,Banks=4,Host=5,Lease=6,Ready=7,
         ScratchRestoring=8,ScratchVerified=9,Closing=10,LeaseClosed=11,FleetAudited=12,
-        PciClosed=13,TransportClosed=14,Retiring=15,HostReleased=16,OwnerRetired=17,Retained=18 };
+        PciClosed=13,TransportClosed=14,Retiring=15,HostReleased=16,OwnerRetired=17,Retained=18,
+        RoleVerified=19 };
 private:
     PioneerQ35ProjectionResetRecovery fRestore;
     PioneerStoreContext* fOld=nullptr;
@@ -31,6 +32,11 @@ private:
     PioneerProbeCookie* fOwner=nullptr;
     uint64 fTicket=0;
     bool fFabric=false;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    bool fRole=false;
+    const void* fRoleBinding=nullptr;
+    const void* fGraphOwner=nullptr;
+#endif
     Stage fStage=Unstarted;
     unsigned fFailureStage=0;
 
@@ -41,7 +47,12 @@ private:
         fFailureStage=failed;fStage=Retained;
         if (fOld) {
             if (!fOld->recoveryFreshSession) fOld->recoveryFreshSession=this;
-            fOld->qwen35QualificationOwner.Retain();fOld->banks.Quarantine();
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+            if (!fRole) fOld->qwen35QualificationOwner.Retain();
+#else
+            fOld->qwen35QualificationOwner.Retain();
+#endif
+            fOld->banks.Quarantine();
         }
         if (fFresh) {
             fFresh->banks.Quarantine();fFresh->lease.recovery_required=true;
@@ -76,8 +87,15 @@ private:
             || fOwner!=sRuntimeOwner || fOwner->context!=fOld
             || !sColdRecoveryRequired || sReloadQuiesced || sOpenCookies!=1
             || !sBankStorageOnly || !fOld->bankStorageOnly
-            || fOld->recoveryFreshSession!=this || !EvidenceValid(*fOld,fTicket,fFabric)
-            || !fOld->qwen35QualificationOwner.ModifiedResetEligible(fOld->banks)) return false;
+            || fOld->recoveryFreshSession!=this || !EvidenceValid(*fOld,fTicket,fFabric)) return false;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        if (fRole) {
+            if (!fFabric || !fOld->recoveryFabricRoleViewsDisposed || !fRoleBinding || !fGraphOwner
+                || fOld->qwen35SharedRoleBinding!=fRoleBinding
+                || fOld->qwen35GraphOwner!=fGraphOwner) return false;
+        } else
+#endif
+        if (!fOld->qwen35QualificationOwner.ModifiedResetEligible(fOld->banks)) return false;
         return guard->validate(fTicket)==B_OK;
     }
     bool RetiredTicketValid(pioneer_driver_recovery_guard_v2_info* guard,
@@ -106,6 +124,15 @@ public:
     unsigned FailureStage() const { return fFailureStage; }
     PioneerStoreContext* Fresh() const { return fFresh; }
     uint64 Ticket() const { return fTicket; }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    // Metadata only: callers must independently validate the recovery ticket
+    // and physical scope before touching any views or device state.
+    bool RoleReady() const {
+        return fRole && fStage==Ready && fOld && fFresh && fOld->recoveryFabricRoleViewsDisposed && fRoleBinding && fGraphOwner
+            && fOld->recoveryFreshSession==this && fOld->qwen35SharedRoleBinding==fRoleBinding
+            && fOld->qwen35GraphOwner==fGraphOwner;
+    }
+#endif
     template<class Scope> void RetainUncertain(Scope& scope) {
         if (fStage==Retained) {
             if (fOld && !fOld->recoveryFreshSession) fOld->recoveryFreshSession=this;
@@ -126,16 +153,30 @@ public:
 private:
     template<class Scope>
     bool PrepareWithEvidence(PioneerProbeCookie* owner,PioneerStoreContext& old,
-        pioneer_driver_recovery_guard_v2_info* guard,Scope& scope,uint64 ticket,bool fabric) {
+        pioneer_driver_recovery_guard_v2_info* guard,Scope& scope,uint64 ticket,bool fabric,bool role=false) {
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        const void* requestedRole=role?old.qwen35SharedRoleBinding:nullptr;
+        const void* requestedGraph=role?old.qwen35GraphOwner:nullptr;
+#endif
         if (fStage!=Unstarted || fOld || fFresh || fOwner || fTicket || !owner || !guard
             || owner!=sRuntimeOwner || owner->context!=&old || old.recoveryFreshSession
             || !sColdRecoveryRequired || sReloadQuiesced || sOpenCookies!=1
-            || !sBankStorageOnly || !old.bankStorageOnly || !EvidenceValid(old,ticket,fabric)
-            || !old.qwen35QualificationOwner.ModifiedResetEligible(old.banks) || !old.initialized
-            || old.bytes!=PioneerResidentBanks::Total
-            || !guard->validate || guard->validate(ticket)!=B_OK
-            || !scope.FreshRecoveryAdmission(*this,owner,old,ticket)
-            || guard->validate(ticket)!=B_OK) return false;
+            || !sBankStorageOnly || !old.bankStorageOnly || !EvidenceValid(old,ticket,fabric) || !old.initialized
+            || old.bytes!=PioneerResidentBanks::Total || !guard->validate || guard->validate(ticket)!=B_OK) return false;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        if (role) {
+            if (!fabric || !old.recoveryFabricRoleViewsDisposed || !requestedRole || !requestedGraph
+                || !scope.FreshRoleRecoveryAdmission(*this,owner,old,ticket)
+                || old.qwen35SharedRoleBinding!=requestedRole || old.qwen35GraphOwner!=requestedGraph) return false;
+        } else
+#else
+        if (role) return false;
+#endif
+        if (!old.qwen35QualificationOwner.ModifiedResetEligible(old.banks)) return false;
+        if (!scope.FreshRecoveryAdmission(*this,owner,old,ticket) || guard->validate(ticket)!=B_OK) return false;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        if (role && (old.qwen35SharedRoleBinding!=requestedRole || old.qwen35GraphOwner!=requestedGraph)) return false;
+#endif
         auto* fresh=new(std::nothrow) PioneerStoreContext(PioneerResidentBanks::Total);
         if (!fresh) return false;
         if (!fresh->initialized || !fresh->hashes) { delete fresh;return false; }
@@ -143,6 +184,10 @@ private:
         fresh->bankStorageOnly=true;
         memcpy(fresh->initialized,old.initialized,PioneerResidentBanks::Pages);
         fOld=&old;fFresh=fresh;fOwner=owner;fTicket=ticket;fFabric=fabric;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        fRole=role;
+        if (role) { fRoleBinding=requestedRole;fGraphOwner=requestedGraph; }
+#endif
         old.recoveryFreshSession=this;fStage=Attached;
         auto allowed=[&](unsigned stage) {
             return TicketValid(guard) && scope.FreshRecoveryBoundary(*this,old,*fresh,stage)
@@ -185,6 +230,21 @@ public:
         pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
         return PrepareWithEvidence(owner,old,guard,scope,old.recoveryFabricStartTicket,true);
     }
+    template<class Scope>
+    bool PrepareFabricRole(PioneerProbeCookie* owner,PioneerStoreContext& old,
+        pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        return PrepareWithEvidence(owner,old,guard,scope,old.recoveryFabricStartTicket,true,true);
+    }
+    // The scope must independently prove restoration of all role images,
+    // local RAM and parent handoffs, plus closure of fresh role mappings.
+    // This records an intermediate state only; nothing is released here.
+    template<class Scope>
+    bool VerifyRoleRestoration(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        if (!fRole || fStage!=Ready || !fOld || !fFresh) return false;
+        if (!RoleReady() || !TicketValid(guard) || !scope.FreshRoleRecoveryRestored(*this,*fOld,*fFresh)
+            || !TicketValid(guard)) return Retain(scope,RoleVerified);
+        fStage=RoleVerified;return true;
+    }
 #endif
 
     // Restore through this session's exact fresh resources and retained old
@@ -192,7 +252,11 @@ public:
     // single-use; the surrounding scope supplies the missing live proofs.
     template<class Scope>
     bool RestoreScratch(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
-        if (fStage!=Ready || !fOld || !fFresh) return false;
+        if (fStage!=Ready || !fOld || !fFresh
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+            || fRole
+#endif
+            ) return false;
         auto* scratch=fOld->qwen35QualificationOwner.Scratch();
         if (!TicketValid(guard) || !scratch
             || !scope.FreshRecoveryRestoreAdmission(*this,*fOld,*fFresh,fRestore)

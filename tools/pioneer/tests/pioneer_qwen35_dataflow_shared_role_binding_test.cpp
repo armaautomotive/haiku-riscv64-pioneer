@@ -327,6 +327,7 @@ static void ExerciseFabricViewRetirement(PioneerSessionIO& io)
     assert(!PioneerQ35FabricDisposeRoleViews(*context,scope,&guard,9) && !gUnmapCalls); // host-page alias
     io.PioneerHostPageIO::area=-1;
     assert(PioneerQ35FabricDisposeRoleViews(*context,scope,&guard,9) && binding->FabricViewsDisposed() && gUnmapCalls);
+    context->recoveryFabricRoleViewsDisposed=true; // controller publishes this after its final guard check
     assert(!binding->CanDestroy() && context->qwen35SharedRoleBinding==binding
         && PioneerQ35SharedRoleBindingTestAccess::CodeSnapshot(*binding)==code
         && PioneerQ35SharedRoleBindingTestAccess::RamSnapshot(*binding)==ram);
@@ -349,7 +350,7 @@ static void ExerciseFabricViewRetirement(PioneerSessionIO& io)
     delete binding;binding=nullptr;context->recoveryFabricEvidenceRecorded=false;
     context->recoveryFabricPcieAudited=false;context->recoveryFabricPciIdle=false;
     context->recoveryFabricAuditReleased=false;context->recoveryFabricStartTicket=0;
-    context->recoveryFreshSession=nullptr;io.fabricOldMmioDisposeComplete=false;
+    context->recoveryFabricRoleViewsDisposed=false;context->recoveryFreshSession=nullptr;io.fabricOldMmioDisposeComplete=false;
     sColdRecoveryRequired=false;gAllowWrite=false;
 }
 #endif

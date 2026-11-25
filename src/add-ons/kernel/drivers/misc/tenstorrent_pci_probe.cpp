@@ -4211,6 +4211,7 @@ struct PioneerStoreContext {
 	PioneerDriverFabricRecoveryProof recoveryFabricEvidence={};
 	bool recoveryFabricEvidenceRecorded=false;
 	bool recoveryFabricPcieAuditAttempted=false,recoveryFabricPcieAudited=false;
+	bool recoveryFabricRoleViewsDisposed=false;
 #endif
 	bool q35PciReservationHeld=false,q35PciReleaseAttempted=false;
 #endif
