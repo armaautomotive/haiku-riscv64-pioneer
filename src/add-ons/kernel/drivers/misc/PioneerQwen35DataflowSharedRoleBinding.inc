@@ -506,6 +506,22 @@ public:
             && session->RoleReady() && session->Fresh() && &session->Fresh()->io==&freshIO
             && fContext.q35PciReservationHeld && !fContext.q35PciReleaseAttempted;
     }
+    // Parent compute restoration writes an overlapping L1 range. Reaudit the
+    // restored roles through the same fresh session before their views close.
+    template<class Scope,class Check>
+    bool VerifyFabricRolesAfterParent(PioneerSessionIO& freshIO,Scope& scope,Check& check) {
+        auto* session=fContext.recoveryFreshSession;
+        if (fFabricConversionAuthorityLost || fContext.qwen35SharedRoleBinding!=this
+            || fFabricCoreSequence.CurrentPhase()!=PioneerQwen35::DataflowFabricCoreRecoverySequence::Restored
+            || !fOwner.CoveredStateRestored() || !fViews.FabricFreshOpenComplete() || !session
+            || !session->RoleReady() || session->Ticket()!=fContext.recoveryFabricStartTicket
+            || !session->Fresh() || &session->Fresh()->io!=&freshIO || &freshIO==&fContext.io
+            || !fContext.q35PciReservationHeld || fContext.q35PciReleaseAttempted) return false;
+        FabricRecoveryAdapter<Scope,Check> io(freshIO,scope,fViews,check);
+        const bool verified=io.FabricRecoveryConversionAllowed() && fOwner.VerifyAfterCoreLocalResidentRestore(io);
+        if (!io.FabricRecoveryConversionAllowed()) { fFabricConversionAuthorityLost=true;return false; }
+        return verified && fOwner.CoveredStateRestored() && session->RoleReady();
+    }
 #endif
     // A verified ASIC reset invalidates the old tile images and RAM. Retire
     // the host BAR views without restoring those stale snapshots. The reset
@@ -1169,6 +1185,14 @@ PioneerQ35FabricCoreFleetRestoreCompileWitness(PioneerQwen35SharedRoleBinding* b
     if (!binding) return false;
     auto check=[&]() { return allowed; };
     return binding->RestoreFabricCoreFleet(fresh,scope,check,polls);
+}
+static __attribute__((used,noinline)) bool
+PioneerQ35FabricRolesAfterParentCompileWitness(PioneerQwen35SharedRoleBinding* binding,PioneerSessionIO& fresh,
+    PioneerQwen35RoleBorrowedScopeWitness& scope,bool allowed)
+{
+    if (!binding) return false;
+    auto check=[&]() { return allowed; };
+    return binding->VerifyFabricRolesAfterParent(fresh,scope,check);
 }
 #endif
 

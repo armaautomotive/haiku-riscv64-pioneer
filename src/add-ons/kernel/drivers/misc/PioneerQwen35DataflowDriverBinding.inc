@@ -4,6 +4,9 @@
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRuntimeRecovery.h"
 #include "PioneerQwen35DataflowNoC1Audit.h"
 #include "PioneerQwen35DataflowBankRouteAudit.h"
+#if defined(PIONEER_QWEN35_FABRIC_GUARD_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY)
+#include "PioneerQwen35FreshResidentRecoveryIO.h"
+#endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 #include "PioneerQwen35DataflowFirmwareIdentity.h"
 #include "PioneerQwen35DataflowNocSafetySample.h"
@@ -2323,6 +2326,9 @@ class PioneerQ35GraphOwner {
 	PioneerQ35ResidentDriverOwner* residentDriver=nullptr;
 #endif
 	bool recorded=false,bound=false,retiredAfterFault=false;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+	bool fabricParentRestoreAttempted=false,fabricParentRestored=false;
+#endif
 public:
 	explicit PioneerQ35GraphOwner(PioneerStoreContext& c):context(c),stream(c) {}
 #ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
@@ -2436,6 +2442,52 @@ public:
 #endif
 			;
 	}
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+	// Restore this graph's saved compute-core snapshots using only the fresh
+	// post-reset transport. Scope must bind the exact session, saved role
+	// owner, ticket, snapshot identities and continuous physical exclusion.
+	// The live Haiku scope does not yet supply those proofs or call this path.
+	template<class Scope,class Check>
+	bool RestoreFabricParent(PioneerStoreContext& fresh,Scope& scope,Check& check) {
+		if (fabricParentRestoreAttempted || fabricParentRestored || &fresh==&context
+			|| context.qwen35GraphOwner!=this || !context.qwen35DataflowMemory
+			|| !context.qwen35SharedRoleBinding || !context.recoveryFreshSession
+			|| !context.q35PciReservationHeld || context.q35PciReleaseAttempted
+			|| !sColdRecoveryRequired || !fresh.io.fleetEnabled || !check()
+			|| !scope.FabricParentRecoveryAdmission(*this,context,fresh) || !check()) return false;
+		auto allowed=[&]() {
+			return check() && scope.FabricParentRecoveryAccessAllowed(*this,context,fresh) && check();
+		};
+		PioneerQ35FreshResidentRecoveryIO<PioneerSessionIO,PioneerSessionIO,decltype(allowed)>
+			raw(context.io,fresh.io,allowed);
+		auto* transport=new(std::nothrow) PioneerQwen35DataflowPciMemory<decltype(raw)>(raw);
+		if (!transport) return false;
+		fabricParentRestoreAttempted=true;
+		auto snapshotAllowed=[&](unsigned core,const DataflowPciCoreSnapshot& snapshot) {
+			return allowed() && scope.FabricParentSnapshotAllowed(*this,context,fresh,core,snapshot) && allowed();
+		};
+		bool okay=true;
+		for (unsigned end=PioneerQwen35::DataflowCoreCount;end && okay;end--) {
+			const unsigned core=end-1;
+			if (context.qwen35DataflowMemory->FabricParentSnapshotPresent(core))
+				okay=context.qwen35DataflowMemory->FabricRestoreParentCore(core,*transport,snapshotAllowed);
+			else okay=context.qwen35DataflowMemory->FabricParentSnapshotAbsent(core)
+				&& allowed() && scope.FabricParentUncapturedUntouched(*this,context,fresh,core) && allowed();
+		}
+		for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount && okay;core++) {
+			if (context.qwen35DataflowMemory->FabricParentSnapshotPresent(core))
+				okay=context.qwen35DataflowMemory->FabricVerifyParentCore(core,*transport,snapshotAllowed);
+			else okay=context.qwen35DataflowMemory->FabricParentSnapshotAbsent(core)
+				&& allowed() && scope.FabricParentUncapturedUntouched(*this,context,fresh,core) && allowed();
+		}
+		okay=okay && raw.FabricRecoveryAllowed()
+			&& scope.FabricParentRecoveryRestored(*this,context,fresh) && raw.FabricRecoveryAllowed();
+		delete transport;
+		if (!okay) return false; // retained, no automatic replay
+		fabricParentRestored=true;return true;
+	}
+	bool FabricParentRestored() const { return fabricParentRestored; }
+#endif
 #ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
 	bool DestroyResident() { return PioneerQ35ResidentDriverDestroy(residentDriver); }
 	PioneerQwen35::DataflowServiceResult CloseResident() {
@@ -2504,6 +2556,28 @@ public:
 	}
 #endif
 };
+
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+// Compile the actual parent-restore bridge only into the non-loadable
+// witness. This synthetic scope is not a physical authority or ioctl.
+struct PioneerQ35FabricParentRestoreCompileScope {
+	bool allowed;
+	bool FabricParentRecoveryAdmission(PioneerQ35GraphOwner&,PioneerStoreContext&,PioneerStoreContext&) const { return allowed; }
+	bool FabricParentRecoveryAccessAllowed(PioneerQ35GraphOwner&,PioneerStoreContext&,PioneerStoreContext&) const { return allowed; }
+	bool FabricParentSnapshotAllowed(PioneerQ35GraphOwner&,PioneerStoreContext&,PioneerStoreContext&,
+		unsigned,const DataflowPciCoreSnapshot&) const { return allowed; }
+	bool FabricParentUncapturedUntouched(PioneerQ35GraphOwner&,PioneerStoreContext&,PioneerStoreContext&,unsigned) const { return allowed; }
+	bool FabricParentRecoveryRestored(PioneerQ35GraphOwner&,PioneerStoreContext&,PioneerStoreContext&) const { return allowed; }
+};
+static __attribute__((used,noinline)) bool
+PioneerQ35FabricParentRestoreCompileWitness(PioneerQ35GraphOwner* owner,PioneerStoreContext& fresh,bool allowed)
+{
+	if (!owner) return false;
+	PioneerQ35FabricParentRestoreCompileScope scope{allowed};
+	auto check=[&]() { return allowed; };
+	return owner->RestoreFabricParent(fresh,scope,check);
+}
+#endif
 
 #ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
 static PioneerQwen35::DataflowServiceResult

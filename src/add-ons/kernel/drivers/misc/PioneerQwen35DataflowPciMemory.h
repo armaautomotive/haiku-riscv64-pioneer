@@ -202,6 +202,10 @@ class PioneerQwen35DataflowPciMemory {
 	bool fResumeStartAttempted=false;
 	bool fResumeFleetStarted=false;
 	bool fUnconfirmedHeldWrite=false;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+	bool fFabricParentRestoreAttempted[PioneerQwen35::DataflowCoreCount]{};
+	bool fFabricParentRestoreVerified[PioneerQwen35::DataflowCoreCount]{};
+#endif
 	static constexpr unsigned StopPollLimit=65536;
 
 	bool SelectMapped(unsigned core)
@@ -521,6 +525,39 @@ public:
 		return core<PioneerQwen35::DataflowCoreCount
 			&& RestoreCoreState(core,fSnapshots[core]);
 	}
+
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+	// Restore the old owner's exact retained snapshot through a separately
+	// owned fresh transport. Check is metadata/authority only and must bind
+	// both owners, ticket and lifetime exclusion; FreshMemory must guard each
+	// physical access. A failed write may have landed, so this is one-shot.
+	bool FabricParentSnapshotPresent(unsigned core) const {
+		return core<PioneerQwen35::DataflowCoreCount && fSnapshots[core].captured
+			&& fSnapshots[core].core==core && fSnapshots[core].localWords;
+	}
+	bool FabricParentSnapshotAbsent(unsigned core) const {
+		return core<PioneerQwen35::DataflowCoreCount && !fSnapshots[core].captured
+			&& !fSnapshots[core].localWords && fSnapshots[core].core==UINT32_MAX
+			&& !fSnapshots[core].reset && !fSnapshots[core].boot;
+	}
+	template<class FreshMemory,class Check>
+	bool FabricRestoreParentCore(unsigned core,FreshMemory& fresh,Check& check) {
+		if (!FabricParentSnapshotPresent(core) || fFabricParentRestoreAttempted[core]
+			|| !check(core,fSnapshots[core]) || !fresh.FabricRecoveryAllowed()) return false;
+		fFabricParentRestoreAttempted[core]=true;
+		if (!fresh.RestoreCoreState(core,fSnapshots[core]) || !fresh.FabricRecoveryAllowed()
+			|| !check(core,fSnapshots[core]) || !fresh.FabricRecoveryAllowed()) return false;
+		fFabricParentRestoreVerified[core]=true;return true;
+	}
+	template<class FreshMemory,class Check>
+	bool FabricVerifyParentCore(unsigned core,FreshMemory& fresh,Check& check) {
+		return FabricParentSnapshotPresent(core) && fFabricParentRestoreAttempted[core]
+			&& fFabricParentRestoreVerified[core] && check(core,fSnapshots[core])
+			&& fresh.FabricRecoveryAllowed() && fresh.VerifyCoreStateRestored(core,fSnapshots[core])
+			&& fresh.FabricRecoveryAllowed() && check(core,fSnapshots[core]) && fresh.FabricRecoveryAllowed();
+	}
+	bool FabricRecoveryAllowed() { return fRaw.FabricRecoveryAllowed(); }
+#endif
 
 	bool VerifyCoreStateRestored(unsigned core,
 		const DataflowPciCoreSnapshot& snapshot)
