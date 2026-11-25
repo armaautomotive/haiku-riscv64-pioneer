@@ -1,0 +1,36 @@
+{
+  "inventory_sha256": "10b25af3cfea0457f4599d7b52efe8488f9dda91182fc5cd44d76e42534bec6c",
+  "results": [
+    {
+      "reference": "generated.pioneer/vm-top-page-20261022/kernel-spin-idle-fixed",
+      "reference_sha256": "92310628bed8e5a030789b7886a347571cd26c992423d13c085c4ea197362c21",
+      "runtime_symbols": 4840,
+      "reference_symbols": 4840,
+      "matching_symbols": 4840,
+      "runtime_only": 0,
+      "reference_only": 0,
+      "exact_exported_symbols": true
+    },
+    {
+      "reference": "generated.pioneer/vm-top-page-20261022/kernel-ordinary-fixed",
+      "reference_sha256": "90d6a7f5ccb2a93f42bb0256b050dbd1363ed05bdb3169820676fa45b08e5de8",
+      "runtime_symbols": 4840,
+      "reference_symbols": 4840,
+      "matching_symbols": 577,
+      "runtime_only": 4263,
+      "reference_only": 4263,
+      "exact_exported_symbols": false
+    },
+    {
+      "reference": "/private/tmp/q35-installed-haiku-kernel-riscv64",
+      "reference_sha256": "38d4a4245db6a8ec4e2baa44c7705cdcdd5d4e66a8d43da97f3157699449a65b",
+      "runtime_symbols": 4840,
+      "reference_symbols": 4838,
+      "matching_symbols": 5,
+      "runtime_only": 4835,
+      "reference_only": 4833,
+      "exact_exported_symbols": false
+    }
+  ],
+  "proves_binary_hash": false
+}

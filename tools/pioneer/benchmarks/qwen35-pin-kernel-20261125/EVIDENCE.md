@@ -1,5 +1,27 @@
 # Offline Pioneer pin-service kernel candidate
 
+## Spin-idle profile correction (2026-11-25)
+
+The earlier `0aca1f85...` candidate below uses the ordinary kernel and is not
+the recorded 64-CPU spin-idle boot profile. Do not use it for that profile.
+The saved NVMe handoff records a spin-idle RAM bundle; the running kernel's
+4,840 exported symbol tuples all match the saved spin-idle kernel, compared
+with 577 for the ordinary kernel. This strongly identifies the layout but is
+not a hash of the running image; see `kernel-symbol-match.json`.
+
+The revised builder reproduces both ordinary and spin-idle control kernels
+byte for byte, checks the spin-idle code, and builds the pin-service kernel
+from the spin-idle profile. Independent builds produced SHA-256
+`6b43356be4b4f5974c555b06599b89d8008825fcbc26b40e8eb57b5edfde1372`;
+see `spin-manifest.json`. A private local RAM filesystem was built from the
+preserved base package and the original root-opt-in ECAM driver; its package
+path list, replaced-file hashes, filesystem check, and package roundtrip
+passed. Its image SHA-256 is
+`9e569f8c23ae3726b0be8747f93b7d16c511f4a02f91df23e00bd3703c037b96`.
+This only prepares a candidate: it has not been installed or booted, and it
+does not establish physical recovery or a working inference path. Repeat the
+27B process and idle-driver checks before any card access.
+
 Two independent runs of `build_qwen35_pin_kernel.py` reproduced the saved
 control kernel byte for byte and produced the same candidate kernel hash. The
 manifest records source, pin-header, control, candidate and Jam-action hashes.

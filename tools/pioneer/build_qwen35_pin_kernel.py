@@ -8,14 +8,17 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shlex
 import subprocess
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 BASE_SHA256 = '90d6a7f5ccb2a93f42bb0256b050dbd1363ed05bdb3169820676fa45b08e5de8'
+SPIN_SHA256 = '92310628bed8e5a030789b7886a347571cd26c992423d13c085c4ea197362c21'
 DM = 'src/system/kernel/device_manager/device_manager.cpp'
 MODULE = 'src/system/kernel/module.cpp'
+CPU = 'src/system/kernel/cpu.cpp'
 
 
 def digest(path):
@@ -33,7 +36,8 @@ def checked_sources(mirror):
     mod = (REPO / MODULE).read_text()
     mod = mod.replace('#ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS\nextern module_info gPioneerDeviceManagerPinModule;\n#endif\n', '')
     mod = mod.replace('#ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS\n\t&gPioneerDeviceManagerPinModule,\n#endif\n', '')
-    if dm != (mirror / DM).read_text() or mod != (mirror / MODULE).read_text():
+    if (dm != (mirror / DM).read_text() or mod != (mirror / MODULE).read_text()
+            or (REPO / CPU).read_bytes() != (mirror / CPU).read_bytes()):
         raise RuntimeError('kernel source differs from the saved build beyond the pin-service changes')
 
 
@@ -42,6 +46,9 @@ def main():
     parser.add_argument('build', type=Path, help='saved generated.riscv64 directory')
     parser.add_argument('jam', type=Path, help='Haiku Jam executable')
     parser.add_argument('output', type=Path, help='new absolute output directory')
+    parser.add_argument('--spin-reference', type=Path,
+                        default=REPO / 'generated.pioneer/vm-top-page-20261022/kernel-spin-idle-fixed',
+                        help='saved, previously qualified spin-idle kernel')
     args = parser.parse_args()
     build = args.build.resolve(strict=True)
     jam = args.jam.resolve(strict=True)
@@ -56,6 +63,9 @@ def main():
     saved = kernel_dir / 'kernel_riscv64'
     if digest(saved) != BASE_SHA256:
         raise RuntimeError('saved Pioneer kernel hash does not match the verified baseline')
+    spin_reference = args.spin_reference.resolve(strict=True)
+    if digest(spin_reference) != SPIN_SHA256:
+        raise RuntimeError('saved spin-idle kernel does not match the qualified profile')
     output.mkdir(mode=0o700)
     actions = output / 'jam-actions.txt'
     env = dict(os.environ, HAIKU_REVISION='hrev99999')
@@ -94,9 +104,28 @@ def main():
             label + '-version')
         return path
 
-    control = finish(full_link, output / 'control', 'control-link')
-    if digest(control) != BASE_SHA256:
+    ordinary_control = finish(full_link, output / 'ordinary-control', 'ordinary-control-link')
+    if digest(ordinary_control) != BASE_SHA256:
         raise RuntimeError('saved build objects did not reproduce the known kernel byte for byte')
+    cpu_original = '../haiku/' + CPU
+    cpu_command = select(lambda x: ' -c "' + cpu_original + '" ' in x)
+    spin_cpu = output / 'spin-cpu.o'
+    set_output(cpu_command, spin_cpu)
+    cpu_command.append('-DPIONEER_DIAGNOSTIC_SPIN_IDLE')
+    run(cpu_command, 'compile-spin-cpu')
+    core_needle = ' -r objects/haiku/riscv64/release/system/kernel/boot_item.o '
+    core_cpu = 'objects/haiku/riscv64/release/system/kernel/cpu.o'
+    core_object = 'objects/haiku/riscv64/release/system/kernel/kernel_core.o'
+    spin_core = output / 'spin-core.o'
+    spin_merge = select(lambda x: core_needle in x)
+    spin_merge[spin_merge.index(core_cpu)] = str(spin_cpu)
+    set_output(spin_merge, spin_core)
+    run(spin_merge, 'merge-spin-core')
+    spin_link = list(full_link)
+    spin_link[spin_link.index(core_object)] = str(spin_core)
+    control = finish(spin_link, output / 'spin-control', 'spin-control-link')
+    if digest(control) != SPIN_SHA256 or control.read_bytes() != spin_reference.read_bytes():
+        raise RuntimeError('spin-idle control did not reproduce the qualified kernel byte for byte')
     built = {}
     for name, rel in (('module', MODULE), ('device_manager', DM)):
         original = '../haiku/' + rel
@@ -116,12 +145,14 @@ def main():
     for name, needle, old, new in merges:
         command = select(lambda x: needle in x)
         command[command.index(old)] = str(new)
+        if name == 'core':
+            command[command.index(core_cpu)] = str(spin_cpu)
         merged[name] = output / (name + '-merged.o')
         set_output(command, merged[name])
         run(command, 'merge-' + name)
     candidate_link = list(full_link)
     for old, new in (
-        ('objects/haiku/riscv64/release/system/kernel/kernel_core.o', merged['core']),
+        (core_object, merged['core']),
         ('objects/haiku/riscv64/release/system/kernel/device_manager/kernel_device_manager.o', merged['device_manager']),
     ):
         candidate_link[candidate_link.index(old)] = str(new)
@@ -146,13 +177,24 @@ def main():
     if (not has_relocation(table_address, 'gDeviceManagerModule')
             or not has_relocation(table_address + 8, 'gPioneerDeviceManagerPinModule')):
         raise RuntimeError('pin service is not registered in the built-in module table')
+    objdump = build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-objdump'
+    idle = subprocess.check_output([str(objdump), '-d', '--disassemble=cpu_idle', str(candidate)], text=True)
+    if ('<smp_get_num_cpus@plt>' not in idle or not re.search(r'\bli\s+\w+,64\b', idle)
+            or not re.search(r'\bwfi\b', idle)):
+        raise RuntimeError('candidate does not contain the expected 64-CPU spin-idle path')
+    (output / 'candidate-cpu-idle.disassembly').write_text(idle)
     control_symbols = subprocess.check_output([str(nm), str(control)], text=True)
     if 'gPioneerDeviceManagerPinModule' in control_symbols:
         raise RuntimeError('control unexpectedly contains the pin service')
     manifest = {
-        'saved_kernel_sha256': digest(saved), 'reproduced_control_sha256': digest(control),
+        'saved_ordinary_kernel_sha256': digest(saved),
+        'reproduced_ordinary_kernel_sha256': digest(ordinary_control),
+        'saved_spin_idle_kernel_sha256': digest(spin_reference),
+        'reproduced_spin_idle_kernel_sha256': digest(control),
         'candidate_kernel_sha256': digest(candidate),
         'device_manager_source_sha256': digest(REPO / DM), 'module_source_sha256': digest(REPO / MODULE),
+        'spin_cpu_source_sha256': digest(REPO / CPU),
+        'spin_cpu_object_sha256': digest(spin_cpu),
         'pin_header_sha256': digest(REPO / 'src/system/kernel/device_manager/PioneerDeviceManagerPinModule.h'),
         'jam_actions_sha256': digest(actions), 'installed_or_booted': False,
     }
