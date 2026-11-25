@@ -41,13 +41,18 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
             // selected tile. This does not claim firmware write exclusion.
             && (fScope.ProveRoleDedicatedObservedStage(fIO) || fScope.ProveRoleFleetHeldAndQuiet(fIO,core))
 #else
-            && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)
+            // The held/quiet check requires the requested tile already be
+            // selected. Check session authority first, then select it, and
+            // only then inspect that tile's reset and NoC state.
+            && fScope.CanSelectRoleHeldCore(fIO,core)
 #endif
             && fIO.SelectRuntimeCore(core) && fIO.MapQ38Panel() && fIO.DataflowPanelMappingStable()
             && fGuard.ProveSelectedRoute(core)
             && PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; })
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
             && SelectedHeldAndQuiet(core)
+#else
+            && fScope.ProveRoleFleetHeldAndQuiet(fIO,core)
 #endif
             ;
     }

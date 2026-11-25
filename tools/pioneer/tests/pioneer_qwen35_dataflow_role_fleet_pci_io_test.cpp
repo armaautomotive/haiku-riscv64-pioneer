@@ -10,7 +10,7 @@ static bool PioneerQ35SharedRoleCopiesCaptured(const PioneerQwen35SharedRoleBind
 #endif
 
 struct FleetPciTestScope {
-    bool exclusive=true,held=true,routing=true,stable=true,read=true,write=true,control=true,release=false,stop=false,park=false;
+    bool exclusive=true,held=true,selectionAllowed=true,selectedHeld=true,routing=true,stable=true,read=true,write=true,control=true,release=false,stop=false,park=false;
     bool computeStop=false,computePark=false,hold=false,heldAfter=false,releaseDrained=false;
     bool runtime=false;
     bool stackCancel=false,stackCancelled=false;
@@ -70,7 +70,16 @@ struct FleetPciTestScope {
         { return held && stable && write; }
     bool ProveRoleControlWriteSafe(PioneerSessionIO&,unsigned,uint32_t,uint32_t) const
         { return held && stable && control; }
-    bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO&,unsigned) const { return held; }
+    bool CanSelectRoleHeldCore(PioneerSessionIO&,unsigned core) const {
+        return selectionAllowed && held && core<DataflowBarrierWorkers;
+    }
+    bool ProveRoleFleetHeldAndQuiet(PioneerSessionIO& io,unsigned core) const {
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        (void)io;(void)core;return held;
+#else
+        return held && selectedHeld && io.runtimeCore==core;
+#endif
+    }
     bool ProveRoleBootRoutingInspectionAllowed(PioneerSessionIO&,unsigned) const { return held && routing; }
     bool ProveRoleLocalRamStable(PioneerSessionIO&,unsigned) const { return held && stable; }
     bool ProveRoleStartupHandoffSafe(PioneerSessionIO&,unsigned) const { return runtime; }
@@ -198,6 +207,15 @@ int main()
         && counted.copies==1 && counted.reads==0);
     assert(countedIo.ReadRam(7,DataflowRoleReader,DataflowRoleBriscLocalRam,copied,sizeof(copied))
         && counted.copies==1 && counted.reads==4);
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+    const unsigned beforeDeniedSelection=context.io.selectCalls;
+    scope.selectionAllowed=false;
+    assert(!io.AllRolesHeld(8) && context.io.selectCalls==beforeDeniedSelection);
+    scope.selectionAllowed=true;
+    scope.selectedHeld=false;
+    assert(!io.AllRolesHeld(8) && context.io.selectCalls==beforeDeniedSelection+1);
+    scope.selectedHeld=true;
+#endif
     for (unsigned core=0;core<DataflowBarrierWorkers;core++)
         assert(io.AllRolesHeld(core) && io.DefaultBootRouting(core) && io.LocalRamStable(core));
     {

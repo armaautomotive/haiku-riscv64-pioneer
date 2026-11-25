@@ -276,6 +276,19 @@ public:
 #endif
     }
 // PIONEER_Q35_SCOPE_RESET_CONTROL_END
+    // Authorize selecting a held worker within the locked qualification. This
+    // does not assert the destination is held or quiet: those observations
+    // are made only after its route has actually been selected.
+    bool CanSelectRoleHeldCore(PioneerSessionIO& io,unsigned core) const {
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
+    && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+        return fContext && core<PioneerQwen35::DataflowBarrierWorkers && io.DataflowPanelMappingStable()
+            && ProveExclusiveRewrite(io) && io.SharedRoleFirmwareMatches()
+            && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io);
+#else
+        (void)io;(void)core;return false;
+#endif
+    }
     // Restricted to a locked fixed-projection scratch operation. This is a
     // fresh observation of the selected tile, not a lifetime guarantee about
     // firmware or traffic from other tiles. The caller checks every worker.
@@ -283,9 +296,7 @@ public:
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
     && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
         auto allowed=[&]() {
-            return fContext && core<PioneerQwen35::DataflowBarrierWorkers && io.runtimeCore==core
-                && io.DataflowPanelMappingStable() && ProveExclusiveRewrite(io)
-                && io.SharedRoleFirmwareMatches() && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io);
+            return io.runtimeCore==core && CanSelectRoleHeldCore(io,core);
         };
         if (!allowed()) return false;
         struct ObservationScope {

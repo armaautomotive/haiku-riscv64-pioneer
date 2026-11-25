@@ -346,6 +346,20 @@ static void ExerciseStatusSampling(PioneerSessionIO& io)
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
     assert(!scope->ProveRoleFleetHeldAndQuiet(io,7));
     gQualificationHeldOwnerAllowed=true;
+    assert(scope->CanSelectRoleHeldCore(io,8) && !scope->ProveRoleFleetHeldAndQuiet(io,8));
+    {
+        PioneerQwen35RoleHaikuMap platform;
+        DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap> views(platform);
+        PioneerQwen35RoleFleetPciIO<PioneerSessionIO,PioneerQwen35RoleBorrowedScopeWitness,decltype(views)>
+            fleet(io,*scope,views);
+        // Use the real scope and adapter: each check must select its own
+        // tile before the selected-tile held/NoC observation.
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) assert(fleet.AllRolesHeld(core));
+        gQualificationHeldOwnerAllowed=false;
+        const unsigned selections=io.selectCalls;
+        assert(!fleet.AllRolesHeld(0) && io.selectCalls==selections);
+        gQualificationHeldOwnerAllowed=true;
+    }
     for (unsigned core=0;core<DataflowBarrierWorkers;core++)
         assert(io.SelectRuntimeCore(core) && scope->ProveRoleFleetHeldAndQuiet(io,core));
     assert(io.SelectRuntimeCore(7) && scope->ProveRoleFleetHeldAndQuiet(io,7));
