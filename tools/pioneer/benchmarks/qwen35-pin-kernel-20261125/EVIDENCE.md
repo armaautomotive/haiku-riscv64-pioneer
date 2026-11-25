@@ -47,3 +47,19 @@ of the running kernel's hash. The actual boot artifact and rollback path
 must be identified before a candidate boot. No reset, driver swap or model
 inference was attempted; the idle/27B process check must be repeated
 immediately before any card operation.
+
+## Card-independent service probe and package-content audit
+
+The actual probe driver was cross-built and its success and failure paths were
+tested with simulated modules under ASan/UBSan. On the running baseline Haiku
+kernel, the separate trial observed `B_ENTRY_NOT_FOUND` for the experimental
+service, as expected, with zero callbacks. It removed the temporary driver,
+device registration and staged files and confirmed the image was no longer
+listed. The candidate has not been booted, so its service is not qualified.
+The probe does not enumerate PCI or access the card.
+
+Full local extraction of the base and private candidate packages found 5,857
+entries in each. File contents, symlink targets and POSIX modes differed only
+for the intentionally replaced kernel and PCI ECAM file. This comparison does
+not verify Haiku-specific package attributes or prove equivalence with the
+recorded Linux-side private package.
