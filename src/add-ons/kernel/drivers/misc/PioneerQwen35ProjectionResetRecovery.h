@@ -6,7 +6,7 @@
 #error Projection reset restore is restricted to the non-loadable snapshot witness
 #endif
 #include "PioneerQwen35ProjectionScratch.h"
-#include "PioneerDriverReloadState.h"
+#include "PioneerQ35GraphRecoveryProof.h"
 
 // Heap-owned by a future locked recovery session. This restores only the
 // complete saved diagnostic scratch to a separately leased post-reset bank.
@@ -45,14 +45,13 @@ public:
             && oldBanks.Q35StreamClaimMatches(&scratch,scratch.ranges,PioneerQwen35::DataflowCoreCount)
             && newBanks.Q35StreamClaimMatches(&scratch,scratch.ranges,PioneerQwen35::DataflowCoreCount);
     }
-    template<class IO,class Scope>
-    bool Restore(PioneerQ35ProjectionScratch& scratch,uint64_t ticket,const PioneerDriverRecoveryProof& proof,
+    template<class IO,class Scope,class Proof>
+    bool Restore(PioneerQ35ProjectionScratch& scratch,uint64_t ticket,const Proof& proof,
         IO& io,Scope& scope,PioneerResidentBanks& oldBanks,const tt_dram_samples_result& oldDram,
         PioneerResidentBanks& newBanks,const tt_dram_samples_result& newDram,
         const tt_compute_noc_result& noc,const tt_host_page_result& host,PioneerResidentLease& lease,
         const uint8_t* initialized,unsigned initializedPages) {
-        if (phase!=PhaseFresh || !ticket || !proof.ReadyToRetireOneOwner()
-            || proof.reset_generation!=ticket || proof.firmware_generation!=ticket
+        if (phase!=PhaseFresh || !PioneerQ35ScratchRecoveryProofMatches(proof,ticket)
             || &oldBanks==&newBanks
             || !oldBanks.Q35RecoveryRoutesMatch(oldDram,newBanks,newDram)
             || !oldBanks.Q35StreamClaimMatches(&scratch,scratch.ranges,PioneerQwen35::DataflowCoreCount)

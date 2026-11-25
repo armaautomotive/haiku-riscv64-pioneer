@@ -8,6 +8,10 @@ struct PioneerQ35FreshRecoveryCompileScope {
     bool allowed;
     bool RecoveryTransactionAdmission(PioneerProbeCookie*,PioneerStoreContext&,
         pioneer_driver_recovery_guard_v2_info*) const { return allowed; }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    bool FabricRecoveryTransactionAdmission(PioneerProbeCookie*,PioneerStoreContext&,
+        pioneer_driver_recovery_guard_v2_info*) const { return allowed; }
+#endif
     bool FreshRecoveryAdmission(PioneerQ35FreshRecoverySession&,PioneerProbeCookie*,
         PioneerStoreContext&,uint64) const { return allowed; }
     bool FreshRecoveryBoundary(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
@@ -53,6 +57,10 @@ PioneerQ35FreshRecoveryCompileWitness(PioneerQ35FreshRecoverySession* session,
     if (action==1) return session->RestoreScratch(guard,scope);
     if (action==2) return session->CloseTransport(guard,scope);
     if (action==3) return session->Retire(guard,scope);
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    if (action==5) return session->PrepareFabric(owner,old,guard,scope);
+    if (action==6) return PioneerQ35RunModifiedFabricRecoveryTransaction<PioneerQ35FreshRecoverySession>(owner,&old,guard,scope)==B_OK;
+#endif
     return action==4 && PioneerQ35RunModifiedRecoveryTransaction<PioneerQ35FreshRecoverySession>(owner,&old,guard,scope)==B_OK;
 }
 struct PioneerQ35ResetScratchCompileScope {

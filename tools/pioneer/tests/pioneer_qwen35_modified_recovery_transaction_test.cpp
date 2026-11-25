@@ -5,6 +5,7 @@
 #define PIONEER_QWEN35_RECOVERY_RUN_ENABLE 1
 #define PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS 1
 #define PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS 1
+#define PIONEER_QWEN35_FABRIC_GUARD_WITNESS 1
 #include <cassert>
 #include <cstdio>
 #include <new>
@@ -27,11 +28,13 @@ struct PioneerStoreContext {
 };
 struct PioneerProbeCookie { PioneerStoreContext* context=nullptr; };
 struct pioneer_driver_recovery_guard_v2_info {};
-static unsigned failure=0,allocations=0,discards=0,retains=0;
+static unsigned failure=0,allocations=0,discards=0,retains=0;static bool usedFabric=false;
 static std::vector<unsigned> calls;
 struct Scope {
     bool allowed=true;
     bool RecoveryTransactionAdmission(PioneerProbeCookie*,PioneerStoreContext&,
+        pioneer_driver_recovery_guard_v2_info*) { return allowed; }
+    bool FabricRecoveryTransactionAdmission(PioneerProbeCookie*,PioneerStoreContext&,
         pioneer_driver_recovery_guard_v2_info*) { return allowed; }
 };
 struct FakeSession {
@@ -57,6 +60,9 @@ struct FakeSession {
         if (failure==4) c.recoveryFreshSession=nullptr;
         return true;
     }
+    bool PrepareFabric(PioneerProbeCookie* owner,PioneerStoreContext& c,pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        usedFabric=true;return Prepare(owner,c,guard,scope);
+    }
     bool RestoreScratch(pioneer_driver_recovery_guard_v2_info*,Scope&) {
         calls.push_back(2);
         if (failure==5) { old->recoveryFreshSession=nullptr;return false; }
@@ -75,10 +81,12 @@ struct FakeSession {
 
 int main() {
     pioneer_driver_recovery_guard_v2_info guard;
-    for (failure=0;failure<=8;failure++) {
-        allocations=discards=retains=0;calls.clear();PioneerStoreContext context;
+    for (unsigned fabric=0;fabric<2;fabric++) for (failure=0;failure<=8;failure++) {
+        allocations=discards=retains=0;usedFabric=false;calls.clear();PioneerStoreContext context;
         PioneerProbeCookie owner{&context};Scope scope;
-        const int result=PioneerQ35RunModifiedRecoveryTransaction<FakeSession>(&owner,&context,&guard,scope);
+        const int result=fabric?PioneerQ35RunModifiedFabricRecoveryTransaction<FakeSession>(&owner,&context,&guard,scope)
+            :PioneerQ35RunModifiedRecoveryTransaction<FakeSession>(&owner,&context,&guard,scope);
+        assert(usedFabric==(fabric && failure!=1));
         if (!failure) {
             assert(result==B_OK && calls==std::vector<unsigned>({1,2,3,4})
                 && !context.recoveryFreshSession && context.qwen35QualificationOwner.retired);
@@ -95,6 +103,7 @@ int main() {
     failure=0;allocations=0;PioneerStoreContext context;PioneerProbeCookie owner{&context};Scope scope;
     scope.allowed=false;
     assert(PioneerQ35RunModifiedRecoveryTransaction<FakeSession>(&owner,&context,&guard,scope)==B_NOT_ALLOWED && !allocations);
+    assert(PioneerQ35RunModifiedFabricRecoveryTransaction<FakeSession>(&owner,&context,&guard,scope)==B_NOT_ALLOWED && !allocations);
     scope.allowed=true;context.qwen35SharedRoleBinding=&context;
     assert(PioneerQ35RunModifiedRecoveryTransaction<FakeSession>(&owner,&context,&guard,scope)==B_NOT_ALLOWED && !allocations);
     context.qwen35SharedRoleBinding=nullptr;context.qwen35GraphOwner=&context;

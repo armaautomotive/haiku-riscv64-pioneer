@@ -4,7 +4,9 @@
 #define PIONEER_QWEN35_DEVICE_DISPATCH 1
 #define PIONEER_QWEN35_RECOVERY_RUN_ENABLE 1
 #define PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS 1
+#define PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS 1
 #define PIONEER_QWEN35_FRESH_RECOVERY_TEST 1
+#define PIONEER_QWEN35_FABRIC_GUARD_WITNESS 1
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
@@ -13,7 +15,8 @@
 #include <new>
 #include <vector>
 using uint64=uint64_t;
-constexpr int B_OK=0;
+using status_t=int;
+constexpr int B_OK=0,B_NOT_ALLOWED=-1,B_NO_MEMORY=-2,B_DEV_NOT_READY=-3;
 constexpr unsigned TT_HOST_PAGE_READY=1;
 constexpr uint64 kTicket=37;
 namespace PioneerQwen35 { enum { DataflowCoreCount=120 }; }
@@ -34,6 +37,11 @@ struct MockProof {
     bool valid=true;
     bool ReadyToRetireOneOwner() const { return valid; }
 };
+struct MockFabricProof {
+    uint64 fabric_generation=kTicket,firmware_generation=kTicket;
+    bool valid=true;
+    bool ReadyForScratchRestore() const { return valid; }
+};
 struct PioneerResidentBanks;
 struct MockScratch {
     bool eligible=true;
@@ -44,21 +52,22 @@ using PioneerQ35ProjectionScratch=MockScratch;
 struct MockQualificationOwner {
     MockScratch scratch;
     uint32_t snapshot=1;
-    bool active=true,retained=true,retired=false;
-    bool Active() const { return active && !retired; }
+    bool active=true,retained=true,retiredFlag=false;
+    bool Active() const { return active && !retiredFlag; }
+    bool Retired() const { return retiredFlag; }
     MockScratch* Scratch() { return Active()?&scratch:nullptr; }
     uint32_t* Snapshot() { return Active()?&snapshot:nullptr; }
     void Retain() { retained=true; }
     bool ModifiedResetEligible(const PioneerResidentBanks&) const;
     bool RetiredModifiedIdentity(const MockScratch* expected,const uint32_t* saved) const {
-        return active && retired && retained && expected==&scratch && saved==&snapshot;
+        return active && retiredFlag && retained && expected==&scratch && saved==&snapshot;
     }
     template<class Proof,class Receipt,class Banks,class Session,class Scope>
     bool RetireModifiedAfterReset(const Proof&,uint64 ticket,const Receipt& receipt,
         const Banks& old,const Banks& fresh,const Session& session,Scope& scope) {
         if (!Active() || !receipt.VerifiedFor(scratch,ticket,old,fresh)
             || !scope.QualificationModifiedResetRetirementAllowed(*this,scratch,receipt,session)) return false;
-        retained=true;retired=true;return true;
+        retained=true;retiredFlag=true;return true;
     }
 };
 struct PioneerResidentBanks {
@@ -96,7 +105,7 @@ struct PioneerPostResetMapping {
 };
 struct PioneerHostDmaAuditIO { bool AfterNodeId(unsigned) { return Step(2); } };
 struct MockIO : PioneerHostDmaAuditIO {
-    bool postResetDisposeComplete=false,quarantined=false;
+    bool postResetDisposeComplete=false,fabricOldMmioDisposeComplete=false,quarantined=false;
     void QuarantineHostPage() { quarantined=true; }
     int ReleaseHostPage() { return Step(17)?B_OK:-1; }
 };
@@ -108,8 +117,15 @@ struct PioneerStoreContext {
     uint32_t* hashes;
     bool bankStorageOnly=true,recoveryAttempted=true,recoveryFinishPending=true;
     uint64 recoveryFinishTicket=kTicket;
+    bool recoveryFabricEvidenceRecorded=false,recoveryFabricPciIdleAttempted=false,recoveryFabricPciIdle=false;
+    bool recoveryFabricAuditReleaseAttempted=false,recoveryFabricAuditReleased=false;
+    bool q35PciReservationHeld=true,q35PciReleaseAttempted=false;
+    uint64 recoveryFabricStartTicket=kTicket;
+    void* recoveryFabricArcOwner=nullptr;
+    void* qwen35SharedRoleBinding=nullptr;void* qwen35GraphOwner=nullptr;
     PioneerPostResetMapping* recoveryMapping=nullptr;
     MockProof recoveryFinishProof;
+    MockFabricProof recoveryFabricEvidence;
     PioneerQ35FreshRecoverySession* recoveryFreshSession=nullptr;
     MockQualificationOwner qwen35QualificationOwner;
     PioneerResidentBanks banks;
@@ -149,8 +165,8 @@ static bool PioneerQ38DispatchMmioEnd(MockIO&,MockPci& pci,MockTransaction& t) {
 }
 struct PioneerQ35ProjectionResetRecovery {
     bool restored=false;
-    template<class Scope>
-    bool Restore(MockScratch&,uint64 ticket,const MockProof&,MockIO&,Scope&,
+    template<class Scope,class Proof>
+    bool Restore(MockScratch&,uint64 ticket,const Proof&,MockIO&,Scope&,
         PioneerResidentBanks&,const MockDram&,PioneerResidentBanks&,const MockDram&,
         const MockNoc&,const MockHost&,MockLease&,const uint8_t*,unsigned pages) {
         if (ticket!=kTicket || pages!=PioneerResidentBanks::Pages || !Step(7)) return false;
@@ -160,12 +176,15 @@ struct PioneerQ35ProjectionResetRecovery {
         const PioneerResidentBanks& fresh) const { return restored && ticket==kTicket && !fresh.quarantined; }
 };
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FreshRecoverySession.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35ModifiedRecoveryTransaction.inc"
 
 struct Scope {
     bool admission=true,retained=false,closeAdmission=true,retirementAdmission=true,ownerAdmission=true;
     bool quarantineAtRetirement=false,loseClaimAfterRetirement=false;
     bool dropAttachment=false;
     unsigned failBoundary=0;
+    bool RecoveryTransactionAdmission(PioneerProbeCookie*,PioneerStoreContext&,pioneer_driver_recovery_guard_v2_info*) { return admission; }
+    bool FabricRecoveryTransactionAdmission(PioneerProbeCookie*,PioneerStoreContext&,pioneer_driver_recovery_guard_v2_info*) { return admission; }
     bool FreshRecoveryAdmission(PioneerQ35FreshRecoverySession&,PioneerProbeCookie*,PioneerStoreContext&,uint64 ticket) {
         return admission && ticket==kTicket;
     }
@@ -213,6 +232,61 @@ static void CheckRetained(PioneerQ35FreshRecoverySession* session,PioneerStoreCo
 }
 int main() {
     pioneer_driver_recovery_guard_v2_info guard;
+    for (unsigned invalid=0;invalid<8;invalid++) {
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
+        old.io.fabricOldMmioDisposeComplete=true;
+        old.recoveryFabricEvidenceRecorded=old.recoveryFabricPciIdleAttempted=old.recoveryFabricPciIdle=true;
+        old.recoveryFabricAuditReleaseAttempted=old.recoveryFabricAuditReleased=true;
+        if (invalid==0) old.recoveryFabricEvidence.valid=false;
+        if (invalid==1) old.recoveryFabricEvidence.fabric_generation++;
+        if (invalid==2) old.recoveryFabricEvidence.firmware_generation++;
+        if (invalid==3) old.io.fabricOldMmioDisposeComplete=false;
+        if (invalid==4) old.io.postResetDisposeComplete=true;
+        if (invalid==5) old.recoveryFabricAuditReleased=false;
+        if (invalid==6) old.q35PciReservationHeld=false;
+        if (invalid==7) old.recoveryFabricArcOwner=&old;
+        Scope scope;auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(!session->PrepareFabric(&owner,old,&guard,scope) && operations.empty()
+            && !old.recoveryFreshSession && session->DiscardUnstarted());
+    }
+    {
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
+        old.io.fabricOldMmioDisposeComplete=true;
+        old.recoveryFabricEvidenceRecorded=old.recoveryFabricPciIdleAttempted=old.recoveryFabricPciIdle=true;
+        old.recoveryFabricAuditReleaseAttempted=old.recoveryFabricAuditReleased=true;
+        Scope scope;auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(!session->Prepare(&owner,old,&guard,scope) && operations.empty());
+        assert(session->PrepareFabric(&owner,old,&guard,scope)
+            && session->RestoreScratch(&guard,scope) && session->CloseTransport(&guard,scope));
+        assert(session->Retire(&guard,scope) && !old.recoveryFreshSession && old.qwen35QualificationOwner.RetiredModifiedIdentity(
+            &old.qwen35QualificationOwner.scratch,&old.qwen35QualificationOwner.snapshot)
+            && old.io.fabricOldMmioDisposeComplete && !old.io.postResetDisposeComplete && !scope.retained);
+    }
+    {
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
+        old.io.fabricOldMmioDisposeComplete=true;
+        old.recoveryFabricEvidenceRecorded=old.recoveryFabricPciIdleAttempted=old.recoveryFabricPciIdle=true;
+        old.recoveryFabricAuditReleaseAttempted=old.recoveryFabricAuditReleased=true;
+        Scope scope;auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(session->PrepareFabric(&owner,old,&guard,scope));
+        old.recoveryFabricEvidence.valid=false;
+        assert(!session->RestoreScratch(&guard,scope));CheckRetained(session,old,scope);
+        PioneerQ35FreshRecoverySession::DisposeSimulated(session);
+    }
+    {
+        // Actual transaction coordinator and fresh session together; all
+        // hardware, proof and transfer methods here are simulated.
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
+        old.io.fabricOldMmioDisposeComplete=true;
+        old.recoveryFabricEvidenceRecorded=old.recoveryFabricPciIdleAttempted=old.recoveryFabricPciIdle=true;
+        old.recoveryFabricAuditReleaseAttempted=old.recoveryFabricAuditReleased=true;
+        Scope scope;old.recoveryFabricEvidence.valid=false;
+        assert(PioneerQ35RunModifiedFabricRecoveryTransaction<PioneerQ35FreshRecoverySession>(&owner,&old,&guard,scope)==B_DEV_NOT_READY
+            && !old.recoveryFreshSession && operations.empty());
+        old.recoveryFabricEvidence.valid=true;
+        assert(PioneerQ35RunModifiedFabricRecoveryTransaction<PioneerQ35FreshRecoverySession>(&owner,&old,&guard,scope)==B_OK
+            && !old.recoveryFreshSession && old.qwen35QualificationOwner.Retired() && !scope.retained);
+    }
     for (unsigned failure=0;failure<=6;failure++) {
         Reset();PioneerStoreContext old(PioneerResidentBanks::Total);old.io.postResetDisposeComplete=true;
         old.initialized[7]=9;PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;Scope scope;

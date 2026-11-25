@@ -71,3 +71,10 @@ non-loadable controller then removes the old CPU MMIO views and closed audit
 objects, with guard checks and no automatic retry. Host DMA buffers, the role
 owner's mappings, bank claims, snapshots and cold state stay retained. Scratch
 restoration, complete mapping disposal and recovery are still unfinished.
+
+The fresh scratch-restoration session and coordinator can now consume a
+separate fabric proof in the non-loadable witness. Their simulated success
+requires a PCIe-health flag that the current fabric transaction does not
+produce. No real scope or controller calls this path, and the existing
+multi-access transfer and close helpers still need physical ownership and
+guard qualification before use on the card.

@@ -41,3 +41,37 @@ PioneerQ35RunModifiedRecoveryTransaction(PioneerProbeCookie* owner,PioneerStoreC
         || !context->qwen35QualificationOwner.Retired()) return B_DEV_NOT_READY;
     return B_OK;
 }
+
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+// Distinct fabric admission: never manufacture an ASIC-reset proof. The
+// scope must still establish the same physical identity, writer exclusion,
+// PCI reservation and per-transfer authority; this remains non-loadable.
+template<class Session,class Scope>
+static status_t
+PioneerQ35RunModifiedFabricRecoveryTransaction(PioneerProbeCookie* owner,PioneerStoreContext* context,
+    pioneer_driver_recovery_guard_v2_info* guard,Scope& scope)
+{
+    if (!owner || !context || !guard || owner->context!=context || context->recoveryFreshSession
+        || !context->qwen35QualificationOwner.ModifiedResetEligible(context->banks)
+        || context->qwen35SharedRoleBinding || context->qwen35GraphOwner
+        || !scope.FabricRecoveryTransactionAdmission(owner,*context,guard)) return B_NOT_ALLOWED;
+    auto* session=Session::Allocate();
+    if (!session) return B_NO_MEMORY;
+    if (!session->PrepareFabric(owner,*context,guard,scope)) {
+        if (context->recoveryFreshSession!=session) {
+            if (!session->DiscardUnstarted()) session->RetainUncertain(scope);
+        } else session->RetainUncertain(scope);
+        return B_DEV_NOT_READY;
+    }
+    if (context->recoveryFreshSession!=session) {
+        session->RetainUncertain(scope);return B_DEV_NOT_READY;
+    }
+    if (!session->RestoreScratch(guard,scope) || !session->CloseTransport(guard,scope)) {
+        session->RetainUncertain(scope);return B_DEV_NOT_READY;
+    }
+    if (!session->Retire(guard,scope)) { session->RetainUncertain(scope);return B_DEV_NOT_READY; }
+    if (context->recoveryFreshSession || context->qwen35QualificationOwner.Active()
+        || !context->qwen35QualificationOwner.Retired()) return B_DEV_NOT_READY;
+    return B_OK;
+}
+#endif

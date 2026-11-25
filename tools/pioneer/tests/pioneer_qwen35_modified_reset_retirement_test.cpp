@@ -2,6 +2,7 @@
 // Exercise the actual modified-scratch owner retirement against simulated IO.
 #define PIONEER_QWEN35_RECOVERY_COMPILE_ONLY 1
 #define PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS 1
+#define PIONEER_QWEN35_FABRIC_GUARD_WITNESS 1
 #define PIONEER_QWEN35_PROJECTION_SCRATCH_MOCK_ONLY 1
 #include "pioneer_qwen35_projection_scratch_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35ProjectionQualificationOwner.h"
@@ -53,7 +54,7 @@ static PioneerDriverRecoveryProof Proof() {
     p.flags=PIONEER_RECOVERY_PROOF_REQUIRED & ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;
     p.core_count=120;p.retained_owners=1;p.reset_generation=37;p.firmware_generation=37;return p;
 }
-int main() {
+static void Scenario(bool fabric) {
     (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;
     auto old=std::make_unique<ScratchDevice<>>();auto fresh=std::make_unique<ScratchDevice<>>();
     auto owner=std::make_unique<PioneerQ35ProjectionQualificationOwner>();assert(owner->Allocate());
@@ -93,7 +94,15 @@ int main() {
     assert(!owner->RetireModifiedAfterReset(proof,37,receipt,old->banks,fresh->banks,session,scope));
     assert(owner->Active() && owner->Retained() && !owner->Retired());
     scope.invalidate=false;receipt.valid=true;
-    assert(owner->RetireModifiedAfterReset(proof,37,receipt,old->banks,fresh->banks,session,scope));
+    PioneerDriverFabricRecoveryProof fabricProof{};
+    fabricProof.flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
+        | PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
+    fabricProof.core_count=120;fabricProof.retained_owners=1;
+    fabricProof.fabric_generation=fabricProof.firmware_generation=37;
+    auto incomplete=fabricProof;incomplete.flags &= ~PIONEER_FABRIC_PROOF_PCIE_HEALTHY;
+    assert(!owner->RetireModifiedAfterReset(incomplete,37,receipt,old->banks,fresh->banks,session,scope));
+    assert(fabric?owner->RetireModifiedAfterReset(fabricProof,37,receipt,old->banks,fresh->banks,session,scope)
+        :owner->RetireModifiedAfterReset(proof,37,receipt,old->banks,fresh->banks,session,scope));
     assert(owner->Retired() && !owner->Active() && owner->RetiredModifiedIdentity(scratch,snapshot)
         && !owner->RetiredModifiedIdentity(scratch,fresh->snapshot.data())
         && old->banks.Q35StreamClaimIdentity(scratch,PioneerQwen35::DataflowCoreCount)
@@ -103,3 +112,4 @@ int main() {
     old.reset();fresh.reset();owner.reset();
     std::puts("PASS modified reset retirement keeps exact scratch owner and snapshot; SIMULATED ONLY");
 }
+int main() { Scenario(false);Scenario(true); }

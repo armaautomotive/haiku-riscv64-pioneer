@@ -12,12 +12,22 @@ inline bool PioneerQ35GraphRecoveryProofMatches(const PioneerDriverRecoveryProof
 	return ticket && mappingClosed && ownerMappingsDisposed && proof.ReadyToRetireOneOwner()
 		&& proof.reset_generation==ticket && proof.firmware_generation==ticket;
 }
+inline bool PioneerQ35ScratchRecoveryProofMatches(const PioneerDriverRecoveryProof& proof,uint64_t ticket)
+{
+	return ticket && proof.ReadyToRetireOneOwner()
+		&& proof.reset_generation==ticket && proof.firmware_generation==ticket;
+}
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
 // A fabric proof is a separate contract; it never asserts an ASIC reset.
 inline bool PioneerQ35GraphRecoveryProofMatches(const PioneerDriverFabricRecoveryProof& proof,
 	uint64_t ticket,bool mappingClosed,bool ownerMappingsDisposed)
 {
 	return ticket && mappingClosed && ownerMappingsDisposed && proof.ReadyToRetireOneOwner()
+		&& proof.fabric_generation==ticket && proof.firmware_generation==ticket;
+}
+inline bool PioneerQ35ScratchRecoveryProofMatches(const PioneerDriverFabricRecoveryProof& proof,uint64_t ticket)
+{
+	return ticket && proof.ReadyForScratchRestore()
 		&& proof.fabric_generation==ticket && proof.firmware_generation==ticket;
 }
 #endif

@@ -2,6 +2,7 @@
 // Saved scratch is restored via a fresh claimed bank over simulated NoC IO.
 #define PIONEER_QWEN35_RECOVERY_COMPILE_ONLY 1
 #define PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS 1
+#define PIONEER_QWEN35_FABRIC_GUARD_WITNESS 1
 #define PIONEER_QWEN35_PROJECTION_SCRATCH_MOCK_ONLY 1
 #include "pioneer_qwen35_projection_scratch_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35ProjectionResetRecovery.h"
@@ -47,15 +48,39 @@ static PioneerDriverRecoveryProof ResetProof(uint64_t ticket) {
     PioneerDriverRecoveryProof p;p.flags=PIONEER_RECOVERY_PROOF_REQUIRED & ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;
     p.core_count=120;p.retained_owners=1;p.reset_generation=ticket;p.firmware_generation=ticket;return p;
 }
-template<class Device>
+template<class Device,class Proof>
 static bool Restore(PioneerQ35ProjectionResetRecovery& recovery,PioneerQ35ProjectionScratch& scratch,
-    uint64_t ticket,const PioneerDriverRecoveryProof& proof,ScratchDevice<>& oldDevice,Device& fresh,ResetScope& scope) {
+    uint64_t ticket,const Proof& proof,ScratchDevice<>& oldDevice,Device& fresh,ResetScope& scope) {
     return recovery.Restore(scratch,ticket,proof,fresh.io,scope,oldDevice.banks,oldDevice.dram,
         fresh.banks,fresh.dram,fresh.noc,fresh.host,fresh.lease,fresh.initialized.data(),fresh.initialized.size());
 }
 int main() {
     (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;
     constexpr uint64_t ticket=37;
+    {
+        auto scratch=std::make_unique<PioneerQ35ProjectionScratch>();
+        auto oldDevice=std::make_unique<ScratchDevice<>>();auto fresh=std::make_unique<ScratchDevice<>>();
+        auto recovery=std::make_unique<PioneerQ35ProjectionResetRecovery>();
+        assert(oldDevice->Capture(*scratch) && oldDevice->Stage(*scratch));oldDevice->banks.Quarantine();
+        ResetScope scope;scope.owner=scratch.get();scope.expectedTicket=ticket;
+        scope.oldBanks=&oldDevice->banks;scope.newBanks=&fresh->banks;scope.snapshot=oldDevice->snapshot.data();
+        scope.noc=&fresh->noc;scope.host=&fresh->host;scope.lease=&fresh->lease;
+        PioneerDriverFabricRecoveryProof proof{};
+        proof.flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
+            | PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
+        proof.core_count=120;proof.retained_owners=1;proof.fabric_generation=proof.firmware_generation=ticket;
+        auto incomplete=proof;incomplete.flags &= ~PIONEER_FABRIC_PROOF_PCIE_HEALTHY;
+        assert(!Restore(*recovery,*scratch,ticket,incomplete,*oldDevice,*fresh,scope)
+            && !recovery->Faulted() && !fresh->banks.Q35StreamClaimed());
+        assert(!Restore(*recovery,*scratch,ticket+1,proof,*oldDevice,*fresh,scope)
+            && !recovery->Faulted() && !fresh->banks.Q35StreamClaimed());
+        assert(Restore(*recovery,*scratch,ticket,proof,*oldDevice,*fresh,scope)
+            && recovery->VerifiedFor(*scratch,ticket,oldDevice->banks,fresh->banks));
+        for (unsigned n=0;n<Fixture::ScratchPages;n++) {
+            const auto& page=fresh->io.memory.at(fresh->io.Key(18|(12<<6),Fixture::ScratchAddress+n*4096));
+            for (unsigned i=0;i<1024;i++) assert(page[i]==oldDevice->original[n*1024+i]);
+        }
+    }
     for (unsigned scenario=0;scenario<9;scenario++) {
         auto scratch=std::make_unique<PioneerQ35ProjectionScratch>();
         auto oldDevice=std::make_unique<ScratchDevice<>>();

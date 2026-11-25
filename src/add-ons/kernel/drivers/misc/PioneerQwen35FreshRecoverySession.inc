@@ -27,6 +27,7 @@ private:
     PioneerStoreContext* fFresh=nullptr;
     PioneerProbeCookie* fOwner=nullptr;
     uint64 fTicket=0;
+    bool fFabric=false;
     Stage fStage=Unstarted;
     unsigned fFailureStage=0;
 
@@ -47,30 +48,41 @@ private:
         scope.RetainFreshRecovery(*this);
         return false;
     }
+    static bool EvidenceValid(const PioneerStoreContext& old,uint64 ticket,bool fabric) {
+        if (!ticket || !old.recoveryAttempted || old.recoveryMapping) return false;
+        if (fabric) {
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+            return old.recoveryFabricEvidenceRecorded && old.recoveryFabricStartTicket==ticket
+                && old.recoveryFabricPciIdleAttempted && old.recoveryFabricPciIdle
+                && old.recoveryFabricAuditReleaseAttempted && old.recoveryFabricAuditReleased
+                && !old.recoveryFabricArcOwner && old.io.fabricOldMmioDisposeComplete
+                && !old.io.postResetDisposeComplete && old.q35PciReservationHeld && !old.q35PciReleaseAttempted
+                && old.recoveryFabricEvidence.ReadyForScratchRestore()
+                && old.recoveryFabricEvidence.fabric_generation==ticket
+                && old.recoveryFabricEvidence.firmware_generation==ticket;
+#else
+            return false;
+#endif
+        }
+        return old.recoveryFinishPending && old.recoveryFinishTicket==ticket && old.io.postResetDisposeComplete
+            && old.recoveryFinishProof.ReadyToRetireOneOwner()
+            && old.recoveryFinishProof.reset_generation==ticket && old.recoveryFinishProof.firmware_generation==ticket;
+    }
     bool TicketValid(pioneer_driver_recovery_guard_v2_info* guard) const {
-        if (!guard || !fOld || !fFresh || !fOwner || !fTicket
+        if (!guard || !guard->validate || !fOld || !fFresh || !fOwner || !fTicket
             || fOwner!=sRuntimeOwner || fOwner->context!=fOld
             || !sColdRecoveryRequired || sReloadQuiesced || sOpenCookies!=1
             || !sBankStorageOnly || !fOld->bankStorageOnly
-            || fOld->recoveryFreshSession!=this || !fOld->recoveryAttempted
-            || !fOld->recoveryFinishPending || fOld->recoveryFinishTicket!=fTicket
-            || fOld->recoveryMapping || !fOld->io.postResetDisposeComplete
-            || !fOld->recoveryFinishProof.ReadyToRetireOneOwner()
-            || fOld->recoveryFinishProof.reset_generation!=fTicket
-            || fOld->recoveryFinishProof.firmware_generation!=fTicket
+            || fOld->recoveryFreshSession!=this || !EvidenceValid(*fOld,fTicket,fFabric)
             || !fOld->qwen35QualificationOwner.ModifiedResetEligible(fOld->banks)) return false;
         return guard->validate(fTicket)==B_OK;
     }
     bool RetiredTicketValid(pioneer_driver_recovery_guard_v2_info* guard,
         const PioneerQ35ProjectionScratch* scratch,const uint32_t* snapshot) const {
-        if (!guard || !fOld || !fFresh || !fOwner || !fTicket || fOwner!=sRuntimeOwner
+        if (!guard || !guard->validate || !fOld || !fFresh || !fOwner || !fTicket || fOwner!=sRuntimeOwner
             || fOwner->context!=fOld || !sColdRecoveryRequired || sReloadQuiesced || sOpenCookies!=1
             || !sBankStorageOnly || !fOld->bankStorageOnly || fOld->recoveryFreshSession!=this
-            || !fOld->recoveryAttempted || !fOld->recoveryFinishPending || fOld->recoveryFinishTicket!=fTicket
-            || fOld->recoveryMapping || !fOld->io.postResetDisposeComplete
-            || !fOld->recoveryFinishProof.ReadyToRetireOneOwner()
-            || fOld->recoveryFinishProof.reset_generation!=fTicket
-            || fOld->recoveryFinishProof.firmware_generation!=fTicket
+            || !EvidenceValid(*fOld,fTicket,fFabric)
             || !fOld->qwen35QualificationOwner.RetiredModifiedIdentity(scratch,snapshot)
             || !scratch->ResetRestoreClaimMatches(fOld->banks,snapshot)
             || !fRestore.VerifiedFor(*scratch,fTicket,fOld->banks,fFresh->banks)) return false;
@@ -108,29 +120,26 @@ public:
     }
 #endif
 
+private:
     template<class Scope>
-    bool Prepare(PioneerProbeCookie* owner,PioneerStoreContext& old,
-        pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+    bool PrepareWithEvidence(PioneerProbeCookie* owner,PioneerStoreContext& old,
+        pioneer_driver_recovery_guard_v2_info* guard,Scope& scope,uint64 ticket,bool fabric) {
         if (fStage!=Unstarted || fOld || fFresh || fOwner || fTicket || !owner || !guard
             || owner!=sRuntimeOwner || owner->context!=&old || old.recoveryFreshSession
             || !sColdRecoveryRequired || sReloadQuiesced || sOpenCookies!=1
-            || !sBankStorageOnly || !old.bankStorageOnly || !old.recoveryAttempted
-            || !old.recoveryFinishPending || !old.recoveryFinishTicket || old.recoveryMapping
-            || !old.io.postResetDisposeComplete || !old.recoveryFinishProof.ReadyToRetireOneOwner()
-            || old.recoveryFinishProof.reset_generation!=old.recoveryFinishTicket
-            || old.recoveryFinishProof.firmware_generation!=old.recoveryFinishTicket
+            || !sBankStorageOnly || !old.bankStorageOnly || !EvidenceValid(old,ticket,fabric)
             || !old.qwen35QualificationOwner.ModifiedResetEligible(old.banks) || !old.initialized
             || old.bytes!=PioneerResidentBanks::Total
-            || guard->validate(old.recoveryFinishTicket)!=B_OK
-            || !scope.FreshRecoveryAdmission(*this,owner,old,old.recoveryFinishTicket)
-            || guard->validate(old.recoveryFinishTicket)!=B_OK) return false;
+            || !guard->validate || guard->validate(ticket)!=B_OK
+            || !scope.FreshRecoveryAdmission(*this,owner,old,ticket)
+            || guard->validate(ticket)!=B_OK) return false;
         auto* fresh=new(std::nothrow) PioneerStoreContext(PioneerResidentBanks::Total);
         if (!fresh) return false;
         if (!fresh->initialized || !fresh->hashes) { delete fresh;return false; }
         fresh->profile=old.profile;
         fresh->bankStorageOnly=true;
         memcpy(fresh->initialized,old.initialized,PioneerResidentBanks::Pages);
-        fOld=&old;fFresh=fresh;fOwner=owner;fTicket=old.recoveryFinishTicket;
+        fOld=&old;fFresh=fresh;fOwner=owner;fTicket=ticket;fFabric=fabric;
         old.recoveryFreshSession=this;fStage=Attached;
         auto allowed=[&](unsigned stage) {
             return TicketValid(guard) && scope.FreshRecoveryBoundary(*this,old,*fresh,stage)
@@ -161,6 +170,19 @@ public:
         if (!allowed(Lease)) return Retain(scope,Lease);
         fStage=Ready;return true;
     }
+public:
+    template<class Scope>
+    bool Prepare(PioneerProbeCookie* owner,PioneerStoreContext& old,
+        pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        return PrepareWithEvidence(owner,old,guard,scope,old.recoveryFinishTicket,false);
+    }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    template<class Scope>
+    bool PrepareFabric(PioneerProbeCookie* owner,PioneerStoreContext& old,
+        pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        return PrepareWithEvidence(owner,old,guard,scope,old.recoveryFabricStartTicket,true);
+    }
+#endif
 
     // Restore through this session's exact fresh resources and retained old
     // snapshot. The underlying owner writes and rereads every page and is
@@ -173,11 +195,19 @@ public:
             || !scope.FreshRecoveryRestoreAdmission(*this,*fOld,*fFresh,fRestore)
             || !TicketValid(guard)) return Retain(scope,ScratchRestoring);
         fStage=ScratchRestoring;
-        if (!fRestore.Restore(*scratch,fTicket,fOld->recoveryFinishProof,fFresh->io,scope,
-            fOld->banks,fOld->baseline.baseline.baseline.baseline.dram,
-            fFresh->banks,fFresh->baseline.baseline.baseline.baseline.dram,
-            fFresh->baseline.baseline.baseline.noc,fFresh->host,fFresh->lease,
-            fFresh->initialized,PioneerResidentBanks::Pages)) return Retain(scope,ScratchRestoring);
+        auto restore=[&](const auto& proof) {
+            return fRestore.Restore(*scratch,fTicket,proof,fFresh->io,scope,
+                fOld->banks,fOld->baseline.baseline.baseline.baseline.dram,
+                fFresh->banks,fFresh->baseline.baseline.baseline.baseline.dram,
+                fFresh->baseline.baseline.baseline.noc,fFresh->host,fFresh->lease,
+                fFresh->initialized,PioneerResidentBanks::Pages);
+        };
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        const bool restored=fFabric?restore(fOld->recoveryFabricEvidence):restore(fOld->recoveryFinishProof);
+#else
+        const bool restored=restore(fOld->recoveryFinishProof);
+#endif
+        if (!restored) return Retain(scope,ScratchRestoring);
         if (!TicketValid(guard) || !fRestore.VerifiedFor(*scratch,fTicket,fOld->banks,fFresh->banks)
             || !scope.FreshRecoveryRestoreComplete(*this,*fOld,*fFresh,fRestore)
             || !TicketValid(guard) || !fRestore.VerifiedFor(*scratch,fTicket,fOld->banks,fFresh->banks))
@@ -269,8 +299,16 @@ public:
         if (!TicketValid(guard) || !fRestore.VerifiedFor(*scratch,fTicket,fOld->banks,fFresh->banks)
             || !scope.FreshRecoveryRetirementAdmission(*this,*fOld,*fFresh,fRestore)
             || !TicketValid(guard)) return Retain(scope,HostReleased);
-        if (!fOld->qwen35QualificationOwner.RetireModifiedAfterReset(fOld->recoveryFinishProof,fTicket,
-            fRestore,fOld->banks,fFresh->banks,*this,scope)) return Retain(scope,OwnerRetired);
+        auto retire=[&](const auto& proof) {
+            return fOld->qwen35QualificationOwner.RetireModifiedAfterReset(proof,fTicket,
+                fRestore,fOld->banks,fFresh->banks,*this,scope);
+        };
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        const bool retired=fFabric?retire(fOld->recoveryFabricEvidence):retire(fOld->recoveryFinishProof);
+#else
+        const bool retired=retire(fOld->recoveryFinishProof);
+#endif
+        if (!retired) return Retain(scope,OwnerRetired);
         fStage=OwnerRetired;
         if (!RetiredTicketValid(guard,scratch,snapshot)
             || !scope.FreshRecoveryAfterOwnerRetired(*this,*fOld,*fFresh,fRestore)

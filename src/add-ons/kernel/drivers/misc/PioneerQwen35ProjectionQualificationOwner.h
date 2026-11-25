@@ -3,7 +3,7 @@
 #define PIONEER_QWEN35_PROJECTION_QUALIFICATION_OWNER_H
 
 #include "PioneerQwen35ProjectionScratch.h"
-#include "PioneerDriverReloadState.h"
+#include "PioneerQ35GraphRecoveryProof.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowProjectionQualificationService.h"
 #include <new>
 #include <stdlib.h>
@@ -91,12 +91,11 @@ public:
     // fleet/DMA audit, idle PCI state and host-page release under the same
     // retained ticket. The old claim and snapshot remain allocated until
     // their containing context is destroyed; this never clears the cold latch.
-    template<class Receipt,class Session,class Scope>
-    bool RetireModifiedAfterReset(const PioneerDriverRecoveryProof& proof,uint64_t ticket,
+    template<class Proof,class Receipt,class Session,class Scope>
+    bool RetireModifiedAfterReset(const Proof& proof,uint64_t ticket,
         const Receipt& receipt,const PioneerResidentBanks& oldBanks,const PioneerResidentBanks& freshBanks,
         const Session& session,Scope& scope) {
-        if (!Active() || !scratch || !snapshot || !ticket || !proof.ReadyToRetireOneOwner()
-            || proof.reset_generation!=ticket || proof.firmware_generation!=ticket
+        if (!Active() || !scratch || !snapshot || !PioneerQ35ScratchRecoveryProofMatches(proof,ticket)
             || !scratch->ResetRestoreEligible(snapshot)
             || !receipt.VerifiedFor(*scratch,ticket,oldBanks,freshBanks)
             || !scope.QualificationModifiedResetRetirementAllowed(*this,*scratch,receipt,session)

@@ -69,6 +69,16 @@ struct PioneerDriverFabricRecoveryProof {
 	uint32_t version=Version,flags=0,core_count=0,reserved=0;
 	uint32_t noc_busy_mask=0,noc_outstanding_mask=0,host_dma_active=0,retained_owners=0;
 	uint64_t fabric_generation=0,firmware_generation=0;
+	// Before restoring retained scratch, CPU MMIO can be gone while the old
+	// DMA buffers and role mappings remain pinned. PCIe health is still an
+	// independent required fact; current fabric transaction does not set it.
+	bool ReadyForScratchRestore() const {
+		return version==Version && flags==(PIONEER_FABRIC_PROOF_REQUIRED
+			& ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED | PIONEER_FABRIC_PROOF_OWNERS_RELEASED
+				| PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED))
+			&& core_count==120 && !reserved && !noc_busy_mask && !noc_outstanding_mask
+			&& !host_dma_active && retained_owners==1 && fabric_generation && firmware_generation;
+	}
 	bool ReadyToRetireOneOwner() const {
 		return version==Version && flags==(PIONEER_FABRIC_PROOF_REQUIRED
 			& ~(PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED))
