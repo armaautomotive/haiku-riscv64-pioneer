@@ -21,16 +21,35 @@ template<class IO> struct PioneerQ35RoleFleetCoreSelector {
     explicit PioneerQ35RoleFleetCoreSelector(IO& io):fIO(io) {}
     bool Select(unsigned core) { return fIO.SelectRuntimeCore(core); }
     bool Allowed() const { return true; }
+    uint32_t DramTlbRead(unsigned slot,unsigned word) { return fIO.DramTlbRead(slot,word); }
+    uint32_t ResidentNocRead(unsigned offset) { return fIO.ResidentNocRead(offset); }
+    uint32_t ResetRead() { return fIO.ResetRead(); }
 private:
     IO& fIO;
+};
+template<class IO,class Selector> struct PioneerQ35RoleFleetRouteAccess {
+    IO& io;Selector& selector;
+    PioneerQ35RoleFleetRouteAccess(IO& value,Selector& selected):io(value),selector(selected) {}
+    bool Allowed() { return selector.Allowed(); }
+    uint32_t DramTlbRead(unsigned slot,unsigned word) { return selector.DramTlbRead(slot,word); }
+    uint32_t ResidentNocRead(unsigned offset) { return selector.ResidentNocRead(offset); }
+};
+template<class IO,class Selector> struct PioneerQ35RoleFleetClockAccess {
+    IO& io;Selector& selector;unsigned& runtimeCore;
+    PioneerQ35RoleFleetClockAccess(IO& value,Selector& selected):io(value),selector(selected),runtimeCore(value.runtimeCore) {}
+    bool DataflowPanelMappingStable() { return selector.Allowed() && io.DataflowPanelMappingStable() && selector.Allowed(); }
+    uint32_t ResidentNocRead(unsigned offset) { return selector.ResidentNocRead(offset); }
+    void Pause() { io.Pause(); }
 };
 template<class IO,class Scope,class Views,class Selector=PioneerQ35RoleFleetCoreSelector<IO>>
 class PioneerQwen35RoleFleetPciIO {
     IO& fIO;
     Scope& fScope;
     Views& fViews;
-    PioneerQwen35RoleRouteGuard<IO,Scope> fGuard;
     Selector fSelector;
+    using RouteAccess=PioneerQ35RoleFleetRouteAccess<IO,Selector>;
+    PioneerQwen35RoleRouteGuard<IO,Scope,RouteAccess> fGuard;
+    PioneerQ35RoleFleetClockAccess<IO,Selector> fClock;
     class ImageReadGuard {
         PioneerQwen35RoleFleetPciIO& fOwner;
     public:
@@ -55,9 +74,10 @@ class PioneerQwen35RoleFleetPciIO {
             // only then inspect that tile's reset and NoC state.
             && fScope.CanSelectRoleHeldCore(fIO,core)
 #endif
-            && fSelector.Select(core) && fIO.MapQ38Panel() && fIO.DataflowPanelMappingStable()
+            && fSelector.Select(core) && fSelector.Allowed() && fIO.MapQ38Panel() && fSelector.Allowed()
+            && fClock.DataflowPanelMappingStable()
             && fGuard.ProveSelectedRoute(core)
-            && PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; })
+            && PioneerQwen35WithSelectedClock(fClock,core,[]() { return true; })
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
             && SelectedHeldAndQuiet(core)
 #else
@@ -124,21 +144,21 @@ class PioneerQwen35RoleFleetPciIO {
     bool SelectedHeldAndQuiet(unsigned core) {
         using namespace PioneerQwen35;
         for (unsigned pass=0;pass<2;pass++) {
-            if (!PioneerQwen35SampleNocFifosAndClock([&](unsigned offset) { return fIO.ResidentNocRead(offset); })
-                || fIO.ResetRead()!=0x47800 || fIO.ResetRead()!=0x47800) return false;
+            if (!PioneerQwen35SampleNocFifosAndClock([&](unsigned offset) { return fSelector.ResidentNocRead(offset); })
+                || fSelector.ResetRead()!=0x47800 || fSelector.ResetRead()!=0x47800) return false;
             for (unsigned noc=0;noc<2;noc++) {
                 const unsigned base=noc?0x10000:0;
                 uint32_t first=0,second=0;
-                if (!DataflowNocDecodeLocalRoute(fIO.ResidentNocRead(base+DataflowNocLogicalIdOffset),first)
-                    || !DataflowNocDecodeLocalRoute(fIO.ResidentNocRead(base+DataflowNocLogicalIdOffset),second)
+                if (!DataflowNocDecodeLocalRoute(fSelector.ResidentNocRead(base+DataflowNocLogicalIdOffset),first)
+                    || !DataflowNocDecodeLocalRoute(fSelector.ResidentNocRead(base+DataflowNocLogicalIdOffset),second)
                     || first!=second || !DataflowNocRouteMatchesWorker(first,core)) return false;
                 for (unsigned i=0;i<4;i++)
-                    if (fIO.ResidentNocRead(base+0x40+i*0x800)) return false;
+                    if (fSelector.ResidentNocRead(base+0x40+i*0x800)) return false;
                 for (unsigned i=0;i<32;i++)
-                    if (fIO.ResidentNocRead(base+0x240+i*4)&0xffU) return false;
+                    if (fSelector.ResidentNocRead(base+0x240+i*4)&0xffU) return false;
             }
-            if (!PioneerQwen35SampleNocFifosAndClock([&](unsigned offset) { return fIO.ResidentNocRead(offset); })
-                || fIO.ResetRead()!=0x47800 || !fGuard.ProveSelectedRoute(core)) return false;
+            if (!PioneerQwen35SampleNocFifosAndClock([&](unsigned offset) { return fSelector.ResidentNocRead(offset); })
+                || fSelector.ResetRead()!=0x47800 || !fGuard.ProveSelectedRoute(core)) return false;
             fIO.Pause();
         }
         return true;
@@ -214,10 +234,10 @@ class PioneerQwen35RoleFleetPciIO {
 #endif
 public:
     PioneerQwen35RoleFleetPciIO(IO& io,Scope& scope,Views& views)
-        :fIO(io),fScope(scope),fViews(views),fGuard(io,scope),fSelector(io) {}
+        :fIO(io),fScope(scope),fViews(views),fSelector(io),fGuard(io,scope,fSelector),fClock(io,fSelector) {}
     template<class Check>
     PioneerQwen35RoleFleetPciIO(IO& io,Scope& scope,Views& views,Check& check)
-        :fIO(io),fScope(scope),fViews(views),fGuard(io,scope),fSelector(io,check) {}
+        :fIO(io),fScope(scope),fViews(views),fSelector(io,check),fGuard(io,scope,fSelector),fClock(io,fSelector) {}
     bool RoleSelectionAuthorityValid() { return fSelector.Allowed(); }
     bool HeldImageStageAllowed() {
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) \
@@ -265,7 +285,7 @@ public:
             || !fSelector.Select(core) || !fIO.MapQ38Panel()
             || !fIO.DataflowPanelMappingStable() || !fGuard.ProveSelectedRoute(core)
             || !PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; })
-            || fIO.ResetRead()!=0x47800 || fIO.ResetRead()!=0x47800) return false;
+            || fSelector.ResetRead()!=0x47800 || fSelector.ResetRead()!=0x47800) return false;
         uint32_t first=0,second=0;
         if (!fViews.Read(core,DataflowRolePhysicalControl,0x224,first,fGuard)
             || !fViews.Read(core,DataflowRolePhysicalControl,0x224,second,fGuard)
@@ -1018,14 +1038,14 @@ public:
     bool DefaultBootRouting(unsigned core) {
         using namespace PioneerQwen35;
         if (!Select(core) || !fScope.ProveRoleBootRoutingInspectionAllowed(fIO,core)
-            || fIO.ResetRead()!=0x47800 || fIO.ResetRead()!=0x47800) return false;
+            || fSelector.ResetRead()!=0x47800 || fSelector.ResetRead()!=0x47800) return false;
         uint32_t trisc1=0,trisc2=0,ncrisc1=0,ncrisc2=0;
         return fViews.Read(core,DataflowRolePhysicalControl,0x234,trisc1,fGuard)
             && fViews.Read(core,DataflowRolePhysicalControl,0x23c,ncrisc1,fGuard)
             && fViews.Read(core,DataflowRolePhysicalControl,0x234,trisc2,fGuard)
             && fViews.Read(core,DataflowRolePhysicalControl,0x23c,ncrisc2,fGuard)
             && trisc1==trisc2 && ncrisc1==ncrisc2 && !(trisc1&1U) && !(ncrisc1&1U)
-            && fIO.ResetRead()==0x47800 && fIO.ResetRead()==0x47800
+            && fSelector.ResetRead()==0x47800 && fSelector.ResetRead()==0x47800
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
             && (fScope.ProveRoleDedicatedObservedStage(fIO) || fScope.ProveRoleFleetHeldAndQuiet(fIO,core))
 #else

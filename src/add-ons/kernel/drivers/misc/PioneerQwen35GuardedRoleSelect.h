@@ -26,6 +26,17 @@ template<class IO,class Check> class PioneerQ35GuardedRoleSelector {
 public:
     PioneerQ35GuardedRoleSelector(IO& io,Check& check):fIO(io),fGuarded{io,check} {}
     bool Allowed() { return fGuarded.Allowed(); }
+    uint32_t DramTlbRead(unsigned slot,unsigned word) { return fGuarded.DramTlbRead(slot,word); }
+    uint32_t ResidentNocRead(unsigned offset) {
+        if (!Allowed()) return UINT32_MAX;
+        const uint32_t value=fIO.ResidentNocRead(offset);
+        return Allowed()?value:UINT32_MAX;
+    }
+    uint32_t ResetRead() {
+        if (!Allowed()) return UINT32_MAX;
+        const uint32_t value=fIO.ResetRead();
+        return Allowed()?value:UINT32_MAX;
+    }
     bool Select(unsigned core) {
         const unsigned route=PioneerQwen35::DataflowBarrierWorkerRoute(core);
         if (route==UINT32_MAX || !fIO.fleetEnabled || !fGuarded.Allowed()) return false;

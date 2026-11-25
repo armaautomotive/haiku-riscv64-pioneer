@@ -15,16 +15,21 @@ struct GuardedFleetIO : PioneerSessionIO {
     }
     uint32_t DramTlbRead(unsigned slot,unsigned word) { ++accesses;return tlbs[slot][word]; }
     void DramTlbWrite(unsigned slot,unsigned word,uint32_t value) { ++accesses;tlbs[slot][word]=value; }
+    uint32_t ResidentNocRead(unsigned offset) { ++accesses;return PioneerSessionIO::ResidentNocRead(offset); }
+    uint32_t ResetRead() { ++accesses;return PioneerSessionIO::ResetRead(); }
 };
 struct FleetCheck {
-    unsigned calls=0,failAt=0;
-    bool operator()() { return ++calls!=failAt; }
+    GuardedFleetIO& io;unsigned calls=0,failAt=0,accessesAtFailure=0;
+    bool operator()() {
+        if (++calls==failAt) { accessesAtFailure=io.accesses;return false; }
+        return true;
+    }
 };
 int main() {
     gLocked=true;
     GuardedFleetIO device;FleetPciTestScope scope;PioneerQwen35RoleHaikuMap platform;
     DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap> views(platform);
-    FleetCheck check;
+    FleetCheck check{device};
     using Selector=PioneerQ35GuardedRoleSelector<GuardedFleetIO,FleetCheck>;
     PioneerQwen35RoleFleetPciIO<GuardedFleetIO,FleetPciTestScope,decltype(views),Selector>
         fleet(device,scope,views,check);
@@ -35,6 +40,20 @@ int main() {
     const unsigned calls=check.calls;
     assert(!fleet.RoleSelectionAuthorityValid() && !fleet.AllRolesHeld(0)
         && check.calls==calls && device.accesses==before);
+    GuardedFleetIO countedDevice;FleetCheck countedCheck{countedDevice};
+    PioneerQwen35RoleFleetPciIO<GuardedFleetIO,FleetPciTestScope,decltype(views),Selector>
+        counted(countedDevice,scope,views,countedCheck);
+    assert(counted.AllRolesHeld(119));
+    const unsigned boundaries=countedCheck.calls;
+    assert(boundaries>200);
+    for (unsigned failure=1;failure<=boundaries;failure++) {
+        GuardedFleetIO trialDevice;FleetCheck trialCheck{trialDevice};trialCheck.failAt=failure;
+        PioneerQwen35RoleFleetPciIO<GuardedFleetIO,FleetPciTestScope,decltype(views),Selector>
+            trial(trialDevice,scope,views,trialCheck);
+        assert(!trial.AllRolesHeld(119) && trialCheck.calls==failure
+            && trialDevice.accesses==trialCheck.accessesAtFailure);
+        assert(!trial.RoleSelectionAuthorityValid() && trialDevice.accesses==trialCheck.accessesAtFailure);
+    }
     gLocked=false;
-    std::puts("PASS actual fleet adapter uses sticky guarded role selection; SIMULATED ONLY");
+    std::printf("PASS actual held-fleet adapter stops on all %u simulated authority boundaries\n",boundaries);
 }
