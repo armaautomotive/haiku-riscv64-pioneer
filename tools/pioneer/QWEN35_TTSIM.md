@@ -117,3 +117,26 @@ successful result depends on the experimental simulator changes, which have
 not been independently qualified. It does not prove general Q4_K accuracy,
 correct bank ownership, instruction timing, full-model output, throughput,
 or recovery on physical hardware.
+
+To exercise actual 4B model weights, first create the fixed fixture as above,
+then replace its synthetic weight bytes using the real tiled reader:
+
+```sh
+c++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  tools/pioneer/tests/pioneer_qwen35_ttsim_model_fixture.cpp \
+  tools/pioneer/PioneerModelWeightCache.cpp -o /tmp/q35-ttsim-model-fixture
+/tmp/q35-ttsim-model-fixture /path/to/Qwen3.5-4B-Q4_K_M.gguf /path/to/fixture-directory
+python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py \
+  /path/to/experimental-libttsim.so /path/to/build/qwen35-dataflow-service-image \
+  /path/to/build/qwen35-shared-role-images --model-projection-fixture /path/to/fixture-directory
+```
+
+The fixture generator hashes the complete pinned GGUF on its open file,
+checks file identity through tiled reads, and takes the first 1,920 rows of
+`blk.0.ffn_gate.weight`. The test independently checks the resulting tiled
+weight digest, decodes Q4_K on the host, and compares two resident commands,
+each with 2,560 synthetic input values. It accepts an absolute error of at
+most `2e-6 * max(1, sum(abs(weight * input)))` per row. For the recorded
+fixture the largest observed normalized error was `1.573e-7` in each run.
+This is one tensor slice, in the experimental simulator, not model inference
+or a measurement of P100A speed.

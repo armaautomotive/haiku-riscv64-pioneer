@@ -8,21 +8,24 @@ it neither accesses hardware nor measures inference or P100A performance.
 
 import argparse
 import ctypes
+import hashlib
 import math
 from pathlib import Path
 import struct
 
 
-def check_fixed_projection_reference(fixture, expected):
-    """Independently decode the synthetic byte-major Q4_K blocks on the host.
+def projection_reference(fixture):
+    """Independently decode byte-major Q4_K blocks on the host.
 
     This is an offline reference for the simulator fixture, not an inference
-    path. The fixture is constructed so every resulting integer is exactly
-    representable in binary32.
+    path. The fixed synthetic fixture has exactly representable outputs;
+    real model weights require a floating-point tolerance.
     """
     inputs = struct.unpack_from('<2560f', fixture, 2764800)
+    values, norms = [], []
     for row in range(1920):
         total = 0.0
+        norm = 0.0
         for block in range(10):
             base = (row // 16 * 10 + block) * 2304 + row % 16
             data = fixture[base:base + 2304:16]
@@ -40,9 +43,14 @@ def check_fixed_projection_reference(fixture, expected):
                 for j in range(32):
                     q = data[packed + j]
                     q = (q & 15) if group % 2 == 0 else (q >> 4)
-                    total += inputs[activation + j] * (d * scale * q - dmin * minimum)
-        if not math.isfinite(total) or struct.pack('<f', total) != expected[row * 4:row * 4 + 4]:
-            raise ValueError(f'Q4_K fixture reference mismatch at row {row}')
+                    term = inputs[activation + j] * (d * scale * q - dmin * minimum)
+                    total += term
+                    norm += abs(term)
+        if not math.isfinite(total) or not math.isfinite(norm):
+            raise ValueError(f'non-finite Q4_K reference at row {row}')
+        values.append(total)
+        norms.append(norm)
+    return values, norms
 
 
 def main():
@@ -53,6 +61,8 @@ def main():
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--projection-fixture', type=Path,
                        help='also execute the separately generated fixed projection')
+    group.add_argument('--model-projection-fixture', type=Path,
+                       help='also execute a fixture prepared from the pinned 4B model')
     group.add_argument('--silu-fixture', type=Path,
                        help='also execute the separately generated 120-core SiLU operation')
     group.add_argument('--rms-fixture', type=Path,
@@ -129,13 +139,21 @@ def main():
         reset_address = bar + 0x200000 + (0xffb121b0 & 0x1fffff)
         invocations = None
         invocation_size = 0
-        if args.projection_fixture:
-            fixture = (args.projection_fixture / 'fixture.bin').read_bytes()
-            invocations = (args.projection_fixture / 'invocations.bin').read_bytes()
-            expected = (args.projection_fixture / 'expected.bin').read_bytes()
+        projection_fixture = args.projection_fixture or args.model_projection_fixture
+        if projection_fixture:
+            fixture = (projection_fixture / 'fixture.bin').read_bytes()
+            invocations = (projection_fixture / 'invocations.bin').read_bytes()
+            expected = (projection_fixture / 'expected.bin').read_bytes()
             if len(fixture) != 2785280 or len(invocations) != 120 * 1128 or len(expected) != 1920 * 4:
                 raise ValueError('unexpected fixed-projection fixture size')
-            check_fixed_projection_reference(fixture, expected)
+            if args.model_projection_fixture and hashlib.sha256(fixture[:2764800]).hexdigest() != (
+                    '550cc5316cf0f1bf1427a0f2d269cc1b74736e6fe9f04751629deb7e1b2ab26d'):
+                raise ValueError('model fixture weights do not match the pinned 4B tensor slice')
+            values, norms = projection_reference(fixture)
+            reference = struct.pack('<1920f', *values)
+            if args.projection_fixture and reference != expected:
+                raise ValueError('fixed Q4_K fixture does not match the independent reference')
+            expected = reference
             invocation_size = 1128
             offset = 0
             while offset < len(fixture):
@@ -164,7 +182,7 @@ def main():
             for address, data in ((0x4001000, rms_input), (0x4011000, rms_weight), (0x4021000, bytes(9216 * 4))):
                 select(2, address, 18, 12)
                 write(bar + 0x400000 + (address & 0x1fffff), data)
-        role_stop = 3 if args.projection_fixture else 1
+        role_stop = 3 if projection_fixture else 1
         for core in range(120):
             select_worker(core)
             if struct.unpack('<I', read(reset_address, 4))[0] != 0x47800:
@@ -211,7 +229,7 @@ def main():
         sequence = 0
         if invocations is not None:
             for run in range(2):
-                if run and args.projection_fixture:
+                if run and projection_fixture:
                     input_offset = 2764800
                     bits = struct.unpack_from('<2560I', fixture, input_offset)
                     data = struct.pack('<2560I', *(value ^ 0x80000000 for value in bits))
@@ -255,11 +273,27 @@ def main():
                         break
                 else:
                     raise RuntimeError('operation did not complete on all 120 simulated cores')
-                if args.projection_fixture:
+                if projection_fixture:
                     address = 0x4001000 + 2777088
                     select(2, address, 18, 12)
-                    if read(bar + 0x400000 + (address & 0x1fffff), len(expected)) != expected:
-                        raise RuntimeError('simulated fixed projection output did not match expected values')
+                    data = read(bar + 0x400000 + (address & 0x1fffff), len(expected))
+                    if args.projection_fixture:
+                        if data != expected:
+                            raise RuntimeError('simulated fixed projection output did not match expected values')
+                    else:
+                        actual = struct.unpack('<1920f', data)
+                        reference = struct.unpack('<1920f', expected)
+                        maximum = worst = 0.0
+                        for row, (got, want, norm) in enumerate(zip(actual, reference, norms)):
+                            error = abs(got - want)
+                            ratio = error / max(1.0, norm)
+                            maximum = max(maximum, error)
+                            worst = max(worst, ratio)
+                            if not math.isfinite(got) or ratio > 2e-6:
+                                raise RuntimeError(f'model projection run {run + 1}, row {row}: '
+                                                   f'{got} differs from {want}; normalized error {ratio}')
+                        print(f'model projection run {run + 1}: maximum absolute error {maximum:.9g}; '
+                              f'maximum error / sum of absolute products {worst:.9g}', flush=True)
                 elif args.silu_fixture:
                     address = 0x4001000
                     select(2, address, 18, 12)
@@ -312,6 +346,8 @@ def main():
         if invocations is not None:
             if args.projection_fixture:
                 print('PASS two resident 120-core Q4_K projections match 1,920 independently checked values each; SIMULATED ONLY')
+            elif args.model_projection_fixture:
+                print('PASS two resident 120-core model-weight Q4_K projections match 1,920 independently checked values each; SIMULATED ONLY')
             elif args.silu_fixture:
                 print('PASS two resident 120-core SiLU runs match 9,216 values each; SIMULATED ONLY')
             else:
