@@ -8,6 +8,7 @@ it neither accesses hardware nor measures inference or P100A performance.
 
 import argparse
 import ctypes
+import math
 from pathlib import Path
 import struct
 
@@ -17,8 +18,13 @@ def main():
     parser.add_argument('library', type=Path)
     parser.add_argument('image', type=Path)
     parser.add_argument('roles', type=Path)
-    parser.add_argument('--projection-fixture', type=Path,
-                        help='also execute the separately generated fixed projection')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--projection-fixture', type=Path,
+                       help='also execute the separately generated fixed projection')
+    group.add_argument('--silu-fixture', type=Path,
+                       help='also execute the separately generated 120-core SiLU operation')
+    group.add_argument('--rms-fixture', type=Path,
+                       help='also execute the separately generated 120-core RMS normalization')
     args = parser.parse_args()
     image = args.image
     if not (image / 'activation-sharing.marker').is_file():
@@ -90,12 +96,14 @@ def main():
         handoff_address = bar + 0xab540
         reset_address = bar + 0x200000 + (0xffb121b0 & 0x1fffff)
         invocations = None
+        invocation_size = 0
         if args.projection_fixture:
             fixture = (args.projection_fixture / 'fixture.bin').read_bytes()
             invocations = (args.projection_fixture / 'invocations.bin').read_bytes()
             expected = (args.projection_fixture / 'expected.bin').read_bytes()
             if len(fixture) != 2785280 or len(invocations) != 120 * 1128 or len(expected) != 1920 * 4:
                 raise ValueError('unexpected fixed-projection fixture size')
+            invocation_size = 1128
             offset = 0
             while offset < len(fixture):
                 address = 0x4001000 + offset
@@ -103,6 +111,27 @@ def main():
                 count = min(0x10000, len(fixture) - offset, 0x200000 - (address & 0x1fffff))
                 write(bar + 0x400000 + (address & 0x1fffff), fixture[offset:offset + count])
                 offset += count
+        elif args.silu_fixture:
+            invocations = (args.silu_fixture / 'silu-invocations.bin').read_bytes()
+            gate = (args.silu_fixture / 'silu-gate.bin').read_bytes()
+            up = (args.silu_fixture / 'silu-up.bin').read_bytes()
+            if len(invocations) != 120 * 432 or len(gate) != 9216 * 4 or len(up) != len(gate):
+                raise ValueError('unexpected SiLU fixture size')
+            invocation_size = 432
+            for address, data in ((0x4001000, gate), (0x4011000, up)):
+                select(2, address, 18, 12)
+                write(bar + 0x400000 + (address & 0x1fffff), data)
+        elif args.rms_fixture:
+            invocations = (args.rms_fixture / 'rms-invocations.bin').read_bytes()
+            rms_input = (args.rms_fixture / 'rms-input.bin').read_bytes()
+            rms_weight = (args.rms_fixture / 'rms-weight.bin').read_bytes()
+            if len(invocations) != 120 * 516 or len(rms_input) != 2560 * 4 or len(rms_weight) != len(rms_input):
+                raise ValueError('unexpected RMS fixture size')
+            invocation_size = 516
+            for address, data in ((0x4001000, rms_input), (0x4011000, rms_weight), (0x4021000, bytes(9216 * 4))):
+                select(2, address, 18, 12)
+                write(bar + 0x400000 + (address & 0x1fffff), data)
+        role_stop = 2 if args.projection_fixture else 1
         for core in range(120):
             select_worker(core)
             if struct.unpack('<I', read(reset_address, 4))[0] != 0x47800:
@@ -144,43 +173,85 @@ def main():
             if words[5:8] != (1, 0, 0) or words[15] != core:
                 raise RuntimeError(f'core {core}: service failed startup: {words}')
             if invocations is not None:
-                write(bar + 0xaa000, invocations[core * 1128:(core + 1) * 1128])
+                write(bar + 0xaa000, invocations[core * invocation_size:(core + 1) * invocation_size])
 
         sequence = 0
         if invocations is not None:
-            for core in range(120):
-                select_worker(core)
-                write32(mailbox_address + 8, 1)
-            for attempt in range(100):
-                lib.libttsim_clock(100000)
-                completed = 0
+            for run in range(1 if args.projection_fixture else 2):
+                if run and args.silu_fixture:
+                    gates = struct.unpack('<9216f', gate)
+                    ups = struct.unpack('<9216f', up)
+                    gate = struct.pack('<9216f', *(-value for value in gates))
+                    up = struct.pack('<9216f', *(-value for value in ups))
+                    for address, data in ((0x4001000, gate), (0x4011000, up)):
+                        select(2, address, 18, 12)
+                        write(bar + 0x400000 + (address & 0x1fffff), data)
+                elif run and args.rms_fixture:
+                    inputs = struct.unpack('<2560f', rms_input)
+                    rms_input = struct.pack('<2560f', *(-value for value in inputs))
+                    for address, data in ((0x4001000, rms_input), (0x4021000, bytes(9216 * 4))):
+                        select(2, address, 18, 12)
+                        write(bar + 0x400000 + (address & 0x1fffff), data)
+                sequence += 1
+                for core in range(120):
+                    select_worker(core)
+                    write32(mailbox_address + 8, sequence)
+                for attempt in range(100):
+                    lib.libttsim_clock(100000)
+                    completed = 0
+                    for core in range(120):
+                        select_worker(core)
+                        words = struct.unpack('<16I', read(mailbox_address, 64))
+                        if words[5] in (4, 6):
+                            roles = struct.unpack('<16I', read(role_address, 64))
+                            raise RuntimeError(f'core {core}: operation failed: {words}; roles={roles}')
+                        completed += words[5] == 3 and words[4] == sequence
+                    if completed == 120:
+                        break
+                else:
+                    raise RuntimeError('operation did not complete on all 120 simulated cores')
+                if args.projection_fixture:
+                    address = 0x4001000 + 2777088
+                    select(2, address, 18, 12)
+                    if read(bar + 0x400000 + (address & 0x1fffff), len(expected)) != expected:
+                        raise RuntimeError('simulated fixed projection output did not match expected values')
+                elif args.silu_fixture:
+                    address = 0x4001000
+                    select(2, address, 18, 12)
+                    values = struct.unpack('<9216f', read(bar + 0x400000 + (address & 0x1fffff), len(gate)))
+                    gates = struct.unpack('<9216f', gate)
+                    ups = struct.unpack('<9216f', up)
+                    for row, (actual, a, b) in enumerate(zip(values, gates, ups)):
+                        reference = a / (1.0 + math.exp(-a)) * b
+                        if not math.isfinite(actual) or abs(actual - reference) > 2e-5 * max(1.0, abs(reference)):
+                            raise RuntimeError(f'SiLU run {run + 1}, row {row}: {actual} differs from reference {reference}')
+                else:
+                    address = 0x4021000
+                    select(2, address, 18, 12)
+                    values = struct.unpack('<2560f', read(bar + 0x400000 + (address & 0x1fffff), len(rms_input)))
+                    inputs = struct.unpack('<2560f', rms_input)
+                    weights = struct.unpack('<2560f', rms_weight)
+                    scale = 1.0 / math.sqrt(sum(value * value for value in inputs) / len(inputs) + 1e-6)
+                    for row, (actual, value, weight) in enumerate(zip(values, inputs, weights)):
+                        reference = value * scale * weight
+                        if not math.isfinite(actual) or abs(actual - reference) > 2e-5 * max(1.0, abs(reference)):
+                            raise RuntimeError(f'RMS run {run + 1}, row {row}: {actual} differs from reference {reference}')
+                for core in range(120):
+                    select_worker(core)
+                    write32(mailbox_address + 12, sequence)
+                lib.libttsim_clock(30000)
                 for core in range(120):
                     select_worker(core)
                     words = struct.unpack('<16I', read(mailbox_address, 64))
-                    if words[5] in (4, 6):
-                        roles = struct.unpack('<16I', read(role_address, 64))
-                        raise RuntimeError(f'core {core}: projection failed: {words}; roles={roles}')
-                    completed += words[5] == 3
-                if completed == 120:
-                    break
-            else:
-                raise RuntimeError('fixed projection did not complete on all 120 simulated cores')
-            address = 0x4001000 + 2777088
-            select(2, address, 18, 12)
-            if read(bar + 0x400000 + (address & 0x1fffff), len(expected)) != expected:
-                raise RuntimeError('simulated fixed projection output did not match expected values')
-            for core in range(120):
-                select_worker(core)
-                write32(mailbox_address + 12, 1)
-            lib.libttsim_clock(30000)
-            sequence = 1
+                    if words[2:8] != (sequence, sequence, sequence, 1, 0, 0):
+                        raise RuntimeError(f'core {core}: service did not return to ready: {words}')
 
         for core in range(120):
             select_worker(core)
             words = struct.unpack('<16I', read(mailbox_address, 64))
             if words[2:8] != (sequence, sequence, sequence, 1, 0, 0):
                 raise RuntimeError(f'core {core}: service did not return to ready: {words}')
-            write32(role_address + 32, sequence + 1)
+            write32(role_address + 32, role_stop)
             write32(mailbox_address + 32, 0x53544f50)
 
         lib.libttsim_clock(30000)
@@ -190,11 +261,16 @@ def main():
             if words[2:8] != (sequence, sequence, sequence, 5, 0, 0) or words[15] != core:
                 raise RuntimeError(f'core {core}: service did not stop cleanly: {words}')
             roles = struct.unpack('<16I', read(role_address, 64))
-            if roles[8:11] != (sequence + 1, sequence + 1, sequence + 1):
+            if roles[8:11] != (role_stop, role_stop, role_stop):
                 raise RuntimeError(f'core {core}: reader/writer did not stop: {roles}')
         print('PASS compiled Q35 service and reader/writer roles start and stop on 120 Blackhole simulator cores; NO HARDWARE')
         if invocations is not None:
-            print('PASS fixed Q4_K matrix projection matches all 1,920 expected values; SIMULATED ONLY')
+            if args.projection_fixture:
+                print('PASS fixed Q4_K matrix projection matches all 1,920 expected values; SIMULATED ONLY')
+            elif args.silu_fixture:
+                print('PASS two resident 120-core SiLU runs match 9,216 values each; SIMULATED ONLY')
+            else:
+                print('PASS two resident 120-core RMS runs match 2,560 values each; SIMULATED ONLY')
     finally:
         lib.libttsim_exit()
 

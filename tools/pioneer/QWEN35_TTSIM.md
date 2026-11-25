@@ -43,6 +43,40 @@ actual [Blackhole register definitions](https://github.com/tenstorrent/tt-metal/
 include fields absent from that model, so the device initialization still
 resets the full documented thread-state range.
 
+The same patched simulator can exercise a non-projection operation without
+changing the compiled device images. Build the synthetic SiLU fixture:
+
+```sh
+c++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  tools/pioneer/tests/pioneer_qwen35_ttsim_silu_fixture.cpp -o /tmp/q35-ttsim-silu-fixture
+/tmp/q35-ttsim-silu-fixture /path/to/fixture-directory
+python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py \
+  /path/to/patched-libttsim.so /path/to/build/qwen35-dataflow-service-image \
+  /path/to/build/qwen35-shared-role-images --silu-fixture /path/to/fixture-directory
+```
+
+This runs two successive commands through the same 120 simulated services,
+changes the synthetic input between runs, and compares all 9,216 output
+values each time against an independent mathematical reference. The test
+uses the actual NoC reader, writer and completion checks in the compiled
+firmware. It does not exercise Tensix matrix projections or a language model.
+
+The RMS fixture tests the root worker's scale calculation and distribution,
+then checks the output of all 120 workers. Build and run it in the same way:
+
+```sh
+c++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  tools/pioneer/tests/pioneer_qwen35_ttsim_rms_fixture.cpp -o /tmp/q35-ttsim-rms-fixture
+/tmp/q35-ttsim-rms-fixture /path/to/fixture-directory
+python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py \
+  /path/to/patched-libttsim.so /path/to/build/qwen35-dataflow-service-image \
+  /path/to/build/qwen35-shared-role-images --rms-fixture /path/to/fixture-directory
+```
+
+Two successive commands reuse the resident service, with different synthetic
+inputs, and compare all 2,560 output values each time to an independent RMS
+reference. These are simulated operation checks, not warm model runs.
+
 A separate temporary experiment changed the matrix format and removed some
 configuration writes/readbacks solely to investigate simulator coverage. It
 advanced to an unpack operation the simulator marks untested and then stopped.
