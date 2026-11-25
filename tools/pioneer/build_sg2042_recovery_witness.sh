@@ -1,6 +1,7 @@
 #!/bin/sh
 # Offline cross-build only; the witness rejects controller initialization and
-# its recovery module refuses requests. Never installs or touches hardware.
+# its default recovery module refuses requests. A second non-loadable build
+# type-checks the controller gateway. Never installs or touches hardware.
 set -eu
 [ "$#" = 2 ] || exit 2
 build=$(CDPATH= cd -- "$1" && pwd)
@@ -28,10 +29,11 @@ set -- -isystem "$sdk/headers/os/drivers" \
 for include in "$sdk/headers/os" "$sdk"/headers/os/*; do
  [ ! -d "$include" ] || set -- "$@" -isystem "$include"
 done
-for mode in control witness; do
+for mode in control witness gateway; do
  mkdir -m 700 "$output/$mode"
  flag=
- [ "$mode" != witness ] || flag=-DPIONEER_SG2042_RECOVERY_WITNESS
+ [ "$mode" = control ] || flag=-DPIONEER_SG2042_RECOVERY_WITNESS
+ [ "$mode" != gateway ] || flag="$flag -DPIONEER_SG2042_RECOVERY_GATEWAY_WITNESS"
  for source in ECAMPCIController ECAMPCIControllerFDT ECAMPCIControllerACPI kernel_interface; do
   "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -Wno-unused-parameter -Wno-missing-field-initializers \
    -fno-exceptions -fno-rtti -ffreestanding -fno-use-cxa-atexit -fno-strict-aliasing \
@@ -49,6 +51,7 @@ if "$nm" -C "$output/control/ecam" | grep -q 'gPioneerRecovery'; then
  echo 'unexpected recovery module in control' >&2; exit 1
 fi
 "$nm" -C "$output/witness/ecam" | grep -q 'gPioneerRecovery'
+"$nm" -C "$output/gateway/ecam" | grep -q 'gPioneerRecovery'
 "$objdump" -Cd "$output/witness/ECAMPCIController.o" > "$output/witness/disassembly.txt"
 sed -n '/<ECAMPCIController::InitDriver(/,/^$/p' "$output/witness/disassembly.txt" > "$output/witness/init.txt"
 grep -q 'lui.*a0,0x80000' "$output/witness/init.txt"
@@ -57,5 +60,10 @@ grep -q 'add.*a0,a0,15' "$output/witness/init.txt"
 sed -n '/<gPioneerRecovery.*_FUN/,/^$/p' "$output/witness/interface.txt" > "$output/witness/callbacks.txt"
 [ "$(grep -c 'lui.*a0,0x80000' "$output/witness/callbacks.txt")" = 1 ]
 [ "$(grep -c 'add.*a0,a0,15' "$output/witness/callbacks.txt")" = 1 ]
-shasum -a 256 "$output/control/ecam" "$output/witness/ecam"
-echo 'PASS SG2042 recovery witness rejects controller initialization and the service call; NOT LOADABLE'
+"$objdump" -Cd "$output/gateway/ECAMPCIController.o" > "$output/gateway/disassembly.txt"
+sed -n '/<ECAMPCIController::InitDriver(/,/^$/p' "$output/gateway/disassembly.txt" > "$output/gateway/init.txt"
+grep -q 'lui.*a0,0x80000' "$output/gateway/init.txt"
+grep -q 'add.*a0,a0,15' "$output/gateway/init.txt"
+"$nm" -C "$output/gateway/kernel_interface.o" | grep -q 'ECAMPCIController::RunPioneerRecovery'
+shasum -a 256 "$output/control/ecam" "$output/witness/ecam" "$output/gateway/ecam"
+echo 'PASS SG2042 control and non-loadable recovery witnesses; gateway forwards to controller lease'

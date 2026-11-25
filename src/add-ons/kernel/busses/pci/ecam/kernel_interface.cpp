@@ -66,8 +66,15 @@ pioneer_sg2042_recovery_module_info gPioneerRecovery = {
 	.info = { .name = PIONEER_SG2042_RECOVERY_MODULE },
 	.run = [](void* cookie, pioneer_sg2042_recovery_operation operation,
 		void* argument, status_t* operationStatus) {
+		#ifdef PIONEER_SG2042_RECOVERY_GATEWAY_WITNESS
+		if (cookie == NULL)
+			return B_BAD_VALUE;
+		return static_cast<ECAMPCIController*>(cookie)->RunPioneerRecovery(
+			operation, argument, operationStatus);
+		#else
 		(void)cookie; (void)operation; (void)argument; (void)operationStatus;
 		return B_NOT_ALLOWED;
+		#endif
 	}
 };
 #endif

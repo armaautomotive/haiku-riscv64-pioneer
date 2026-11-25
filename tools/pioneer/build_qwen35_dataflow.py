@@ -542,6 +542,8 @@ def main():
     parser.add_argument('new_output', type=Path)
     parser.add_argument('--compile-recovery-prototype', action='store_true',
                         help='compile the experimental recovery body into a non-loadable driver')
+    parser.add_argument('--compile-root-recovery-gateway', action='store_true',
+                        help='connect recovery to the non-loadable SG2042 controller gateway')
     parser.add_argument('--compile-device-dispatch-prototype', action='store_true',
                         help='compile incomplete device dispatch into a non-loadable driver')
     parser.add_argument('--compile-role-write-prototype', action='store_true',
@@ -677,6 +679,10 @@ def main():
             or args.build_device_dispatch_trial):
         parser.error('supported span requires the non-loadable device dispatch prototype')
 
+    if args.compile_root_recovery_gateway and (not args.compile_snapshot_takeover_prototype
+            or args.build_recovery_qualification or args.build_device_dispatch_trial):
+        parser.error('root recovery gateway requires the non-loadable snapshot prototype')
+
     build = args.haiku_build.resolve(strict=True)
     output = args.new_output.absolute()
     output.mkdir(mode=0o700)
@@ -703,6 +709,8 @@ def main():
                       PIONEER_Q38_SPAN_FAST='1')
     if args.compile_recovery_prototype or args.compile_device_dispatch_prototype:
         driver_env['PIONEER_QWEN35_RECOVERY_COMPILE_ONLY'] = '1'
+    if args.compile_root_recovery_gateway:
+        driver_env['PIONEER_QWEN35_ROOT_RECOVERY_GATEWAY_WITNESS'] = '1'
     if args.compile_device_dispatch_prototype:
         driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY'] = '1'
     if args.compile_role_write_prototype:

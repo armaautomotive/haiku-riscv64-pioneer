@@ -42,6 +42,16 @@ struct tt_pioneer_profile {
 #include <device_manager.h>
 status_t GetPioneerPciProfile(device_manager_info*, const pci_info&,
 	tt_pioneer_profile&);
+// The callback runs synchronously while the validated device-tree nodes,
+// including the PCI controller node, remain referenced. It may use the
+// controller cookie only until it returns. A node reference does NOT pin its
+// driver or cookie against device removal; callers must provide that separate
+// lifetime protection. The profile validates identity and topology; it does
+// not establish DMA, MMIO or firmware exclusion.
+typedef status_t (*pioneer_pci_controller_operation)(void* controllerCookie,
+	void* argument);
+status_t WithPioneerPciController(device_manager_info*, const pci_info&,
+	tt_pioneer_profile&, pioneer_pci_controller_operation, void* argument);
 #endif
 
 #endif

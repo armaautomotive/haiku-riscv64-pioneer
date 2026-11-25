@@ -24,9 +24,10 @@ struct NodeRef {
 
 } // namespace
 
-status_t
-GetPioneerPciProfile(device_manager_info* dm, const pci_info& expected,
-	tt_pioneer_profile& profile)
+static status_t
+InspectPioneerPciProfile(device_manager_info* dm, const pci_info& expected,
+	tt_pioneer_profile& profile, pioneer_pci_controller_operation operation,
+	void* argument)
 {
 	profile = {};
 	profile.version = 1;
@@ -187,5 +188,22 @@ GetPioneerPciProfile(device_manager_info* dm, const pci_info& expected,
 	profile.stage = 6;
 	profile.ready = 1;
 	dprintf("PIONEER-P100A: profile stage 6 validated; no PCI/MMIO writes\n");
-	return B_OK;
+	return operation != NULL ? operation(hostDevice, argument) : B_OK;
+}
+
+status_t
+GetPioneerPciProfile(device_manager_info* dm, const pci_info& expected,
+	tt_pioneer_profile& profile)
+{
+	return InspectPioneerPciProfile(dm, expected, profile, NULL, NULL);
+}
+
+status_t
+WithPioneerPciController(device_manager_info* dm, const pci_info& expected,
+	tt_pioneer_profile& profile, pioneer_pci_controller_operation operation,
+	void* argument)
+{
+	if (dm == NULL || operation == NULL)
+		return B_BAD_VALUE;
+	return InspectPioneerPciProfile(dm, expected, profile, operation, argument);
 }

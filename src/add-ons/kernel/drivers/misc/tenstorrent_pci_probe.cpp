@@ -12760,6 +12760,62 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 #endif
 }
 
+#ifdef PIONEER_QWEN35_ROOT_RECOVERY_GATEWAY_WITNESS
+#if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY)
+#error The root recovery gateway is restricted to the non-loadable witness
+#endif
+// The profile holds the actual controller node throughout the synchronous
+// call. This only serializes controller-mediated PCI configuration; it does
+// not prove downstream topology stability, MMIO/DMA exclusion or firmware
+// quiescence. A node reference does not pin the controller driver against
+// removal, and the complete callback's lock ordering is unaudited. Neither
+// witness can be loaded until both are solved.
+// PIONEER_Q35_ROOT_RECOVERY_GATEWAY_BEGIN
+struct Qwen35RootRecoveryCall {
+	PioneerProbeCookie* inspector;
+	tt_pioneer_recovery_run& request;
+	const tt_pioneer_profile& original;
+	tt_pioneer_profile inspected{};
+	status_t operationStatus=B_ERROR;
+	static status_t Invoke(void* opaque) {
+		auto& call=*static_cast<Qwen35RootRecoveryCall*>(opaque);
+		return Qwen35RecoveryRunLocked(call.inspector,call.request);
+	}
+	static status_t Controller(void* cookie,void* opaque) {
+		auto& call=*static_cast<Qwen35RootRecoveryCall*>(opaque);
+		const auto& a=call.original;const auto& b=call.inspected;
+		if (!cookie || !a.ready || !b.ready || a.card_bus!=b.card_bus
+			|| a.root_bus!=b.root_bus || a.controller!=b.controller || a.config!=b.config
+			|| a.config_length!=b.config_length || a.bar0_host_start!=b.bar0_host_start
+			|| a.bar0_host_end!=b.bar0_host_end || a.bar2_host_start!=b.bar2_host_start
+			|| a.bar2_host_end!=b.bar2_host_end) return B_NOT_ALLOWED;
+		pioneer_sg2042_recovery_module_info* service=nullptr;
+		status_t status=get_module(PIONEER_SG2042_RECOVERY_MODULE,(module_info**)&service);
+		if (status!=B_OK) return status;
+		PioneerRootLeaseCompileQuarantine quarantine;
+		PioneerPciRootLeaseScope<PioneerRootLeaseCompileQuarantine,
+			pioneer_sg2042_recovery_module_info> scope(quarantine);
+		status=scope.Run(service,cookie,Invoke,&call,&call.operationStatus);
+		put_module(PIONEER_SG2042_RECOVERY_MODULE);
+		return status==B_OK ? call.operationStatus : status;
+	}
+};
+static status_t
+Qwen35RecoveryWithRootLease(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& request)
+{
+	if (!sDeviceManager || !sRuntimeOwner || !sRuntimeOwner->context)
+		return B_NOT_ALLOWED;
+	Qwen35RootRecoveryCall call{inspector,request,sRuntimeOwner->context->profile};
+	return WithPioneerPciController(sDeviceManager,sCard,call.inspected,
+		Qwen35RootRecoveryCall::Controller,&call);
+}
+// PIONEER_Q35_ROOT_RECOVERY_GATEWAY_END
+#define Qwen35RecoveryRunSelected Qwen35RecoveryWithRootLease
+#else
+#define Qwen35RecoveryRunSelected Qwen35RecoveryRunLocked
+#endif
+
+
 static status_t
 Qwen35RecoveryRequest(PioneerProbeCookie* cookie,void* data,size_t length,bool force,bool qualification=false)
 {
@@ -12831,7 +12887,7 @@ Qwen35RecoveryRequest(PioneerProbeCookie* cookie,void* data,size_t length,bool f
 					r.operation_status=B_NOT_ALLOWED;
 				else {
 					context->qwen35LiveFaultRecoveryRequested=true;
-					r.operation_status=Qwen35RecoveryRunLocked(cookie,r);
+					r.operation_status=Qwen35RecoveryRunSelected(cookie,r);
 				}
 			}
 		}
@@ -12839,7 +12895,7 @@ Qwen35RecoveryRequest(PioneerProbeCookie* cookie,void* data,size_t length,bool f
 #else
 	(void)force;
 #endif
-		r.operation_status=Qwen35RecoveryRunLocked(cookie,r);
+		r.operation_status=Qwen35RecoveryRunSelected(cookie,r);
 #ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
 	// The failed owner remains quarantined. Preserve root AER evidence without
 	// writing or acknowledging status, before the caller releases its fd.
@@ -12856,6 +12912,8 @@ Qwen35RecoveryRequest(PioneerProbeCookie* cookie,void* data,size_t length,bool f
 	status=user_memcpy(data,&r,sizeof(r));
 	release_sem(sLock);return status;
 }
+#undef Qwen35RecoveryRunSelected
+
 
 static status_t
 Qwen35RecoveryRun(PioneerProbeCookie* cookie,void* data,size_t length)
