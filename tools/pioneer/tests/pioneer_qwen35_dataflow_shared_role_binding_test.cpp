@@ -331,10 +331,21 @@ static void ExerciseFabricViewRetirement(PioneerSessionIO& io)
         && PioneerQ35SharedRoleBindingTestAccess::CodeSnapshot(*binding)==code
         && PioneerQ35SharedRoleBindingTestAccess::RamSnapshot(*binding)==ram);
     assert(!PioneerQ35FabricDisposeRoleViews(*context,scope,&guard,9));
+    PioneerQ35SharedRoleBindingTestAccess::Guard bar;
+    auto permit=[]() { return true; };auto noAlias=[](int32_t) { return false; };
+    assert(!binding->OpenFabricRecoveryViews(bar,permit,noAlias)); // no fresh session
+    gMapCalls=0; // the fake mapper numbers a fresh pass from its first window
+    context->recoveryFreshSession=reinterpret_cast<void*>(1);
+    assert(binding->OpenFabricRecoveryViews(bar,permit,noAlias) && binding->FabricRecoveryViewsOpen()
+        && !binding->FabricViewsDisposed() && !binding->CanDestroy());
+    assert(binding->CloseFabricRecoveryViews(permit,noAlias) && binding->FabricRecoveryViewsClosed()
+        && !binding->CanDestroy() && PioneerQ35SharedRoleBindingTestAccess::CodeSnapshot(*binding)==code
+        && PioneerQ35SharedRoleBindingTestAccess::RamSnapshot(*binding)==ram);
     // Test teardown only: these mappings and snapshots are simulated.
     delete binding;binding=nullptr;context->recoveryFabricEvidenceRecorded=false;
     context->recoveryFabricPcieAudited=false;context->recoveryFabricPciIdle=false;
-    context->recoveryFabricAuditReleased=false;context->recoveryFabricStartTicket=0;io.fabricOldMmioDisposeComplete=false;
+    context->recoveryFabricAuditReleased=false;context->recoveryFabricStartTicket=0;
+    context->recoveryFreshSession=nullptr;io.fabricOldMmioDisposeComplete=false;
     sColdRecoveryRequired=false;gAllowWrite=false;
 }
 #endif

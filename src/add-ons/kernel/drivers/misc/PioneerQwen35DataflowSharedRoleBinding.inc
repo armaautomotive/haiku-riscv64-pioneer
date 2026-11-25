@@ -385,7 +385,11 @@ public:
     // the old session areas *before* either owner removes any mappings.
     bool FabricViewsReferenceArea(int32_t area) const { return fViews.ReferencesArea(area); }
     bool FabricViewsLayoutValid() const { return fViews.FabricAreaLayoutValid(); }
-    bool FabricViewsDisposed() const { return fViews.FabricCloseComplete(); }
+    bool FabricViewsDisposed() const {
+        return fViews.FabricCloseComplete() && !fViews.FabricFreshOpenAttempted() && !fViews.HasMappings();
+    }
+    bool FabricRecoveryViewsOpen() const { return fViews.FabricFreshOpenComplete(); }
+    bool FabricRecoveryViewsClosed() const { return fViews.FabricFreshCloseComplete(); }
     template<class Check> bool DisposeFabricViews(Check& check) {
         if (fContext.qwen35SharedRoleBinding!=this || !sColdRecoveryRequired
             || !fContext.recoveryFabricEvidenceRecorded || !fContext.recoveryFabricPcieAudited
@@ -397,6 +401,35 @@ public:
                 || area==fContext.io.wideArea;
         };
         return fViews.CloseForFabricRecovery(check,protectedArea);
+    }
+    // The caller's metadata-only check must bind the exact fresh session,
+    // ticket, reservation and retained snapshot owner. Its protected-area
+    // predicate must include every fresh-session and audit mapping. Neither
+    // method proves physical writer exclusion or restores any role state.
+    template<class Guard,class Check,class Protected>
+    bool OpenFabricRecoveryViews(Guard& guard,Check& check,Protected& freshProtectedArea) {
+        if (fContext.qwen35SharedRoleBinding!=this || !sColdRecoveryRequired || !fContext.recoveryFreshSession
+            || !fCodeSnapshot || !fRamSnapshot || !FabricViewsDisposed()
+            || !fContext.recoveryFabricEvidenceRecorded || !fContext.recoveryFabricPcieAudited
+            || !fContext.recoveryFabricEvidence.ReadyForScratchRestore()
+            || !fContext.io.fabricOldMmioDisposeComplete || fContext.recoveryMapping
+            || !fContext.q35PciReservationHeld || fContext.q35PciReleaseAttempted || !check()) return false;
+        auto protectedArea=[&](int32_t area) {
+            return area==fContext.io.PioneerHostPageIO::area || area==fContext.io.outputArea
+                || area==fContext.io.wideArea || freshProtectedArea(area);
+        };
+        return fViews.OpenForFabricRecovery(guard,check,protectedArea);
+    }
+    template<class Check,class Protected>
+    bool CloseFabricRecoveryViews(Check& check,Protected& freshProtectedArea) {
+        if (fContext.qwen35SharedRoleBinding!=this || !sColdRecoveryRequired || !fContext.recoveryFreshSession
+            || !fViews.FabricFreshOpenComplete() || !fContext.q35PciReservationHeld
+            || fContext.q35PciReleaseAttempted || !check()) return false;
+        auto protectedArea=[&](int32_t area) {
+            return area==fContext.io.PioneerHostPageIO::area || area==fContext.io.outputArea
+                || area==fContext.io.wideArea || freshProtectedArea(area);
+        };
+        return fViews.CloseFabricRecoveryViews(check,protectedArea);
     }
 #endif
     // A verified ASIC reset invalidates the old tile images and RAM. Retire
@@ -1031,6 +1064,20 @@ PioneerQ35FabricRoleViewsCompileWitness(PioneerQwen35SharedRoleBinding* binding,
     if (!binding || binding->FabricViewsReferenceArea(protectedArea)) return false;
     auto check=[&]() { return allowed; };
     return binding->DisposeFabricViews(check);
+}
+struct PioneerQ35FabricFreshViewsCompileGuard {
+    bool allowed;
+    bool ProvePinnedBar(uint64_t,uint64_t) const { return allowed; }
+};
+static __attribute__((used,noinline)) bool
+PioneerQ35FabricFreshViewsCompileWitness(PioneerQwen35SharedRoleBinding* binding,bool allowed,bool close)
+{
+    if (!binding) return false;
+    PioneerQ35FabricFreshViewsCompileGuard guard{allowed};
+    auto check=[&]() { return allowed; };
+    auto protectedArea=[](int32_t) { return false; };
+    return close?binding->CloseFabricRecoveryViews(check,protectedArea)
+        :binding->OpenFabricRecoveryViews(guard,check,protectedArea);
 }
 #endif
 

@@ -25,6 +25,8 @@ template<class Platform> class DataflowRoleWritableViews {
     bool fAttempted=false,fOpen=false,fImageWriteUnconfirmed=false,fControlWriteUnconfirmed=false;
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     bool fFabricCloseAttempted=false,fFabricCloseComplete=false;
+    bool fFabricFreshOpenAttempted=false,fFabricFreshOpenComplete=false;
+    bool fFabricFreshCloseAttempted=false,fFabricFreshCloseComplete=false;
 #endif
     template<class Guard> bool Route(unsigned core,Guard& guard) {
         return guard.ProvePinnedBar(fBarStart,fBarEnd) && guard.ProveSelectedRoute(core);
@@ -50,6 +52,10 @@ public:
     }
     bool FabricCloseAttempted() const { return fFabricCloseAttempted; }
     bool FabricCloseComplete() const { return fFabricCloseComplete; }
+    bool FabricFreshOpenAttempted() const { return fFabricFreshOpenAttempted; }
+    bool FabricFreshOpenComplete() const { return fFabricFreshOpenComplete && fOpen; }
+    bool FabricFreshCloseAttempted() const { return fFabricFreshCloseAttempted; }
+    bool FabricFreshCloseComplete() const { return fFabricFreshCloseComplete; }
     // Only CPU mappings are removed. The owner and its RAM/code snapshots
     // remain intact. The caller must establish held/idle hardware, verify
     // area ownership and exclude aliases with all retained DMA buffers and
@@ -57,9 +63,8 @@ public:
     template<class Check,class Protected> bool CloseForFabricRecovery(Check& check,Protected& protectedArea) {
         if (fFabricCloseAttempted || !check()) return false;
         if (!FabricAreaLayoutValid()) return false;
-        for (unsigned i=0;i<Count;i++) if (fArea[i]>=0) {
-            if (protectedArea(fArea[i])) return false;
-        }
+        for (unsigned i=0;i<Count;i++) if (fArea[i]>=0)
+            if (!check() || protectedArea(fArea[i]) || !check()) return false;
         if (!check()) return false;
         fFabricCloseAttempted=true;fOpen=false;
         for (unsigned n=Count;n>0;n--) {
@@ -73,6 +78,51 @@ public:
         // Preserve the pinned BAR identity for a separately authorized fresh
         // mapping; CloseForFabricRecovery does not itself reopen anything.
         fFabricCloseComplete=true;return true;
+    }
+    // A separate guarded session may map the exact same pinned BAR windows
+    // again. This only establishes CPU views; it does not authorize device
+    // reads, role restoration, release or model execution. All partial maps
+    // are retained after any failure and this attempt cannot be replayed.
+    template<class Guard,class Check,class Protected>
+    bool OpenForFabricRecovery(Guard& guard,Check& check,Protected& protectedArea) {
+        if (!fAttempted || !fFabricCloseComplete || fFabricFreshOpenAttempted || fOpen || HasMappings()
+            || fBarEnd<fBarStart || fBarEnd-fBarStart==UINT64_MAX || !check()
+            || !guard.ProvePinnedBar(fBarStart,fBarEnd) || !check()) return false;
+        uint64_t addresses[Count]{};unsigned lengths[Count]{};
+        for (unsigned i=0;i<Count;i++)
+            if (!DataflowRolePhysicalAddress(fBarStart,fBarEnd-fBarStart+1,i,addresses[i],lengths[i])) return false;
+        if (!check()) return false;
+        fFabricFreshOpenAttempted=true;
+        for (unsigned i=0;i<Count;i++) {
+            if (!check()) return false;
+            int32_t area=-1;volatile uint32_t* view=nullptr;
+            const bool okay=fPlatform.MapReadWrite(addresses[i],lengths[i],area,view);
+            if (area>=0) { fArea[i]=area;fView[i]=okay?view:nullptr;fBytes[i]=lengths[i]; }
+            if (!check() || !okay || area<0 || !view || protectedArea(area)
+                || !FabricAreaLayoutValid() || !check()) return false;
+        }
+        if (!check() || !guard.ProvePinnedBar(fBarStart,fBarEnd) || !check()) return false;
+        fFabricFreshOpenComplete=true;fOpen=true;return true;
+    }
+    // The independent scope must first establish that every role and DMA
+    // user is held/idle and that the fresh view is no longer needed. This
+    // closes mappings only; owner snapshots remain retained on all outcomes.
+    template<class Check,class Protected> bool CloseFabricRecoveryViews(Check& check,Protected& protectedArea) {
+        if (!fFabricFreshOpenComplete || !fOpen || fFabricFreshCloseAttempted || !check()
+            || !FabricAreaLayoutValid()) return false;
+        for (unsigned i=0;i<Count;i++) if (fArea[i]>=0)
+            if (!check() || protectedArea(fArea[i]) || !check()) return false;
+        if (!check()) return false;
+        fFabricFreshCloseAttempted=true;fOpen=false;
+        for (unsigned n=Count;n>0;n--) {
+            const unsigned i=n-1;
+            if (fArea[i]<0) continue;
+            if (!check() || !fPlatform.Unmap(fArea[i])) return false;
+            fArea[i]=-1;fView[i]=nullptr;fBytes[i]=0;
+            if (!check()) return false;
+        }
+        if (!check() || HasMappings()) return false;
+        fFabricFreshCloseComplete=true;return true;
     }
 #endif
     // Mapping metadata only; it neither reads the device nor grants access.
