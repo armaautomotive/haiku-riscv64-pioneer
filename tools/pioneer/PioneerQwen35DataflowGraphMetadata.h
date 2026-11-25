@@ -37,6 +37,16 @@ public:
 			&& candidate.Authorize(b) && candidate.Begin(a) && candidate.Complete(a)
 			&& candidate.Begin(b) && candidate.Complete(b));
 	}
+#ifdef PIONEER_QWEN35_FUSED_RECURRENCE
+	template<class IO> int RunIndependentProjectionTriple(const DataflowProjectionProgram& a,
+		const DataflowProjectionProgram& b,const DataflowProjectionProgram& c,IO&) {
+		return Done(DataflowProjectionTriple::Compatible(a,b,c) && candidate.Authorize(a)
+			&& candidate.Authorize(b) && candidate.Authorize(c)
+			&& candidate.Begin(a) && candidate.Complete(a)
+			&& candidate.Begin(b) && candidate.Complete(b)
+			&& candidate.Begin(c) && candidate.Complete(c));
+	}
+#endif
 #endif
 	template<class IO> int RunRms(const DataflowRmsProgram& p,IO&) {
 		return Done(candidate.BeginRms(p) && candidate.CompleteRms(p));

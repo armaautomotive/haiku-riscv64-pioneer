@@ -527,7 +527,8 @@ public:
 	}
 
 	bool BuildProjection(unsigned layer,unsigned role,unsigned inputSlot,
-		unsigned outputSlot,DataflowProjectionProgram& program) const
+		unsigned outputSlot,DataflowProjectionProgram& program,
+		unsigned coreLimit=DataflowCoreCount) const
 	{
 		if (!fBound || inputSlot>=ActivationBuffers
 			|| outputSlot>DataflowGraphVocabularyOutputSlot
@@ -551,7 +552,7 @@ public:
 			:outputSlot<ActivationBuffers?&fManifest.activation[outputSlot]:nullptr;
 		if (!weight || !DataflowProgramBuilder::Build(*weight,
 			fManifest.activation[inputSlot],weight->inputs,
-			*output,fRoutes,program,fProjectionScheduleScratch)) return false;
+			*output,fRoutes,program,fProjectionScheduleScratch,0,coreLimit)) return false;
 		return Authorize(program);
 	}
 

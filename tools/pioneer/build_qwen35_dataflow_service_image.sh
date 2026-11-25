@@ -28,6 +28,13 @@ case "${PIONEER_QWEN35_SHARED_ROLE_GRAPH_COMPILE_ONLY:-0}" in
 	service_flags="$service_flags -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE";;
 *) exit 2;;
 esac
+case "${PIONEER_QWEN35_FUSED_RECURRENCE_COMPILE_ONLY:-0}" in
+0) ;;
+1) [ "$role_graph" = 1 ] || exit 2
+	service_flags="$service_flags -DPIONEER_QWEN35_FUSED_RECURRENCE"
+	: > "$output/fused-recurrence.marker" ;;
+*) exit 2 ;;
+esac
 
 "$cross-g++" $flags $service_flags -I"$directory" -I"$sdk/headers" \
 	-idirafter "$sdk/headers/posix" \

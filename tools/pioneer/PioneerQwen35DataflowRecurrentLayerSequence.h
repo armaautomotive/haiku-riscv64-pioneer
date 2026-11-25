@@ -34,6 +34,7 @@ enum DataflowRecurrentLayerSequenceResult {
 	DataflowRecurrentAddRunFailed=21,
 	DataflowRecurrentFfnFailed=22,
 	DataflowRecurrentPairRunFailed=23,
+	DataflowRecurrentTripleRunFailed=24,
 	DataflowRecurrentFfnStageBase=32
 };
 
@@ -46,6 +47,32 @@ static_assert(DataflowRecurrentFfnStageBase+DataflowFfnAddRunFailed<256,
 // add, and the existing feed-forward sequence. It performs no tensor math.
 class DataflowRecurrentLayerSequence {
 #ifdef PIONEER_QWEN35_PAIRED_RECURRENCE
+#ifdef PIONEER_QWEN35_FUSED_RECURRENCE
+	template<class Authority,class Service,class IO>
+	static __attribute__((noinline)) auto TryTriple(unsigned layer,unsigned normalizedSlot,Authority& authority,
+		Service& service,IO& io,DataflowProjectionProgram& first,int)
+		-> decltype(service.RunIndependentProjectionTriple(first,first,first,io),int())
+	{
+		auto* alpha=new(std::nothrow) DataflowProjectionProgram;
+		auto* beta=new(std::nothrow) DataflowProjectionProgram;
+		if (!alpha || !beta) { delete alpha;delete beta;return DataflowRecurrentTripleRunFailed; }
+		int result=DataflowRecurrentLayerComplete;
+		if (!authority.BuildProjection(layer,Alpha,normalizedSlot,DataflowGraphRecurrentAlphaOutputSlot,*alpha))
+			result=DataflowRecurrentAlphaBuildFailed;
+		else if (!authority.BuildProjection(layer,Beta,normalizedSlot,DataflowGraphRecurrentBetaOutputSlot,*beta))
+			result=DataflowRecurrentBetaBuildFailed;
+		else if (alpha->activeCores+beta->activeCores>=DataflowCoreCount
+			|| !authority.BuildProjection(layer,RecurrentQkv,normalizedSlot,
+				DataflowGraphRecurrentQkvOutputSlot,first,DataflowCoreCount-alpha->activeCores-beta->activeCores))
+			result=DataflowRecurrentQkvBuildFailed;
+		else if (service.RunIndependentProjectionTriple(first,*alpha,*beta,io)!=0)
+			result=DataflowRecurrentTripleRunFailed;
+		delete beta;delete alpha;return result;
+	}
+	template<class Authority,class Service,class IO>
+	static int TryTriple(unsigned,unsigned,Authority&,Service&,IO&,DataflowProjectionProgram&,long)
+		{ return -1; }
+#endif
 	template<class Authority,class Service,class IO>
 	static __attribute__((noinline)) auto TryPair(unsigned layer,unsigned normalizedSlot,Authority& authority,
 		Service& service,IO& io,DataflowProjectionProgram& first,int)
@@ -112,7 +139,16 @@ public:
 #ifdef PIONEER_QWEN35_PAIRED_RECURRENCE
 		projectionCount=2;
 #endif
+#ifdef PIONEER_QWEN35_FUSED_RECURRENCE
+		const int tripleResult=TryTriple(layer,normalizedSlot,authority,service,io,projectionScratch,0);
+		const bool fused=tripleResult>=0;
+		if (fused && tripleResult!=DataflowRecurrentLayerComplete)
+			return static_cast<DataflowRecurrentLayerSequenceResult>(stage=unsigned(tripleResult));
+#endif
 		for (unsigned i=0;i<projectionCount;i++) {
+#ifdef PIONEER_QWEN35_FUSED_RECURRENCE
+			if (fused && i==0) continue;
+#endif
 			DataflowProjectionProgram& projection=projectionScratch;
 			if (!authority.BuildProjection(layer,projectionRoles[i],normalizedSlot,
 				projectionSlots[i],projection))
@@ -124,6 +160,9 @@ public:
 		}
 
 #ifdef PIONEER_QWEN35_PAIRED_RECURRENCE
+#ifdef PIONEER_QWEN35_FUSED_RECURRENCE
+		if (!fused) {
+#endif
 		const int pairResult=TryPair(layer,normalizedSlot,authority,service,io,projectionScratch,0);
 		if (pairResult<0) {
 			for (unsigned i=2;i<4;i++) {
@@ -135,6 +174,9 @@ public:
 			}
 		} else if (pairResult!=DataflowRecurrentLayerComplete)
 			return static_cast<DataflowRecurrentLayerSequenceResult>(stage=unsigned(pairResult));
+#ifdef PIONEER_QWEN35_FUSED_RECURRENCE
+		}
+#endif
 #endif
 
 		DataflowConvProgram conv{};

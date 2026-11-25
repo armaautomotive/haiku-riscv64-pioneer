@@ -51,7 +51,7 @@ int main() {
 	assert(live->BindValidatedModel(fixture->manifest,fixture->workspace,fixture->routes,fixture->rope));
 	auto plan=std::make_unique<DataflowStreamPlan>();
 	assert(DataflowStreamPlanBuilder::Build(fixture->packed,fixture->manifest,fixture->workspace,
-		fixture->rope,fixture->routes,99,548,*plan));
+		fixture->rope,fixture->routes,99,DataflowGraphDecodeSteps,*plan));
 	auto candidate0=std::make_unique<DataflowProjectionAuthority>();
 	auto candidate1=std::make_unique<DataflowProjectionAuthority>();
 	auto candidate2=std::make_unique<DataflowProjectionAuthority>();
@@ -64,7 +64,7 @@ int main() {
 	auto activationReuse=std::make_unique<DataflowActivationReuse[]>(DataflowCoreCount);
 	unsigned reusedActivations=0,activeProjections=0;
 	for (unsigned core=0;core<DataflowCoreCount;core++) DataflowActivationReuseReset(activationReuse[core]);
-	for (unsigned step=0;step<548;step++) for (unsigned core=0;core<DataflowCoreCount;core++) {
+	for (unsigned step=0;step<DataflowGraphDecodeSteps;step++) for (unsigned core=0;core<DataflowCoreCount;core++) {
 		auto& state=activationReuse[core];DataflowActivationReuseSetStep(state,1,step+1);
 		const auto& record=base.records[size_t(step)*DataflowCoreCount+core];
 		if (record.header[5]!=DataflowProgramMagic) continue;
@@ -92,9 +92,9 @@ int main() {
 	const unsigned magicTypes[]={DataflowEmbeddingMagic,DataflowProgramMagic,DataflowRmsMagic,
 		DataflowSiluMagic,DataflowResidualMagic,DataflowConvMagic,DataflowDeltaMagic,
 		DataflowDenseAttentionMagic,DataflowArgmaxMagic};
-	bool localTested[9]{};DataflowGraphRunTicket localTicket{7,1001,548};
+	bool localTested[9]{};DataflowGraphRunTicket localTicket{7,1001,DataflowGraphDecodeSteps};
 	alignas(64) uint32_t localProgram[DataflowProgramRegionBytes/4]{};
-	for (unsigned step=0;step<548;step++) {
+	for (unsigned step=0;step<DataflowGraphDecodeSteps;step++) {
 		const unsigned magic=base.records[size_t(step)*DataflowCoreCount].header[5];
 		unsigned type=0;while (type<9 && magicTypes[type]!=magic) type++;
 		assert(type<9);if (localTested[type]) continue;localTested[type]=true;
@@ -132,7 +132,7 @@ int main() {
 		assert(DataflowResidentStreamCacheBind(caches[core],plan->binding[core]));
 	}
 	uint64_t fullBytes=0,warmBytes=0;
-	for (unsigned step=0;step<548;step++) for (unsigned core=0;core<DataflowCoreCount;core++) {
+	for (unsigned step=0;step<DataflowGraphDecodeSteps;step++) for (unsigned core=0;core<DataflowCoreCount;core++) {
 		const auto& original=base.records[size_t(step)*DataflowCoreCount+core];
 		DataflowStreamRecord fetched{},expected=original;
 		alignas(64) uint32_t program[DataflowProgramRegionBytes/4]{};
@@ -154,10 +154,10 @@ int main() {
 			&& !std::memcmp(program,expected.payload,expected.header[6]));
 		assert(DataflowResidentStreamCacheRecord(caches[core],step,fetched,hint));
 	}
-	assert(fullBytes==uint64_t(548)*DataflowCoreCount*DataflowStreamRecordBytes
+	assert(fullBytes==uint64_t(DataflowGraphDecodeSteps)*DataflowCoreCount*DataflowStreamRecordBytes
 		&& warmBytes<fullBytes);
-	std::printf("resident stream simulation: cold=%llu warm=%llu bytes for 548 steps across 120 cores\n",
-		static_cast<unsigned long long>(fullBytes),static_cast<unsigned long long>(warmBytes));
+	std::printf("resident stream simulation: cold=%llu warm=%llu bytes for %u steps across 120 cores\n",
+		static_cast<unsigned long long>(fullBytes),static_cast<unsigned long long>(warmBytes),unsigned(DataflowGraphDecodeSteps));
 	{
 		const auto& original=base.records[0];FetchIO io{original};DataflowStreamRecord fetched{};
 		alignas(64) uint32_t program[DataflowProgramRegionBytes/4]{};unsigned failed=99;
@@ -174,9 +174,9 @@ int main() {
 			0,0,fetched,program,sizeof(program),dynamic1,&failed,hint)
 			&& failed==DataflowStreamFetchRecord && !program[0]);
 		unsigned paddedStep=0;
-		while (paddedStep<548 && !(base.records[size_t(paddedStep)*DataflowCoreCount].header[6]&63U))
+		while (paddedStep<DataflowGraphDecodeSteps && !(base.records[size_t(paddedStep)*DataflowCoreCount].header[6]&63U))
 			paddedStep++;
-		assert(paddedStep<548);
+		assert(paddedStep<DataflowGraphDecodeSteps);
 		const auto& padded=base.records[size_t(paddedStep)*DataflowCoreCount];
 		damaged=padded;damaged.payload[padded.header[6]/4]=1;FetchIO badPadding{damaged};
 		const unsigned paddedHint=DataflowResidentStreamCacheHint(caches[0],paddedStep);
@@ -192,11 +192,11 @@ int main() {
 	DataflowResidentStreamCacheReset(cache);
 	assert(DataflowResidentStreamCacheBind(cache,otherBinding)
 		&& DataflowResidentStreamCacheHint(cache,0)==0);
-	// The prompt-only program must be byte-identical to the first 545
+	// The prompt-only program must be byte-identical to the initial prompt
 	// operations of the decode stream, including after a dynamic token patch.
 	auto promptPlan=std::make_unique<DataflowStreamPlan>();
 	assert(DataflowStreamPlanBuilder::Build(fixture->packed,fixture->manifest,fixture->workspace,
-		fixture->rope,fixture->routes,99,545,*promptPlan));
+		fixture->rope,fixture->routes,99,DataflowGraphPromptSteps,*promptPlan));
 	DataflowDynamicTokenContext dynamic0{};
 	assert(DataflowDynamicTokenContext::Build(fixture->manifest,42,0,dynamic0));
 	auto prompt0=std::make_unique<DataflowProjectionAuthority>();CompareSink comparePrompt0{base,dynamic0};
@@ -205,7 +205,7 @@ int main() {
 	auto prompt1=std::make_unique<DataflowProjectionAuthority>();CompareSink comparePrompt1{base,dynamic1};
 	assert(DataflowStreamRecording::Build(fixture->packed,*candidate0,*prompt1,*promptPlan,fixture->routes,
 		1,otherToken,0,false,comparePrompt1,*scratch,*projection,stage));
-	assert(comparePrompt0.current==545*DataflowCoreCount && comparePrompt1.current==545*DataflowCoreCount);
+	assert(comparePrompt0.current==DataflowGraphPromptSteps*DataflowCoreCount && comparePrompt1.current==DataflowGraphPromptSteps*DataflowCoreCount);
 	FetchIO read{base.records[0]};DataflowStreamRecord staging{};
 	alignas(64) uint32_t program[DataflowProgramRegionBytes/4]{};
 	assert(DataflowStreamFetchDynamic(read,plan->binding[0],plan->lease[0],fixture->routes,
@@ -233,7 +233,7 @@ int main() {
 	DataflowDynamicTokenContext edge{};
 	assert(DataflowDynamicTokenContext::Build(fixture->manifest,Vocabulary-1,fixture->manifest.context-1,edge));
 	bool tested[4]{};
-	for (unsigned step=0;step<548;step++) {
+	for (unsigned step=0;step<DataflowGraphDecodeSteps;step++) {
 		const auto magic=base.records[size_t(step)*DataflowCoreCount].header[5];
 		const unsigned which=magic==DataflowEmbeddingMagic?0:magic==DataflowConvMagic?1:
 			magic==DataflowDeltaMagic?2:magic==DataflowDenseAttentionMagic?3:4;

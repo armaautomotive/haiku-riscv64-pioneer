@@ -769,7 +769,8 @@ public:
 	static bool Build(const TensorSpace& weight,const RowSpace& input,
 		unsigned inputRows,const RowSpace& output,
 		const unsigned (&bankRoute)[2][Banks],DataflowProjectionProgram& result,
-		PioneerQ35ProjectionProgram& schedule,unsigned inputBase=0)
+		PioneerQ35ProjectionProgram& schedule,unsigned inputBase=0,
+		unsigned coreLimit=DataflowCoreCount)
 	{
 		result={};
 		struct ResultGuard {
@@ -796,7 +797,7 @@ public:
 			if ((part.firstRow|part.rows)&15) return false;
 			fragments[f]={part.firstRow/16,part.rows/16};
 		}
-		if (!PioneerQ35BuildProjectionProgram(fragments,weight.place.count,schedule))
+		if (!PioneerQ35BuildProjectionProgram(fragments,weight.place.count,schedule,coreLimit))
 			return false;
 
 		DataflowProjectionProgram& candidate=result;

@@ -72,6 +72,26 @@ public:
 		delete invocation;
 		steps++;return 0;
 	}
+#ifdef PIONEER_QWEN35_FUSED_RECURRENCE
+	template<class IO> __attribute__((noinline)) int RunIndependentProjectionTriple(const DataflowProjectionProgram& a,
+		const DataflowProjectionProgram& b,const DataflowProjectionProgram& c,IO&) {
+		if (failed || steps>=plan.count || !DataflowProjectionTriple::Compatible(a,b,c)
+			|| !candidate.Authorize(a) || !candidate.Authorize(b) || !candidate.Authorize(c)
+			|| !candidate.Begin(a) || !candidate.Complete(a)
+			|| !candidate.Begin(b) || !candidate.Complete(b)
+			|| !candidate.Begin(c) || !candidate.Complete(c)) return Fail();
+		auto* invocation=new(std::nothrow) DataflowCoreInvocation;
+		if (!invocation) return Fail();
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			if (!DataflowProjectionTriple::BindCore(a,b,c,core,*invocation)
+				|| !DataflowStreamEncode(*invocation,plan.epoch,steps+1,record)
+				|| !sink.StageRecord(plan.binding[core],plan.lease[core],steps,record)) {
+				delete invocation;return Fail();
+			}
+		}
+		delete invocation;steps++;return 0;
+	}
+#endif
 	template<class IO> int RunRms(const DataflowRmsProgram& p,IO&) {
 		return candidate.BeginRms(p) && Emit<DataflowRmsProgramBuilder,DataflowRmsInvocation>(p)
 			&& candidate.CompleteRms(p)?0:Fail();

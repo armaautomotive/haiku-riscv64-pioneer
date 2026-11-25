@@ -43,5 +43,33 @@ public:
         return DataflowProgramBuilder::BindCore(a,core,output) && !output.assignment.active;
     }
 };
+
+// Three independently authorized projections can occupy one fleet step if
+// their inputs agree, their outputs and weights do not alias, and their core
+// budgets fit. Every invocation remains an ordinary full-input projection.
+class DataflowProjectionTriple {
+public:
+    static bool Compatible(const DataflowProjectionProgram& a,const DataflowProjectionProgram& b,
+        const DataflowProjectionProgram& c) {
+        return DataflowProjectionPair::Compatible(a,b) && DataflowProjectionPair::Compatible(a,c)
+            && DataflowProjectionPair::Compatible(b,c)
+            && a.activeCores+b.activeCores+c.activeCores<=DataflowCoreCount;
+    }
+    static bool BindCore(const DataflowProjectionProgram& a,const DataflowProjectionProgram& b,
+        const DataflowProjectionProgram& c,unsigned core,DataflowCoreInvocation& output) {
+        if (core>=DataflowCoreCount || !Compatible(a,b,c)) return false;
+        if (a.core[core].active) return DataflowProgramBuilder::BindCore(a,core,output);
+        unsigned rank=0;
+        for (unsigned i=0;i<core;i++) if (!a.core[i].active) ++rank;
+        const DataflowProjectionProgram* programs[]={&b,&c};
+        for (const auto* program:programs) for (unsigned source=0;source<DataflowCoreCount;source++) {
+            if (!program->core[source].active) continue;
+            if (rank) { --rank;continue; }
+            if (!DataflowProgramBuilder::BindCore(*program,source,output)) return false;
+            output.core=core;return output.Valid();
+        }
+        return DataflowProgramBuilder::BindCore(a,core,output) && !output.assignment.active;
+    }
+};
 }
 #endif

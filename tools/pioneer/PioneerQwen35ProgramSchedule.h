@@ -31,9 +31,10 @@ struct PioneerQ35ProjectionProgram {
 // a local tile loop and publish completion at the program boundary.
 inline bool PioneerQ35BuildProjectionProgram(
 	const PioneerQ35WorkFragment* fragments, unsigned fragmentCount,
-	PioneerQ35ProjectionProgram& program)
+	PioneerQ35ProjectionProgram& program,unsigned coreLimit=PioneerQ35ProgramCoreCount)
 {
-	if (!fragments || !fragmentCount || fragmentCount>PioneerQ35ProgramMaxFragments)
+	if (!fragments || !fragmentCount || fragmentCount>PioneerQ35ProgramMaxFragments
+		|| !coreLimit || coreLimit>PioneerQ35ProgramCoreCount)
 		return false;
 	program={};
 	unsigned total=0;
@@ -48,9 +49,9 @@ inline bool PioneerQ35BuildProjectionProgram(
 	program.groups=total;
 	uint64_t prefix[PioneerQ35ProgramMaxFragments+1]={};
 	for (unsigned f=0;f<fragmentCount;f++) prefix[f+1]=prefix[f]+fragments[f].groups;
-	for (unsigned core=0;core<PioneerQ35ProgramCoreCount;core++) {
-		const uint64_t begin=uint64_t(total)*core/PioneerQ35ProgramCoreCount;
-		const uint64_t end=uint64_t(total)*(core+1)/PioneerQ35ProgramCoreCount;
+	for (unsigned core=0;core<coreLimit;core++) {
+		const uint64_t begin=uint64_t(total)*core/coreLimit;
+		const uint64_t end=uint64_t(total)*(core+1)/coreLimit;
 		PioneerQ35ProgramCore& assignment=program.core[core];
 		for (unsigned f=0;f<fragmentCount;f++) {
 			const uint64_t first=begin>prefix[f]?begin:prefix[f];
@@ -68,9 +69,8 @@ inline bool PioneerQ35BuildProjectionProgram(
 		if (assignment.groups!=expected) return false;
 		if (expected) program.activeCores++;
 	}
-	return program.activeCores && program.core[PioneerQ35ProgramCoreCount-1].groups
-		==unsigned(uint64_t(total)*PioneerQ35ProgramCoreCount/PioneerQ35ProgramCoreCount
-			-uint64_t(total)*(PioneerQ35ProgramCoreCount-1)/PioneerQ35ProgramCoreCount);
+	return program.activeCores && program.core[coreLimit-1].groups
+		==unsigned(uint64_t(total)-uint64_t(total)*(coreLimit-1)/coreLimit);
 }
 
 #endif
