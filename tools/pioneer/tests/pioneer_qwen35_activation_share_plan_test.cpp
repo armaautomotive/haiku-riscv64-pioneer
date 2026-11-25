@@ -4,6 +4,7 @@
 #include "pioneer_qwen35_dataflow_stream_recorder_test.cpp"
 #undef main
 #include "../PioneerQwen35DataflowActivationSharePlan.h"
+#include "../PioneerQwen35DataflowActivationShareTree.h"
 #include "../PioneerQwen35DataflowGraphRunProtocol.h"
 #include <cstring>
 
@@ -41,6 +42,16 @@ struct PlanSink {
                 if (member && peer<leader) leader=peer;
             }
             assert(group.leader==leader && !(group.members[3]&0xff000000U));
+            DataflowActivationShareTreePosition tree{};
+            assert(DataflowActivationShareTreeLocate(group,core,tree));
+            if (!tree.rank) assert(core==group.leader && tree.parent==DataflowCoreCount);
+            else {
+                DataflowActivationShareTreePosition parent{};
+                assert(tree.parent<core
+                    && DataflowActivationShareTreeLocate(group,tree.parent,parent)
+                    && parent.rank==(tree.rank-1)/DataflowActivationShareTreeFanout
+                    && parent.count==tree.count);
+            }
         }
         if (!negativesChecked) {
             auto reverse=std::make_unique<DataflowActivationSharePlan>();

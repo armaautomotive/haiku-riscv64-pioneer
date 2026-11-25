@@ -7,6 +7,8 @@ trap 'rm -rf "$temporary"' EXIT HUP INT TERM
 flags='-std=c++17 -O1 -g -Wall -Wextra -Werror -pthread -fsanitize=address,undefined'
 ${CXX:-c++} $flags "$directory/pioneer_qwen35_activation_read_pipeline_test.cpp" -o "$temporary/pipeline"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pipeline"
+${CXX:-c++} $flags "$directory/pioneer_qwen35_activation_share_tree_test.cpp" -o "$temporary/sharing-tree"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sharing-tree"
 for mode in ordinary paired fused; do
     case "$mode" in
         ordinary) extra= ;;
