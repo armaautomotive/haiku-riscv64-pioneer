@@ -46,6 +46,16 @@ int main() {
         assert(!selector.Select(0) && !selector.Allowed()
             && io.accesses==access && check.calls==failAt);
     }
+    {
+        SelectIO root;root.runtimeCore=119;SelectCheck rootCheck{root};
+        assert(PioneerQ35GuardedSelectRoleRoot(root,rootCheck) && root.runtimeCore==0);
+        const unsigned rootChecks=rootCheck.calls;
+        for (unsigned fail=1;fail<=rootChecks;fail++) {
+            SelectIO trial;trial.runtimeCore=119;SelectCheck trialCheck{trial};trialCheck.failAt=fail;
+            assert(!PioneerQ35GuardedSelectRoleRoot(trial,trialCheck)
+                && trialCheck.calls==fail && trial.accesses==trialCheck.accessesAtFailure);
+        }
+    }
     SelectIO io;SelectCheck check{io};PioneerQ35GuardedRoleSelector<SelectIO,SelectCheck> selector(io,check);
     assert(!selector.Select(120) && io.accesses==0);
     io.fleetEnabled=false;

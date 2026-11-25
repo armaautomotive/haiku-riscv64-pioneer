@@ -88,4 +88,9 @@ public:
         return true;
     }
 };
+template<class IO,class Check>
+bool PioneerQ35GuardedSelectRoleRoot(IO& io,Check& check) {
+    PioneerQ35GuardedRoleSelector<IO,Check> selector(io,check);
+    return selector.Select(0) && selector.Allowed();
+}
 #endif

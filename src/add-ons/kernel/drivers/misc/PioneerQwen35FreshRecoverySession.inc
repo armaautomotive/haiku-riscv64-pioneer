@@ -19,6 +19,7 @@
 #include "PioneerQwen35GuardedMmioBegin.h"
 #include "PioneerQwen35GuardedMmioEnd.h"
 #include "PioneerQwen35GuardedHostPage.h"
+#include "PioneerQwen35GuardedRoleSelect.h"
 #endif
 #endif
 
@@ -28,6 +29,9 @@ public:
         ScratchRestoring=8,ScratchVerified=9,Closing=10,LeaseClosed=11,FleetAudited=12,
         PciClosed=13,TransportClosed=14,Retiring=15,HostReleased=16,OwnerRetired=17,Retained=18,
         RoleVerified=19 };
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    struct RoleRestorationReceipt { const void* binding=nullptr;const void* graph=nullptr;uint64 ticket=0; };
+#endif
 private:
     PioneerQ35ProjectionResetRecovery fRestore;
     PioneerStoreContext* fOld=nullptr;
@@ -39,6 +43,7 @@ private:
     bool fRole=false;
     const void* fRoleBinding=nullptr;
     const void* fGraphOwner=nullptr;
+    RoleRestorationReceipt fRoleReceipt{};
 #endif
     Stage fStage=Unstarted;
     unsigned fFailureStage=0;
@@ -131,7 +136,8 @@ public:
     // Metadata only: callers must independently validate the recovery ticket
     // and physical scope before touching any views or device state.
     bool RoleReady() const {
-        return fRole && fStage==Ready && fOld && fFresh && fOld->recoveryFabricRoleViewsDisposed && fRoleBinding && fGraphOwner
+        return fRole && fStage==Ready && fOld && fFresh && fFresh->io.fleetEnabled
+            && fOld->recoveryFabricRoleViewsDisposed && fRoleBinding && fGraphOwner
             && fOld->recoveryFreshSession==this && fOld->qwen35SharedRoleBinding==fRoleBinding
             && fOld->qwen35GraphOwner==fGraphOwner;
     }
@@ -271,6 +277,15 @@ private:
             return Retain(scope,Lease);
         fStage=Lease;
         if (!allowed(Lease)) return Retain(scope,Lease);
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        // Store contexts start with fleet selection disabled. The role
+        // recovery adapter needs all 120 fixed routes; enable only this
+        // retained, fabric-role session after the guarded lease is ready.
+        if (role) {
+            fresh->io.fleetEnabled=true;
+            if (!allowed(Lease)) return Retain(scope,Lease);
+        }
+#endif
         fStage=Ready;return true;
     }
 public:
@@ -298,6 +313,7 @@ public:
         if (!fRole || fStage!=Ready || !fOld || !fFresh) return false;
         if (!RoleReady() || !TicketValid(guard) || !scope.FreshRoleRecoveryRestored(*this,*fOld,*fFresh)
             || !TicketValid(guard)) return Retain(scope,RoleVerified);
+        fRoleReceipt={fRoleBinding,fGraphOwner,fTicket};
         fStage=RoleVerified;return true;
     }
 #endif
@@ -344,15 +360,12 @@ public:
     // snapshot stay alive even after PCI has been restored to idle; releasing
     // them requires a separate, not-yet-implemented owner-retirement step.
     // Any attempted close or uncertain result is one-shot and retained.
-    template<class Scope>
-    bool CloseTransport(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
-        if (fStage!=ScratchVerified || !fOld || !fFresh) return false;
-        auto verified=[&]() {
-            auto* scratch=fOld->qwen35QualificationOwner.Scratch();
-            return scratch && fRestore.VerifiedFor(*scratch,fTicket,fOld->banks,fFresh->banks);
-        };
+private:
+    template<class Scope,class Receipt,class Verify,class PostLease>
+    bool CloseTransportWith(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope,
+        const Receipt& receipt,Verify& verified,PostLease& postLease) {
         if (!TicketValid(guard) || !verified()
-            || !scope.FreshRecoveryCloseAdmission(*this,*fOld,*fFresh,fRestore)
+            || !scope.FreshRecoveryCloseAdmission(*this,*fOld,*fFresh,receipt)
             || !TicketValid(guard) || !verified()) return Retain(scope,Closing);
         fStage=Closing;
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
@@ -360,10 +373,14 @@ public:
             bool lost=false;
             auto allowed=[&]() {
                 if (lost || !TicketValid(guard) || !verified()
-                    || !scope.FreshRecoveryLeaseAccessAllowed(*this,*fOld,*fFresh,fRestore)
+                    || !scope.FreshRecoveryLeaseAccessAllowed(*this,*fOld,*fFresh,receipt)
                     || !TicketValid(guard) || !verified()) { lost=true;return false; }
                 return true;
             };
+            // Role recovery selected many tiles. The lease belongs to root;
+            // reselect it under the same ticket before touching its NIU.
+            if (fRole && (!fFresh->lease.ready || fFresh->lease.pending || fFresh->lease.recovery_required
+                || !PioneerQ35GuardedSelectRoleRoot(fFresh->io,allowed))) return Retain(scope,LeaseClosed);
             if (!PioneerQ35GuardedLeaseEnd(fFresh->io,fFresh->baseline.baseline.baseline.noc,
                 fFresh->lease,allowed)) return Retain(scope,LeaseClosed);
         } else
@@ -371,8 +388,8 @@ public:
         if (!PioneerResidentLeaseEnd(fFresh->io,fFresh->baseline.baseline.baseline.noc,fFresh->lease))
             return Retain(scope,LeaseClosed);
         fStage=LeaseClosed;
-        if (!TicketValid(guard) || !verified()
-            || !scope.FreshRecoveryPostTransferAudit(*this,*fOld,*fFresh,fRestore)
+        if (!TicketValid(guard) || !verified() || !postLease()
+            || !scope.FreshRecoveryPostTransferAudit(*this,*fOld,*fFresh,receipt)
             || !TicketValid(guard) || !verified()) return Retain(scope,FleetAudited);
         // Use a distinct fresh audit mapping, kept on the fresh context on
         // every failure. Audit both NoCs on all 120 held cores and host DMA,
@@ -391,7 +408,7 @@ public:
             bool lost=false;
             auto allowed=[&]() {
                 if (lost || !TicketValid(guard) || !verified()
-                    || !scope.FreshRecoveryAuditAccessAllowed(*this,*fOld,*fFresh,fRestore)
+                    || !scope.FreshRecoveryAuditAccessAllowed(*this,*fOld,*fFresh,receipt)
                     || !TicketValid(guard) || !verified()) { lost=true;return false; }
                 return true;
             };
@@ -418,8 +435,8 @@ public:
                 || !TicketValid(guard) || !audit.Close()) return Retain(scope,FleetAudited);
         }
         delete fFresh->recoveryMapping;fFresh->recoveryMapping=nullptr;
-        if (!TicketValid(guard) || !verified()
-            || !scope.FreshRecoveryPostTransferAudit(*this,*fOld,*fFresh,fRestore)
+        if (!TicketValid(guard) || !verified() || !postLease()
+            || !scope.FreshRecoveryPostTransferAudit(*this,*fOld,*fFresh,receipt)
             || !TicketValid(guard) || !verified()) return Retain(scope,FleetAudited);
         fStage=FleetAudited;
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
@@ -427,13 +444,13 @@ public:
             bool lost=false;
             auto allowed=[&]() {
                 if (lost || !TicketValid(guard) || !verified()
-                    || !scope.FreshRecoveryPciAccessAllowed(*this,*fOld,*fFresh,fRestore)
+                    || !scope.FreshRecoveryPciAccessAllowed(*this,*fOld,*fFresh,receipt)
                     || !TicketValid(guard) || !verified()) { lost=true;return false; }
                 return true;
             };
             auto protectedArea=[&](int32_t area) {
                 return fOld->io.ReferencesRecoveryHostArea(area)
-                    || scope.FreshRecoveryAreaProtected(*this,*fOld,*fFresh,fRestore,area);
+                    || scope.FreshRecoveryAreaProtected(*this,*fOld,*fFresh,receipt,area);
             };
             auto unmap=[&]() {
                 return !fFresh->lease.ready && !fFresh->lease.pending && !fFresh->lease.recovery_required
@@ -449,10 +466,44 @@ public:
             return Retain(scope,PciClosed);
         fStage=PciClosed;
         if (!TicketValid(guard) || !verified()
-            || !scope.FreshRecoveryPciIdle(*this,*fOld,*fFresh,fRestore)
+            || !scope.FreshRecoveryPciIdle(*this,*fOld,*fFresh,receipt)
             || !TicketValid(guard) || !verified()) return Retain(scope,TransportClosed);
         fStage=TransportClosed;return true;
     }
+
+public:
+    template<class Scope>
+    bool CloseTransport(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        if (fStage!=ScratchVerified || !fOld || !fFresh) return false;
+        auto verified=[&]() {
+            auto* scratch=fOld->qwen35QualificationOwner.Scratch();
+            return scratch && fRestore.VerifiedFor(*scratch,fTicket,fOld->banks,fFresh->banks);
+        };
+        auto postLease=[]() { return true; };
+        return CloseTransportWith(guard,scope,fRestore,verified,postLease);
+    }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    // This closes only the fresh transport. The scope must prove the role and
+    // parent graph were restored, their mappings closed, and the root lease
+    // close cannot invalidate either; it must revalidate after lease close.
+    // The old owner, snapshots, host pages and PCI reservation stay retained.
+    template<class Scope>
+    bool CloseRoleTransport(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        if (!fRole || !fFabric || fStage!=RoleVerified || !fOld || !fFresh) return false;
+        auto verified=[&]() {
+            return fRoleReceipt.ticket==fTicket && fRoleReceipt.binding==fRoleBinding
+                && fRoleReceipt.graph==fGraphOwner && fOld->qwen35SharedRoleBinding==fRoleBinding
+                && fOld->qwen35GraphOwner==fGraphOwner && fFresh->io.fleetEnabled;
+        };
+        if (!TicketValid(guard) || !verified()
+            || !scope.FreshRoleRecoveryCloseAdmission(*this,*fOld,*fFresh,fRoleReceipt)
+            || !TicketValid(guard) || !verified()) return Retain(scope,Closing);
+        auto postLease=[&]() {
+            return scope.FreshRoleRecoveryPostLeaseAudit(*this,*fOld,*fFresh,fRoleReceipt);
+        };
+        return CloseTransportWith(guard,scope,fRoleReceipt,verified,postLease);
+    }
+#endif
 
     // Retire only after the post-transfer fleet/DMA audit and PCI idle
     // transition. The exact old snapshot stays alive through old-bank
@@ -462,7 +513,11 @@ public:
     // its pointer and revalidate the recovery guard before generic finish.
     template<class Scope>
     bool Retire(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
-        if (fStage!=TransportClosed || !fOld || !fFresh) return false;
+        if (fStage!=TransportClosed || !fOld || !fFresh
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+            || fRole // role/graph owner retirement has a separate contract
+#endif
+            ) return false;
         auto* scratch=fOld->qwen35QualificationOwner.Scratch();
         auto* snapshot=fOld->qwen35QualificationOwner.Snapshot();
         auto readyForRelease=[&]() {

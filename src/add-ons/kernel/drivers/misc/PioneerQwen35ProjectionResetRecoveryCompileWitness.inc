@@ -15,6 +15,10 @@ struct PioneerQ35FreshRecoveryCompileScope {
         PioneerStoreContext&,uint64) const { return allowed; }
     bool FreshRoleRecoveryRestored(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&) const { return allowed; }
+    template<class Receipt> bool FreshRoleRecoveryCloseAdmission(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRoleRecoveryPostLeaseAudit(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
     bool FreshRecoverySetupAccessAllowed(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&,unsigned) const { return allowed; }
 #endif
@@ -83,6 +87,7 @@ PioneerQ35FreshRecoveryCompileWitness(PioneerQ35FreshRecoverySession* session,
     if (action==6) return PioneerQ35RunModifiedFabricRecoveryTransaction<PioneerQ35FreshRecoverySession>(owner,&old,guard,scope)==B_OK;
     if (action==7) return session->PrepareFabricRole(owner,old,guard,scope);
     if (action==8) return session->VerifyRoleRestoration(guard,scope);
+    if (action==9) return session->CloseRoleTransport(guard,scope);
 #endif
     return action==4 && PioneerQ35RunModifiedRecoveryTransaction<PioneerQ35FreshRecoverySession>(owner,&old,guard,scope)==B_OK;
 }
