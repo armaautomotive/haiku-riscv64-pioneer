@@ -25,6 +25,8 @@ struct PioneerQ35FreshRecoveryCompileScope {
     template<class Receipt> bool FreshRecoveryPostTransferAudit(PioneerQ35FreshRecoverySession&,
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    template<class Receipt> bool FreshRecoveryLeaseAccessAllowed(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
     template<class Receipt> bool FreshRecoveryAuditAccessAllowed(PioneerQ35FreshRecoverySession&,
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
 #endif

@@ -14,6 +14,9 @@
 #endif
 #ifndef PIONEER_QWEN35_FRESH_RECOVERY_TEST
 #include "PioneerQwen35ProjectionResetRecovery.h"
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+#include "PioneerQwen35GuardedLeaseEnd.h"
+#endif
 #endif
 
 class PioneerQ35FreshRecoverySession {
@@ -232,6 +235,19 @@ public:
             || !scope.FreshRecoveryCloseAdmission(*this,*fOld,*fFresh,fRestore)
             || !TicketValid(guard) || !verified()) return Retain(scope,Closing);
         fStage=Closing;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        if (fFabric) {
+            bool lost=false;
+            auto allowed=[&]() {
+                if (lost || !TicketValid(guard) || !verified()
+                    || !scope.FreshRecoveryLeaseAccessAllowed(*this,*fOld,*fFresh,fRestore)
+                    || !TicketValid(guard) || !verified()) { lost=true;return false; }
+                return true;
+            };
+            if (!PioneerQ35GuardedLeaseEnd(fFresh->io,fFresh->baseline.baseline.baseline.noc,
+                fFresh->lease,allowed)) return Retain(scope,LeaseClosed);
+        } else
+#endif
         if (!PioneerResidentLeaseEnd(fFresh->io,fFresh->baseline.baseline.baseline.noc,fFresh->lease))
             return Retain(scope,LeaseClosed);
         fStage=LeaseClosed;
