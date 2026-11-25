@@ -386,7 +386,19 @@ static void ExerciseQualificationCaptureRoot(PioneerSessionIO& io)
     assert(io.SharedCaptureAndStageHeld() && !sColdRecoveryRequired
         && gMapCalls==DataflowRolePhysicalControl+1 && io.sharedResetWrites==resetWrites);
     assert(!io.SharedArmAndBeginRelease() && !io.SharedStartCore(0) && io.sharedResetWrites==resetWrites);
+    context->qwen35DataflowService->capturePending=false;
+    context->qwen35DataflowService->faulted=true;
+    gQualificationHeldOwnerAllowed=false;
+    gQualificationHeldRollbackOwnerAllowed=true;
+    assert(PioneerQ35CanAbortUnstagedQualification(binding));
+    PioneerQ35SharedRoleBindingTestAccess::MarkReleaseAttempt(*binding,7,true);
     assert(!PioneerQ35CanAbortUnstagedQualification(binding));
+    PioneerQ35SharedRoleBindingTestAccess::MarkReleaseAttempt(*binding,7,false);
+    io.reset=0x46800;assert(!PioneerQ35CanAbortUnstagedQualification(binding));io.reset=0x47800;
+    sColdRecoveryRequired=true;assert(!PioneerQ35CanAbortUnstagedQualification(binding));sColdRecoveryRequired=false;
+    gQualificationHeldRollbackOwnerAllowed=false;
+    assert(!io.SharedRestoreRolesHeld());
+    gQualificationHeldRollbackOwnerAllowed=true;
     assert(io.SharedRestoreRolesHeld() && io.SharedVerifyRolesAfterResidentRestore());
     for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
         assert(io.SelectRuntimeCore(core));
@@ -395,6 +407,8 @@ static void ExerciseQualificationCaptureRoot(PioneerSessionIO& io)
     }
     assert(io.SharedFinalizeBeforeResume() && PioneerQ35DestroySharedRoleBinding(binding));
     context->qwen35SharedRoleBinding=nullptr;gQualificationHeldOwnerAllowed=false;
+    gQualificationHeldRollbackOwnerAllowed=false;context->qwen35DataflowService->faulted=false;
+    context->qwen35DataflowService->capturePending=true;
     gPerCoreRoleWindows=false;for (auto& windows:gRoleTileWindows) windows.clear();
     io.simulateArc=false;io.simulateHdma=false;ResetMaps();
 }

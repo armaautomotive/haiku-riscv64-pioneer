@@ -13,6 +13,7 @@
 class PioneerQ35ProjectionQualificationScope;
 #if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
 static bool PioneerQ35QualificationHeldOwnerAllowed(PioneerStoreContext&,PioneerSessionIO&);
+static bool PioneerQ35QualificationHeldRollbackOwnerAllowed(PioneerStoreContext&,PioneerSessionIO&);
 #endif
 #endif
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleReadOnlyViews.h"
@@ -268,6 +269,11 @@ public:
                 && which<=PioneerQwen35::DataflowRolePhysicalExtraCode
                 && PioneerQwen35::DataflowRolePhysicalWriteRange(which,offset,bytes)
                 && ProveRoleMemoryReadSafe(io,core,which);
+        if (fContext && PioneerQ35QualificationHeldRollbackOwnerAllowed(*fContext,io))
+            return ProveRoleHeldImageMutationAllowed(io,true)
+                && which<=PioneerQwen35::DataflowRolePhysicalExtraCode
+                && PioneerQwen35::DataflowRolePhysicalWriteRange(which,offset,bytes)
+                && ProveRoleMemoryReadSafe(io,core,which);
 #endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         return which<=PioneerQwen35::DataflowRolePhysicalExtraCode
@@ -285,7 +291,8 @@ public:
     // ask for these image writes. Per-word held, route and NoC checks remain
     // in the adapter; this does not authorize reset or processor release.
     bool ProveRoleHeldImageMutationAllowed(PioneerSessionIO& io,bool rollback) const {
-        return fContext && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)
+        return fContext && (PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)
+                || (rollback && PioneerQ35QualificationHeldRollbackOwnerAllowed(*fContext,io)))
             && ProveExclusiveRewrite(io) && io.SharedRoleFirmwareMatches()
             && io.DataflowPanelMappingStable()
             && PioneerQ35SharedRoleHeldImageAccess(fContext->qwen35SharedRoleBinding,rollback);
@@ -295,7 +302,8 @@ public:
     bool ProveRoleControlWriteSafe(PioneerSessionIO& io,unsigned core,uint32_t expected,uint32_t desired) const {
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
 #if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
-        if (fContext && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)) return false;
+        if (fContext && (PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)
+            || PioneerQ35QualificationHeldRollbackOwnerAllowed(*fContext,io))) return false;
 #endif
         return ProveRoleMemoryReadSafe(io,core,PioneerQwen35::DataflowRolePhysicalExtraCode)
             && PioneerQ35SharedRoleResetTransition(fContext->qwen35SharedRoleBinding,core,expected,desired)
@@ -313,7 +321,9 @@ public:
     && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
         return fContext && core<PioneerQwen35::DataflowBarrierWorkers && io.DataflowPanelMappingStable()
             && ProveExclusiveRewrite(io) && io.SharedRoleFirmwareMatches()
-            && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io);
+            && (PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)
+                || (PioneerQ35QualificationHeldRollbackOwnerAllowed(*fContext,io)
+                    && PioneerQ35SharedRoleHeldImageAccess(fContext->qwen35SharedRoleBinding,true)));
 #else
         (void)io;(void)core;return false;
 #endif

@@ -201,6 +201,7 @@ class PioneerQwen35DataflowPciMemory {
 	DataflowPciCoreSnapshot fSnapshots[PioneerQwen35::DataflowCoreCount]{};
 	bool fResumeStartAttempted=false;
 	bool fResumeFleetStarted=false;
+	bool fUnconfirmedHeldWrite=false;
 	static constexpr unsigned StopPollLimit=65536;
 
 	bool SelectMapped(unsigned core)
@@ -253,6 +254,9 @@ class PioneerQwen35DataflowPciMemory {
 	}
 
 public:
+	// A successful later store cannot prove a previously unconfirmed held
+	// store has drained. This ledger covers only WriteCoreMemory's held path.
+	bool HeldWritesConfirmed() const { return !fUnconfirmedHeldWrite; }
 	explicit PioneerQwen35DataflowPciMemory(Raw& raw):fRaw(raw) {}
 	~PioneerQwen35DataflowPciMemory()
 	{
@@ -354,8 +358,12 @@ private:
 			if (bytes!=sizeof(uint32_t)) return false;
 			const uint32_t value=*static_cast<const uint32_t*>(input);
 			if (value!=PioneerQwen35::DataflowServiceBootWord) return false;
+			const bool previous=fUnconfirmedHeldWrite;
+			if (held) { fUnconfirmedHeldWrite=true;asm volatile("" ::: "memory"); }
 			fRaw.RuntimeCodeWrite(0,value);
-			return fRaw.RuntimeCodeRead(0)==value;
+			if (fRaw.RuntimeCodeRead(0)!=value || (held && !CoreHeld(core))) return false;
+			if (held) fUnconfirmedHeldWrite=previous;
+			return true;
 		}
 		const uint32_t* words=static_cast<const uint32_t*>(input);
 		for (unsigned i=0;i<bytes/sizeof(uint32_t);i++) {
@@ -364,12 +372,15 @@ private:
 				*issued=true;
 				asm volatile("" ::: "memory");
 			}
+			const bool previous=fUnconfirmedHeldWrite;
+			if (held) { fUnconfirmedHeldWrite=true;asm volatile("" ::: "memory"); }
 			fRaw.Q38PanelWrite(current,words[i]);
 			if (fRaw.Q38PanelRead(current)!=words[i]
 				|| !fRaw.DataflowPanelMappingStable()
 				|| (held && !CoreHeld(core))
 				|| (!held && (fRaw.ResetRead()!=DataflowPciRunningReset
 					|| fRaw.ResetRead()!=DataflowPciRunningReset))) return false;
+			if (held) fUnconfirmedHeldWrite=previous;
 		}
 		return true;
 	}

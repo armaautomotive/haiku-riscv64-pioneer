@@ -28,6 +28,8 @@ struct Context {
     QualificationOwner qwen35QualificationOwner;
     Binding binding;Binding* qwen35SharedRoleBinding=&binding;
     DataflowServiceOwner service;DataflowServiceOwner* qwen35DataflowService=&service;
+    struct Memory { bool confirmed=true;bool HeldWritesConfirmed() const { return confirmed; } } memory;
+    Memory* qwen35DataflowMemory=&memory;
     MockDataflowIO io;unsigned closes=0;
     DataflowServiceResult CloseDataflowRewrite() {
         ++closes;const auto closed=service.Close(io);
@@ -59,6 +61,12 @@ int main() {
         c->Handle(DataflowServiceSnapshotFailed,scope);
         assert(c->qwen35QualificationOwner.retained && c->service.Faulted()
             && !c->closes && !scope.restores && !c->io.restoreCount);
+    }
+    {
+        auto c=std::make_unique<Context>();Scope scope;Prepare(*c);c->memory.confirmed=false;
+        c->Handle(DataflowServiceSnapshotFailed,scope);
+        assert(c->qwen35QualificationOwner.retained && c->service.Faulted()
+            && !c->closes && !scope.restores);
     }
     {
         auto c=std::make_unique<Context>();Scope scope;Prepare(*c);c->io.failRoleRestore=true;

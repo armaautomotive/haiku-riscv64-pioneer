@@ -23,6 +23,7 @@ struct MockPciRaw {
 	bool idle=true;
 	bool idleForWrite=true;
 	bool corruptRestoreRead=false;
+	bool dropPanelWrite=false,dropBootWrite=false;
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 	bool dropStackReleaseWrite=false;
 	bool* stackIssueWitness=nullptr;
@@ -67,7 +68,7 @@ struct MockPciRaw {
 	void RuntimeCodeWrite(unsigned word,unsigned value)
 	{
 		assert(word==0 && selected<120);
-		boot[selected]=value;
+		if (!dropBootWrite) boot[selected]=value;
 		writes++;
 	}
 	void RuntimeResetWrite(unsigned value) {
@@ -98,6 +99,7 @@ struct MockPciRaw {
 	{
 		assert(selected<120 && address>=DataflowPciL1ViewBase
 			&& address<DataflowPciL1ViewBase+DataflowPciL1ViewBytes);
+		if (dropPanelWrite) { ++writes;return; }
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 		if (address==PioneerQwen35::DataflowRoleSnapshotHandoffAddress
 			+offsetof(PioneerQwen35::DataflowRoleSnapshotHandoff,release) && stackIssueWitness) {
@@ -133,6 +135,34 @@ using namespace PioneerQwen35;
 
 int main()
 {
+	{
+		MockPciRaw ledgerRaw;
+		PioneerQwen35DataflowPciMemory<MockPciRaw> ledger(ledgerRaw);
+		ledgerRaw.reset[0]=0x47800;
+		const uint32_t first=0x12345678,second=0x87654321;
+		assert(ledger.HeldWritesConfirmed()
+			&& !ledger.WriteCoreMemory(0,0x7000,&first,sizeof(first))
+			&& ledger.HeldWritesConfirmed());
+		assert(ledger.WriteCoreMemory(0,DataflowServiceEntryAddress,&first,sizeof(first))
+			&& ledger.HeldWritesConfirmed());
+		ledgerRaw.dropPanelWrite=true;
+		assert(!ledger.WriteCoreMemory(0,DataflowServiceEntryAddress,&second,sizeof(second))
+			&& !ledger.HeldWritesConfirmed());
+		ledgerRaw.dropPanelWrite=false;
+		assert(ledger.WriteCoreMemory(0,DataflowServiceEntryAddress,&second,sizeof(second))
+			&& !ledger.HeldWritesConfirmed()); // sticky across later successful stores
+	}
+	{
+		MockPciRaw ledgerRaw;
+		PioneerQwen35DataflowPciMemory<MockPciRaw> ledger(ledgerRaw);
+		ledgerRaw.reset[0]=0x47800;ledgerRaw.boot[0]=0;ledgerRaw.dropBootWrite=true;
+		const uint32_t boot=DataflowServiceBootWord;
+		assert(!ledger.WriteCoreMemory(0,DataflowServiceBootAddress,&boot,sizeof(boot))
+			&& !ledger.HeldWritesConfirmed());
+		ledgerRaw.dropBootWrite=false;
+		assert(ledger.WriteCoreMemory(0,DataflowServiceBootAddress,&boot,sizeof(boot))
+			&& !ledger.HeldWritesConfirmed());
+	}
 	unsigned resumeStage=UINT32_MAX,resumeCore=UINT32_MAX;
 	unsigned resumeDetail=UINT32_MAX;
 	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(

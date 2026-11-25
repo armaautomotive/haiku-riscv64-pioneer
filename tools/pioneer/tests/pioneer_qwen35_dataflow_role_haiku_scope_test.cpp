@@ -717,6 +717,10 @@ status_t delete_area(area_id area) {
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
     && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
 static bool gQualificationHeldOwnerAllowed=false;
+static bool gQualificationHeldRollbackOwnerAllowed=false;
+static bool PioneerQ35QualificationHeldRollbackOwnerAllowed(PioneerStoreContext&,PioneerSessionIO&) {
+    return gQualificationHeldRollbackOwnerAllowed;
+}
 static bool PioneerQ35QualificationHeldOwnerAllowed(PioneerStoreContext&,PioneerSessionIO&) {
     return gQualificationHeldOwnerAllowed;
 }

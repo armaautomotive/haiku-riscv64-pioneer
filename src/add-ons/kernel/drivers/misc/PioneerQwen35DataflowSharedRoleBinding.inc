@@ -111,11 +111,12 @@ public:
     bool CanAbortUnstagedQualification() {
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
         auto* scope=Scope();auto& io=fContext.io;
-        if (!fUnstagedQualificationAbort || !scope || sColdRecoveryRequired
+        if ((!fUnstagedQualificationAbort && !fOwner.HeldImageRollbackReady()) || !scope || sColdRecoveryRequired
             || fContext.qwen35SharedRoleBinding!=this || !fContext.qwen35DataflowService
             || !fContext.qwen35DataflowService->Faulted() || !fCaptureAttempted
             || fReleaseAuthorized || !fViews.Opened() || !fViews.ImageWritesConfirmed()
-            || !fCodeSnapshot || !fRamSnapshot || !fOwner.StacklessHeldImagesCaptured()
+            || !fCodeSnapshot || !fRamSnapshot
+            || (!fOwner.StacklessHeldImagesCaptured() && !fOwner.HeldImageRollbackReady())
             || io.runtimeCore>=PioneerQwen35::DataflowBarrierWorkers) return false;
         for (unsigned core=0;core<PioneerQwen35::DataflowBarrierWorkers;core++)
             if (fReleaseAttempted[core] || fStackReleaseAttempted[core] || fHoldAttempted[core]) return false;

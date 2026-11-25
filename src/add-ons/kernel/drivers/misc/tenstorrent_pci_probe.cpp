@@ -4980,9 +4980,10 @@ public:
 			&& qwen35DataflowService && qwen35DataflowService->Started()) {
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) \
 	&& defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
-			// Only a fully captured, unmodified role fleet can use the normal
-			// audited close and return to the scratch rollback path.
-			if (!PioneerQ35CanAbortUnstagedQualification(qwen35SharedRoleBinding)
+			// Before release, a captured fleet with confirmed writes can use
+			// the audited close and return to the scratch rollback path.
+			if (!qwen35DataflowMemory || !qwen35DataflowMemory->HeldWritesConfirmed()
+				|| !PioneerQ35CanAbortUnstagedQualification(qwen35SharedRoleBinding)
 				|| CloseDataflowRewrite()!=PioneerQwen35::DataflowServiceClosed
 				|| !scope.QualificationRestoreUnstagedRoute(scratch,*this))
 				qwen35QualificationOwner.Retain();

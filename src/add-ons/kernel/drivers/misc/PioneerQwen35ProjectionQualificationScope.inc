@@ -14,26 +14,40 @@
 // scratch transaction. The borrowed scope supplies thread, lock and identity
 // checks; callers sample each selected tile's real reset and NoC state.
 static bool
+PioneerQ35QualificationHeldOwnerBaseAllowed(PioneerStoreContext& c,PioneerSessionIO& io)
+{
+    return &io==&c.io && io.qwen35DataflowContext==&c && sOpenCookies==1
+        && !sColdRecoveryRequired && !sReloadQuiesced && sBankStorageOnly
+        && c.bankStorageOnly && c.bytes==PioneerResidentBanks::Total && c.initialized
+        && c.qwen35QualificationInternalActive && c.qwen35QualificationOwner.Active()
+        && !c.qwen35QualificationOwner.Retained() && c.qwen35QualificationOwner.Scratch()
+        && c.q35PciReservationHeld && !c.q35PciReleaseAttempted && c.qwen35DedicatedFleet
+        && c.q38DispatchRoutes && c.q38Dispatch && c.q38Dispatch->prepared==120
+        && !c.q38Dispatch->unsafe && !c.q38Dispatch->closed && !c.q38Dispatch->rootRunning
+        && !c.q38Dispatch->bootAttempted && !c.q38Dispatch->booted
+        && !c.qwen35DataflowAuthority && !c.qwen35DataflowProgramScratch && !c.qwen35GraphOwner
+        && c.banks.Matches(c.baseline.baseline.baseline.baseline.dram)
+        && c.lease.ready && !c.lease.pending && !c.lease.recovery_required
+        && c.host.state==TT_HOST_PAGE_READY && !c.host.released;
+}
+static bool
 PioneerQ35QualificationHeldOwnerAllowed(PioneerStoreContext& c,PioneerSessionIO& io)
 {
-    if (&io!=&c.io || io.qwen35DataflowContext!=&c || sOpenCookies!=1
-        || sColdRecoveryRequired || sReloadQuiesced || !sBankStorageOnly
-        || !c.bankStorageOnly || c.bytes!=PioneerResidentBanks::Total || !c.initialized
-        || !c.qwen35QualificationInternalActive || !c.qwen35QualificationOwner.Active()
-        || c.qwen35QualificationOwner.Retained() || !c.qwen35QualificationOwner.Scratch()
-        || !c.q35PciReservationHeld || c.q35PciReleaseAttempted || !c.qwen35DedicatedFleet
-        || !c.q38DispatchRoutes || !c.q38Dispatch || c.q38Dispatch->prepared!=120
-        || c.q38Dispatch->unsafe || c.q38Dispatch->closed || c.q38Dispatch->rootRunning
-        || c.q38Dispatch->bootAttempted || c.q38Dispatch->booted
-        || c.qwen35DataflowAuthority || c.qwen35DataflowProgramScratch || c.qwen35GraphOwner
-        || !c.banks.Matches(c.baseline.baseline.baseline.baseline.dram)
-        || !c.lease.ready || c.lease.pending || c.lease.recovery_required
-        || c.host.state!=TT_HOST_PAGE_READY || c.host.released || c.UnsafeForQ35HeldObservation()) return false;
+    if (!PioneerQ35QualificationHeldOwnerBaseAllowed(c,io) || c.UnsafeForQ35HeldObservation()) return false;
     if (!c.qwen35DataflowService)
         return !c.qwen35SharedRoleBinding && !c.qwen35DataflowMemory;
     if (c.qwen35DataflowService->ScratchHeld() || c.qwen35DataflowService->SharedRoleCapturePending())
         return c.qwen35SharedRoleBinding && c.qwen35DataflowMemory;
     return c.qwen35DataflowService->Closed() && !c.qwen35SharedRoleBinding && !c.qwen35DataflowMemory;
+}
+// Only a faulted, pre-release service with confirmed held writes may enter
+// the separately bound role-image rollback. Other unsafe state remains fatal.
+static bool __attribute__((unused))
+PioneerQ35QualificationHeldRollbackOwnerAllowed(PioneerStoreContext& c,PioneerSessionIO& io)
+{
+    return PioneerQ35QualificationHeldOwnerBaseAllowed(c,io) && c.qwen35DataflowService
+        && c.qwen35DataflowService->Faulted() && c.qwen35SharedRoleBinding && c.qwen35DataflowMemory
+        && c.qwen35DataflowMemory->HeldWritesConfirmed() && !c.Unsafe(false,true);
 }
 #endif
 

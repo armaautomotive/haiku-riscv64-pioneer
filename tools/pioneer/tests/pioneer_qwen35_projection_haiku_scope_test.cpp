@@ -56,6 +56,7 @@ public:
 template<class Work> static bool PioneerQwen35WithSelectedClock(PioneerSessionIO&,unsigned,Work work) { return work(); }
 struct FakeDispatch { unsigned prepared=120;bool unsafe=false,closed=false,rootRunning=false,bootAttempted=false,booted=false; };
 struct FakeRoleBinding { bool restored=false; };
+struct FakeMemory { bool confirmed=true;bool HeldWritesConfirmed() const { return confirmed; } };
 static bool PioneerQ35SharedRoleProjectionRestored(const FakeRoleBinding* binding) {
     return binding && binding->restored;
 }
@@ -77,7 +78,7 @@ struct PioneerStoreContext {
     bool q35PciReservationHeld=true,q35PciReleaseAttempted=false,qwen35DedicatedFleet=true;
     uint64_t bytes=PioneerResidentBanks::Total;
     void* qwen35DataflowAuthority=nullptr;void* qwen35DataflowProgramScratch=nullptr;void* qwen35GraphOwner=nullptr;
-    void* qwen35DataflowMemory=nullptr;
+    FakeMemory memory;FakeMemory* qwen35DataflowMemory=nullptr;
     PioneerQwen35::DataflowServiceOwner* qwen35DataflowService=nullptr;
     FakeRoleBinding* qwen35SharedRoleBinding=nullptr;
     bool qwen35DataflowRoutesAudited=false,otherUnsafe=false;
@@ -149,7 +150,7 @@ int main() {
         assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.lease.pending=false;
         context.qwen35QualificationInternalActive=false;
         assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.qwen35QualificationInternalActive=true;
-        context.qwen35DataflowMemory=&context;
+        context.qwen35DataflowMemory=&context.memory;
         assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.qwen35DataflowMemory=nullptr;
         context.io.qwen35DataflowContext=nullptr;
         assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));context.io.qwen35DataflowContext=&context;

@@ -26,7 +26,7 @@ struct InstallationIO : MockDataflowIO {
         context.qwen35SharedRoleBinding=nullptr;
         assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));
         context.qwen35SharedRoleBinding=binding;
-        void* memory=context.qwen35DataflowMemory;
+        auto* memory=context.qwen35DataflowMemory;
         context.qwen35DataflowMemory=nullptr;
         assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));
         context.qwen35DataflowMemory=memory;
@@ -49,7 +49,7 @@ int main() {
     FakeRoleBinding binding;
     DataflowServiceOwner service;
     context.qwen35SharedRoleBinding=&binding;
-    context.qwen35DataflowMemory=&context;
+    context.qwen35DataflowMemory=&context.memory;
     context.qwen35DataflowService=&service;
     assert(!PioneerQ35QualificationHeldOwnerAllowed(context,context.io));
     uint32_t code[96]{},dispatchCode[80]{};
@@ -58,6 +58,12 @@ int main() {
     assert(service.Install(image,*io)==DataflowServiceSnapshotFailed && io->observed);
     assert(service.Faulted() && context.Unsafe() && context.UnsafeForQ35HeldObservation()
         && !PioneerQ35QualificationHeldOwnerAllowed(context,context.io));
+    assert(PioneerQ35QualificationHeldRollbackOwnerAllowed(context,context.io));
+    context.memory.confirmed=false;
+    assert(!PioneerQ35QualificationHeldRollbackOwnerAllowed(context,context.io));
+    context.memory.confirmed=true;context.otherUnsafe=true;
+    assert(!PioneerQ35QualificationHeldRollbackOwnerAllowed(context,context.io));
+    context.otherUnsafe=false;
     assert(io->startCount==0 && io->roleStages==0);
     assert(service.Close(*io)==DataflowServiceClosed && service.Closed()
         && io->restoreCount==DataflowCoreCount && io->resumeCount==1);
