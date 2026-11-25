@@ -38,6 +38,7 @@ int main() {
         assert(wrong.PollCandidate()==Host::CandidateReady && wrong.AuditCandidate() && wrong.AcknowledgeCandidate());
         assert(!model.Commit(wrong,output) && live==liveOwner.get());
         assert(model.Commit(host,output) && live==after.get() && model.Retired()==liveOwner.get());
+        assert(model.CommittedFor(command,host) && !model.CommittedFor(command,wrong));
         assert(output.token==(position?42:Vocabulary) && !model.Commit(host,output));
         liveOwner.swap(after);
     }

@@ -44,6 +44,18 @@ int main() {
         auto scratch=std::make_unique<DataflowProjectionProgram>();
         DataflowResidentGraphSession session;ResidentController controller;controller.sealed=plan.get();
         assert(session.Bind(*plan,f->routes,0,live,controller));
+        if (!scenario) {
+            // A valid command whose model position is not yet ready must not
+            // consume the next worker trigger; the retry starts at one.
+            auto rejectedCandidate=std::make_unique<DataflowProjectionAuthority>();
+            auto rejectedRaw=std::make_unique<ResidentRaw>();ResidentScope rejectedScope;
+            Host rejectedHost(*rejectedRaw,rejectedScope);DataflowResidentSessionRun<Host> rejected(rejectedHost);
+            DataflowArgmaxResult rejectedOutput{};DataflowProjectionAuthority* rejectedRetired=nullptr;
+            unsigned rejectedStage=0;
+            assert(session.Run(rejected,*rejectedCandidate,1,42,true,3,*scratch,controller,
+                rejectedOutput,rejectedRetired,rejectedStage)==DataflowResidentSessionPreflight);
+            assert(!rejectedHost.Issued() && !session.Faulted() && !rejectedRetired);
+        }
         const unsigned iterations=scenario?1:2;
         for (unsigned position=0;position<iterations;position++) {
             auto candidate=std::make_unique<DataflowProjectionAuthority>();
@@ -64,6 +76,7 @@ int main() {
                 assert(result==DataflowResidentSessionComplete && retired==liveOwner.get()
                     && live==candidate.get() && output.token==(decode?42:Vocabulary));
                 assert(!session.Faulted() && !controller.retain && host.IsAcknowledged());
+                assert(host.Request().trigger==position+1);
                 liveOwner.swap(candidate);
             } else {
                 assert(result==DataflowResidentSessionRetained && session.Faulted()

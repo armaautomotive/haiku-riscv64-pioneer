@@ -42,6 +42,7 @@ public:
     DataflowResidentGraphSession(const DataflowResidentGraphSession&)=delete;
     DataflowResidentGraphSession& operator=(const DataflowResidentGraphSession&)=delete;
     bool Faulted() const { return faulted; }
+    unsigned NextTrigger() const { return nextTrigger; }
     const void* RetainedRun() const { return faulted?retainedRun:nullptr; }
     template<class IO> bool Bind(const DataflowStreamPlan& sealed,const unsigned (&bankRoutes)[2][Banks],
         unsigned slot,DataflowProjectionAuthority*& authority,IO& io) {
@@ -73,7 +74,7 @@ public:
             || !issuer.Issue(count,ticket) || ticket.firstSequence>DataflowResidentRunLimit
             || count-1>DataflowResidentRunLimit-ticket.firstSequence
             || !DataflowGraphRunBuild(plan->binding[0],plan->lease[0],routes,dynamic,ticket,
-                nextTrigger++,polls,inputSlot,descriptor)
+                nextTrigger,polls,inputSlot,descriptor)
             || !DataflowResidentCommandBuild(descriptor,run.command)
             || !run.model.Prepare(*live,candidate,run.command,run.host,scratch,stage))
             return DataflowResidentSessionPreflight;
@@ -99,6 +100,7 @@ public:
             return Retain(run,io);
         retired=run.model.Retired();
         if (!retired || *live!=&candidate) { output={Vocabulary,0,0,0};return Retain(run,io); }
+        ++nextTrigger;
         return DataflowResidentSessionComplete;
     }
 };

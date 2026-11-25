@@ -15,7 +15,7 @@ namespace PioneerQwen35 {
 class DataflowResidentModelTransaction {
     enum Phase { Empty,Prepared,Committed,Rejected } phase=Empty;
     DataflowProjectionAuthority** liveSlot=nullptr;
-    DataflowProjectionAuthority *original=nullptr,*candidate=nullptr,*retired=nullptr;
+    DataflowProjectionAuthority *original=nullptr,*candidate=nullptr,*retired=nullptr,*promoted=nullptr;
     const void* hostOwner=nullptr;
     DataflowResidentCommand request{};
     DataflowDynamicTokenContext token{};
@@ -59,11 +59,17 @@ public:
         if (!Matches(host.Request(),host) || !host.IsAcknowledged() || host.IsRetained()) return false;
         DataflowArgmaxResult observed{};
         if (request.count==DataflowGraphDecodeSteps && !host.Output(observed)) return false;
-        retired=original;*liveSlot=candidate;candidate=nullptr;phase=Committed;
+        retired=original;promoted=candidate;*liveSlot=candidate;candidate=nullptr;phase=Committed;
         if (request.count==DataflowGraphDecodeSteps) result=observed;
         return true;
     }
     DataflowProjectionAuthority* Retired() const { return phase==Committed?retired:nullptr; }
+    template<class Host> bool CommittedFor(const DataflowResidentCommand& command,const Host& host) const {
+        return phase==Committed && liveSlot && promoted && *liveSlot==promoted && retired==original
+            && hostOwner==&host && RequestMatches(command) && RequestMatches(host.Request())
+            && host.IsAcknowledged() && !host.IsRetained()
+            && original->GraphStateMatches(originalState) && promoted->GraphStateMatches(candidateState);
+    }
 };
 }
 #endif

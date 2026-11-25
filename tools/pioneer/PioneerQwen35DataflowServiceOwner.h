@@ -5,6 +5,11 @@
 #if defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) && !defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
 #error Dedicated takeover requires the shared role owner and reset retirement path
 #endif
+#if defined(PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS) \
+    && (!defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
+        || !defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY))
+#error Resident service ownership is limited to the non-loadable snapshot witness
+#endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 #if !defined(PIONEER_QWEN35_DEVICE_DISPATCH) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY)
 #error Shared-role service lifecycle is a non-loadable recovery witness only
@@ -141,6 +146,9 @@ class DataflowServiceOwner {
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		, PhaseGraphRunning, PhaseGraphFaulted, PhaseGraphClosing
 #endif
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+		, PhaseResidentIdle
+#endif
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
 		, PhaseScratchHeld
 #endif
@@ -168,6 +176,10 @@ class DataflowServiceOwner {
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 	unsigned fGraphPrevious=0,fGraphTrigger=0;
 	const DataflowGraphPublisher* fGraphPublisher=nullptr;
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+	const void* fResidentSession=nullptr;
+	const void* fResidentRun=nullptr;
+#endif
 #endif
 
 	void SetDiagnostic(unsigned stage,unsigned core,
@@ -371,6 +383,57 @@ public:
 		return fPhase==PhaseGraphRunning && fGraphPublisher==&publisher;
 	}
 	bool GraphRunning() const { return fPhase==PhaseGraphRunning; }
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+	// A resident service is reserved for its resident protocol for its whole
+	// session lifetime. Generic worker commands and Close remain unavailable;
+	// a separately audited resident stop path must retire this reservation.
+	bool BindResidentSession(const void* session) {
+		if (!session || fResidentSession || fResidentRun || fPhase!=PhaseReady
+			|| fProjectionOwner.NextSequence()!=0) return false;
+		fResidentSession=session;fPhase=PhaseResidentIdle;return true;
+	}
+	bool ResidentSessionIdle(const void* session) const {
+		return session && fResidentSession==session && !fResidentRun && fPhase==PhaseResidentIdle;
+	}
+	template<class Run> bool BeginResidentRun(const void* session,const Run& run,unsigned expectedTrigger) {
+		if (!ResidentSessionIdle(session) || run.attempted || run.host.Issued()
+			|| run.host.IsRetained() || run.host.IsAcknowledged()) return false;
+		const unsigned previous=fProjectionOwner.NextSequence();
+		if (expectedTrigger!=previous+1 || !fProjectionOwner.CanAdoptGraphSequence(previous,expectedTrigger))
+			return false;
+		fResidentRun=&run;fGraphPrevious=previous;fGraphTrigger=expectedTrigger;
+		fGraphPublisher=nullptr;fPhase=PhaseGraphRunning;return true;
+	}
+	template<class Run> bool OwnsResidentRun(const void* session,const Run& run) const {
+		return session && fResidentSession==session && fResidentRun==&run && fPhase==PhaseGraphRunning;
+	}
+	template<class Run> bool CancelResidentRun(const void* session,const Run& run) {
+		if (!OwnsResidentRun(session,run)) return false;
+		if (run.host.Issued() || run.host.IsRetained() || run.host.IsAcknowledged()) {
+			fPhase=PhaseGraphFaulted;return false;
+		}
+		fResidentRun=nullptr;fGraphPrevious=fGraphTrigger=0;fPhase=PhaseResidentIdle;return true;
+	}
+	template<class Run> bool CommitResidentRun(const void* session,const Run& run) {
+		if (!OwnsResidentRun(session,run)) return false;
+		if (run.command.trigger!=fGraphTrigger
+			|| !run.model.CommittedFor(run.command,run.host)
+			|| !fProjectionOwner.CanAdoptGraphSequence(fGraphPrevious,fGraphTrigger)) {
+			if (run.host.Issued() || run.host.IsRetained() || run.host.IsAcknowledged())
+				fPhase=PhaseGraphFaulted;
+			return false;
+		}
+		fProjectionOwner.AdoptGraphSequence(fGraphTrigger);fResidentRun=nullptr;
+		fGraphPrevious=fGraphTrigger=0;fPhase=PhaseResidentIdle;return true;
+	}
+	template<class Run> bool RetainResidentRun(const void* session,const Run& run) {
+		if (!OwnsResidentRun(session,run)) return false;
+		fPhase=PhaseGraphFaulted;return true;
+	}
+	template<class Run> bool OwnsRetainedResidentRun(const void* session,const Run& run) const {
+		return session && fResidentSession==session && fResidentRun==&run && fPhase==PhaseGraphFaulted;
+	}
+#endif
 	bool CancelGraphBeforePublication(const DataflowGraphPublisher& publisher) {
 		if (fPhase!=PhaseGraphRunning || fGraphPublisher!=&publisher || !publisher.Unpublished()) return false;
 		fPhase=PhaseReady;fGraphPrevious=fGraphTrigger=0;fGraphPublisher=nullptr;return true;
