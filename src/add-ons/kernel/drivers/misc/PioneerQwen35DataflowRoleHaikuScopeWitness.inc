@@ -29,6 +29,9 @@ static bool PioneerQ35SharedRoleResetTransition(const PioneerQwen35SharedRoleBin
 static bool PioneerQ35SharedRoleSnapshotHoldTransition(const PioneerQwen35SharedRoleBinding*,unsigned,bool);
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 static bool PioneerQ35SharedRoleProjectionInFlightLedger(const PioneerQwen35SharedRoleBinding*);
+#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE)
+static bool PioneerQ35SharedRoleHeldImageAccess(const PioneerQwen35SharedRoleBinding*,bool);
+#endif
 #endif
 static bool PioneerQ35SharedRoleSavedRamSources(const PioneerQwen35SharedRoleBinding*,unsigned,
     const uint32_t*&,const uint32_t*&,bool&);
@@ -260,9 +263,11 @@ public:
     bool ProveRoleMemoryWriteSafe(PioneerSessionIO& io,unsigned core,unsigned which,unsigned offset,unsigned bytes) const {
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
     && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
-        // Image-read authority during fixed qualification never implies a
-        // retained snapshot, image-write permission or safe restoration.
-        if (fContext && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)) return false;
+        if (fContext && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io))
+            return (ProveRoleHeldImageMutationAllowed(io,false) || ProveRoleHeldImageMutationAllowed(io,true))
+                && which<=PioneerQwen35::DataflowRolePhysicalExtraCode
+                && PioneerQwen35::DataflowRolePhysicalWriteRange(which,offset,bytes)
+                && ProveRoleMemoryReadSafe(io,core,which);
 #endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         return which<=PioneerQwen35::DataflowRolePhysicalExtraCode
@@ -274,6 +279,18 @@ public:
             && ProveRoleMemoryReadSafe(io,core,which);
 #endif
     }
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
+    && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+    // Only the active binding's bounded stage or rollback transaction may
+    // ask for these image writes. Per-word held, route and NoC checks remain
+    // in the adapter; this does not authorize reset or processor release.
+    bool ProveRoleHeldImageMutationAllowed(PioneerSessionIO& io,bool rollback) const {
+        return fContext && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)
+            && ProveExclusiveRewrite(io) && io.SharedRoleFirmwareMatches()
+            && io.DataflowPanelMappingStable()
+            && PioneerQ35SharedRoleHeldImageAccess(fContext->qwen35SharedRoleBinding,rollback);
+    }
+#endif
 // PIONEER_Q35_SCOPE_RESET_CONTROL_BEGIN
     bool ProveRoleControlWriteSafe(PioneerSessionIO& io,unsigned core,uint32_t expected,uint32_t desired) const {
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)

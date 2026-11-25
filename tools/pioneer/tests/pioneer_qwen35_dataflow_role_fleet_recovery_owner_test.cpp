@@ -11,6 +11,7 @@ struct RecoveryIO {
     bool held=true,defaultRoute=true,stable=true,corruptRamOnBoot=false,corruptBootOnRam=false;
     bool corruptPriorDisableOnWrite=false;
     bool stacklessPreparation=true,stacklessSafe=true,uncapturedProtected=true;
+    bool heldImageStageAllowed=false,heldImageRollbackAllowed=false,heldImageWritesConfirmed=true;
     bool coreRestoreProof=false,restoreReleaseReady=false,staleRestoreReceipt=false;
     bool restoreCompletion=false,restoreCompletedHeld=false;
     bool autoArmProof=false,autoHeldProof=false,autoCancelProof=false,autoRetirementProof=false;
@@ -48,6 +49,9 @@ struct RecoveryIO {
     bool StacklessFleetPreparationSafe(unsigned core) const {
         return held && stacklessPreparation && core<DataflowBarrierWorkers;
     }
+    bool HeldImageStageAllowed() const { return heldImageStageAllowed; }
+    bool HeldImageRollbackAllowed() const { return heldImageRollbackAllowed; }
+    bool HeldImageWritesConfirmed() const { return heldImageWritesConfirmed; }
     bool StacklessUncapturedRamProtected(unsigned core) const {
         return held && uncapturedProtected && core<DataflowBarrierWorkers;
     }
@@ -228,6 +232,46 @@ int main()
     std::vector<uint32_t> codeSnapshot(DataflowRoleFleetRecoveryOwner::CodeWords());
     std::vector<uint32_t> ramSnapshot(DataflowRoleFleetRecoveryOwner::RamWords());
     const uint32_t codeA[]={1,2,3},codeB[]={4,5},shimA[]={6,7},shimB[]={8,9};
+    {
+        // Stage only after the held-fleet admission, then restore all image
+        // windows before any reset release without touching private RAM.
+        RecoveryIO io;io.stacklessPreparation=false;
+        const auto originalCode=io.code,originalRam=io.ram,originalBoots=io.boots,
+            originalShims=io.shims,originalDisable=io.resetDisable;
+        DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.SelectAutoRestoreMode()
+            && owner.CaptureAllStacklessHeldImages(codeSnapshot.data(),codeSnapshot.size(),
+                ramSnapshot.data(),ramSnapshot.size(),io));
+        assert(!owner.StageHeldImages(codeA,3,codeB,2,shimA,2,shimB,2,io)
+            && owner.Untouched() && !io.writes);
+        io.heldImageStageAllowed=true;
+        assert(owner.StageHeldImages(codeA,3,codeB,2,shimA,2,shimB,2,io)
+            && owner.HeldImageRollbackReady() && io.writes && !io.privateRamReads);
+        const unsigned before=io.writes;
+        assert(!owner.RestoreHeldImagesBeforeRelease(io) && io.writes==before);
+        io.heldImageRollbackAllowed=true;io.heldImageWritesConfirmed=false;
+        assert(!owner.RestoreHeldImagesBeforeRelease(io) && io.writes==before);
+        io.heldImageWritesConfirmed=true;
+        assert(owner.RestoreHeldImagesBeforeRelease(io) && owner.HeldImageRollbackComplete()
+            && owner.VerifyAfterResidentRestore(io) && !io.privateRamReads);
+        assert(io.code==originalCode && io.ram==originalRam && io.boots==originalBoots
+            && io.shims==originalShims && io.resetDisable==originalDisable);
+    }
+    {
+        // An unconfirmed partial stage cannot be replayed or rolled back by
+        // this transaction merely because the worker still reads as held.
+        RecoveryIO io;DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.SelectAutoRestoreMode()
+            && owner.CaptureAllStacklessHeldImages(codeSnapshot.data(),codeSnapshot.size(),
+                ramSnapshot.data(),ramSnapshot.size(),io));
+        io.heldImageStageAllowed=true;io.failRetirementCodeCore=3;
+        assert(!owner.StageHeldImages(codeA,3,codeB,2,shimA,2,shimB,2,io)
+            && owner.HeldImageRollbackReady());
+        io.heldImageRollbackAllowed=true;io.heldImageWritesConfirmed=false;
+        const unsigned before=io.writes;
+        assert(!owner.RestoreHeldImagesBeforeRelease(io) && io.writes==before
+            && owner.RestorationRequired());
+    }
     {
         // Held image capture is read-only; missing release preparation must
         // still deny staging without a single image or private-RAM write.

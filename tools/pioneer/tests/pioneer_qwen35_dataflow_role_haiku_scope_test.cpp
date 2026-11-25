@@ -30,7 +30,7 @@ static tt_pioneer_profile GoodProfile()
     return p;
 }
 struct PioneerStoreContext;
-#if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+#if defined(TEST_SHARED_POST_RESET) && (defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS))
 static void SelectRoleTestWindows(unsigned previous,unsigned next);
 #ifdef TEST_ROLE_STAGE_QUALIFY
 static bool FailSelectAfterStageWrite();
@@ -118,12 +118,14 @@ struct PioneerSessionIO {
         if (failNextSelection) {
             failNextSelection=false; ++selectCalls; tlb0Override=true; return false;
         }
-#if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+#if defined(TEST_SHARED_POST_RESET) && (defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS))
         SelectRoleTestWindows(runtimeCore,core);
 #ifdef TEST_ROLE_STAGE_QUALIFY
         if (FailSelectAfterStageWrite()) return false;
 #endif
+#ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         if (perCoreReset) { tileReset[runtimeCore]=reset;reset=tileReset[core]; }
+#endif
 #endif
         ++selectCalls; runtimeCore=core; tlbOverride=false; tlb0Override=false; return true;
     }
@@ -596,7 +598,7 @@ static bool SimulateLocalRestore() {
 }
 #endif
 #endif
-#if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+#if defined(TEST_SHARED_POST_RESET) && (defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS))
 // The mapped BAR address remains fixed while TLB selection changes its tile.
 // Copy each selected tile into the fixed mock view to model that aliasing.
 static bool gPerCoreRoleWindows=false;
@@ -688,7 +690,7 @@ area_id map_physical_memory(const char*,phys_addr_t physical,size_t bytes,uint32
     assert(physical==0x4900000000ULL+plan.offset && bytes==plan.bytes);
     if (int(index)==gFailMap) return -1;
     gMemory[index].assign(bytes/4,0x76540000U+index); gMapped[index]=true;
-#if defined(TEST_SHARED_POST_RESET) && defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+#if defined(TEST_SHARED_POST_RESET) && (defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS))
 #ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
     constexpr unsigned lastWindow=DataflowRolePhysicalControl;
 #else

@@ -356,6 +356,7 @@ static void ExerciseQualificationCaptureRoot(PioneerSessionIO& io)
     ResetMaps();gAllowWrite=true;
     context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
     auto* binding=context->qwen35SharedRoleBinding;assert(binding);
+    assert(PioneerQ35SelectSharedRoleAutoRestore(binding));
     io.simulateArc=true;io.simulateHdma=true;io.firmwareMatches=true;
     context->qwen35DataflowService->capturePending=true;
     assert(io.SelectRuntimeCore(119));
@@ -377,28 +378,24 @@ static void ExerciseQualificationCaptureRoot(PioneerSessionIO& io)
         && sColdRecoveryRequired && io.tlb0Override && io.runtimeCore==119);
     sColdRecoveryRequired=false; // simulated external repair of the partial TLB write
     assert(io.SelectRuntimeCore(119));
-    // The real inspector restores worker 119, then the binding must select
-    // worker zero before held inspection. Later preparation remains denied.
+    // Model each tile's BAR windows independently, as on the real device.
+    gPerCoreRoleWindows=true;gRoleWindowCore=gRoleSelectedCore=io.runtimeCore;
+    // The inspector restores worker 119; capture selects root, stages all
+    // held tiles, and still cannot release a worker without the later proof.
     const unsigned resetWrites=io.sharedResetWrites;
-    assert(!io.SharedCaptureAndStageHeld() && io.runtimeCore==119 && !sColdRecoveryRequired
-        && gMapCalls==DataflowRolePhysicalControl+1
-        && PioneerQ35SharedRoleBindingTestAccess::HeldImagesCaptured(*binding)
-        && io.sharedResetWrites==resetWrites
-        && gMemory[DataflowRolePhysicalExtraCode][0]==0x76540000U+DataflowRolePhysicalExtraCode);
+    assert(io.SharedCaptureAndStageHeld() && !sColdRecoveryRequired
+        && gMapCalls==DataflowRolePhysicalControl+1 && io.sharedResetWrites==resetWrites);
+    assert(!io.SharedArmAndBeginRelease() && !io.SharedStartCore(0) && io.sharedResetWrites==resetWrites);
     assert(!PioneerQ35CanAbortUnstagedQualification(binding));
-    context->qwen35DataflowService->capturePending=false;
-    context->qwen35DataflowService->faulted=true;
-    assert(PioneerQ35CanAbortUnstagedQualification(binding));
-    PioneerQ35SharedRoleBindingTestAccess::MarkReleaseAttempt(*binding,119,true);
-    assert(!PioneerQ35CanAbortUnstagedQualification(binding));
-    PioneerQ35SharedRoleBindingTestAccess::MarkReleaseAttempt(*binding,119,false);
-    io.reset=0x6000;assert(!PioneerQ35CanAbortUnstagedQualification(binding));io.reset=0x47800;
-    io.tlb0Override=true;assert(!PioneerQ35CanAbortUnstagedQualification(binding));io.tlb0Override=false;
-    sColdRecoveryRequired=true;assert(!PioneerQ35CanAbortUnstagedQualification(binding));sColdRecoveryRequired=false;
-    assert(PioneerQ35CanAbortUnstagedQualification(binding));
+    assert(io.SharedRestoreRolesHeld() && io.SharedVerifyRolesAfterResidentRestore());
+    for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+        assert(io.SelectRuntimeCore(core));
+        for (unsigned window=0;window<=DataflowRolePhysicalExtraCode;window++)
+            assert(gMemory[window][0]==RoleWindowInitial(core,window));
+    }
     assert(io.SharedFinalizeBeforeResume() && PioneerQ35DestroySharedRoleBinding(binding));
     context->qwen35SharedRoleBinding=nullptr;gQualificationHeldOwnerAllowed=false;
-    context->qwen35DataflowService->faulted=false;context->qwen35DataflowService->capturePending=true;
+    gPerCoreRoleWindows=false;for (auto& windows:gRoleTileWindows) windows.clear();
     io.simulateArc=false;io.simulateHdma=false;ResetMaps();
 }
 #endif

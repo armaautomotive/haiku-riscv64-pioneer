@@ -39,6 +39,7 @@ class PioneerQwen35SharedRoleBinding {
     unsigned fRuntimeObservationCore=PioneerQwen35::DataflowBarrierWorkers;
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     bool fUnstagedQualificationAbort=false;
+    unsigned fHeldImageMutation=0; // 1: stage, 2: pre-release rollback
     bool fSnapshotFleetParked=false;
 #endif
     bool fAutoRestoreParked[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -86,6 +87,25 @@ class PioneerQwen35SharedRoleBinding {
 #endif
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
 public:
+    bool HeldImageAccessAllowed(bool rollback) const {
+        if (fHeldImageMutation!=(rollback?2U:1U) || sColdRecoveryRequired
+            || fContext.qwen35SharedRoleBinding!=this || !fCaptureAttempted || fReleaseAuthorized
+            || !fViews.Opened() || !fCodeSnapshot || !fRamSnapshot) return false;
+        if (rollback ? !(fOwner.HeldImageRollbackReady() || fOwner.HeldImageRollbackProofActive())
+                     : !(fOwner.StacklessHeldImagesCaptured() || fOwner.HeldImageRollbackReady())) return false;
+        return true;
+    }
+    // The session lock serializes this interval. Check the release ledger
+    // once at entry; no release can start without fReleaseAuthorized, which
+    // remains false throughout the operation. Per-word checks stay O(1).
+    bool BeginHeldImageMutation(unsigned mode) {
+        if ((mode!=1 && mode!=2) || fHeldImageMutation || fReleaseAuthorized) return false;
+        for (unsigned core=0;core<PioneerQwen35::DataflowBarrierWorkers;core++)
+            if (fReleaseAttempted[core] || fStackReleaseAttempted[core] || fHoldAttempted[core]) return false;
+        fHeldImageMutation=mode;
+        if (!HeldImageAccessAllowed(mode==2)) { fHeldImageMutation=0;return false; }
+        return true;
+    }
     // This admits only an attempted cleanup, not a completed restoration.
     // The service's normal close still audits and restores every worker.
     bool CanAbortUnstagedQualification() {
@@ -373,14 +393,24 @@ public:
         if (PioneerQ35QualificationHeldOwnerAllowed(fContext,fContext.io)) {
             if (!fOwner.CaptureAllStacklessHeldImages(fCodeSnapshot,DataflowRoleFleetRecoveryOwner::CodeWords(),
                     fRamSnapshot,DataflowRoleFleetRecoveryOwner::RamWords(),io)) return false;
-            // The held-image capture itself does not prove staging, prior
-            // private-RAM preservation, or partial-release recovery.
-            if (!scope->ProveRoleStacklessFleetPreparationSafe(fContext.io,fContext.io.runtimeCore)) {
-                fUnstagedQualificationAbort=fViews.ImageWritesConfirmed()
+            const auto image=RoleImage();
+            const bool staged=image.Valid() && BeginHeldImageMutation(1)
+                && fOwner.StageHeldImages(image.code[DataflowRoleReader],
+                    image.bounds.codeWords[DataflowRoleReader],image.code[DataflowRoleWriter],
+                    image.bounds.codeWords[DataflowRoleWriter],image.shim[DataflowRoleReader],
+                    image.bounds.shimWords[DataflowRoleReader],image.shim[DataflowRoleWriter],
+                    image.bounds.shimWords[DataflowRoleWriter],io);
+            fHeldImageMutation=0;
+            if (!staged) {
+                // Only a denial before the first stage attempt can use the
+                // unstaged close. Any attempted write stays retained.
+                fUnstagedQualificationAbort=fOwner.StacklessHeldImagesCaptured()
+                    && fViews.ImageWritesConfirmed()
                     && scope->CanSelectRoleHeldCore(fContext.io,fContext.io.runtimeCore)
                     && route.ProveSelectedRoute(fContext.io.runtimeCore);
                 return false;
             }
+            return true;
         } else
 #endif
         if (!fOwner.CaptureAllStackless(fCodeSnapshot,DataflowRoleFleetRecoveryOwner::CodeWords(),
@@ -726,6 +756,13 @@ public:
         if (!scope || !OpenForRecovery(*scope)) return false;
         Adapter io(fContext.io,*scope,fViews);
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        if (fOwner.HeldImageRollbackReady()) {
+            if (!BeginHeldImageMutation(2)) return false;
+            const bool restored=fOwner.RestoreHeldImagesBeforeRelease(io);
+            fHeldImageMutation=0;return restored;
+        }
+#endif
         // Before a copy-aware release ledger starts, no role can have used
         // stack RAM. Restore the staged fleet through the existing held path.
         if (fOwner.CoreLocalRestoreMode() && !fOwner.CopyAwareReleaseStarted()) {
@@ -754,6 +791,13 @@ public:
         if (!scope || !OpenForRecovery(*scope)) return false;
         Adapter io(fContext.io,*scope,fViews);
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+#ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        if (fOwner.HeldImageRollbackComplete()) {
+            if (!BeginHeldImageMutation(2)) return false;
+            const bool verified=fOwner.VerifyAfterResidentRestore(io);
+            fHeldImageMutation=0;return verified;
+        }
+#endif
         if (fOwner.CoreLocalRestoreMode() && !fOwner.CopyAwareReleaseStarted())
             return fOwner.CoveredStateRestored() && fOwner.VerifyAfterResidentRestore(io);
         if (fAutoRestoreOnStop)
@@ -799,6 +843,11 @@ PioneerQ35SharedRoleSnapshotHoldTransition(const PioneerQwen35SharedRoleBinding*
 
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+static bool
+PioneerQ35SharedRoleHeldImageAccess(const PioneerQwen35SharedRoleBinding* binding,bool rollback)
+{
+    return binding && binding->HeldImageAccessAllowed(rollback);
+}
 static bool
 PioneerQ35CanAbortUnstagedQualification(PioneerQwen35SharedRoleBinding* binding)
 {

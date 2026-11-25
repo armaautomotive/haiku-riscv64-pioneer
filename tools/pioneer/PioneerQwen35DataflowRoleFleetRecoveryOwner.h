@@ -31,6 +31,7 @@ class DataflowRoleFleetRecoveryOwner {
     bool fCoreLocalRestoreMode=false;
     bool fAutoRestoreMode=false;
     bool fCoreLocalReleaseLedger=false;
+    bool fHeldImageOnlyStage=false,fHeldImageOnlyRestored=false;
     bool fCoreResetRestoreAttempted=false;
     bool fCoreRestoreStaged[DataflowBarrierWorkers]{};
     bool fCoreRestoreReleaseAttempted[DataflowBarrierWorkers]{};
@@ -178,6 +179,18 @@ public:
         return fPhase==Faulted || fPhase==Staged || fPhase==Armed || fPhase==ReleaseAttempted;
     }
     bool CoveredStateRestored() const { return fPhase==Restored; }
+    // Metadata for the fixed qualification's pre-release image transaction.
+    // It is not authority for MMIO or proof that a processor is held.
+    bool HeldImageRollbackReady() const {
+        return fHeldImageOnlyStage && !fHeldImageOnlyRestored && fStackless
+            && !fCoreLocalReleaseLedger && !fResetDisableTouched
+            && (fPhase==Faulted || fPhase==Staged) && fRam.StacklessCapturePrepared();
+    }
+    bool HeldImageRollbackComplete() const { return fHeldImageOnlyRestored && fPhase==Restored; }
+    bool HeldImageRollbackProofActive() const {
+        return fHeldImageOnlyRestored && (fPhase==Restored || fPhase==Faulted)
+            && !fCoreLocalReleaseLedger && !fResetDisableTouched && fRam.StacklessCapturePrepared();
+    }
     // Historical ledger only: a full successful projection must have captured,
     // run and locally restored every role. This does not prove that reset,
     // firmware or a NoC writer stayed excluded after the observations.
@@ -460,6 +473,37 @@ public:
             || !fRam.VerifyOriginalAll(io) || !AllSafe(io)) return false;
         fPhase=Staged; return true;
     }
+    // Fixed qualification only: stage images while all workers remain held.
+    // IO independently admits the exact retained owner and each write. This
+    // does not prepare a release or establish private-RAM continuity.
+    template<class IO> bool StageHeldImages(const uint32_t* reader,unsigned readerWords,
+        const uint32_t* writer,unsigned writerWords,const uint32_t* readerShim,
+        unsigned readerShimWords,const uint32_t* writerShim,unsigned writerShimWords,IO& io) {
+        if (fPhase!=Captured || !fStackless || !fRam.StacklessCapturePrepared()
+            || fHeldImageOnlyStage || fCoreLocalReleaseLedger || fResetDisableTouched
+            || !io.HeldImageStageAllowed() || !AllHeldAndRouted(io)
+            || !io.HeldImageStageAllowed()) return false;
+        fHeldImageOnlyStage=true;fPhase=Faulted;
+        if (!fImages.StageAll(reader,readerWords,writer,writerWords,
+                readerShim,readerShimWords,writerShim,writerShimWords,io)
+            || !AllHeldAndRouted(io) || !io.HeldImageStageAllowed()) return false;
+        fPhase=Staged;return true;
+    }
+    // No release/reset-preservation attempt may have begun. Restoring these
+    // images never reads or writes role-private RAM. An uncertain write or
+    // failed proof retains the snapshots; callers must not retry blindly.
+    template<class IO> bool RestoreHeldImagesBeforeRelease(IO& io) {
+        if (!HeldImageRollbackReady() || !io.HeldImageWritesConfirmed()
+            || !io.HeldImageRollbackAllowed() || !AllHeldAndRouted(io)) return false;
+        fPhase=Faulted;
+        if (fImages.RestorationRequired()) {
+            if (!fImages.RestoreAll(io)) return false;
+        } else if (!fImages.VerifyOriginalAll(io)) return false;
+        if (!io.HeldImageWritesConfirmed() || !io.HeldImageRollbackAllowed()
+            || !fImages.VerifyOriginalAll(io) || !VerifyResetDisable(io,false)
+            || !AllHeldAndRouted(io)) return false;
+        fHeldImageOnlyRestored=true;fPhase=Restored;return true;
+    }
     // Ledger only: no processor is released. In deferred mode snapshots are
     // captured per tile before stack release, and uncaptured tiles require
     // independent protection throughout recovery.
@@ -605,6 +649,13 @@ public:
     template<class IO> bool VerifyAfterResidentRestore(IO& io) {
         if (fPhase!=Restored) return false;
         fPhase=Faulted;
+        if (fHeldImageOnlyRestored) {
+            if (fCoreLocalReleaseLedger || fResetDisableTouched || !fRam.StacklessCapturePrepared()
+                || !io.HeldImageRollbackAllowed() || !AllHeldAndRouted(io)
+                || !fImages.VerifyOriginalAll(io) || !VerifyResetDisable(io,false)
+                || !AllHeldAndRouted(io)) return false;
+            fPhase=Restored;return true;
+        }
         if (fStackless) {
             if (!AllHeldAndRouted(io) || !fImages.VerifyOriginalAll(io)
                 || !fRam.VerifyStacklessRestored(io) || !VerifyResetDisable(io,false)
