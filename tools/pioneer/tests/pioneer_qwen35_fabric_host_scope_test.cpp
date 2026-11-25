@@ -16,9 +16,21 @@ static team_id currentTeam=20;
 static thread_id find_thread(const char*) { return currentThread; }
 static int get_thread_info(thread_id,thread_info* info) { info->team=currentTeam;return B_OK; }
 namespace PioneerResidentBanks { constexpr uint64 Total=4096; }
-struct PioneerPostResetMapping {};
+struct PioneerPostResetMapping {
+    bool ready=true,firmwareReady=true,topologyReady=true,savedValid=true;
+    bool queueAttempted=false,dmaModified=false,fleetAudited=false,dmaAudited=false;
+};
+struct PioneerQ35FabricArcCompileOwner {
+    enum Phase { Fresh,ClockForced,RiscsHeld,TensixToggled,NocReinitialized,
+        TilesHeld,RiscsReleased,ClockReleased,Failed,Retired };
+    uint64 ticket=42;Phase phase=Fresh;bool clockRestored=false;
+    uint64 Ticket() const { return ticket; }
+    Phase CurrentPhase() const { return phase; }
+    bool ClockRestored() const { return clockRestored; }
+};
 struct PioneerStoreContext {
     PioneerPostResetMapping* recoveryMapping=nullptr;
+    PioneerQ35FabricArcCompileOwner* recoveryFabricArcOwner=nullptr;
     bool bankStorageOnly=true,dispatchOwnerRetained=true;
     bool q35PciReservationHeld=true,q35PciReleaseAttempted=false;
     uint64 bytes=PioneerResidentBanks::Total;
@@ -50,7 +62,6 @@ int main() {
     pioneer_driver_recovery_guard_v2_info guard;
     PioneerQ35FabricHostScope live(&owner,&owner,&context,&guard,42,10,20);
     assert(live.HostOwnershipValid());
-    assert(!live.FabricRecoveryAdmission(context,&guard,42));
     sReloadGeneration++;assert(!live.HostOwnershipValid());sReloadGeneration--;
     sOpenCookies++;assert(!live.HostOwnershipValid());sOpenCookies--;
     sReloadQuiesced=true;assert(!live.HostOwnershipValid());sReloadQuiesced=false;
@@ -77,8 +88,76 @@ int main() {
     sQwen35ExclusiveCookie=&inspector;
     PioneerQ35FabricHostScope retained(&inspector,&owner,&context,&guard,42,10,20);
     assert(retained.HostOwnershipValid());
-    assert(!retained.FabricRecoveryAdmission(context,&guard,42));
     inspector.context=&context;assert(!retained.HostOwnershipValid());inspector.context=nullptr;
     owner.finalFreeRetained=false;assert(!retained.HostOwnershipValid());
+
+    // The only admitted sequence is bound to the same retained owner, ticket,
+    // mapping and monotonically advancing transaction stage. This models
+    // host ownership; it does not model external firmware or a real reset.
+    sQwen35ExclusiveCookie=&owner;
+    PioneerQ35FabricHostScope sequence(&owner,&owner,&context,&guard,42,10,20);
+    mapping.firmwareReady=false;
+    assert(!sequence.FabricRecoveryAdmission(context,&guard,42));
+    mapping.firmwareReady=true;
+    assert(sequence.FabricRecoveryAdmission(context,&guard,42));
+    assert(!sequence.FabricRecoveryAdmission(context,&guard,42));
+    PioneerQ35FabricArcCompileOwner arc,otherArc;
+    assert(!sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,1));
+    context.recoveryFabricArcOwner=&arc;
+    assert(!sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,2));
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,1));
+    assert(sequence.FabricArcAllowed(arc,mapping,42,arc.phase));
+    assert(!sequence.FabricArcAllowed(otherArc,mapping,42,otherArc.phase));
+    assert(!sequence.FabricArcAllowed(arc,otherMapping,42,arc.phase));
+    assert(!sequence.FabricArcAllowed(arc,mapping,41,arc.phase));
+    assert(!sequence.FabricClockQueryAllowed(arc,mapping,42,arc.phase));
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,2));
+    assert(sequence.FabricClockQueryAllowed(arc,mapping,42,arc.phase));
+    assert(!sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,4));
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,3));
+    assert(sequence.FabricArcPhaseReady(arc,mapping,42,arc.phase));
+    ticketValid=false;assert(!sequence.FabricArcAllowed(arc,mapping,42,arc.phase));ticketValid=true;
+    arc.phase=arc.ClockForced;
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,3));
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,4));
+    assert(sequence.FabricClockQueryAllowed(arc,mapping,42,arc.phase));
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,5));
+    assert(sequence.FabricResetUnitAllowed(arc,mapping,42,arc.phase,true));
+    assert(!sequence.FabricResetUnitAllowed(arc,mapping,42,arc.phase,false));
+    arc.phase=arc.RiscsHeld;
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,5));
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,6));
+    assert(sequence.FabricArcPhaseReady(arc,mapping,42,arc.phase));
+    arc.phase=arc.TensixToggled;
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,6));
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,7));
+    assert(sequence.FabricArcPhaseReady(arc,mapping,42,arc.phase));
+    arc.phase=arc.NocReinitialized;
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,7));
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,8));
+    assert(sequence.FabricTileResetAllowed(arc,mapping,42,119));
+    assert(!sequence.FabricTileResetAllowed(arc,mapping,42,120));
+    arc.phase=arc.TilesHeld;
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,8));
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,9));
+    assert(sequence.FabricResetUnitAllowed(arc,mapping,42,arc.phase,false));
+    arc.phase=arc.RiscsReleased;
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,9));
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,10));
+    assert(sequence.FabricArcPhaseReady(arc,mapping,42,arc.phase));
+    arc.phase=arc.ClockReleased;
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,10));
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,11));
+    assert(sequence.FabricClockQueryAllowed(arc,mapping,42,arc.phase));
+    for (unsigned stage=12;stage<=15;stage++)
+        assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,stage));
+    assert(!sequence.FabricRetirementAllowed(arc,mapping,42));
+    mapping.fleetAudited=mapping.dmaAudited=true;arc.clockRestored=true;
+    assert(sequence.FabricRetirementAllowed(arc,mapping,42));
+    arc.phase=arc.Retired;
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,15));
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,16));
+    assert(sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,17));
+    assert(!sequence.FabricRecoveryStageAllowed(context,arc,&guard,42,16));
     return 0;
 }

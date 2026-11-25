@@ -175,7 +175,7 @@ struct PioneerPostResetMapping {
         q35CloseComplete=true;return check();
     }
 };
-struct Guard { int (*validate)(uint64); };
+struct Guard { int (*validate)(uint64); unsigned version=2; };
 static int Validate(uint64 ticket) { return ticket==123 && ticketValid?B_OK:-1; }
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricArcOwner.h"
 using Owner=PioneerQ35FabricArcOwner<Guard>;

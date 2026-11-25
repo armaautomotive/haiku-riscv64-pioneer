@@ -1,11 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 // Included inside PioneerStoreContext in the non-loadable snapshot rewrite.
 // The caller holds sLock and supplies an already-open, firmware-probed mapping,
-// an active recovery ticket and the independent physical-ownership scope.
+// an active recovery ticket and an operation scope. The Haiku host scope
+// checks retained ownership and stage order but does not exclude external
+// firmware activity. This sequence remains non-loadable and unqualified.
 // Success means only that the Tensix sequence, audits and mapping close
 // completed: the context, owner, mapping object, PCI reservation and cold
 // latch remain retained for scratch restoration and final recovery.
-// A live scope must independently maintain physical ownership and fault
+// A live operation must establish the necessary physical ownership and fault
 // fencing throughout each audit and the entire recovery transaction.
 #if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH) \
     || defined(PIONEER_QWEN35_RECOVERY_QUALIFY) \
