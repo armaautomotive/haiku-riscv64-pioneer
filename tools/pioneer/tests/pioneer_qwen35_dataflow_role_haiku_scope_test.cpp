@@ -101,7 +101,8 @@ struct FakeService {
     bool SharedSnapshotCleanStopPending() const { return cleanStopPending; }
     bool SharedSnapshotFaultStopPending() const { return faultStopPending; }
 };
-struct FakeGraph { bool retained=false; const void* run=nullptr; bool closePermitted=false; unsigned ackCore=UINT32_MAX; };
+struct FakeGraph { bool retained=false; const void* run=nullptr; bool closePermitted=false; unsigned ackCore=UINT32_MAX;
+    bool fabricParentRestored=false;bool FabricParentRestored() const { return fabricParentRestored; } };
 #ifdef TEST_SHARED_FABRIC_VIEWS
 struct PioneerHostPageIO { int32_t area=-1; };
 struct PioneerSessionIO : PioneerHostPageIO {

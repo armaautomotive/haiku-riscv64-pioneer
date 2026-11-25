@@ -322,8 +322,11 @@ public:
     template<class Scope>
     bool VerifyRoleRestoration(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
         if (!fRole || fStage!=Ready || !fOld || !fFresh) return false;
-        if (!RoleReady() || !TicketValid(guard) || !scope.FreshRoleRecoveryRestored(*this,*fOld,*fFresh)
-            || !TicketValid(guard)) return Retain(scope,RoleVerified);
+        if (!RoleReady() || !TicketValid(guard)
+            || !PioneerQ35FabricRoleRestorationMatches(*fOld,fTicket)
+            || !scope.FreshRoleRecoveryRestored(*this,*fOld,*fFresh)
+            || !TicketValid(guard) || !PioneerQ35FabricRoleRestorationMatches(*fOld,fTicket))
+            return Retain(scope,RoleVerified);
         fRoleReceipt={fRoleBinding,fGraphOwner,fTicket};
         fStage=RoleVerified;return true;
     }

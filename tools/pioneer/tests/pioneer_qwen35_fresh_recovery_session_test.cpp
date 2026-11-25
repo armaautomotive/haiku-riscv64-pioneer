@@ -162,6 +162,7 @@ struct PioneerStoreContext {
     bool recoveryFabricEvidenceRecorded=false,recoveryFabricPciIdleAttempted=false,recoveryFabricPciIdle=false;
     bool recoveryFabricAuditReleaseAttempted=false,recoveryFabricAuditReleased=false;
     bool recoveryFabricRoleViewsDisposed=false;
+    bool fabricRoleRestorationReady=true;
     bool q35PciReservationHeld=true,q35PciReleaseAttempted=false;
     uint64 recoveryFabricStartTicket=kTicket;
     void* recoveryFabricArcOwner=nullptr;
@@ -255,13 +256,17 @@ static bool PioneerQ35GraphOwnerReleaseAfterFabric(void* graph,const MockFabricP
     return graph && proof.ReadyToRetireOneOwner() && ticket==kTicket && guard
         && guard->validate(ticket)==B_OK && Step(23) && guard->validate(ticket)==B_OK;
 }
+static bool PioneerQ35FabricRoleRestorationMatches(const PioneerStoreContext& old,uint64 ticket) {
+    return old.fabricRoleRestorationReady && old.recoveryFreshSession && old.qwen35SharedRoleBinding
+        && old.qwen35GraphOwner && ticket==kTicket;
+}
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FreshRecoverySession.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35ModifiedRecoveryTransaction.inc"
 
 struct Scope {
     bool admission=true,retained=false,closeAdmission=true,retirementAdmission=true,ownerAdmission=true;
     bool quarantineAtRetirement=false,loseClaimAfterRetirement=false;
-    bool dropAttachment=false,roleAdmission=true,roleRestored=true;
+    bool dropAttachment=false,roleAdmission=true,roleRestored=true,loseRoleEvidence=false;
     bool roleCloseAdmission=true,rolePostLease=true,roleHostAdmission=true,roleHostComplete=true,protectOldHost=false;
     bool clearHostCompletion=false;
     bool roleMappingsAdmission=true,roleMappingsComplete=true;
@@ -279,7 +284,8 @@ struct Scope {
         if (replaceGraphAtAdmission) old.qwen35GraphOwner=&old;
         return roleAdmission && ticket==kTicket;
     }
-    bool FreshRoleRecoveryRestored(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,PioneerStoreContext&) {
+    bool FreshRoleRecoveryRestored(PioneerQ35FreshRecoverySession&,PioneerStoreContext& old,PioneerStoreContext&) {
+        if (loseRoleEvidence) old.fabricRoleRestorationReady=false;
         return roleRestored;
     }
     template<class Receipt> bool FreshRoleRecoveryCloseAdmission(PioneerQ35FreshRecoverySession&,
@@ -387,7 +393,7 @@ int main() {
         assert(!session->PrepareFabricRole(&owner,old,&guard,scope) && operations.empty()
             && !old.recoveryFreshSession && !old.qwen35QualificationOwner.retained && session->DiscardUnstarted());
     }
-    for (unsigned scenario=0;scenario<6;scenario++) {
+    for (unsigned scenario=0;scenario<8;scenario++) {
         Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
         int role=1,graph=2,replacement=3;old.qwen35SharedRoleBinding=&role;old.qwen35GraphOwner=&graph;
         old.qwen35QualificationOwner.active=false;old.qwen35QualificationOwner.retained=false;
@@ -409,6 +415,8 @@ int main() {
         if (scenario==3) scope.roleRestored=false;
         if (scenario==4) failGuardAt=guardCalls+1;
         if (scenario==5) old.recoveryFabricRoleViewsDisposed=false;
+        if (scenario==6) old.fabricRoleRestorationReady=false;
+        if (scenario==7) scope.loseRoleEvidence=true;
         const bool verified=session->VerifyRoleRestoration(&guard,scope);
         if (!scenario) {
             assert(verified && !session->RoleReady() && session->CurrentStage()==PioneerQ35FreshRecoverySession::RoleVerified

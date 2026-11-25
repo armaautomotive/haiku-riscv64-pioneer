@@ -338,6 +338,7 @@ static void ExerciseFabricViewRetirement(PioneerSessionIO& io)
     gMapCalls=0; // the fake mapper numbers a fresh pass from its first window
     PioneerStoreContext freshContext;MockRecoverySession freshSession{&freshContext};
     context->recoveryFreshSession=&freshSession;
+    assert(!PioneerQ35FabricRoleRestorationMatches(*context,9)); // no role or parent receipt
     assert(binding->OpenFabricRecoveryViews(bar,permit,noAlias) && binding->FabricRecoveryViewsOpen()
         && !binding->FabricViewsDisposed() && !binding->CanDestroy());
     assert(!binding->BeginFabricCoreRecovery(io,*io.qwen35BorrowedRoleScope,permit)
@@ -349,6 +350,7 @@ static void ExerciseFabricViewRetirement(PioneerSessionIO& io)
     assert(binding->CloseFabricRecoveryViews(permit,noAlias) && binding->FabricRecoveryViewsClosed()
         && !binding->CanDestroy() && PioneerQ35SharedRoleBindingTestAccess::CodeSnapshot(*binding)==code
         && PioneerQ35SharedRoleBindingTestAccess::RamSnapshot(*binding)==ram);
+    assert(!PioneerQ35FabricRoleRestorationMatches(*context,9)); // close alone is not restoration
     // Test teardown only: these mappings and snapshots are simulated.
     delete binding;binding=nullptr;context->recoveryFabricEvidenceRecorded=false;
     context->recoveryFabricPcieAudited=false;context->recoveryFabricPciIdle=false;

@@ -40,6 +40,9 @@ class PioneerQwen35SharedRoleBinding {
     bool fReleaseAuthorized=false;
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     bool fFabricConversionAuthorityLost=false;
+    const void* fFabricVerifiedSession=nullptr;
+    const void* fFabricVerifiedGraph=nullptr;
+    uint64 fFabricVerifiedTicket=0;
     PioneerQwen35::DataflowFabricCoreRecoverySequence fFabricCoreSequence;
     template<class Scope,class Check> struct FabricRecoveryAdapter
         : PioneerQwen35RoleFleetPciIO<PioneerSessionIO,Scope,Views,
@@ -409,6 +412,21 @@ public:
     }
     bool FabricRecoveryViewsOpen() const { return fViews.FabricFreshOpenComplete(); }
     bool FabricRecoveryViewsClosed() const { return fViews.FabricFreshCloseComplete(); }
+    // Metadata receipt only. The live scope must still prove physical writer
+    // exclusion across the complete restore and fresh-transport close.
+    bool FabricRolesAfterParentVerified() const {
+        auto* session=fContext.recoveryFreshSession;
+        auto* graph=fContext.qwen35GraphOwner;
+        return !fFabricConversionAuthorityLost && fFabricVerifiedSession && fFabricVerifiedGraph
+            && fFabricVerifiedTicket && session && session==fFabricVerifiedSession
+            && graph && graph==fFabricVerifiedGraph && graph->FabricParentRestored()
+            && session->Ticket()==fFabricVerifiedTicket && session->RoleReady()
+            && fContext.recoveryFabricStartTicket==fFabricVerifiedTicket
+            && fContext.qwen35SharedRoleBinding==this && fContext.recoveryFabricRoleViewsDisposed
+            && fContext.q35PciReservationHeld && !fContext.q35PciReleaseAttempted
+            && fCodeSnapshot && fRamSnapshot && fOwner.CoveredStateRestored()
+            && fViews.FabricFreshCloseComplete() && !fViews.HasMappings();
+    }
     bool FabricCoreRecoveryUsable() const {
         return !fFabricConversionAuthorityLost && fContext.recoveryFabricRoleViewsDisposed && fOwner.FabricCoreRecoveryActive()
             && fOwner.RestorationRequired() && fViews.FabricFreshOpenComplete()
@@ -511,7 +529,9 @@ public:
     template<class Scope,class Check>
     bool VerifyFabricRolesAfterParent(PioneerSessionIO& freshIO,Scope& scope,Check& check) {
         auto* session=fContext.recoveryFreshSession;
+        auto* graph=fContext.qwen35GraphOwner;
         if (fFabricConversionAuthorityLost || fContext.qwen35SharedRoleBinding!=this
+            || fFabricVerifiedSession || !graph || !graph->FabricParentRestored()
             || fFabricCoreSequence.CurrentPhase()!=PioneerQwen35::DataflowFabricCoreRecoverySequence::Restored
             || !fOwner.CoveredStateRestored() || !fViews.FabricFreshOpenComplete() || !session
             || !session->RoleReady() || session->Ticket()!=fContext.recoveryFabricStartTicket
@@ -520,7 +540,11 @@ public:
         FabricRecoveryAdapter<Scope,Check> io(freshIO,scope,fViews,check);
         const bool verified=io.FabricRecoveryConversionAllowed() && fOwner.VerifyAfterCoreLocalResidentRestore(io);
         if (!io.FabricRecoveryConversionAllowed()) { fFabricConversionAuthorityLost=true;return false; }
-        return verified && fOwner.CoveredStateRestored() && session->RoleReady();
+        if (!verified || !fOwner.CoveredStateRestored() || session!=fContext.recoveryFreshSession
+            || graph!=fContext.qwen35GraphOwner || !graph->FabricParentRestored() || !session->RoleReady()
+            || session->Ticket()!=fContext.recoveryFabricStartTicket || !check()) return false;
+        fFabricVerifiedSession=session;fFabricVerifiedGraph=graph;fFabricVerifiedTicket=session->Ticket();
+        return true;
     }
 #endif
     // A verified ASIC reset invalidates the old tile images and RAM. Retire
@@ -1007,6 +1031,16 @@ public:
 #endif
     }
 };
+
+#if defined(PIONEER_QWEN35_FABRIC_GUARD_WITNESS) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+static bool
+PioneerQ35FabricRoleRestorationMatches(const PioneerStoreContext& context,
+    uint64 ticket)
+{
+    return context.recoveryFreshSession && ticket && context.recoveryFreshSession->Ticket()==ticket
+        && context.qwen35SharedRoleBinding && context.qwen35SharedRoleBinding->FabricRolesAfterParentVerified();
+}
+#endif
 
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 static bool
