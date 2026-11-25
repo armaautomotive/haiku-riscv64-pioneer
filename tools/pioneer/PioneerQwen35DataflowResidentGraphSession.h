@@ -27,12 +27,17 @@ template<class Host> struct DataflowResidentSessionRun {
 // installed service and routes. Host's independent audit must prove fleet
 // completion, including sender failures. This class supplies neither proof.
 class DataflowResidentGraphSession {
+    template<class Handle> friend class DataflowResidentOwnedRunner;
     const DataflowStreamPlan* plan=nullptr;
     DataflowProjectionAuthority** live=nullptr;
     unsigned routes[2][Banks]{},inputSlot=ActivationBuffers,nextTrigger=1;
     DataflowGraphRunIssuer issuer;
     const void* retainedRun=nullptr;
     bool bound=false,faulted=false;
+    bool CanRetireRun(const void* run) const {
+        return bound && run && (faulted?retainedRun==run:retainedRun==nullptr);
+    }
+    void RetireRunAfterProof() { bound=false;faulted=true;retainedRun=nullptr; }
     template<class Run,class IO> DataflowResidentSessionResult Retain(Run& run,IO& io) {
         faulted=true;retainedRun=&run;io.RetainResidentSession(*this,&run);
         return DataflowResidentSessionRetained;

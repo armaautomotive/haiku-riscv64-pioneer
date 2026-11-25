@@ -11,8 +11,12 @@ struct ResidentHandle {
 struct RunnerController : ServiceController {
     std::vector<std::unique_ptr<ResidentHandle>> handles;
     std::vector<std::unique_ptr<DataflowProjectionAuthority>> candidates;
+    std::vector<DataflowProjectionAuthority*> deletedCandidatePointers;
     bool failAllocation=false,denyCommit=false,corruptCommit=false,ownerRetained=false;
-    unsigned deletedRuns=0,deletedCandidates=0;
+    unsigned deletedRuns=0,deletedCandidates=0,restoreChecks=0;
+    bool restoreProof=false,mutateLive=false,reenter=false;unsigned reentryChecks=0;
+    DataflowProjectionAuthority** liveSlot=nullptr;DataflowResidentGraphSession* recoverySession=nullptr;
+    DataflowResidentOwnedRunner<ResidentHandle>* recoveryRunner=nullptr;
     RunnerController(DataflowServiceOwner& s,const DataflowStreamPlan& p):ServiceController{s,p} {}
     ResidentHandle* NewResidentRun() {
         handles.emplace_back(std::make_unique<ResidentHandle>());
@@ -23,10 +27,23 @@ struct RunnerController : ServiceController {
         candidates.emplace_back(std::make_unique<DataflowProjectionAuthority>());return candidates.back().get();
     }
     void DeleteResidentRun(ResidentHandle*) { ++deletedRuns; }
-    void DeleteResidentCandidate(DataflowProjectionAuthority* candidate) { assert(candidate);++deletedCandidates; }
+    void DeleteResidentCandidate(DataflowProjectionAuthority* candidate) { assert(candidate);++deletedCandidates;deletedCandidatePointers.push_back(candidate); }
     bool ResidentCommitAllowed(const DataflowResidentGraphSession& session,const ResidentRun& current) {
         if (corruptCommit) assert(candidates.back()->InvalidateActivation(0));
         return !denyCommit && service.OwnsResidentRun(&session,current);
+    }
+    bool ResidentFleetRestored(const DataflowResidentGraphSession& session,const DataflowServiceOwner& current,
+        const ResidentHandle& handle,DataflowProjectionAuthority* live,DataflowProjectionAuthority* candidate,
+        DataflowProjectionAuthority* retired) {
+        ++restoreChecks;
+        assert(&current==&service && owner==&session && &handle.run==run && candidate && live);
+        if (reenter) {
+            assert(recoveryRunner && recoverySession && liveSlot);
+            ++reentryChecks;
+            assert(!recoveryRunner->ReleaseRetainedAfterRestoration(*recoverySession,service,*liveSlot,*this));
+        }
+        if (mutateLive && liveSlot) *liveSlot=(live==candidate?retired:candidate);
+        return restoreProof;
     }
     void RetainResidentOwnedRun(const DataflowResidentGraphSession& session,ResidentHandle& handle,bool serviceRetained) {
         assert(serviceRetained && service.OwnsRetainedResidentRun(&session,handle.run));ownerRetained=true;
@@ -75,8 +92,32 @@ int main() {
                 if (scenario==2 || scenario==3) assert(runner.RetainedRetired()==initial.get());
                 assert(runner.Run(session,*service,live,0,42,true,3,*scratch,io,output,stage)
                     ==DataflowResidentSessionInvalid);
+                auto* originalLive=live;DataflowResidentGraphSession wrongSession;
+                auto wrongService=std::make_unique<DataflowServiceOwner>();
+                assert(!runner.ReleaseRetainedAfterRestoration(session,*wrongService,live,io)
+                    && !io.restoreChecks && runner.Retained());
+                DataflowProjectionAuthority* absent=nullptr;
+                assert(!runner.ReleaseRetainedAfterRestoration(session,*service,absent,io)
+                    && !io.restoreChecks && runner.Retained());
+                assert(!runner.ReleaseRetainedAfterRestoration(wrongSession,*service,live,io)
+                    && !io.restoreChecks && !io.deletedRuns && !io.deletedCandidates);
+                assert(!runner.ReleaseRetainedAfterRestoration(session,*service,live,io)
+                    && runner.Retained() && io.restoreChecks==1 && !io.deletedRuns && !io.deletedCandidates);
+                io.restoreProof=true;io.mutateLive=true;io.liveSlot=&live;
+                assert(!runner.ReleaseRetainedAfterRestoration(session,*service,live,io)
+                    && runner.Retained() && !io.deletedRuns && !io.deletedCandidates && live!=originalLive);
+                live=originalLive;io.mutateLive=false;io.reenter=true;
+                io.recoverySession=&session;io.recoveryRunner=&runner;
+                assert(runner.ReleaseRetainedAfterRestoration(session,*service,live,io)
+                    && !runner.Retained() && !runner.RetainedHandle() && !runner.RetainedCandidate()
+                    && session.Faulted() && !session.RetainedRun()
+                    && service->ResidentRecoveredForRetirement(&session)
+                    && service->Close(*serviceIO)==DataflowServiceInvalidState
+                    && io.deletedRuns==1 && io.deletedCandidates==1 && io.reentryChecks==1
+                    && io.deletedCandidatePointers.size()==1 && io.deletedCandidatePointers[0]!=live);
+                assert(!runner.ReleaseRetainedAfterRestoration(session,*service,live,io));
             }
         }
     }
-    puts("PASS resident owned runner commits service sequence before exposing output; SIMULATED ONLY");
+    puts("PASS resident owned runner requires restoration proof before retained-run retirement; SIMULATED ONLY");
 }

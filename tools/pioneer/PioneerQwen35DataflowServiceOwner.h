@@ -28,6 +28,9 @@
 #include <string.h>
 
 namespace PioneerQwen35 {
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+template<class Handle> class DataflowResidentOwnedRunner;
+#endif
 
 enum : unsigned {
 	DataflowServiceBootAddress=0x6000,
@@ -142,6 +145,9 @@ struct DataflowServiceDiagnostic {
 // takeover instead retains its owner until a verified device reset. Neither
 // path starts a core until all 120 images and startup records are read back.
 class DataflowServiceOwner {
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+	template<class Handle> friend class DataflowResidentOwnedRunner;
+#endif
 	enum Phase { PhaseEmpty, PhaseInstalling, PhaseReady, PhaseFaulted, PhaseClosed
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		, PhaseGraphRunning, PhaseGraphFaulted, PhaseGraphClosing
@@ -179,8 +185,19 @@ class DataflowServiceOwner {
 #ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
 	const void* fResidentSession=nullptr;
 	const void* fResidentRun=nullptr;
-	bool fResidentCloseAttempted=false;
+	bool fResidentCloseAttempted=false,fResidentRecoveryRetired=false;
 #endif
+#endif
+
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+	bool CanRetireResidentRun(const void* session,const void* run) const {
+		return session && run && fResidentSession==session && fResidentRun==run
+			&& fPhase==PhaseGraphFaulted && !fResidentRecoveryRetired;
+	}
+	void RetireResidentRunAfterProof() {
+		fResidentRun=nullptr;fGraphPrevious=fGraphTrigger=0;
+		fResidentRecoveryRetired=true;fResidentCloseAttempted=true;fPhase=PhaseFaulted;
+	}
 #endif
 
 	void SetDiagnostic(unsigned stage,unsigned core,
@@ -392,6 +409,10 @@ public:
 		if (!session || fResidentSession || fResidentRun || fPhase!=PhaseReady
 			|| fProjectionOwner.NextSequence()!=0) return false;
 		fResidentSession=session;fPhase=PhaseResidentIdle;return true;
+	}
+	bool ResidentRecoveredForRetirement(const void* session) const {
+		return session && fResidentSession==session && !fResidentRun
+			&& fResidentRecoveryRetired && fPhase==PhaseFaulted;
 	}
 	bool ResidentSessionIdle(const void* session) const {
 		return session && fResidentSession==session && !fResidentRun && fPhase==PhaseResidentIdle;

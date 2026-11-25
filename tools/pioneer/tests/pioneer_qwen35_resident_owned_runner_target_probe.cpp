@@ -23,6 +23,8 @@ struct OwnedProbePolicy {
     bool ResidentCommitAllowed(const DataflowResidentGraphSession&,const DataflowResidentSessionRun<OwnedProbeHost>&);
     void RetainResidentSession(const DataflowResidentGraphSession&,const void*);
     void RetainResidentOwnedRun(const DataflowResidentGraphSession&,OwnedProbeHandle&,bool);
+    bool ResidentFleetRestored(const DataflowResidentGraphSession&,const DataflowServiceOwner&,
+        const OwnedProbeHandle&,DataflowProjectionAuthority*,DataflowProjectionAuthority*,DataflowProjectionAuthority*);
     void Pause();
 };
 DataflowResidentSessionResult PioneerQ35ResidentOwnedRunProbe(DataflowResidentOwnedRunner<OwnedProbeHandle>& runner,
@@ -30,4 +32,10 @@ DataflowResidentSessionResult PioneerQ35ResidentOwnedRunProbe(DataflowResidentOw
     unsigned position,unsigned token,bool decode,unsigned polls,DataflowProjectionProgram& scratch,
     OwnedProbePolicy& policy,DataflowArgmaxResult& output,unsigned& stage) {
     return runner.Run(session,service,live,position,token,decode,polls,scratch,policy,output,stage);
+}
+
+bool PioneerQ35ResidentOwnedRecoveryProbe(DataflowResidentOwnedRunner<OwnedProbeHandle>& runner,
+    DataflowResidentGraphSession& session,DataflowServiceOwner& service,DataflowProjectionAuthority*& live,
+    OwnedProbePolicy& policy) {
+    return runner.ReleaseRetainedAfterRestoration(session,service,live,policy);
 }
