@@ -19,7 +19,7 @@ struct PioneerHostReadIO {area_id scratchArea=-1,writeArea=-1;};
 struct PioneerDramSamplesIO {area_id dramArea=-1,dataArea=-1;};
 struct PioneerArcIO {area_id scratchArea=-1;};
 struct PioneerMmioIO {area_id area=-1;};
-struct PioneerHostPageIO {area_id area=-1;volatile uint32* page=(volatile uint32*)1;bool releaseAttempted=false;};
+struct PioneerHostPageIO {area_id area=-1;volatile uint32* page=(volatile uint32*)1;bool releaseAttempted=false,quarantined=false;};
 struct FakeIO:PioneerHostReadIO,PioneerDramSamplesIO,PioneerArcIO,PioneerMmioIO,PioneerHostPageIO {
 	area_id q38PanelArea=-1,attentionArea=-1,bulkArea=-1,coordinatorArea=-1,layerArea=-1,fleetArea=-1;
 	area_id runtimeAreas[5]={-1,-1,-1,-1,-1},hdmaArea=-1,inboundArea=-1,siiArea=-1,nocArea=-1;
@@ -43,6 +43,22 @@ static void FabricAreas(FakeIO& io) {
 	io.PioneerHostPageIO::area=20;io.outputArea=21;io.wideArea=22;
 }
 int main() {
+	{
+		FakeIO io;io.fabricOldMmioDisposeComplete=true;io.PioneerHostPageIO::area=20;
+		io.outputPage=io.widePage=nullptr;
+		assert(io.FreshRecoveryHostReleaseReady());
+		io.quarantined=true;assert(!io.FreshRecoveryHostReleaseReady());io.quarantined=false;
+		io.releaseAttempted=true;assert(!io.FreshRecoveryHostReleaseReady());io.releaseAttempted=false;
+		io.outputArea=21;assert(!io.FreshRecoveryHostReleaseReady());io.outputArea=-1;
+		io.outputPage=(volatile uint32*)2;assert(!io.FreshRecoveryHostReleaseReady());io.outputPage=nullptr;
+		io.wideArea=22;assert(!io.FreshRecoveryHostReleaseReady());io.wideArea=-1;
+		io.widePage=(volatile uint32*)3;assert(!io.FreshRecoveryHostReleaseReady());io.widePage=nullptr;
+		io.fabricHostDisposeAttempted=true;assert(!io.FreshRecoveryHostReleaseReady());io.fabricHostDisposeAttempted=false;
+		io.fabricOldMmioDisposeComplete=false;assert(!io.FreshRecoveryHostReleaseReady());
+		io.fabricOldMmioDisposeComplete=true;io.PioneerHostPageIO::area=-1;io.page=nullptr;io.releaseAttempted=true;
+		assert(io.FreshRecoveryHostReleased() && !io.FreshRecoveryHostReleaseReady());
+		io.quarantined=true;assert(!io.FreshRecoveryHostReleased());
+	}
 	auto proof=Evidence();assert(proof.ReadyToRetireOneOwner() && !proof.Complete());
 	FakeIO invalid;invalid.q38PanelArea=11;auto incomplete=proof;incomplete.flags=0;
 	assert(invalid.DisposeAfterVerifiedReset(incomplete)==B_BAD_VALUE && deleted.empty()

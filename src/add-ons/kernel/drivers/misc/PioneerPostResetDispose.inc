@@ -9,6 +9,24 @@ bool fabricOldMmioDisposeAttempted=false;
 bool fabricOldMmioDisposeComplete=false;
 bool fabricHostDisposeAttempted=false;
 bool fabricHostDisposeComplete=false;
+
+// The fresh recovery transport allocates only its single input host page.
+// After its MMIO is closed, refuse release if any unexpected output owner or
+// a prior disposal/release could make the ordinary page destructor ambiguous.
+bool FreshRecoveryHostReleaseReady() const
+{
+	return fabricOldMmioDisposeComplete && !fabricHostDisposeAttempted && !postResetDisposeAttempted
+		&& this->PioneerHostPageIO::area>=B_OK && this->PioneerHostPageIO::page!=NULL
+		&& !this->PioneerHostPageIO::releaseAttempted && !this->PioneerHostPageIO::quarantined
+		&& outputArea<B_OK && outputPage==NULL && wideArea<B_OK && widePage==NULL;
+}
+bool FreshRecoveryHostReleased() const
+{
+	return fabricOldMmioDisposeComplete && !fabricHostDisposeAttempted && !postResetDisposeAttempted
+		&& this->PioneerHostPageIO::area<B_OK && this->PioneerHostPageIO::page==NULL
+		&& this->PioneerHostPageIO::releaseAttempted && !this->PioneerHostPageIO::quarantined
+		&& outputArea<B_OK && outputPage==NULL && wideArea<B_OK && widePage==NULL;
+}
 #endif
 status_t DisposeAfterVerifiedReset(const PioneerDriverRecoveryProof& proof)
 {

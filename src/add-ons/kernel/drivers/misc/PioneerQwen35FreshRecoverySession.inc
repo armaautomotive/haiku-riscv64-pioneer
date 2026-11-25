@@ -28,7 +28,8 @@ public:
     enum Stage { Unstarted=0,Attached=1,Mapped=2,Baseline=3,Banks=4,Host=5,Lease=6,Ready=7,
         ScratchRestoring=8,ScratchVerified=9,Closing=10,LeaseClosed=11,FleetAudited=12,
         PciClosed=13,TransportClosed=14,Retiring=15,HostReleased=16,OwnerRetired=17,Retained=18,
-        RoleVerified=19,RoleHostDisposed=20,RoleMappingsProved=21,RoleGraphRetired=22 };
+        RoleVerified=19,RoleHostDisposed=20,RoleMappingsProved=21,RoleGraphRetired=22,
+        RoleFreshHostReleased=23 };
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     struct RoleRestorationReceipt { const void* binding=nullptr;const void* graph=nullptr;uint64 ticket=0; };
 #endif
@@ -43,6 +44,7 @@ private:
     bool fRole=false;
     bool fRoleMappingsEvidencePublished=false;
     bool fRoleGraphRetireAttempted=false;
+    bool fRoleFreshHostReleaseAttempted=false;
     const void* fRoleBinding=nullptr;
     const void* fGraphOwner=nullptr;
     RoleRestorationReceipt fRoleReceipt{};
@@ -610,6 +612,38 @@ public:
             || !scope.FreshRoleGraphRetirementComplete(*this,*fOld,*fFresh,fRoleReceipt)
             || !TicketValid(guard) || !ready()) return Retain(scope,RoleGraphRetired);
         fStage=RoleGraphRetired;return true;
+    }
+
+    // The fresh DMA page is released only after graph-run retirement. The
+    // admission callback must independently prove that device DMA cannot
+    // restart and that no retained owner or mapping refers to this page.
+    // A failed delete or lost post-delete authority is never replayed.
+    template<class Scope>
+    bool ReleaseRoleFreshHostPage(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        if (!fRole || !fFabric || fStage!=RoleGraphRetired || fRoleFreshHostReleaseAttempted
+            || !fOld || !fFresh) return false;
+        auto ready=[&]() {
+            return fRoleReceipt.ticket==fTicket && fRoleReceipt.binding==fRoleBinding
+                && fRoleReceipt.graph==fGraphOwner && fOld->qwen35SharedRoleBinding==fRoleBinding
+                && fOld->qwen35GraphOwner==fGraphOwner && fOld->io.fabricHostDisposeComplete
+                && fOld->recoveryFabricEvidence.ReadyToRetireOneOwner()
+                && !fFresh->recoveryMapping && fFresh->Pci().restored && !fFresh->transaction.config_attempted
+                && !fFresh->lease.ready && !fFresh->lease.pending && !fFresh->lease.recovery_required
+                && fFresh->lease.l1_restored && fFresh->lease.niu_restored && fFresh->lease.tlb_restored
+                && fFresh->host.state==TT_HOST_PAGE_READY && fFresh->host.allocated && !fFresh->host.released
+                && fFresh->io.FreshRecoveryHostReleaseReady();
+        };
+        if (!TicketValid(guard) || !ready()
+            || !scope.FreshRoleHostReleaseAdmission(*this,*fOld,*fFresh,fRoleReceipt)
+            || !TicketValid(guard) || !ready()) return Retain(scope,RoleFreshHostReleased);
+        fRoleFreshHostReleaseAttempted=true;
+        fFresh->host.release_status=fFresh->io.ReleaseHostPage();
+        fFresh->host.released=fFresh->host.release_status==B_OK;
+        if (!fFresh->host.released || !fFresh->io.FreshRecoveryHostReleased() || !TicketValid(guard)
+            || !scope.FreshRoleHostReleaseComplete(*this,*fOld,*fFresh,fRoleReceipt)
+            || !TicketValid(guard) || !fFresh->host.released || fFresh->host.release_status!=B_OK
+            || !fFresh->io.FreshRecoveryHostReleased()) return Retain(scope,RoleFreshHostReleased);
+        fStage=RoleFreshHostReleased;return true;
     }
 #endif
 
