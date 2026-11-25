@@ -19,6 +19,18 @@ struct PioneerQ35FreshRecoveryCompileScope {
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
     template<class Receipt> bool FreshRoleRecoveryPostLeaseAudit(PioneerQ35FreshRecoverySession&,
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRoleOldHostDisposeAdmission(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRoleOldHostAccessAllowed(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRoleOldHostAreaProtected(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&,int32_t) const { return false; }
+    template<class Receipt> bool FreshRoleOldHostDisposeComplete(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRoleMappingsDisposedAdmission(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRoleMappingsDisposedComplete(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
     bool FreshRecoverySetupAccessAllowed(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&,unsigned) const { return allowed; }
 #endif
@@ -88,6 +100,8 @@ PioneerQ35FreshRecoveryCompileWitness(PioneerQ35FreshRecoverySession* session,
     if (action==7) return session->PrepareFabricRole(owner,old,guard,scope);
     if (action==8) return session->VerifyRoleRestoration(guard,scope);
     if (action==9) return session->CloseRoleTransport(guard,scope);
+    if (action==10) return session->DisposeRoleOldHostBuffers(guard,scope);
+    if (action==11) return session->PublishRoleMappingsDisposed(guard,scope);
 #endif
     return action==4 && PioneerQ35RunModifiedRecoveryTransaction<PioneerQ35FreshRecoverySession>(owner,&old,guard,scope)==B_OK;
 }

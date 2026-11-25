@@ -7,6 +7,8 @@ bool postResetDisposeComplete=false;
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
 bool fabricOldMmioDisposeAttempted=false;
 bool fabricOldMmioDisposeComplete=false;
+bool fabricHostDisposeAttempted=false;
+bool fabricHostDisposeComplete=false;
 #endif
 status_t DisposeAfterVerifiedReset(const PioneerDriverRecoveryProof& proof)
 {
@@ -92,5 +94,36 @@ template<class Check> status_t DisposeFabricOldMmio(Check& check)
 {
 	auto noProtectedAreas=[](area_id) { return false; };
 	return DisposeFabricOldMmio(check,noProtectedAreas);
+}
+
+// The old host buffers remain pinned after old MMIO removal. Only a later
+// fresh-session scope that has proved DMA quiescence, writer exclusion and
+// no remaining host references may call this; it also protects all fresh
+// and role-owner areas against aliasing. Direct deletion is necessary after
+// an error because the ordinary release APIs reject quarantined buffers.
+// All attempts are consumed before the first delete; no failure is replayed.
+template<class Check,class Protected> status_t DisposeFabricHostBuffers(Check& check,Protected& protectedArea)
+{
+	if (fabricHostDisposeAttempted || postResetDisposeAttempted) return B_NOT_ALLOWED;
+	if (!fabricOldMmioDisposeComplete || !check()) return B_DEV_NOT_READY;
+	area_id* areas[]={&this->PioneerHostPageIO::area,&outputArea,&wideArea};
+	volatile uint32** pages[]={&this->PioneerHostPageIO::page,&outputPage,&widePage};
+	for (unsigned i=0;i<3;i++) {
+		if ((*areas[i]>=B_OK) != (*pages[i]!=NULL)) return B_BAD_VALUE;
+		for (unsigned j=0;j<i;j++) if (*areas[i]>=B_OK && *areas[i]==*areas[j]) return B_BAD_VALUE;
+		if (*areas[i]>=B_OK && (!check() || protectedArea(*areas[i]) || !check())) return B_DEV_NOT_READY;
+	}
+	if (!check()) return B_DEV_NOT_READY;
+	fabricHostDisposeAttempted=true;
+	this->PioneerHostPageIO::releaseAttempted=true;outputReleaseAttempted=true;wideReleaseAttempted=true;
+	for (unsigned i=0;i<3;i++) if (*areas[i]>=B_OK) {
+		if (!check()) return B_DEV_NOT_READY;
+		const status_t result=delete_area(*areas[i]);
+		if (result!=B_OK) return result;
+		*areas[i]=-1;*pages[i]=NULL;
+		if (!check()) return B_DEV_NOT_READY;
+	}
+	if (!check()) return B_DEV_NOT_READY;
+	fabricHostDisposeComplete=true;return B_OK;
 }
 #endif

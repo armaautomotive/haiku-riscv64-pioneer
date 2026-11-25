@@ -28,7 +28,7 @@ public:
     enum Stage { Unstarted=0,Attached=1,Mapped=2,Baseline=3,Banks=4,Host=5,Lease=6,Ready=7,
         ScratchRestoring=8,ScratchVerified=9,Closing=10,LeaseClosed=11,FleetAudited=12,
         PciClosed=13,TransportClosed=14,Retiring=15,HostReleased=16,OwnerRetired=17,Retained=18,
-        RoleVerified=19 };
+        RoleVerified=19,RoleHostDisposed=20,RoleMappingsProved=21 };
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     struct RoleRestorationReceipt { const void* binding=nullptr;const void* graph=nullptr;uint64 ticket=0; };
 #endif
@@ -41,6 +41,7 @@ private:
     bool fFabric=false;
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     bool fRole=false;
+    bool fRoleMappingsEvidencePublished=false;
     const void* fRoleBinding=nullptr;
     const void* fGraphOwner=nullptr;
     RoleRestorationReceipt fRoleReceipt{};
@@ -57,6 +58,7 @@ private:
             if (!fOld->recoveryFreshSession) fOld->recoveryFreshSession=this;
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
             if (!fRole) fOld->qwen35QualificationOwner.Retain();
+            else fOld->io.QuarantineHostPage();
 #else
             fOld->qwen35QualificationOwner.Retain();
 #endif
@@ -70,7 +72,10 @@ private:
         scope.RetainFreshRecovery(*this);
         return false;
     }
-    static bool EvidenceValid(const PioneerStoreContext& old,uint64 ticket,bool fabric) {
+    static bool EvidenceValid(const PioneerStoreContext& old,uint64 ticket,bool fabric,bool roleMappingsProved=false) {
+#ifndef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        (void)roleMappingsProved;
+#endif
         if (!ticket || !old.recoveryAttempted || old.recoveryMapping) return false;
         if (fabric) {
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
@@ -79,7 +84,8 @@ private:
                 && old.recoveryFabricAuditReleaseAttempted && old.recoveryFabricAuditReleased
                 && !old.recoveryFabricArcOwner && old.io.fabricOldMmioDisposeComplete
                 && !old.io.postResetDisposeComplete && old.q35PciReservationHeld && !old.q35PciReleaseAttempted
-                && old.recoveryFabricEvidence.ReadyForScratchRestore()
+                && (old.recoveryFabricEvidence.ReadyForScratchRestore()
+                    || (roleMappingsProved && old.recoveryFabricEvidence.ReadyToRetireOneOwner()))
                 && old.recoveryFabricEvidence.fabric_generation==ticket
                 && old.recoveryFabricEvidence.firmware_generation==ticket;
 #else
@@ -95,7 +101,11 @@ private:
             || fOwner!=sRuntimeOwner || fOwner->context!=fOld
             || !sColdRecoveryRequired || sReloadQuiesced || sOpenCookies!=1
             || !sBankStorageOnly || !fOld->bankStorageOnly
-            || fOld->recoveryFreshSession!=this || !EvidenceValid(*fOld,fTicket,fFabric)) return false;
+            || fOld->recoveryFreshSession!=this || !EvidenceValid(*fOld,fTicket,fFabric
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+                ,fRole && fRoleMappingsEvidencePublished
+#endif
+                )) return false;
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
         if (fRole) {
             if (!fFabric || !fOld->recoveryFabricRoleViewsDisposed || !fRoleBinding || !fGraphOwner
@@ -502,6 +512,72 @@ public:
             return scope.FreshRoleRecoveryPostLeaseAudit(*this,*fOld,*fFresh,fRoleReceipt);
         };
         return CloseTransportWith(guard,scope,fRoleReceipt,verified,postLease);
+    }
+    // Release only the old quarantined DMA areas after the fresh transport
+    // is closed. Scope must prove DMA cannot restart, both retained owners no
+    // longer reference these buffers, and every other mapping is disjoint.
+    // Admission, access, area and completion callbacks must be metadata-only;
+    // the device mappings are already closed at this point.
+    // The owners, snapshots, fresh host page and PCI reservation stay pinned.
+    template<class Scope>
+    bool DisposeRoleOldHostBuffers(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        if (!fRole || !fFabric || fStage!=TransportClosed || !fOld || !fFresh) return false;
+        auto receiptValid=[&]() {
+            return fRoleReceipt.ticket==fTicket && fRoleReceipt.binding==fRoleBinding
+                && fRoleReceipt.graph==fGraphOwner && fOld->qwen35SharedRoleBinding==fRoleBinding
+                && fOld->qwen35GraphOwner==fGraphOwner && fOld->io.fabricOldMmioDisposeComplete
+                && fFresh->io.fabricOldMmioDisposeComplete && !fFresh->recoveryMapping;
+        };
+        if (!TicketValid(guard) || !receiptValid()
+            || !scope.FreshRoleOldHostDisposeAdmission(*this,*fOld,*fFresh,fRoleReceipt)
+            || !TicketValid(guard) || !receiptValid()) return Retain(scope,RoleHostDisposed);
+        bool lost=false;
+        auto allowed=[&]() {
+            if (lost || !TicketValid(guard) || !receiptValid()
+                || !scope.FreshRoleOldHostAccessAllowed(*this,*fOld,*fFresh,fRoleReceipt)
+                || !TicketValid(guard) || !receiptValid()) { lost=true;return false; }
+            return true;
+        };
+        auto protectedArea=[&](int32_t area) {
+            return fFresh->io.ReferencesRecoveryHostArea(area)
+                || scope.FreshRoleOldHostAreaProtected(*this,*fOld,*fFresh,fRoleReceipt,area);
+        };
+        if (fOld->io.DisposeFabricHostBuffers(allowed,protectedArea)!=B_OK
+            || !allowed() || !fOld->io.fabricHostDisposeComplete
+            || !scope.FreshRoleOldHostDisposeComplete(*this,*fOld,*fFresh,fRoleReceipt)
+            || !allowed() || !fOld->io.fabricHostDisposeComplete) return Retain(scope,RoleHostDisposed);
+        fStage=RoleHostDisposed;return true;
+    }
+    // The old-MMIO flag alone excludes host pages and role mappings. Publish
+    // the broader evidence only after the separately guarded host disposal,
+    // fresh transport close, and scope proof that all old mappings are gone.
+    // Admission and completion callbacks must be metadata-only. No owner or
+    // PCI reservation is released by this intermediate receipt.
+    template<class Scope>
+    bool PublishRoleMappingsDisposed(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        if (!fRole || !fFabric || fStage!=RoleHostDisposed || fRoleMappingsEvidencePublished
+            || !fOld || !fFresh) return false;
+        auto ready=[&]() {
+            return fRoleReceipt.ticket==fTicket && fRoleReceipt.binding==fRoleBinding
+                && fRoleReceipt.graph==fGraphOwner && fOld->qwen35SharedRoleBinding==fRoleBinding
+                && fOld->qwen35GraphOwner==fGraphOwner && fOld->io.fabricOldMmioDisposeComplete
+                && fOld->io.fabricHostDisposeComplete && fFresh->io.fabricOldMmioDisposeComplete
+                && !fFresh->recoveryMapping && fFresh->Pci().restored && !fFresh->transaction.config_attempted;
+        };
+        if (!TicketValid(guard) || !ready() || !fOld->recoveryFabricEvidence.ReadyForScratchRestore()
+            || !scope.FreshRoleMappingsDisposedAdmission(*this,*fOld,*fFresh,fRoleReceipt)
+            || !TicketValid(guard) || !ready()) return Retain(scope,RoleMappingsProved);
+        auto& evidence=fOld->recoveryFabricEvidence;
+        const uint32_t prior=evidence.flags;
+        evidence.flags=prior | PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED;
+        fRoleMappingsEvidencePublished=true;
+        if (!TicketValid(guard) || !ready() || !evidence.ReadyToRetireOneOwner()
+            || !scope.FreshRoleMappingsDisposedComplete(*this,*fOld,*fFresh,fRoleReceipt)
+            || !TicketValid(guard) || !ready()) {
+            evidence.flags=prior;fRoleMappingsEvidencePublished=false;
+            return Retain(scope,RoleMappingsProved);
+        }
+        fStage=RoleMappingsProved;return true;
     }
 #endif
 

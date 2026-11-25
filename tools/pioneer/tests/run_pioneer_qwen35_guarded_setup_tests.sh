@@ -25,3 +25,6 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
     "$directory/pioneer_qwen35_fresh_resident_recovery_test.cpp" -o "$temporary/fresh_resident_recovery"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fresh_resident_recovery"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fresh_resident_recovery" all
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    "$directory/pioneer_post_reset_dispose_test.cpp" -o "$temporary/fabric_host_dispose"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fabric_host_dispose"

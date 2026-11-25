@@ -7,6 +7,7 @@
 #include <vector>
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadState.h"
 using area_id=int;using status_t=int;
+using uint32=uint32_t;
 constexpr int B_OK=0,B_BAD_VALUE=-1,B_NOT_ALLOWED=-2,B_ERROR=-3,B_DEV_NOT_READY=-4;
 static std::vector<int> deleted;static int failArea=-1;
 static bool* authorityLive=nullptr;static unsigned deleteAfterLoss=0;
@@ -18,12 +19,13 @@ struct PioneerHostReadIO {area_id scratchArea=-1,writeArea=-1;};
 struct PioneerDramSamplesIO {area_id dramArea=-1,dataArea=-1;};
 struct PioneerArcIO {area_id scratchArea=-1;};
 struct PioneerMmioIO {area_id area=-1;};
-struct PioneerHostPageIO {area_id area=-1;void* page=(void*)1;};
+struct PioneerHostPageIO {area_id area=-1;volatile uint32* page=(volatile uint32*)1;bool releaseAttempted=false;};
 struct FakeIO:PioneerHostReadIO,PioneerDramSamplesIO,PioneerArcIO,PioneerMmioIO,PioneerHostPageIO {
 	area_id q38PanelArea=-1,attentionArea=-1,bulkArea=-1,coordinatorArea=-1,layerArea=-1,fleetArea=-1;
 	area_id runtimeAreas[5]={-1,-1,-1,-1,-1},hdmaArea=-1,inboundArea=-1,siiArea=-1,nocArea=-1;
 	area_id resetArea=-1,csmArea=-1,tlbArea=-1,outputArea=-1,wideArea=-1;
-	void* outputPage=(void*)2;void* widePage=(void*)3;bool runtimeMapped=true;
+	volatile uint32* outputPage=(volatile uint32*)2;volatile uint32* widePage=(volatile uint32*)3;
+	bool outputReleaseAttempted=false,wideReleaseAttempted=false,runtimeMapped=true;
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerPostResetDispose.inc"
 };
 static PioneerDriverRecoveryProof Evidence() {
@@ -111,6 +113,49 @@ int main() {
 		auto revoked=[&](area_id) { permit.live=false;return false; };
 		assert(io.DisposeFabricOldMmio(permit,revoked)==B_DEV_NOT_READY && deleted.empty()
 			&& !io.fabricOldMmioDisposeAttempted && !io.fabricOldMmioDisposeComplete);
+	}
+	unsigned hostChecks=0;
+	for (unsigned loss=0;;loss++) {
+		if (loss && loss>hostChecks) break;
+		deleted.clear();deleteAfterLoss=0;failArea=-1;FakeIO io;FabricAreas(io);
+		io.fabricOldMmioDisposeAttempted=io.fabricOldMmioDisposeComplete=true;
+		Permit permit;permit.failAt=loss;authorityLive=&permit.live;
+		auto noProtected=[](area_id) { return false; };
+		const status_t status=io.DisposeFabricHostBuffers(permit,noProtected);
+		if (!loss) {
+			assert(status==B_OK && io.fabricHostDisposeComplete
+				&& (deleted==std::vector<int>{20,21,22}) && !io.page && !io.outputPage && !io.widePage);
+			hostChecks=permit.calls;assert(hostChecks>10);
+		} else {
+			assert(status==B_DEV_NOT_READY && !io.fabricHostDisposeComplete && !deleteAfterLoss);
+			const auto count=deleted.size();
+			if (io.fabricHostDisposeAttempted)
+				assert(io.DisposeFabricHostBuffers(permit,noProtected)==B_NOT_ALLOWED && deleted.size()==count);
+		}
+	}
+	for (int failed:{20,21,22}) {
+		deleted.clear();failArea=failed;FakeIO io;FabricAreas(io);io.fabricOldMmioDisposeComplete=true;
+		Permit permit;authorityLive=&permit.live;auto noProtected=[](area_id) { return false; };
+		assert(io.DisposeFabricHostBuffers(permit,noProtected)==B_ERROR && io.fabricHostDisposeAttempted
+			&& !io.fabricHostDisposeComplete && io.releaseAttempted && io.outputReleaseAttempted
+			&& io.wideReleaseAttempted);
+		const auto count=deleted.size();
+		assert(io.DisposeFabricHostBuffers(permit,noProtected)==B_NOT_ALLOWED && deleted.size()==count);
+	}
+	{
+		deleted.clear();failArea=-1;FakeIO io;FabricAreas(io);io.fabricOldMmioDisposeComplete=true;
+		io.outputArea=20;Permit permit;auto noProtected=[](area_id) { return false; };
+		assert(io.DisposeFabricHostBuffers(permit,noProtected)==B_BAD_VALUE && deleted.empty());
+		io.outputArea=21;auto protectedArea=[](area_id area) { return area==21; };
+		assert(io.DisposeFabricHostBuffers(permit,protectedArea)==B_DEV_NOT_READY && deleted.empty());
+	}
+	{
+		deleted.clear();failArea=-1;FakeIO io;FabricAreas(io);Permit permit;
+		auto noProtected=[](area_id) { return false; };
+		assert(io.DisposeFabricHostBuffers(permit,noProtected)==B_DEV_NOT_READY && deleted.empty());
+		io.fabricOldMmioDisposeComplete=true;io.page=nullptr;
+		assert(io.DisposeFabricHostBuffers(permit,noProtected)==B_BAD_VALUE && deleted.empty()
+			&& !io.fabricHostDisposeAttempted);
 	}
 	authorityLive=nullptr;
 	puts("PASS post-reset owner area retirement: proof, duplicate refusal, host-last order and partial-failure retention; SIMULATED OS ONLY");

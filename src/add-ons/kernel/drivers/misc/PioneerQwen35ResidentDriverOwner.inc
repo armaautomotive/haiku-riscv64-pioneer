@@ -207,7 +207,8 @@ class PioneerQ35ResidentDriverOwner {
             && context.recoveryFabricStartTicket==ticket
             && !memcmp(&proof,&context.recoveryFabricEvidence,sizeof(proof))
             && PioneerQ35GraphRecoveryProofMatches(proof,ticket,context.recoveryMapping==NULL,
-                context.io.fabricOldMmioDisposeComplete && !context.io.postResetDisposeComplete)
+                context.io.fabricOldMmioDisposeComplete && context.io.fabricHostDisposeComplete
+                    && !context.io.postResetDisposeComplete)
             && guard->validate(ticket)==B_OK;
     }
 #endif

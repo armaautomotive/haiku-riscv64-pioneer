@@ -14,6 +14,7 @@
 #include <cstring>
 #include <new>
 #include <vector>
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadState.h"
 using uint64=uint64_t;
 using status_t=int;
 constexpr int B_OK=0,B_NOT_ALLOWED=-1,B_NO_MEMORY=-2,B_DEV_NOT_READY=-3;
@@ -37,10 +38,15 @@ struct MockProof {
     bool valid=true;
     bool ReadyToRetireOneOwner() const { return valid; }
 };
-struct MockFabricProof {
-    uint64 fabric_generation=kTicket,firmware_generation=kTicket;
+struct MockFabricProof : PioneerDriverFabricRecoveryProof {
     bool valid=true;
-    bool ReadyForScratchRestore() const { return valid; }
+    MockFabricProof() {
+        flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
+            | PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
+        core_count=120;retained_owners=1;fabric_generation=firmware_generation=kTicket;
+    }
+    bool ReadyForScratchRestore() const { return valid && PioneerDriverFabricRecoveryProof::ReadyForScratchRestore(); }
+    bool ReadyToRetireOneOwner() const { return valid && PioneerDriverFabricRecoveryProof::ReadyToRetireOneOwner(); }
 };
 struct PioneerResidentBanks;
 struct MockScratch {
@@ -122,6 +128,7 @@ struct PioneerPostResetMapping {
 struct PioneerHostDmaAuditIO { bool AfterNodeId(unsigned) { return Step(2); } };
 struct MockIO : PioneerHostDmaAuditIO {
     bool postResetDisposeComplete=false,fabricOldMmioDisposeComplete=false,quarantined=false;
+    bool fabricHostDisposeAttempted=false,fabricHostDisposeComplete=false;
     bool fleetEnabled=false;
     unsigned runtimeCore=0;
     bool freshMmioReady=true,freshMmioDisposed=false;
@@ -134,7 +141,14 @@ struct MockIO : PioneerHostDmaAuditIO {
     bool ReferencesRecoveryHostArea(int32_t area) const { return area==77; }
     template<class Check,class Protected> int DisposeFabricOldMmio(Check& check,Protected& protectedArea) {
         if (!check() || protectedArea(91) || !check()) return B_DEV_NOT_READY;
-        freshMmioDisposed=true;return B_OK;
+        freshMmioDisposed=fabricOldMmioDisposeComplete=true;return B_OK;
+    }
+    template<class Check,class Protected> int DisposeFabricHostBuffers(Check& check,Protected& protectedArea) {
+        if (fabricHostDisposeAttempted || !fabricOldMmioDisposeComplete || !check()
+            || protectedArea(92) || !check()) return B_DEV_NOT_READY;
+        fabricHostDisposeAttempted=true;
+        if (!Step(22) || !check()) return B_DEV_NOT_READY;
+        fabricHostDisposeComplete=true;return B_OK;
     }
 };
 class PioneerQ35FreshRecoverySession;
@@ -243,7 +257,9 @@ struct Scope {
     bool admission=true,retained=false,closeAdmission=true,retirementAdmission=true,ownerAdmission=true;
     bool quarantineAtRetirement=false,loseClaimAfterRetirement=false;
     bool dropAttachment=false,roleAdmission=true,roleRestored=true;
-    bool roleCloseAdmission=true,rolePostLease=true;
+    bool roleCloseAdmission=true,rolePostLease=true,roleHostAdmission=true,roleHostComplete=true,protectOldHost=false;
+    bool clearHostCompletion=false;
+    bool roleMappingsAdmission=true,roleMappingsComplete=true;
     bool replaceRoleAtAdmission=false,replaceGraphAtAdmission=false;
     unsigned auditChecks=0,failAuditAt=0,leaseChecks=0,failLeaseAt=0;
     unsigned setupChecks=0,failSetupAt=0,pciChecks=0,failPciAt=0;
@@ -264,6 +280,21 @@ struct Scope {
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) { return roleCloseAdmission; }
     template<class Receipt> bool FreshRoleRecoveryPostLeaseAudit(PioneerQ35FreshRecoverySession&,
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) { return rolePostLease; }
+    template<class Receipt> bool FreshRoleOldHostDisposeAdmission(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) { return roleHostAdmission; }
+    template<class Receipt> bool FreshRoleOldHostAccessAllowed(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) { return true; }
+    template<class Receipt> bool FreshRoleOldHostAreaProtected(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&,int32_t area) { return protectOldHost && area==92; }
+    template<class Receipt> bool FreshRoleOldHostDisposeComplete(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext& old,PioneerStoreContext&,const Receipt&) {
+        if (clearHostCompletion) old.io.fabricHostDisposeComplete=false;
+        return roleHostComplete;
+    }
+    template<class Receipt> bool FreshRoleMappingsDisposedAdmission(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) { return roleMappingsAdmission; }
+    template<class Receipt> bool FreshRoleMappingsDisposedComplete(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) { return roleMappingsComplete; }
     bool FreshRecoverySetupAccessAllowed(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&,unsigned) { return ++setupChecks!=failSetupAt; }
     bool FreshRecoveryAdmission(PioneerQ35FreshRecoverySession&,PioneerProbeCookie*,PioneerStoreContext&,uint64 ticket) {
@@ -413,12 +444,88 @@ int main() {
             const unsigned count=operations.size();
             assert(!session->CloseRoleTransport(&guard,scope) && !session->Retire(&guard,scope)
                 && operations.size()==count);
+            assert(session->DisposeRoleOldHostBuffers(&guard,scope)
+                && session->CurrentStage()==PioneerQ35FreshRecoverySession::RoleHostDisposed
+                && old.io.fabricHostDisposeComplete && !old.qwen35QualificationOwner.retained
+                && old.qwen35SharedRoleBinding==&role && old.qwen35GraphOwner==&graph
+                && fresh->host.allocated && !fresh->host.released && old.q35PciReservationHeld);
+            assert(session->PublishRoleMappingsDisposed(&guard,scope)
+                && session->CurrentStage()==PioneerQ35FreshRecoverySession::RoleMappingsProved
+                && old.recoveryFabricEvidence.ReadyToRetireOneOwner()
+                && old.recoveryFreshSession==session && old.q35PciReservationHeld);
         } else {
             assert(!closed && session->CurrentStage()==PioneerQ35FreshRecoverySession::Retained
                 && scope.retained && old.recoveryFreshSession==session && old.banks.quarantined
                 && fresh->banks.quarantined && fresh->io.quarantined && old.q35PciReservationHeld
                 && !old.qwen35QualificationOwner.retained);
         }
+        PioneerQ35FreshRecoverySession::DisposeSimulated(session);
+    }
+    for (unsigned scenario=1;scenario<=7;scenario++) {
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
+        int role=1,graph=2,replacement=3;old.qwen35SharedRoleBinding=&role;old.qwen35GraphOwner=&graph;
+        old.qwen35QualificationOwner.active=false;old.qwen35QualificationOwner.retained=false;
+        old.io.fabricOldMmioDisposeComplete=true;
+        old.recoveryFabricEvidenceRecorded=old.recoveryFabricPciIdleAttempted=old.recoveryFabricPciIdle=true;
+        old.recoveryFabricAuditReleaseAttempted=old.recoveryFabricAuditReleased=old.recoveryFabricRoleViewsDisposed=true;
+        Scope scope;auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(session->PrepareFabricRole(&owner,old,&guard,scope) && session->VerifyRoleRestoration(&guard,scope)
+            && session->CloseRoleTransport(&guard,scope));
+        if (scenario==1) scope.roleHostAdmission=false;
+        if (scenario==2) scope.protectOldHost=true;
+        if (scenario==3) failedOperation=22;
+        if (scenario==4) scope.roleHostComplete=false;
+        if (scenario==5) failGuardAt=guardCalls+1;
+        if (scenario==6) old.qwen35GraphOwner=&replacement;
+        if (scenario==7) scope.clearHostCompletion=true;
+        assert(!session->DisposeRoleOldHostBuffers(&guard,scope)
+            && session->CurrentStage()==PioneerQ35FreshRecoverySession::Retained && scope.retained
+            && old.recoveryFreshSession==session && old.io.quarantined && old.banks.quarantined
+            && session->Fresh()->io.quarantined && old.q35PciReservationHeld);
+        const unsigned count=operations.size();
+        assert(!session->DisposeRoleOldHostBuffers(&guard,scope) && operations.size()==count);
+        PioneerQ35FreshRecoverySession::DisposeSimulated(session);
+    }
+    unsigned mappingsChecks=0;
+    for (unsigned failure=0;;failure++) {
+        if (failure && failure>mappingsChecks) break;
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
+        int role=1,graph=2;old.qwen35SharedRoleBinding=&role;old.qwen35GraphOwner=&graph;
+        old.qwen35QualificationOwner.active=false;old.qwen35QualificationOwner.retained=false;
+        old.io.fabricOldMmioDisposeComplete=true;
+        old.recoveryFabricEvidenceRecorded=old.recoveryFabricPciIdleAttempted=old.recoveryFabricPciIdle=true;
+        old.recoveryFabricAuditReleaseAttempted=old.recoveryFabricAuditReleased=old.recoveryFabricRoleViewsDisposed=true;
+        Scope scope;auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(session->PrepareFabricRole(&owner,old,&guard,scope) && session->VerifyRoleRestoration(&guard,scope)
+            && session->CloseRoleTransport(&guard,scope) && session->DisposeRoleOldHostBuffers(&guard,scope));
+        const unsigned before=guardCalls;if (failure) failGuardAt=before+failure;
+        const bool published=session->PublishRoleMappingsDisposed(&guard,scope);
+        if (!failure) {
+            assert(published && old.recoveryFabricEvidence.ReadyToRetireOneOwner());
+            mappingsChecks=guardCalls-before;assert(mappingsChecks>=4);
+        } else {
+            assert(!published && scope.retained && old.recoveryFabricEvidence.ReadyForScratchRestore()
+                && !old.recoveryFabricEvidence.ReadyToRetireOneOwner()
+                && session->CurrentStage()==PioneerQ35FreshRecoverySession::Retained);
+        }
+        PioneerQ35FreshRecoverySession::DisposeSimulated(session);
+    }
+    std::printf("PASS old-mapping evidence: %u simulated ticket-loss boundaries\n",mappingsChecks);
+    for (unsigned denied=0;denied<2;denied++) {
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
+        int role=1,graph=2;old.qwen35SharedRoleBinding=&role;old.qwen35GraphOwner=&graph;
+        old.qwen35QualificationOwner.active=false;old.qwen35QualificationOwner.retained=false;
+        old.io.fabricOldMmioDisposeComplete=true;
+        old.recoveryFabricEvidenceRecorded=old.recoveryFabricPciIdleAttempted=old.recoveryFabricPciIdle=true;
+        old.recoveryFabricAuditReleaseAttempted=old.recoveryFabricAuditReleased=old.recoveryFabricRoleViewsDisposed=true;
+        Scope scope;auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(session->PrepareFabricRole(&owner,old,&guard,scope) && session->VerifyRoleRestoration(&guard,scope)
+            && session->CloseRoleTransport(&guard,scope) && session->DisposeRoleOldHostBuffers(&guard,scope));
+        if (denied) scope.roleMappingsComplete=false;else scope.roleMappingsAdmission=false;
+        assert(!session->PublishRoleMappingsDisposed(&guard,scope) && scope.retained
+            && old.recoveryFabricEvidence.ReadyForScratchRestore()
+            && !old.recoveryFabricEvidence.ReadyToRetireOneOwner()
+            && session->CurrentStage()==PioneerQ35FreshRecoverySession::Retained);
         PioneerQ35FreshRecoverySession::DisposeSimulated(session);
     }
     unsigned roleCloseGuardChecks=0;

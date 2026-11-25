@@ -27,7 +27,7 @@ static int ValidateRecovery(uint64_t ticket) {
 struct pioneer_driver_recovery_guard_v2_info { unsigned version=2;int (*validate)(uint64_t)=ValidateRecovery; };
 struct PioneerStoreContext;''', 1)
 base = base.replace('struct PioneerSessionIO : ResidentRaw, MockDataflowIO {',
-                    'struct PioneerSessionIO : ResidentRaw, MockDataflowIO {\n    bool postResetDisposeComplete=false,fabricOldMmioDisposeComplete=false;', 1)
+                    'struct PioneerSessionIO : ResidentRaw, MockDataflowIO {\n    bool postResetDisposeComplete=false,fabricOldMmioDisposeComplete=false,fabricHostDisposeComplete=false;', 1)
 base = base.replace('struct PioneerStoreContext {', '''struct PioneerStoreContext {
     bool recoveryAttempted=false,dispatchOwnerRetained=false,recoveryFinishPending=false;
     bool recoveryFabricEvidenceRecorded=false;
@@ -68,6 +68,7 @@ static void Scenario(unsigned mode) {
     context->recoveryFinishPending=context->recoveryFabricEvidenceRecorded=true;
     context->recoveryFinishTicket=context->recoveryFabricStartTicket=9;
     context->io.postResetDisposeComplete=!fabric;context->io.fabricOldMmioDisposeComplete=fabric;
+    context->io.fabricHostDisposeComplete=fabric;
     auto& asic=context->recoveryFinishProof;
     asic.flags=PIONEER_RECOVERY_PROOF_REQUIRED & ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;
     asic.core_count=120;asic.retained_owners=1;asic.reset_generation=asic.firmware_generation=9;
@@ -84,6 +85,9 @@ static void Scenario(unsigned mode) {
     assert(!retire(9) && PioneerQ35ResidentDriverRetained(owner));
     context->io.postResetDisposeComplete=!fabric;context->io.fabricOldMmioDisposeComplete=fabric;
     if (fabric) {
+        context->io.fabricHostDisposeComplete=false;
+        assert(!retire(9) && PioneerQ35ResidentDriverRetained(owner));
+        context->io.fabricHostDisposeComplete=true;
         context->io.postResetDisposeComplete=true;
         assert(!retire(9) && PioneerQ35ResidentDriverRetained(owner));
         context->io.postResetDisposeComplete=false;
