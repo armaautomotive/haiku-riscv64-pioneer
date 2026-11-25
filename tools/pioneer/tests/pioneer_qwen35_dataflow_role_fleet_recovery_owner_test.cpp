@@ -12,12 +12,12 @@ struct RecoveryIO {
     bool corruptPriorDisableOnWrite=false;
     bool stacklessPreparation=true,stacklessSafe=true,uncapturedProtected=true;
     bool heldImageStageAllowed=false,heldImageRollbackAllowed=false,heldImageWritesConfirmed=true;
-    bool heldPreservationRollbackAllowed=false,heldPreservationWritesConfirmed=true;
+    bool heldPreservationRollbackAllowed=false,heldPreservationStageAllowed=false,heldPreservationWritesConfirmed=true;
     bool coreRestoreProof=false,restoreReleaseReady=false,staleRestoreReceipt=false;
     bool restoreCompletion=false,restoreCompletedHeld=false;
     bool autoArmProof=false,autoHeldProof=false,autoCancelProof=false,autoRetirementProof=false;
     const DataflowRoleFleetRecoveryOwner* transitionOwner=nullptr;
-    bool expectRollbackTransitions=false;
+    bool expectRollbackTransitions=false,expectStageTransitions=false;
     unsigned validatedTransitions=0;
     bool expectCancelledRetirement[DataflowBarrierWorkers]{};
     DataflowRoleSnapshotHandoff restoreHandoff[DataflowBarrierWorkers]{};
@@ -56,6 +56,7 @@ struct RecoveryIO {
     bool HeldImageWritesConfirmed() const { return heldImageWritesConfirmed; }
     bool HeldPreservationRollbackAllowed() const { return heldPreservationRollbackAllowed; }
     bool HeldPreservationWritesConfirmed() const { return heldPreservationWritesConfirmed; }
+    bool HeldPreservationStageAllowed() const { return heldPreservationStageAllowed; }
     bool StacklessUncapturedRamProtected(unsigned core) const {
         return held && uncapturedProtected && core<DataflowBarrierWorkers;
     }
@@ -163,6 +164,10 @@ struct RecoveryIO {
                 assert(transitionOwner->ResetDisableRollbackTransitionMatches(core,resetDisable[core],value));
                 assert(!transitionOwner->ResetDisableRollbackTransitionMatches(core,resetDisable[core],value^2U));
             }
+            if (expectStageTransitions) {
+                assert(transitionOwner->ResetDisableStageTransitionMatches(core,resetDisable[core],value));
+                assert(!transitionOwner->ResetDisableStageTransitionMatches(core,resetDisable[core],value^2U));
+            }
             ++validatedTransitions;
         }
         ++writes; resetDisable[core]=value;
@@ -251,13 +256,15 @@ int main()
                 ramSnapshot.data(),ramSnapshot.size(),io));
         io.heldImageStageAllowed=true;io.heldImageRollbackAllowed=true;io.transitionOwner=&owner;
         assert(owner.StageHeldImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
-        assert(owner.PreparePossibleRelease(io) && owner.HeldPreservationRollbackReady()
+        assert(!owner.PrepareHeldPreservation(io));
+        io.heldPreservationStageAllowed=true;io.expectStageTransitions=true;
+        assert(owner.PrepareHeldPreservation(io) && owner.HeldPreservationRollbackReady()
             && !owner.HeldImageRollbackReady());
         const unsigned before=io.writes;
         assert(!owner.RestoreHeldPreservationBeforeRelease(io) && io.writes==before);
         io.heldPreservationRollbackAllowed=true;io.heldPreservationWritesConfirmed=false;
         assert(!owner.RestoreHeldPreservationBeforeRelease(io) && io.writes==before);
-        io.heldPreservationWritesConfirmed=true;io.expectRollbackTransitions=true;
+        io.heldPreservationWritesConfirmed=true;io.expectStageTransitions=false;io.expectRollbackTransitions=true;
         assert(owner.RestoreHeldPreservationBeforeRelease(io) && owner.HeldImageRollbackReady());
         assert(owner.RestoreHeldImagesBeforeRelease(io) && owner.VerifyAfterResidentRestore(io));
         assert(io.code==originalCode && io.ram==originalRam && io.boots==originalBoots
@@ -272,8 +279,8 @@ int main()
                 ramSnapshot.data(),ramSnapshot.size(),io));
         io.heldImageStageAllowed=true;io.heldImageRollbackAllowed=true;
         assert(owner.StageHeldImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
-        io.failDisableCore=17;io.heldPreservationRollbackAllowed=true;
-        assert(!owner.PreparePossibleRelease(io) && owner.HeldPreservationRollbackReady());
+        io.failDisableCore=17;io.heldPreservationRollbackAllowed=true;io.heldPreservationStageAllowed=true;
+        assert(!owner.PrepareHeldPreservation(io) && owner.HeldPreservationRollbackReady());
         const unsigned before=io.writes;
         assert(!owner.RestoreHeldPreservationBeforeRelease(io) && io.writes==before
             && !owner.HeldImageRollbackReady());
@@ -285,9 +292,9 @@ int main()
         assert(owner.SelectAutoRestoreMode()
             && owner.CaptureAllStacklessHeldImages(codeSnapshot.data(),codeSnapshot.size(),
                 ramSnapshot.data(),ramSnapshot.size(),io));
-        io.heldImageStageAllowed=true;io.heldPreservationRollbackAllowed=true;
+        io.heldImageStageAllowed=true;io.heldPreservationRollbackAllowed=true;io.heldPreservationStageAllowed=true;
         assert(owner.StageHeldImages(codeA,3,codeB,2,shimA,2,shimB,2,io)
-            && owner.PreparePossibleRelease(io) && owner.BeginReleaseAttempt(io));
+            && owner.PrepareHeldPreservation(io) && owner.BeginReleaseAttempt(io));
         const unsigned before=io.writes;
         assert(!owner.HeldPreservationRollbackReady()
             && !owner.RestoreHeldPreservationBeforeRelease(io) && io.writes==before);

@@ -177,6 +177,11 @@ public:
         return core<DataflowBarrierWorkers && desired==fResetDisable[core]
             && ResetDisableTransitionMatches(core,expected,desired);
     }
+    bool ResetDisableStageTransitionMatches(unsigned core,uint32_t expected,uint32_t desired) const {
+        return core<DataflowBarrierWorkers && expected==fResetDisable[core]
+            && desired==(fResetDisable[core]|fPreserveResetMask)
+            && ResetDisableTransitionMatches(core,expected,desired);
+    }
     bool ReleaseLedgerPrepared() const { return fPhase==Armed
         && (fStackless?fRam.StacklessCapturePrepared():fRam.MarkedForPossibleRelease()); }
     bool RestorationRequired() const {
@@ -197,6 +202,11 @@ public:
         return fHeldImageOnlyStage && !fHeldImageOnlyRestored && fStackless
             && !fCoreLocalReleaseLedger && fResetDisableCaptured && fResetDisableTouched
             && (fPhase==Faulted || fPhase==Armed) && fRam.StacklessCapturePrepared();
+    }
+    bool HeldPreservationStageActive() const {
+        return fHeldImageOnlyStage && !fHeldImageOnlyRestored && fStackless
+            && !fCoreLocalReleaseLedger && fResetDisableCaptured
+            && (fPhase==Staged || fPhase==Faulted) && fRam.StacklessCapturePrepared();
     }
     bool HeldImageRollbackProofActive() const {
         return fHeldImageOnlyRestored && (fPhase==Restored || fPhase==Faulted)
@@ -526,6 +536,19 @@ public:
             || !io.HeldPreservationRollbackAllowed() || !VerifyResetDisable(io,false)
             || !AllHeldAndRouted(io)) return false;
         return HeldImageRollbackReady();
+    }
+    // Prepare the preservation bits while every processor is held. The
+    // separately gated BeginReleaseAttempt still checks the stronger fleet
+    // and retained-copy conditions before a processor can be released.
+    template<class IO> bool PrepareHeldPreservation(IO& io) {
+        if (fPhase!=Staged || !HeldPreservationStageActive() || fResetDisableTouched
+            || !io.HeldPreservationWritesConfirmed() || !io.HeldPreservationStageAllowed()) return false;
+        fPhase=Faulted;
+        if (!AllHeldAndRouted(io) || !fImages.VerifyStagedAll(io)
+            || !io.HeldPreservationStageAllowed() || !ArmResetPreservation(io)
+            || !io.HeldPreservationWritesConfirmed() || !fImages.VerifyStagedAll(io)
+            || !AllHeldAndRouted(io) || !io.HeldPreservationStageAllowed()) return false;
+        fPhase=Armed;return true;
     }
     // Ledger only: no processor is released. In deferred mode snapshots are
     // captured per tile before stack release, and uncaptured tiles require

@@ -81,27 +81,13 @@ struct PioneerQ35SharedRoleBindingTestAccess {
     static bool HeldImagesCaptured(const PioneerQwen35SharedRoleBinding& binding) {
         return binding.fOwner.StacklessHeldImagesCaptured();
     }
+    static bool HeldPreservationPrepared(const PioneerQwen35SharedRoleBinding& binding) {
+        return binding.fOwner.HeldPreservationRollbackReady();
+    }
     static void MarkReleaseAttempt(PioneerQwen35SharedRoleBinding& binding,unsigned core,bool value) {
         binding.fReleaseAttempted[core]=value;
     }
 #ifdef TEST_PRESERVATION_ROLLBACK
-    // Simulate a successful preparation because the production release
-    // admission remains denied; the subsequent rollback uses the real scope.
-    static bool SimulatePreservationArm(PioneerQwen35SharedRoleBinding& b) {
-        auto* scope=b.Scope();if (!scope) return false;
-        struct SimulatedPreparation : PioneerQwen35SharedRoleBinding::Adapter {
-            PioneerSessionIO& io;
-            SimulatedPreparation(PioneerSessionIO& device,PioneerQwen35RoleBorrowedScopeWitness& s,
-                PioneerQwen35SharedRoleBinding::Views& views)
-                :PioneerQwen35SharedRoleBinding::Adapter(device,s,views),io(device) {}
-            bool StacklessFleetPreparationSafe(unsigned core) { return core<DataflowBarrierWorkers; }
-            bool WriteResetDisable(unsigned core,uint32_t value) {
-                if (!io.SelectRuntimeCore(core) || !gMapped[DataflowRolePhysicalControl]) return false;
-                gMemory[DataflowRolePhysicalControl][0x224/4]=value;return true;
-            }
-        } simulated(b.fContext.io,*scope,b.fViews);
-        return b.fOwner.PreparePossibleRelease(simulated);
-    }
     static void CheckControlRollbackOnly(PioneerQwen35SharedRoleBinding& b) {
         auto* scope=b.Scope();auto& io=b.fContext.io;assert(scope && io.SelectRuntimeCore(0));
         const uint32_t current=gMemory[DataflowRolePhysicalControl][0x224/4];
@@ -418,9 +404,7 @@ static void ExerciseQualificationCaptureRoot(PioneerSessionIO& io)
     assert(io.SharedCaptureAndStageHeld() && !sColdRecoveryRequired
         && gMapCalls==DataflowRolePhysicalControl+1 && io.sharedResetWrites==resetWrites);
     assert(!io.SharedArmAndBeginRelease() && !io.SharedStartCore(0) && io.sharedResetWrites==resetWrites);
-#ifdef TEST_PRESERVATION_ROLLBACK
-    assert(PioneerQ35SharedRoleBindingTestAccess::SimulatePreservationArm(*binding));
-#endif
+    assert(PioneerQ35SharedRoleBindingTestAccess::HeldPreservationPrepared(*binding));
     context->qwen35DataflowService->capturePending=false;
     context->qwen35DataflowService->faulted=true;
     gQualificationHeldOwnerAllowed=false;

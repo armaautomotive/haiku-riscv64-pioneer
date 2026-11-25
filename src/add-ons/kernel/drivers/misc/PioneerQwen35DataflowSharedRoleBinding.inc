@@ -39,7 +39,7 @@ class PioneerQwen35SharedRoleBinding {
     unsigned fRuntimeObservationCore=PioneerQwen35::DataflowBarrierWorkers;
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     bool fUnstagedQualificationAbort=false;
-    unsigned fHeldImageMutation=0; // 1: stage, 2: image rollback, 3: control rollback
+    unsigned fHeldImageMutation=0; // 1: image stage, 2: image rollback, 3: control rollback, 4: control stage
     bool fSnapshotFleetParked=false;
 #endif
     bool fAutoRestoreParked[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -101,16 +101,23 @@ public:
             && fViews.Opened() && fCodeSnapshot && fRamSnapshot
             && (fOwner.HeldPreservationRollbackReady() || fOwner.HeldImageRollbackReady());
     }
+    bool HeldControlStageAccessAllowed() const {
+        return fHeldImageMutation==4 && !sColdRecoveryRequired && !fReleaseAuthorized
+            && fContext.qwen35SharedRoleBinding==this && fCaptureAttempted
+            && fViews.Opened() && fCodeSnapshot && fRamSnapshot && fOwner.HeldPreservationStageActive();
+    }
     // The session lock serializes this interval. Check the release ledger
     // once at entry; no release can start without fReleaseAuthorized, which
     // remains false throughout the operation. Per-word checks stay O(1).
     bool BeginHeldImageMutation(unsigned mode) {
-        if ((mode!=1 && mode!=2 && mode!=3) || fHeldImageMutation || fReleaseAuthorized
-            || (mode==3 && !fViews.ControlWritesConfirmed())) return false;
+        if ((mode!=1 && mode!=2 && mode!=3 && mode!=4) || fHeldImageMutation || fReleaseAuthorized
+            || ((mode==3 || mode==4) && !fViews.ControlWritesConfirmed())
+            || (mode==4 && !fViews.ImageWritesConfirmed())) return false;
         for (unsigned core=0;core<PioneerQwen35::DataflowBarrierWorkers;core++)
             if (fReleaseAttempted[core] || fStackReleaseAttempted[core] || fHoldAttempted[core]) return false;
         fHeldImageMutation=mode;
-        if (!(mode==3?HeldControlRollbackAccessAllowed():HeldImageAccessAllowed(mode==2)))
+        if (!(mode==3?HeldControlRollbackAccessAllowed()
+                :mode==4?HeldControlStageAccessAllowed():HeldImageAccessAllowed(mode==2)))
             { fHeldImageMutation=0;return false; }
         return true;
     }
@@ -273,6 +280,9 @@ public:
 #if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
     bool ResetDisableRollbackTransitionMatches(unsigned core,uint32_t expected,uint32_t desired) const {
         return fCodeSnapshot && fRamSnapshot && fOwner.ResetDisableRollbackTransitionMatches(core,expected,desired);
+    }
+    bool ResetDisableStageTransitionMatches(unsigned core,uint32_t expected,uint32_t desired) const {
+        return fCodeSnapshot && fRamSnapshot && fOwner.ResetDisableStageTransitionMatches(core,expected,desired);
     }
 #endif
 #endif
@@ -451,18 +461,29 @@ public:
         auto* scope=Scope();
         if (!scope || !fViews.Opened()) return false;
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
-        // Auto-restore may arm only when the real scope can cover a partial
+        // Auto-restore may release only when the real scope can cover a partial
         // three-role start and its stop/hold recovery. The owner rechecks the
         // full staged fleet and preservation mask before arming; StartCore
         // independently checks the release proof again for each tile. The
         // current Haiku scope still denies that physical proof.
         if (fAutoRestoreOnStop && (!fOwner.AutoRestoreMode()
             || !fOwner.ComputeLocalRamPreservationSelected()
-            || fContext.io.runtimeCore>=PioneerQwen35::DataflowBarrierWorkers
-            || !scope->ProveRoleReleaseSafe(fContext.io,fContext.io.runtimeCore))) return false;
+            || fContext.io.runtimeCore>=PioneerQwen35::DataflowBarrierWorkers)) return false;
 #endif
         Adapter io(fContext.io,*scope,fViews);
-        if (!fOwner.PreparePossibleRelease(io) || !fOwner.BeginReleaseAttempt(io)
+        bool heldPrepared=false;
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE)
+        if (PioneerQ35QualificationHeldOwnerAllowed(fContext,fContext.io)) {
+            if (!BeginHeldImageMutation(4)) return false;
+            heldPrepared=fOwner.PrepareHeldPreservation(io);
+            fHeldImageMutation=0;
+            if (!heldPrepared) return false;
+        }
+#endif
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+        if (fAutoRestoreOnStop && !scope->ProveRoleReleaseSafe(fContext.io,fContext.io.runtimeCore)) return false;
+#endif
+        if ((!heldPrepared && !fOwner.PreparePossibleRelease(io)) || !fOwner.BeginReleaseAttempt(io)
             || !fStartOrder.Arm()) return false;
         fReleaseAuthorized=true; return true;
 #endif
@@ -874,6 +895,17 @@ static bool
 PioneerQ35SharedRoleHeldControlRollbackAccess(const PioneerQwen35SharedRoleBinding* binding)
 {
     return binding && binding->HeldControlRollbackAccessAllowed();
+}
+static bool
+PioneerQ35SharedRoleHeldControlStageAccess(const PioneerQwen35SharedRoleBinding* binding)
+{
+    return binding && binding->HeldControlStageAccessAllowed();
+}
+static bool
+PioneerQ35SharedRoleResetStageTransition(const PioneerQwen35SharedRoleBinding* binding,
+    unsigned core,uint32_t expected,uint32_t desired)
+{
+    return binding && binding->ResetDisableStageTransitionMatches(core,expected,desired);
 }
 static bool
 PioneerQ35SharedRoleResetRollbackTransition(const PioneerQwen35SharedRoleBinding* binding,

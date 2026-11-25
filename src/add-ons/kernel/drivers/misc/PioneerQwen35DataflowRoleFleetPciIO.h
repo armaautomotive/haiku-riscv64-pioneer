@@ -232,6 +232,14 @@ public:
 #endif
     }
     bool HeldPreservationWritesConfirmed() const { return fViews.ControlWritesConfirmed(); }
+    bool HeldPreservationStageAllowed() {
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) \
+    && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+        return fScope.ProveRoleHeldControlStageAllowed(fIO);
+#else
+        return false;
+#endif
+    }
     // The caller owns the fleet release ledger. Consume this tile's attempt
     // before the MMIO write: an unconfirmed write can still have succeeded.
     // The independent scope proof must cover both partially released fleets

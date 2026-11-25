@@ -635,7 +635,7 @@ static bool gRoleMisrouteInjected=false;
 static std::vector<std::vector<uint32_t>> gRoleTileWindows[DataflowBarrierWorkers];
 static uint32_t RoleWindowInitial(unsigned core,unsigned window) {
     const uint32_t value=(0x76540000U+window) ^ (core*0x10001U);
-#if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) || defined(TEST_PRESERVATION_ROLLBACK)
+#if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
     // The modeled reset-PC overrides are disabled on every tile.
     if (window==DataflowRolePhysicalControl) return value&~1U;
 #endif
@@ -673,7 +673,7 @@ static void SelectRoleTestWindows(unsigned previous,unsigned next) {
         }
     }
     if (gRoleWindowCore!=actual) {
-#if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) || defined(TEST_PRESERVATION_ROLLBACK)
+#if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
         constexpr unsigned lastWindow=DataflowRolePhysicalControl;
 #else
         constexpr unsigned lastWindow=DataflowRolePhysicalExtraCode;
@@ -717,7 +717,7 @@ area_id map_physical_memory(const char*,phys_addr_t physical,size_t bytes,uint32
     if (int(index)==gFailMap) return -1;
     gMemory[index].assign(bytes/4,0x76540000U+index); gMapped[index]=true;
 #if defined(TEST_SHARED_POST_RESET) && (defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS))
-#if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) || defined(TEST_PRESERVATION_ROLLBACK)
+#if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
     constexpr unsigned lastWindow=DataflowRolePhysicalControl;
 #else
     constexpr unsigned lastWindow=DataflowRolePhysicalExtraCode;
@@ -741,7 +741,7 @@ status_t delete_area(area_id area) {
 #if defined(TEST_SHARED_POST_RESET) && (defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS))
     // Unmapping a view does not discard device memory. Preserve the last
     // selected tile in the backing model before retiring the mock view.
-#ifdef TEST_PRESERVATION_ROLLBACK
+#if defined(TEST_PRESERVATION_ROLLBACK) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
     constexpr unsigned lastWindow=DataflowRolePhysicalControl;
 #else
     constexpr unsigned lastWindow=DataflowRolePhysicalExtraCode;

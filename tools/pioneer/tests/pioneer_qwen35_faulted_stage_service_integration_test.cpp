@@ -12,13 +12,26 @@
 
 struct ComposedServiceIO : MockDataflowIO {
     PioneerSessionIO& roleIO;
+    bool preparedAllControls=false;
     explicit ComposedServiceIO(PioneerSessionIO& io):roleIO(io) {
         // Qualification starts from a prepared fleet with the processors held.
         for (unsigned core=0;core<DataflowCoreCount;core++)
             originalRunning[core]=started[core]=false;
     }
     bool SharedCaptureAndStageHeld() { return roleIO.SharedCaptureAndStageHeld(); }
-    bool SharedArmAndBeginRelease() { return roleIO.SharedArmAndBeginRelease(); }
+    bool SharedArmAndBeginRelease() {
+        const bool released=roleIO.SharedArmAndBeginRelease();
+        auto* binding=roleIO.qwen35DataflowContext->qwen35SharedRoleBinding;
+        if (!released && binding && PioneerQ35SharedRoleBindingTestAccess::HeldPreservationPrepared(*binding)) {
+            for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+                assert(roleIO.SelectRuntimeCore(core));
+                assert(gMemory[DataflowRolePhysicalControl][0x224/4]
+                    ==(RoleWindowInitial(core,DataflowRolePhysicalControl)|DataflowSharedPreserveResetMask));
+            }
+            preparedAllControls=true;
+        }
+        return released;
+    }
     bool SharedStopAndHoldAll(unsigned& stage,unsigned& core) {
         return roleIO.SharedStopAndHoldAll(stage,core);
     }
@@ -43,7 +56,8 @@ static void ExerciseFaultedStageService(PioneerSessionIO& io) {
     auto serviceIO=std::make_unique<ComposedServiceIO>(io);
     uint32_t code[96]{},dispatch[80]{};
     DataflowServiceImageView image={DataflowServiceBootWord,code,96,dispatch,80};
-    assert(service.Install(image,*serviceIO)==DataflowServiceStartFailed && service.Faulted());
+    assert(service.Install(image,*serviceIO)==DataflowServiceStartFailed && service.Faulted()
+        && serviceIO->preparedAllControls);
     assert(serviceIO->startCount==0 && io.sharedResetWrites==0);
     gQualificationHeldOwnerAllowed=false;gQualificationHeldRollbackOwnerAllowed=true;
     assert(PioneerQ35CanAbortUnstagedQualification(binding));

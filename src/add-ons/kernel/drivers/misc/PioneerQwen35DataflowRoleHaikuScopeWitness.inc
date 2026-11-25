@@ -34,6 +34,8 @@ static bool PioneerQ35SharedRoleProjectionInFlightLedger(const PioneerQwen35Shar
 static bool PioneerQ35SharedRoleHeldImageAccess(const PioneerQwen35SharedRoleBinding*,bool);
 static bool PioneerQ35SharedRoleHeldControlRollbackAccess(const PioneerQwen35SharedRoleBinding*);
 static bool PioneerQ35SharedRoleResetRollbackTransition(const PioneerQwen35SharedRoleBinding*,unsigned,uint32_t,uint32_t);
+static bool PioneerQ35SharedRoleHeldControlStageAccess(const PioneerQwen35SharedRoleBinding*);
+static bool PioneerQ35SharedRoleResetStageTransition(const PioneerQwen35SharedRoleBinding*,unsigned,uint32_t,uint32_t);
 #endif
 #endif
 static bool PioneerQ35SharedRoleSavedRamSources(const PioneerQwen35SharedRoleBinding*,unsigned,
@@ -304,6 +306,11 @@ public:
             && ProveExclusiveRewrite(io) && io.SharedRoleFirmwareMatches() && io.DataflowPanelMappingStable()
             && PioneerQ35SharedRoleHeldControlRollbackAccess(fContext->qwen35SharedRoleBinding);
     }
+    bool ProveRoleHeldControlStageAllowed(PioneerSessionIO& io) const {
+        return fContext && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)
+            && ProveExclusiveRewrite(io) && io.SharedRoleFirmwareMatches() && io.DataflowPanelMappingStable()
+            && PioneerQ35SharedRoleHeldControlStageAccess(fContext->qwen35SharedRoleBinding);
+    }
 #endif
 // PIONEER_Q35_SCOPE_RESET_CONTROL_BEGIN
     bool ProveRoleControlWriteSafe(PioneerSessionIO& io,unsigned core,uint32_t expected,uint32_t desired) const {
@@ -313,7 +320,10 @@ public:
             return ProveRoleHeldControlRollbackAllowed(io) && io.runtimeCore==core
                 && ProveRoleFleetHeldAndQuiet(io,core)
                 && PioneerQ35SharedRoleResetRollbackTransition(fContext->qwen35SharedRoleBinding,core,expected,desired);
-        if (fContext && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)) return false;
+        if (fContext && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io))
+            return ProveRoleHeldControlStageAllowed(io) && io.runtimeCore==core
+                && ProveRoleFleetHeldAndQuiet(io,core)
+                && PioneerQ35SharedRoleResetStageTransition(fContext->qwen35SharedRoleBinding,core,expected,desired);
 #endif
         return ProveRoleMemoryReadSafe(io,core,PioneerQwen35::DataflowRolePhysicalExtraCode)
             && PioneerQ35SharedRoleResetTransition(fContext->qwen35SharedRoleBinding,core,expected,desired)
