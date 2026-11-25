@@ -145,5 +145,29 @@ selected format on the host, and compares two resident commands, each with
 `2e-6 * max(1, sum(abs(weight * input)))` per row. The largest observed
 normalized errors for Q4_K, Q5_K and Q6_K were `1.573e-7`, `1.216e-7` and
 `8.096e-8`, respectively, in each run. These are three tensor slices in the
-experimental simulator; they do not exercise Q8_0, full-model inference,
+experimental simulator; they do not establish full-model inference,
 physical recovery, or P100A speed.
+
+The fused fixture exercises full-width QKV, Alpha and Beta projections together:
+
+```sh
+c++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  tools/pioneer/tests/pioneer_qwen35_ttsim_fused_fixture.cpp \
+  tools/pioneer/PioneerModelWeightCache.cpp -o /tmp/q35-ttsim-fused-fixture
+/tmp/q35-ttsim-fused-fixture /path/to/Qwen3.5-4B-Q4_K_M.gguf /path/to/empty-directory
+python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py \
+  /path/to/experimental-libttsim.so /path/to/build/qwen35-dataflow-service-image \
+  /path/to/build/qwen35-shared-role-images --fused-model-fixture /path/to/empty-directory
+```
+
+The generator authenticates the complete pinned model and uses the production
+tiled reader, triple-projection binder and activation-sharing planner. These
+assign 116 workers to 8,192 Q5_K QKV rows and two each to the 32 Q8_0 Alpha
+and Beta rows. Q5_K and Q8_0 use separate sharing groups. The test checks the
+three independently transposed tensor digests, runs two commands with
+sign-reversed synthetic activations, and compares all 8,256 outputs per run
+against independent quantized references with the tolerance above. It executes
+standalone services with those descriptors; it does not execute the complete
+resident graph recorder or language model. The exploratory simulator remains
+unqualified, and these results provide no physical recovery or performance
+evidence.

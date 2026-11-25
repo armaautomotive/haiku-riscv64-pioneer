@@ -14,22 +14,31 @@ from pathlib import Path
 import struct
 
 
-def projection_reference(fixture, quant, input_offset, tile):
-    """Independently decode byte-major Q4_K, Q5_K or Q6_K on the host.
+def projection_reference(fixture, quant, input_offset, tile, rows=1920, weight_offset=0):
+    """Independently decode byte-major Q4_K, Q5_K, Q6_K or Q8_0 on the host.
 
     This is an offline reference for the simulator fixture, not an inference
     path. The fixed synthetic fixture has exactly representable outputs;
     real model weights require a floating-point tolerance.
     """
     inputs = struct.unpack_from('<2560f', fixture, input_offset)
-    block_bytes = {'q4': 144, 'q5': 176, 'q6': 210}[quant]
+    block_bytes = {'q4': 144, 'q5': 176, 'q6': 210, 'q8': 34}[quant]
+    blocks = 80 if quant == 'q8' else 10
     values, norms = [], []
-    for row in range(1920):
+    for row in range(rows):
         total = 0.0
         norm = 0.0
-        for block in range(10):
-            base = (row // 16 * 10 + block) * tile + row % 16
+        for block in range(blocks):
+            base = weight_offset + (row // 16 * blocks + block) * tile + row % 16
             data = fixture[base:base + block_bytes * 16:16]
+            if quant == 'q8':
+                d = struct.unpack_from('<e', data)[0]
+                for j in range(32):
+                    q = struct.unpack_from('<b', data, 2 + j)[0]
+                    term = inputs[block * 32 + j] * d * q
+                    total += term
+                    norm += abs(term)
+                continue
             if quant == 'q6':
                 d = struct.unpack_from('<e', data, 208)[0]
                 for pos in range(256):
@@ -82,6 +91,8 @@ def main():
                        help='also execute the separately generated fixed projection')
     group.add_argument('--model-projection-fixture', type=Path,
                        help='also execute a fixture prepared from the pinned 4B model')
+    group.add_argument('--fused-model-fixture', type=Path,
+                       help='execute full QKV, Alpha and Beta model projections on 120 workers')
     group.add_argument('--silu-fixture', type=Path,
                        help='also execute the separately generated 120-core SiLU operation')
     group.add_argument('--rms-fixture', type=Path,
@@ -158,8 +169,26 @@ def main():
         reset_address = bar + 0x200000 + (0xffb121b0 & 0x1fffff)
         invocations = None
         invocation_size = 0
-        projection_fixture = args.projection_fixture or args.model_projection_fixture
-        if projection_fixture:
+        projection_fixture = args.projection_fixture or args.model_projection_fixture or args.fused_model_fixture
+        if args.fused_model_fixture:
+            fixture = (projection_fixture / 'fused-fixture.bin').read_bytes()
+            invocations = (projection_fixture / 'fused-invocations.bin').read_bytes()
+            if len(fixture) != 14659584 or len(invocations) != 120 * 1128:
+                raise ValueError('unexpected fused model fixture size')
+            tensors = ((0, 14417920, 'e45da19dfd2000f2c4b40f456a5663dc6677f7990a1626c897e7219387d9ca91'),
+                       (14417920, 92160, 'c66aaea468bd19d584e6259ab39ef7770ed29a93d59ebe0dcdb9dd04d1f1d16d'),
+                       (14512128, 92160, 'd04988bc4158cb6936a5ae77eb6b21299d2c81bf8e5536ee0e2d41e635996ffc'))
+            for offset, size, digest in tensors:
+                if hashlib.sha256(fixture[offset:offset + size]).hexdigest() != digest:
+                    raise ValueError('fused fixture weights do not match the pinned 4B tensors')
+            input_offset = 14606336
+            outputs = (('QKV', 8192, 14618624), ('Alpha', 32, 14651392), ('Beta', 32, 14655488))
+            fused_expected = (projection_reference(fixture, 'q5', input_offset, 2816, 8192, 0),
+                              projection_reference(fixture, 'q8', input_offset, 576, 32, 14417920),
+                              projection_reference(fixture, 'q8', input_offset, 576, 32, 14512128))
+            print('Prepared independent fused references', flush=True)
+            invocation_size = 1128
+        elif projection_fixture:
             quant = args.model_projection_type if args.model_projection_fixture else 'q4'
             tile = {'q4': 2304, 'q5': 2816, 'q6': 3392}[quant]
             weight_bytes = 120 * 10 * tile
@@ -181,6 +210,7 @@ def main():
                 raise ValueError('fixed Q4_K fixture does not match the independent reference')
             expected = reference
             invocation_size = 1128
+        if projection_fixture:
             offset = 0
             while offset < len(fixture):
                 address = 0x4001000 + offset
@@ -258,11 +288,14 @@ def main():
                 if run and projection_fixture:
                     bits = struct.unpack_from('<2560I', fixture, input_offset)
                     data = struct.pack('<2560I', *(value ^ 0x80000000 for value in bits))
-                    bits = struct.unpack('<1920I', expected)
-                    expected = struct.pack('<1920I', *(value ^ 0x80000000 for value in bits))
-                    sentinel = fixture[output_offset:output_offset + len(expected)]
-                    for address, payload in ((0x4001000 + input_offset, data),
-                                             (0x4001000 + output_offset, sentinel)):
+                    if args.fused_model_fixture:
+                        sentinels = [(0x4001000 + offset, fixture[offset:offset + rows * 4])
+                                     for _, rows, offset in outputs]
+                    else:
+                        bits = struct.unpack('<1920I', expected)
+                        expected = struct.pack('<1920I', *(value ^ 0x80000000 for value in bits))
+                        sentinels = [(0x4001000 + output_offset, fixture[output_offset:output_offset + len(expected)])]
+                    for address, payload in [(0x4001000 + input_offset, data), *sentinels]:
                         select(2, address, 18, 12)
                         write(bar + 0x400000 + (address & 0x1fffff), payload)
                 elif run and args.silu_fixture:
@@ -283,7 +316,7 @@ def main():
                 for core in range(120):
                     select_worker(core)
                     write32(mailbox_address + 8, sequence)
-                for attempt in range(100):
+                for attempt in range(300 if args.fused_model_fixture else 100):
                     lib.libttsim_clock(100000)
                     completed = 0
                     for core in range(120):
@@ -297,7 +330,24 @@ def main():
                         break
                 else:
                     raise RuntimeError('operation did not complete on all 120 simulated cores')
-                if projection_fixture:
+                if args.fused_model_fixture:
+                    for (name, rows, offset), (reference, norms) in zip(outputs, fused_expected):
+                        address = 0x4001000 + offset
+                        select(2, address, 18, 12)
+                        actual = struct.unpack(f'<{rows}f', read(bar + 0x400000 + (address & 0x1fffff), rows * 4))
+                        maximum = worst = 0.0
+                        for row, (got, want, norm) in enumerate(zip(actual, reference, norms)):
+                            want = -want if run else want
+                            error = abs(got - want)
+                            ratio = error / max(1.0, norm)
+                            maximum = max(maximum, error)
+                            worst = max(worst, ratio)
+                            if not math.isfinite(got) or ratio > 2e-6:
+                                raise RuntimeError(f'{name} run {run + 1}, row {row}: '
+                                                   f'{got} differs from {want}; normalized error {ratio}')
+                        print(f'{name} run {run + 1}: maximum absolute error {maximum:.9g}; '
+                              f'maximum error / sum of absolute products {worst:.9g}', flush=True)
+                elif projection_fixture:
                     address = 0x4001000 + output_offset
                     select(2, address, 18, 12)
                     data = read(bar + 0x400000 + (address & 0x1fffff), len(expected))
@@ -368,7 +418,10 @@ def main():
                 raise RuntimeError(f'core {core}: reader/writer did not stop: {roles}')
         print('PASS compiled Q35 service and reader/writer roles start and stop on 120 Blackhole simulator cores; NO HARDWARE')
         if invocations is not None:
-            if args.projection_fixture:
+            if args.fused_model_fixture:
+                print('PASS two resident 116+2+2 QKV/Alpha/Beta projections match '
+                      '8,256 independently checked values each; SIMULATED ONLY')
+            elif args.projection_fixture:
                 print('PASS two resident 120-core Q4_K projections match 1,920 independently checked values each; SIMULATED ONLY')
             elif args.model_projection_fixture:
                 print(f'PASS two resident 120-core model-weight {quant.upper()}_K projections match '
