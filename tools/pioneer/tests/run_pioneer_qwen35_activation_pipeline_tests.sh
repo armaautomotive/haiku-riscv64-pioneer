@@ -11,6 +11,7 @@ ${CXX:-c++} $flags "$directory/pioneer_qwen35_activation_share_tree_test.cpp" -o
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sharing-tree"
 sharing_flags='-DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS'
 for test in pioneer_qwen35_activation_share_startup_test pioneer_qwen35_activation_share_reader_test \
+    pioneer_qwen35_activation_share_fleet_test \
     pioneer_qwen35_dataflow_role_memory_plan_test pioneer_qwen35_dataflow_role_code_owner_test; do
     ${CXX:-c++} $flags $sharing_flags "$directory/$test.cpp" -o "$temporary/$test"
     ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/$test"
