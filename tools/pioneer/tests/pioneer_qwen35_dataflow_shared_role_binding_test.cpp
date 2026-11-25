@@ -904,6 +904,9 @@ static void ExercisePartialReleaseBinding(PioneerSessionIO& io) {
 }
 #endif
 
+#ifdef TEST_REAL_SERVICE_INTEGRATION
+#define main existing_shared_binding_test_main
+#endif
 int main()
 {
     DataflowRoleProgramBounds exported={
@@ -963,4 +966,8 @@ int main()
 #else
     std::puts("PASS actual shared role binding denies mapping, reset and release without fleet proof; SIMULATED ONLY");
 #endif
+    return 0;
 }
+#ifdef TEST_REAL_SERVICE_INTEGRATION
+#undef main
+#endif

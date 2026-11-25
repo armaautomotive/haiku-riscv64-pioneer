@@ -5,6 +5,9 @@
 #include <KernelExport.h>
 #include "../PioneerQwen35DataflowRolePhysicalPlan.h"
 #include "../PioneerQwen35DataflowOwner.h"
+#ifdef TEST_REAL_SERVICE_INTEGRATION
+#include "../PioneerQwen35DataflowServiceOwner.h"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerPciProfile.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeDramSamplesProbe.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeResidentReadProbe.h"
@@ -52,16 +55,39 @@ namespace PioneerQwen35 { struct DataflowWorkerSnapshot; }
 #endif
 struct PioneerProbeCookie { uint32_t magic=0x50313030; team_id team=11; PioneerStoreContext* context=nullptr; };
 struct FakeService {
+#ifdef TEST_REAL_SERVICE_INTEGRATION
+    DataflowServiceOwner* real=nullptr;
+#endif
     bool ready=true;
     bool capturePending=false;
     bool graphRunning=false;
     bool faulted=false;
     bool cleanStopPending=false;
     bool faultStopPending=false;
-    bool Ready() const { return ready; }
-    bool SharedRoleCapturePending() const { return capturePending; }
-    bool GraphRunning() const { return graphRunning; }
-    bool Faulted() const { return faulted; }
+    bool Ready() const {
+#ifdef TEST_REAL_SERVICE_INTEGRATION
+        if (real) return real->Ready();
+#endif
+        return ready;
+    }
+    bool SharedRoleCapturePending() const {
+#ifdef TEST_REAL_SERVICE_INTEGRATION
+        if (real) return real->SharedRoleCapturePending();
+#endif
+        return capturePending;
+    }
+    bool GraphRunning() const {
+#ifdef TEST_REAL_SERVICE_INTEGRATION
+        if (real) return real->GraphRunning();
+#endif
+        return graphRunning;
+    }
+    bool Faulted() const {
+#ifdef TEST_REAL_SERVICE_INTEGRATION
+        if (real) return real->Faulted();
+#endif
+        return faulted;
+    }
     bool SharedDedicatedCleanStopPending() const { return cleanStopPending; }
     bool SharedSnapshotCleanStopPending() const { return cleanStopPending; }
     bool SharedSnapshotFaultStopPending() const { return faultStopPending; }
@@ -712,6 +738,15 @@ status_t delete_area(area_id area) {
     assert(gLocked && area>=0 && unsigned(area)<gMapped.size() && gMapped[area]);
     ++gUnmapCalls;
     if (area==gFailUnmap) { gFailUnmap=-1; return -1; }
+#if defined(TEST_SHARED_POST_RESET) && (defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS))
+    // Unmapping a view does not discard device memory. Preserve the last
+    // selected tile in the backing model before retiring the mock view.
+    if (gPerCoreRoleWindows && unsigned(area)<=DataflowRolePhysicalExtraCode) {
+        auto& tile=gRoleTileWindows[gRoleWindowCore][unsigned(area)];
+        assert(tile.size()==gMemory[area].size());
+        std::copy(gMemory[area].begin(),gMemory[area].end(),tile.begin());
+    }
+#endif
     gMapped[area]=false; return B_OK;
 }
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) \
