@@ -792,6 +792,8 @@ PIONEER_QWEN35_SHARED_ROLE_GRAPH_COMPILE_ONLY=1 PIONEER_QWEN35_RECOVERY_COMPILE_
 	sh "$root/tools/pioneer/build_qwen35_dataflow_service_image.sh" "$build" "$temporary/shared-graph-service"
 sh "$root/tools/pioneer/build_qwen35_resident_service_witness.sh" \
     "$build" "$temporary/shared-graph-service" "$temporary/resident-graph-service"
+PIONEER_QWEN35_TREE_SETTLEMENT_WITNESS=1 sh "$root/tools/pioneer/build_qwen35_resident_service_witness.sh" \
+    "$build" "$temporary/shared-graph-service" "$temporary/resident-tree-graph-service"
 for image in "$temporary/shared-role-images/reader.disassembly" \
 	"$temporary/shared-graph-service/disassembly.txt"; do
 	if ! grep -E '# abe40([[:space:]]|$)' "$image" >/dev/null; then
@@ -1277,6 +1279,18 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
 	-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE \
 	"$directory/pioneer_qwen35_resident_service_test.cpp" -o "$temporary/resident-service-paired-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-service-paired-test"
+for variant in ordinary paired; do
+    tree_flags=
+    [ "$variant" = ordinary ] || tree_flags=-DPIONEER_QWEN35_PAIRED_RECURRENCE
+    ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+        -DPIONEER_QWEN35_TREE_SETTLEMENT -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS $tree_flags \
+        "$directory/pioneer_qwen35_resident_service_test.cpp" -o "$temporary/resident-tree-$variant-test"
+    ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-tree-$variant-test"
+done
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    "$directory/pioneer_qwen35_tree_receipt_bounds_test.cpp" -o "$temporary/resident-tree-bounds-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-tree-bounds-test"
+python3 -B "$directory/pioneer_qwen35_tree_build_guard_test.py"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_graph_authorization_test.cpp" \
 	-o "$temporary/graph-authorization-test"

@@ -13,7 +13,8 @@ struct ServiceFabric {
     bool begun[DataflowCoreCount]{},ready[DataflowCoreCount]{};
     DataflowResidentSenderReceipt sender[DataflowCoreCount]{};
     unsigned graphCalls=0,candidates=0,started=0;
-    int failGraph=-1,failGatherAfterDelivery=-1;
+    int failGraph=-1,failGatherAfterDelivery=-1,corruptSender=-1,failReceiptRead=-1,delaySender=-1;
+    unsigned settlementReads=0,delayRounds=0;DataflowResidentCommand delayed{};
 };
 struct ServiceIO {
     ServiceFabric& f;unsigned core;
@@ -67,13 +68,29 @@ struct ServiceIO {
         return DataflowBarrierReadCommitted(f.payload[core].word,f.marker[core].word,epoch,step,out);
 #endif
     }
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+    DataflowBarrierReadResult ReadChildSettlement(unsigned child,unsigned epoch,unsigned trigger) {
+        assert(DataflowBarrierReleaseEdge(core,child));++f.settlementReads;
+        if (int(child)==f.failReceiptRead) return DataflowBarrierInvalid;
+        const auto receipt=f.sender[child];
+        const uint32_t words[4]={receipt.trigger,receipt.epoch,receipt.core,receipt.checksum};
+        return DataflowResidentSenderReceiptReadResult(words,words,child,trigger,epoch);
+    }
+#endif
     bool ExecuteResidentGraph(unsigned worker,const DataflowGraphRunDescriptor& d) {
         assert(worker==core && DataflowGraphRunValid(d,core));++f.graphCalls;return int(core)!=f.failGraph;
     }
     bool RecordResidentGraphResult(unsigned worker,unsigned,bool) { return worker==core; }
     bool PublishResidentSenderReceipt(unsigned worker,const DataflowResidentCommand& command) {
-        return worker==core && DataflowResidentSenderReceiptPublish(
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+        if (worker==core && int(core)==f.delaySender && f.delayRounds) {
+            f.delayed=command;return true; // simulate delayed L1 visibility
+        }
+#endif
+        const bool okay=worker==core && DataflowResidentSenderReceiptPublish(
             reinterpret_cast<volatile uint32_t*>(&f.sender[core]),core,command.trigger,command.epoch);
+        if (okay && int(core)==f.corruptSender) f.sender[core].checksum^=1;
+        return okay;
     }
     bool PublishResidentCandidate(unsigned worker,const DataflowResidentCommand&) {
         assert(worker==core && f.ready[core]);if (!core) ++f.candidates;return true;
@@ -127,6 +144,13 @@ struct ServiceFixture {
         Submit();
     }
     void Tick() {
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+        if (fabric->delayed.trigger && fabric->delayRounds && !--fabric->delayRounds) {
+            const unsigned core=unsigned(fabric->delaySender);
+            assert(DataflowResidentSenderReceiptPublish(reinterpret_cast<volatile uint32_t*>(&fabric->sender[core]),
+                core,fabric->delayed.trigger,fabric->delayed.epoch));
+        }
+#endif
         for (unsigned core=0;core<DataflowCoreCount;core++)
             if (state[core]!=DataflowResidentServiceCandidate && state[core]!=DataflowResidentServiceRetained)
                 state[core]=service[core]->Tick();
@@ -167,13 +191,43 @@ int main() {
                 && run->service[core]->CompletedSequence()==3 && run->service[core]->CompletedEpoch()==7);
     }
     {
-        // Root can observe a delivered gather even while its sender reports
-        // failure. The failed sender must not publish its local receipt.
+        // A gather can be delivered even while its sender reports failure.
+        // The failed sender must not publish its local receipt.
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+        for (unsigned failed: {1U,4U,5U,29U,30U,119U}) {
+            auto run=std::make_unique<ServiceFixture>(64);run->fabric->failGatherAfterDelivery=int(failed);run->Submit();
+            for (unsigned round=0;round<300;round++) run->Tick();
+            assert(run->state[0]==DataflowResidentServiceRetained && run->state[failed]==DataflowResidentServiceRetained
+                && !run->fabric->candidates && !DataflowResidentSenderReceiptMatches(run->fabric->sender[failed],failed,run->command));
+        }
+#else
         auto run=std::make_unique<ServiceFixture>();run->fabric->failGatherAfterDelivery=119;run->Submit();
         for (unsigned round=0;round<300 && run->state[0]!=DataflowResidentServiceCandidate;round++) run->Tick();
         assert(run->state[0]==DataflowResidentServiceCandidate && run->state[119]==DataflowResidentServiceRetained
             && !DataflowResidentSenderReceiptMatches(run->fabric->sender[119],119,run->command));
+#endif
     }
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+    {
+        auto run=std::make_unique<ServiceFixture>(64);run->fabric->failReceiptRead=30;run->Submit();
+        for (unsigned round=0;round<300;round++) run->Tick();
+        assert(run->state[0]==DataflowResidentServiceRetained && !run->fabric->candidates
+            && run->fabric->settlementReads>0);
+    }
+    {
+        auto run=std::make_unique<ServiceFixture>(128);run->fabric->delaySender=119;
+        run->fabric->delayRounds=20;run->Submit();
+        for (unsigned round=0;round<300 && run->state[0]!=DataflowResidentServiceCandidate;round++) run->Tick();
+        assert(run->state[0]==DataflowResidentServiceCandidate && run->fabric->candidates==1
+            && !run->fabric->delayRounds && run->fabric->settlementReads>0);
+    }
+    {
+        auto run=std::make_unique<ServiceFixture>(64);run->fabric->corruptSender=117;run->Submit();
+        for (unsigned round=0;round<300;round++) run->Tick();
+        assert(run->state[0]==DataflowResidentServiceRetained && !run->fabric->candidates
+            && run->fabric->settlementReads>0);
+    }
+#endif
     {
         auto run=std::make_unique<ServiceFixture>(12);run->fabric->failGraph=37;run->Submit();
         for (unsigned round=0;round<80;round++) run->Tick();

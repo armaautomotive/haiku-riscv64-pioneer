@@ -249,6 +249,17 @@ public:
 			&& Send(worker,DataflowBarrierReleasePayload,payload)
 			&& Send(worker,DataflowBarrierReleaseCommit,commit);
 	}
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+    bool ReadResidentChildReceipt(unsigned child,uint32_t (&words)[4]) {
+        if (!DataflowBarrierReleaseEdge(core,child)) return false;
+        auto* outbox=reinterpret_cast<volatile uint32_t*>(static_cast<uintptr_t>(DataflowBarrierOutbox));
+        if (!noc.ReadBarrierReceipt(core,child,reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(DataflowBarrierOutbox))))
+            return false;
+        const unsigned offset=DataflowBarrierSenderReceiptOffset/4;
+        for (unsigned i=0;i<4;i++) words[i]=DataflowLoadAcquire(outbox[offset+i]);
+        return true;
+    }
+#endif
 	bool SendArrival(unsigned worker,const DataflowBarrierPacket& payload,const DataflowBarrierPacket& commit)
 	{
 		const unsigned parent=DataflowBarrierReleaseParent(worker);

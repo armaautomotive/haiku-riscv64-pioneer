@@ -95,8 +95,9 @@ inline bool DataflowNocDecodeLocalRoute(uint32_t raw,uint32_t& route)
 
 inline bool DataflowNocRouteMatchesWorker(uint32_t route,unsigned worker)
 {
-	const unsigned columns[]={1,2,3,4,5,6,7,10,11,12,13,14};
-	return worker<120 && route==(columns[worker/10]|((2+worker%10)<<6));
+	if (worker>=120) return false;
+	const unsigned column=worker/10;
+	return route==((column<7?column+1:column+3)|((2+worker%10)<<6));
 }
 
 inline void DataflowNocBuildCommand(bool write,uint32_t remote,uint32_t route,

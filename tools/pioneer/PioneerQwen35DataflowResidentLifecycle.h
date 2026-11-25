@@ -36,6 +36,9 @@ template<class IO,class BarrierIO=IO> class DataflowResidentLifecycle {
     DataflowDeviceBarrier<BarrierIO> barrier;
     unsigned core=DataflowBarrierWorkers,epoch=0,trigger=0,pollLimit=0,polls=0,seen=0;
     bool gatherSent=false;
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+    unsigned arrived=0;
+#endif
     DataflowResidentLifecycleResult Fail() { phase=Retained;return DataflowResidentLifecycleRetained; }
     bool BeginBarrier(unsigned tag) {
         polls=0;
@@ -48,12 +51,22 @@ template<class IO,class BarrierIO=IO> class DataflowResidentLifecycle {
             && child<DataflowBarrierWorkers;child++) {
             const unsigned bit=1U<<(child-first);
             if (seen&bit) continue;
-            DataflowBarrierPacket packet{};
-            const auto state=io.ReadArrival(child,epoch,DataflowResidentGatherTag|trigger,packet);
-            if (state==DataflowBarrierWaiting) { all=false;continue; }
-            if (state!=DataflowBarrierReady
-                || !DataflowBarrierPayloadValid(packet,epoch,DataflowResidentGatherTag|trigger,child)
-                || packet.word[5] || packet.word[6]) return Fail();
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+            if (!(arrived&bit)) {
+#endif
+                DataflowBarrierPacket packet{};
+                const auto state=io.ReadArrival(child,epoch,DataflowResidentGatherTag|trigger,packet);
+                if (state==DataflowBarrierWaiting) { all=false;continue; }
+                if (state!=DataflowBarrierReady
+                    || !DataflowBarrierPayloadValid(packet,epoch,DataflowResidentGatherTag|trigger,child)
+                    || packet.word[5] || packet.word[6]) return Fail();
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+                arrived|=bit;
+            }
+            const auto settled=io.ReadChildSettlement(child,epoch,trigger);
+            if (settled==DataflowBarrierWaiting) { all=false;continue; }
+            if (settled!=DataflowBarrierReady) return Fail();
+#endif
             seen|=bit;
         }
         if (!all) return DataflowResidentLifecyclePending;

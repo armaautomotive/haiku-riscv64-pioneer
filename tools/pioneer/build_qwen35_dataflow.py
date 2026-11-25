@@ -501,6 +501,8 @@ def main():
                         help='compile held dedicated fleet with role snapshot/restore; non-loadable')
     parser.add_argument('--compile-resident-service-prototype', action='store_true',
                         help='embed the resident service in the non-loadable snapshot witness')
+    parser.add_argument('--compile-tree-settlement-prototype', action='store_true',
+                        help='enable experimental device-tree settlement in the non-loadable resident witness')
     parser.add_argument('--compile-supported-span-prototype', action='store_true',
                         help='compile the supported-counter Q35 preload into the non-loadable rewrite')
     parser.add_argument('--build-device-dispatch-trial', action='store_true',
@@ -605,6 +607,8 @@ def main():
     if args.compile_resident_service_prototype and (not args.compile_snapshot_takeover_prototype
             or args.build_recovery_qualification or args.build_device_dispatch_trial):
         parser.error('resident service requires the non-loadable snapshot takeover witness')
+    if args.compile_tree_settlement_prototype and not args.compile_resident_service_prototype:
+        parser.error('tree settlement requires the non-loadable resident service witness')
     if args.compile_supported_span_prototype and (not args.compile_device_dispatch_prototype
             or (args.build_recovery_qualification and not args.build_span_qualification)
             or args.build_device_dispatch_trial):
@@ -649,6 +653,8 @@ def main():
         driver_env['PIONEER_QWEN35_SNAPSHOT_TAKEOVER_COMPILE_ONLY'] = '1'
     if args.compile_resident_service_prototype:
         driver_env['PIONEER_QWEN35_RESIDENT_SERVICE_COMPILE_ONLY'] = '1'
+    if args.compile_tree_settlement_prototype:
+        driver_env['PIONEER_QWEN35_TREE_SETTLEMENT_WITNESS'] = '1'
     if args.compile_supported_span_prototype:
         driver_env['PIONEER_QWEN35_SUPPORTED_SPAN_COMPILE_ONLY'] = '1'
     if args.build_span_qualification:

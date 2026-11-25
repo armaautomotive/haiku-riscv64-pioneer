@@ -133,7 +133,7 @@ class DataflowBlackholeNoc {
 		if (detail) *detail={};
 		const uint32_t localAddress=uint32_t(reinterpret_cast<uintptr_t>(local));
 		const bool rangeOkay=BarrierPeer
-			?write && Noc==1 && DataflowBarrierPeerWriteAllowed(source,destination,
+			?Noc==1 && DataflowBarrierPeerAllowed(write,source,destination,
 				route,remote,localAddress,bytes)
 			:LocalRange(localAddress,bytes) && remote>=BankBase && remote<BankLimit
 				&& bytes<=BankLimit-remote;
@@ -315,6 +315,16 @@ public:
 	{
 		return Transfer(true,remote,route,const_cast<uint8_t*>(local),bytes,detail);
 	}
+
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+	// Fixed read-only parent/child receipt block, not a generic peer read.
+	bool ReadBarrierReceipt(unsigned source,unsigned destination,uint8_t* local,
+		DataflowNocDiagnostic* detail=nullptr) const {
+		return Transfer<true>(false,DataflowBarrierSenderReceiptBlock,
+			DataflowBarrierWorkerRoute(destination),local,DataflowBarrierPacketBytes,
+			detail,source,destination);
+	}
+#endif
 
 	// The dispatch barrier has two fixed 64-byte packets per message. This is
 	// not a general peer-write interface and is not enabled by the service yet.

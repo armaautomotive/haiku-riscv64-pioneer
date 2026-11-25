@@ -16,6 +16,8 @@ enum : unsigned {
 	DataflowBarrierReleaseFanout=4,
 	DataflowBarrierPacketBytes=64,
 	DataflowBarrierOutbox=0xab040,
+	DataflowBarrierSenderReceiptBlock=0xab540,
+	DataflowBarrierSenderReceiptOffset=16,
 	DataflowBarrierReleasePayload=0xab080,
 	DataflowBarrierReleaseCommit=0xab0c0,
 	DataflowBarrierArrivalBase=0xac000,
@@ -39,9 +41,9 @@ inline unsigned DataflowBarrierArrivalAddress(unsigned worker,bool commit)
 
 inline unsigned DataflowBarrierWorkerRoute(unsigned worker)
 {
-	const unsigned columns[]={1,2,3,4,5,6,7,10,11,12,13,14};
-	return worker<DataflowBarrierWorkers
-		?columns[worker/10]|((2+worker%10)<<6):UINT32_MAX;
+	if (worker>=DataflowBarrierWorkers) return UINT32_MAX;
+	const unsigned column=worker/10;
+	return (column<7?column+1:column+3)|((2+worker%10)<<6);
 }
 
 // A fixed four-way heap tree aggregates arrivals and distributes the
@@ -65,21 +67,29 @@ inline bool DataflowBarrierSubtreeContains(unsigned root,unsigned worker)
 	return worker==root;
 }
 
-// No arbitrary address, core or route is supplied to the NoC transport.
-// A peer may publish only its own slot in its parent's L1; release travels
-// down the same fixed tree. The core-0 local receipt needs no NoC packet.
-inline bool DataflowBarrierPeerWriteAllowed(unsigned source,unsigned destination,
-	unsigned route,unsigned remote,unsigned local,unsigned bytes)
-{
-	if (source>=DataflowBarrierWorkers || destination>=DataflowBarrierWorkers
-		|| source==destination || route!=DataflowBarrierWorkerRoute(destination)
-		|| local!=DataflowBarrierOutbox || bytes!=DataflowBarrierPacketBytes) return false;
-	if (DataflowBarrierReleaseEdge(destination,source))
-		return remote==DataflowBarrierArrivalAddress(source,false)
-			|| remote==DataflowBarrierArrivalAddress(source,true);
-	if (DataflowBarrierReleaseEdge(source,destination))
-		return remote==DataflowBarrierReleasePayload || remote==DataflowBarrierReleaseCommit;
-	return false;
+// The fixed parent/child routes permit only barrier packets and one
+// read-only receipt block. No arbitrary peer memory is exposed.
+__attribute__((noinline)) inline bool DataflowBarrierPeerAllowed(bool write,unsigned source,unsigned destination,
+    unsigned route,unsigned remote,unsigned local,unsigned bytes) {
+    if (source>=DataflowBarrierWorkers || destination>=DataflowBarrierWorkers || source==destination
+        || route!=DataflowBarrierWorkerRoute(destination) || local!=DataflowBarrierOutbox
+        || bytes!=DataflowBarrierPacketBytes) return false;
+    if (!write) return DataflowBarrierReleaseEdge(source,destination)
+        && remote==DataflowBarrierSenderReceiptBlock;
+    if (DataflowBarrierReleaseEdge(destination,source))
+        return remote==DataflowBarrierArrivalAddress(source,false)
+            || remote==DataflowBarrierArrivalAddress(source,true);
+    return DataflowBarrierReleaseEdge(source,destination)
+        && (remote==DataflowBarrierReleasePayload || remote==DataflowBarrierReleaseCommit);
 }
+inline bool DataflowBarrierPeerReceiptReadAllowed(unsigned source,unsigned destination,
+    unsigned route,unsigned remote,unsigned local,unsigned bytes) {
+    return DataflowBarrierPeerAllowed(false,source,destination,route,remote,local,bytes);
+}
+inline bool DataflowBarrierPeerWriteAllowed(unsigned source,unsigned destination,
+    unsigned route,unsigned remote,unsigned local,unsigned bytes) {
+    return DataflowBarrierPeerAllowed(true,source,destination,route,remote,local,bytes);
+}
+
 }
 #endif
