@@ -122,7 +122,7 @@ struct PioneerPostResetMapping {
 struct PioneerHostDmaAuditIO { bool AfterNodeId(unsigned) { return Step(2); } };
 struct MockIO : PioneerHostDmaAuditIO {
     bool postResetDisposeComplete=false,fabricOldMmioDisposeComplete=false,quarantined=false;
-    template<class Check> bool GuardedRecoveryHostAudits(unsigned node,Check& check) {
+    template<class Check> bool GuardedRecoveryBaseline(unsigned node,Check& check) {
         return check() && AfterNodeId(node) && check();
     }
     void QuarantineHostPage() { quarantined=true; }

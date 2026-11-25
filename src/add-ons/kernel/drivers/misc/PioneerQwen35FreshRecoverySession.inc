@@ -219,7 +219,7 @@ private:
                     || !TicketValid(guard)) { lost=true;return false; }
                 return true;
             };
-            if (!fresh->io.GuardedRecoveryHostAudits(fresh->Pci().node_id[0],check))
+            if (!fresh->io.GuardedRecoveryBaseline(fresh->Pci().node_id[0],check))
                 return Retain(scope,Baseline);
             if (!PioneerQ35GuardedSessionIdle(fresh->io,fresh->baseline.baseline.baseline.noc,fresh->idle,check))
                 return Retain(scope,Baseline);
