@@ -160,7 +160,7 @@ int main(int argc,char** argv)
             || !DataflowRmsProgramBuilder::BindCore(rms,core,n)
             || !DataflowStreamEncode(n,99,3,records[core*5+2])
             || !DataflowStreamEncode(projections[core],99,4,records[core*5+3])) return 1;
-        // The final zero record deliberately terminates after two barriers.
+        // The final zero record deliberately terminates after four barriers.
     }
     const std::string directory=argv[2];
     const std::array<std::string,6> paths={directory+"/templates.bin",directory+"/command.bin",

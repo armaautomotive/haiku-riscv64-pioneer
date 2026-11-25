@@ -216,6 +216,15 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
         'audit_delta': 'PioneerSessionIO::AuditDelta(',
         'delta_invocation': 'PioneerSessionIO::DeltaInvocationMatches(',
     }
+    sharded_delta = (driver_directory / 'qwen35-dataflow-service-image' / 'delta-shard.marker').is_file()
+    resident_marker = driver_directory / 'qwen35-resident-service-image' / 'delta-shard.marker'
+    if resident_marker.is_file() != sharded_delta:
+        raise RuntimeError('resident and graph images disagree on sharded delta')
+    if sharded_delta:
+        # The direct, single-command delta owner is deliberately disabled in
+        # this witness. Its two graph-record frames are checked below.
+        for key in ('delta_bind', 'owner_delta', 'audit_delta', 'delta_invocation'):
+            del required[key]
     sizes = {}
     for key, marker in required.items():
         matches = [(frame, kind) for name, frame, kind in entries
@@ -243,7 +252,7 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
                          + sizes['bind_core'])
     recurrent_request_stack = (sizes['control'] + sizes['generation']
                                + sizes['decoder'] + sizes['recurrent'])
-    delta_service_branch = sizes['owner_delta'] + max(
+    delta_service_branch = 0 if sharded_delta else sizes['owner_delta'] + max(
         sizes['publish'], sizes['delta_invocation'],
         sizes['audit_delta'] + max(sizes['delta_matches'], sizes['delta_bind']))
     delta_build_branch = max(sizes['delta_build'], sizes['delta_matches'])
@@ -277,6 +286,11 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
             ('page transfer', ('PioneerResidentStorePage(', 'PioneerSessionIO')),
             ('page command', ('PioneerResidentStoreCommand(', 'PioneerSessionIO')),
         ]
+        if sharded_delta:
+            for phase in ('DataflowDeltaShardUpdate', 'DataflowDeltaShardNormalize'):
+                if not any('DataflowStreamRecorder<Sink>::Emit(' in n and phase in n and kind=='static'
+                           for n, _, kind in entries):
+                    raise RuntimeError('missing or unbounded sharded delta recorder frame: ' + phase)
         # Paired recurrence adds a non-inlined bridge and compatibility
         # check on the recording path; include both even though the latter
         # does not overlap every other conservative branch above.
@@ -542,6 +556,8 @@ def main():
                         help='embed the resident service in the non-loadable snapshot witness')
     parser.add_argument('--compile-tree-settlement-prototype', action='store_true',
                         help='enable experimental device-tree settlement in the non-loadable resident witness')
+    parser.add_argument('--compile-delta-shard-prototype', action='store_true',
+                        help='compile the fused two-stage delta graph in the non-loadable resident witness')
     parser.add_argument('--compile-fabric-guard-prototype', action='store_true',
                         help='compile an explicitly non-loadable fabric-recovery guard witness')
     parser.add_argument('--compile-supported-span-prototype', action='store_true',
@@ -650,6 +666,9 @@ def main():
         parser.error('resident service requires the non-loadable snapshot takeover witness')
     if args.compile_tree_settlement_prototype and not args.compile_resident_service_prototype:
         parser.error('tree settlement requires the non-loadable resident service witness')
+    if args.compile_delta_shard_prototype and (not args.compile_resident_service_prototype
+            or args.build_recovery_qualification or args.build_device_dispatch_trial):
+        parser.error('sharded delta requires the non-loadable resident service witness')
     if args.compile_fabric_guard_prototype and (not args.compile_snapshot_takeover_prototype
             or args.build_recovery_qualification or args.build_device_dispatch_trial):
         parser.error('fabric guard requires the non-loadable snapshot takeover witness')
@@ -699,6 +718,10 @@ def main():
         driver_env['PIONEER_QWEN35_RESIDENT_SERVICE_COMPILE_ONLY'] = '1'
     if args.compile_tree_settlement_prototype:
         driver_env['PIONEER_QWEN35_TREE_SETTLEMENT_WITNESS'] = '1'
+    if args.compile_delta_shard_prototype:
+        driver_env['PIONEER_QWEN35_FUSED_RECURRENCE_COMPILE_ONLY'] = '1'
+        driver_env['PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY'] = '1'
+        driver_env['PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY'] = '1'
     if args.compile_fabric_guard_prototype:
         driver_env['PIONEER_QWEN35_FABRIC_GUARD_COMPILE_ONLY'] = '1'
     if args.compile_supported_span_prototype:

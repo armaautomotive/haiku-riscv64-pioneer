@@ -18,7 +18,13 @@ enum : unsigned {
 	DataflowGraphFaultMagic=0x31464735,
 	DataflowGraphProgressMagic=0x51350000,
 	DataflowGraphRunMaxPolls=1048576,
-#ifdef PIONEER_QWEN35_FUSED_RECURRENCE
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+#if !defined(PIONEER_QWEN35_FUSED_RECURRENCE) || !defined(PIONEER_QWEN35_PAIRED_RECURRENCE)
+#error Sharded recurrence witness requires fused paired recurrence
+#endif
+	DataflowGraphDecodeSteps=524,
+	DataflowGraphPromptSteps=521
+#elif defined(PIONEER_QWEN35_FUSED_RECURRENCE)
 #ifndef PIONEER_QWEN35_PAIRED_RECURRENCE
 #error Fused recurrence requires the paired recurrence infrastructure
 #endif

@@ -26,6 +26,9 @@ inline unsigned DataflowGraphProfileOperation(unsigned magic)
 		case DataflowProgramMagic:return DataflowProfileProjection;
 		case DataflowConvMagic:return DataflowProfileConv;
 		case DataflowDeltaMagic:return DataflowProfileDelta;
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+		case DataflowDeltaShardMagic:return DataflowProfileDelta;
+#endif
 		case DataflowSiluMagic:return DataflowProfileSilu;
 		case DataflowDenseAttentionMagic:return DataflowProfileDense;
 		case DataflowArgmaxMagic:return DataflowProfileArgmax;

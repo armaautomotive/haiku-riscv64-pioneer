@@ -10,6 +10,9 @@
 #include "PioneerQwen35DataflowBlackholeResidualWorker.h"
 #include "PioneerQwen35DataflowBlackholeConvWorker.h"
 #include "PioneerQwen35DataflowBlackholeDeltaWorker.h"
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+#include "PioneerQwen35DataflowDeltaShards.h"
+#endif
 #include "PioneerQwen35DataflowBlackholeDenseAttentionWorker.h"
 #include "PioneerQwen35DataflowBlackholeArgmaxWorker.h"
 #ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
@@ -390,6 +393,7 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 						DataflowOutputBufferAddress)),io);
 		}
 		if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
+#ifndef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
 	} else if (invocationMagic==DataflowDeltaMagic) {
 		const auto* delta=reinterpret_cast<const DataflowDeltaInvocation*>(
 			static_cast<uintptr_t>(DataflowProgramAddress));
@@ -421,6 +425,28 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 							+(DataflowDeltaScalarCount+2*DeltaWidth)*sizeof(float))),io);
 		}
 		if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
+#endif
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+	} else if (invocationMagic==DataflowDeltaShardMagic) {
+		const auto* delta=reinterpret_cast<const DataflowDeltaShardInvocation*>(
+			static_cast<uintptr_t>(DataflowProgramAddress));
+		if (DataflowWorkerQueuesClean() && delta->Valid() && delta->core==core) {
+			DataflowBlackholeDeltaOps io;
+			DataflowDeltaShardScratch scratch{
+				reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowInputBufferAddress)),
+				reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowInputBufferAddress+DataflowInputPageBytes)),
+				reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowOutputBufferAddress)),
+				reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowDeltaStateInputAddress)),
+				reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowDeltaStateOutputAddress)),
+				reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowActivationCacheAddress)),
+				reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowActivationCacheAddress+DataflowDeltaScalarCount*sizeof(float))),
+				reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowActivationCacheAddress+(DataflowDeltaScalarCount+DeltaWidth)*sizeof(float))),
+				reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowActivationCacheAddress+(DataflowDeltaScalarCount+2*DeltaWidth)*sizeof(float)))};
+			okay=PioneerQwen35DataflowDeltaShardWorker(delta->program,core,
+				static_cast<DataflowDeltaShardPhase>(delta->phase),scratch,io);
+		}
+		if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
+#endif
 	} else if (invocationMagic==DataflowDenseAttentionMagic) {
 		const auto* dense=reinterpret_cast<const DataflowDenseAttentionInvocation*>(
 			static_cast<uintptr_t>(DataflowProgramAddress));

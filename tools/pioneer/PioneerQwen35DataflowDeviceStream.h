@@ -4,6 +4,9 @@
 
 #include "PioneerQwen35DataflowAuthorization.h"
 #include "PioneerQwen35DataflowBlackholeIO.h"
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+#include "PioneerQwen35DataflowDeltaShardProgram.h"
+#endif
 #include <stddef.h>
 
 namespace PioneerQwen35 {
@@ -11,7 +14,9 @@ namespace PioneerQwen35 {
 enum : unsigned {
 	DataflowStreamBindingMagic=0x31425335,
 	DataflowStreamRecordMagic=0x31525335,
-#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+	DataflowStreamVersion=3,
+#elif defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)
 	DataflowStreamVersion=2,
 #else
 	DataflowStreamVersion=1,
@@ -51,6 +56,10 @@ static_assert(sizeof(DataflowCoreInvocation)<=DataflowStreamPayloadWords*4
 	&& sizeof(DataflowDenseAttentionInvocation)<=DataflowStreamPayloadWords*4
 	&& sizeof(DataflowArgmaxInvocation)<=DataflowStreamPayloadWords*4,
 	"every resident invocation fits in one bounded stream record");
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+static_assert(sizeof(DataflowDeltaShardInvocation)<=DataflowStreamPayloadWords*4,
+    "sharded delta invocation fits a bounded stream record");
+#endif
 
 struct DataflowStreamBinding {
 	uint32_t magic,version,epoch,core,bank,route,base,count;
@@ -86,7 +95,12 @@ inline unsigned DataflowStreamInvocationBytes(unsigned magic)
 	case DataflowSiluMagic:return sizeof(DataflowSiluInvocation);
 	case DataflowResidualMagic:return sizeof(DataflowResidualInvocation);
 	case DataflowConvMagic:return sizeof(DataflowConvInvocation);
+#ifndef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
 	case DataflowDeltaMagic:return sizeof(DataflowDeltaInvocation);
+#endif
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+	case DataflowDeltaShardMagic:return sizeof(DataflowDeltaShardInvocation);
+#endif
 	case DataflowDenseAttentionMagic:return sizeof(DataflowDenseAttentionInvocation);
 	case DataflowArgmaxMagic:return sizeof(DataflowArgmaxInvocation);
 	default:return 0;
@@ -102,7 +116,12 @@ inline unsigned DataflowStreamInvocationVersion(unsigned magic)
 	case DataflowSiluMagic:return DataflowSiluVersion;
 	case DataflowResidualMagic:return DataflowResidualVersion;
 	case DataflowConvMagic:return DataflowConvVersion;
+#ifndef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
 	case DataflowDeltaMagic:return DataflowDeltaVersion;
+#endif
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+	case DataflowDeltaShardMagic:return DataflowDeltaShardVersion;
+#endif
 	case DataflowDenseAttentionMagic:return DataflowDenseAttentionVersion;
 	case DataflowArgmaxMagic:return DataflowArgmaxVersion;
 	default:return 0;
@@ -118,7 +137,12 @@ inline unsigned DataflowStreamCoreWord(unsigned magic)
 	case DataflowSiluMagic:return offsetof(DataflowSiluInvocation,core)/sizeof(uint32_t);
 	case DataflowResidualMagic:return offsetof(DataflowResidualInvocation,core)/sizeof(uint32_t);
 	case DataflowConvMagic:return offsetof(DataflowConvInvocation,core)/sizeof(uint32_t);
+#ifndef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
 	case DataflowDeltaMagic:return offsetof(DataflowDeltaInvocation,core)/sizeof(uint32_t);
+#endif
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+	case DataflowDeltaShardMagic:return offsetof(DataflowDeltaShardInvocation,core)/sizeof(uint32_t);
+#endif
 	case DataflowDenseAttentionMagic:return offsetof(DataflowDenseAttentionInvocation,core)/sizeof(uint32_t);
 	case DataflowArgmaxMagic:return offsetof(DataflowArgmaxInvocation,core)/sizeof(uint32_t);
 	default:return DataflowStreamPayloadWords;

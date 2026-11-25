@@ -87,5 +87,10 @@ with tempfile.TemporaryDirectory() as temporary:
         assert not compiles([define for define in required if define != absent])
     for forbidden in ('PIONEER_QWEN35_RECOVERY_QUALIFY', 'PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL'):
         assert not compiles(required + [forbidden])
+    assert not compiles(required + ['PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY'])
+    (image / 'delta-shard.marker').touch()
+    generated.write_text(module.generate(image), encoding='ascii')
+    assert compiles(required + ['PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY'])
+    assert not compiles(required)
 
 print('PASS qualification image exact packaging and compile guards; OFFLINE ONLY')

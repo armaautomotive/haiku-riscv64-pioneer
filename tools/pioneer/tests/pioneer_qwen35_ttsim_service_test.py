@@ -129,6 +129,8 @@ def main():
                        help='start the resident graph image using synthetic per-core templates')
     group.add_argument('--resident-sequence-fixture', type=Path,
                        help='run embedding, residual, RMS and fused projection steps from model weights')
+    group.add_argument('--delta-shards-fixture', type=Path,
+                       help='run the experimental two-stage recurrent update on 120 workers')
     group.add_argument('--silu-fixture', type=Path,
                        help='also execute the separately generated 120-core SiLU operation')
     group.add_argument('--rms-fixture', type=Path,
@@ -143,14 +145,16 @@ def main():
         parser.error('--resident-corrupt-core requires resident templates and a core in 0..119')
     if args.resident_fault_command and (not args.resident_templates or args.resident_corrupt_core is not None):
         parser.error('--resident-fault-command requires resident templates and no corrupt core')
-    template_path = (args.resident_sequence_fixture / 'templates.bin'
-                     if args.resident_sequence_fixture else args.resident_templates)
+    template_directory = args.resident_sequence_fixture or args.delta_shards_fixture
+    template_path = template_directory / 'templates.bin' if template_directory else args.resident_templates
     resident_templates = template_path.read_bytes() if template_path else None
     if resident_templates is not None and len(resident_templates) != 120 * 512:
         raise ValueError('unexpected resident-template fixture size')
     image = args.image
     if not (image / 'activation-sharing.marker').is_file():
         raise ValueError('expected sharing-enabled standalone service image')
+    if bool(args.delta_shards_fixture) != (image / 'delta-shard.marker').is_file():
+        raise ValueError('delta shard fixture and service image do not match')
     boot = (image / 'boot.bin').read_bytes()
     text = (image / 'text.bin').read_bytes()
     dispatch = (image / 'dispatch.bin').read_bytes()
@@ -346,6 +350,80 @@ def main():
                 raise RuntimeError(f'core {core}: resident initialization did not run')
             if invocations is not None:
                 write(bar + 0xaa000, invocations[core * invocation_size:(core + 1) * invocation_size])
+
+        if args.delta_shards_fixture:
+            directory = args.delta_shards_fixture
+            command = (directory / 'command.bin').read_bytes()
+            records = (directory / 'records.bin').read_bytes()
+            initial = (directory / 'initial.bin').read_bytes()
+            expected = (directory / 'expected.bin').read_bytes()
+            layouts = ((0x10000000, 8192 * 4), (0x11000000, 4096 * 4),
+                       (0x12000000, 32 * 4), (0x13000000, 32 * 4),
+                       (0x14000000, 32 * 4), (0x15000000, 32 * 4),
+                       (0x16000000, 128 * 4), (0x20000000, 32 * 128 * 128 * 4),
+                       (0x30000000, 32 * 128 * 128 * 4))
+            if (len(command) != 128 or len(records) != 120 * 3 * 2048
+                    or len(initial) != sum(size for _, size in layouts)
+                    or len(expected) != (8192 + 32 * 128 * 128) * 4):
+                raise ValueError('unexpected delta shard fixture size')
+            cursor = 0
+            for start, size in layouts:
+                offset = 0
+                while offset < size:
+                    address = start + offset
+                    select(2, address, 18, 12)
+                    count = min(0x10000, size - offset, 0x200000 - (address & 0x1fffff))
+                    write(bar + 0x400000 + (address & 0x1fffff), initial[cursor + offset:cursor + offset + count])
+                    offset += count
+                cursor += size
+            for core in range(120):
+                address = 0x04000000 + core * 0x100000
+                select(2, address, 18, 12)
+                write(bar + 0x400000 + (address & 0x1fffff), records[core * 6144:(core + 1) * 6144])
+            select_worker(0)
+            write(bar + 0xab080, command[:64])
+            write(bar + 0xab0c0, command[64:])
+            for attempt in range(1000):
+                lib.libttsim_clock(100000)
+                snapshots = []
+                for core in range(120):
+                    select_worker(core)
+                    snapshots.append(struct.unpack('<16I', read(mailbox_address, 64)))
+                if all(words[5] == 4 for words in snapshots):
+                    break
+                if any(words[5] not in (1, 2, 4) for words in snapshots):
+                    raise RuntimeError('unexpected worker state during sharded recurrent update')
+            else:
+                raise RuntimeError('sharded recurrent sequence did not reach its intentional terminal fault')
+            for core, words in enumerate(snapshots):
+                if (words[2:8] != (1, 0, 1, 4, 4, 5)
+                        or words[9:15] != (0x31464735, 1, 2, 120, 0x80000004, 0)
+                        or words[15] != core):
+                    raise RuntimeError(f'core {core}: sharded sequence failed before both barriers: {words}')
+            for name, address, rows, expected_offset in (('QKV', 0x10000000, 8192, 0),
+                    ('state', 0x30000000, 32 * 128 * 128, 8192 * 4)):
+                actual = bytearray()
+                offset = 0
+                while offset < rows * 4:
+                    current = address + offset
+                    select(2, current, 18, 12)
+                    count = min(0x10000, rows * 4 - offset, 0x200000 - (current & 0x1fffff))
+                    actual.extend(read(bar + 0x400000 + (current & 0x1fffff), count))
+                    offset += count
+                maximum = 0.0
+                for row, (got,), (want,) in zip(range(rows), struct.iter_unpack('<f', actual),
+                        struct.iter_unpack('<f', expected[expected_offset:expected_offset + rows * 4])):
+                    error = abs(got - want)
+                    if not math.isfinite(got) or error > 2e-5 * max(1.0, abs(want)):
+                        raise RuntimeError(f'{name} row {row}: {got} differs from full-head reference {want}')
+                    maximum = max(maximum, error)
+                print(f'{name}: {rows} values match full-head reference; maximum absolute error {maximum:.9g}', flush=True)
+            select_worker(0)
+            if struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
+                raise RuntimeError('intentionally faulted shard sequence published a candidate')
+            print('PASS 120 simulated workers completed sharded update and normalization; '
+                  'third record intentionally faults; NO HARDWARE')
+            return
 
         if args.resident_sequence_fixture:
             directory = args.resident_sequence_fixture

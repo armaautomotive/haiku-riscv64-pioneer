@@ -76,6 +76,7 @@ class DataflowDynamicPatcher {
 			if (!invocation.Valid()) return false;
 			DataflowDynamicWrite(record,invocation);break;
 		}
+#ifndef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
 		case DataflowDeltaMagic: {
 			DataflowDeltaInvocation invocation{};DataflowDynamicRead(record,invocation);
 			if ((invocation.program.position^run.position)&1U) {
@@ -86,6 +87,19 @@ class DataflowDynamicPatcher {
 			if (!invocation.Valid()) return false;
 			DataflowDynamicWrite(record,invocation);break;
 		}
+#endif
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+		case DataflowDeltaShardMagic: {
+			DataflowDeltaShardInvocation invocation{};DataflowDynamicRead(record,invocation);
+			if ((invocation.program.position^run.position)&1U) {
+				const RowSpace old=invocation.program.stateRead;
+				invocation.program.stateRead=invocation.program.stateWrite;invocation.program.stateWrite=old;
+			}
+			invocation.program.position=run.position;
+			if (!invocation.Valid()) return false;
+			DataflowDynamicWrite(record,invocation);break;
+		}
+#endif
 		case DataflowDenseAttentionMagic: {
 			DataflowDenseAttentionInvocation invocation{};DataflowDynamicRead(record,invocation);
 			if (invocation.program.context!=run.context) return false;

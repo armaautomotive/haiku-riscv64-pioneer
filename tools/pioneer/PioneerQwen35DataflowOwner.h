@@ -896,6 +896,11 @@ public:
 	template<class IO>
 	DataflowOwnerResult RunDelta(const DataflowDeltaProgram& program,IO& io)
 	{
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+		// This witness supports delta only through the two-step resident graph.
+		// Reject the legacy one-command owner before it can mutate authority.
+		(void)program;(void)io;return DataflowOwnerInvalidState;
+#else
 		if (!fInitialized || fFaulted) return DataflowOwnerInvalidState;
 		if (!program.Valid()) return DataflowOwnerInvalidProgram;
 		if (fNextSequence>=DataflowWorkerSequenceLimit)
@@ -981,6 +986,7 @@ public:
 		fNextSequence=sequence;
 		fPendingSequence=0;
 		return DataflowOwnerComplete;
+#endif
 	}
 
 	template<class IO>

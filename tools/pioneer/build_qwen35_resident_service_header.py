@@ -12,6 +12,7 @@ from struct import iter_unpack, unpack
 
 def generate(directory: Path) -> str:
     sharing = (directory / 'activation-sharing.marker').is_file()
+    sharded = (directory / 'delta-shard.marker').is_file()
     boot = (directory / 'boot.bin').read_bytes()
     text = (directory / 'text.bin').read_bytes()
     dispatch = (directory / 'dispatch.bin').read_bytes()
@@ -54,6 +55,8 @@ def generate(directory: Path) -> str:
         '!defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) || '
         + ('!defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS) || ' if sharing
            else 'defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS) || ')
+        + ('!defined(PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY) || ' if sharded
+           else 'defined(PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY) || ')
         + 'defined(PIONEER_QWEN35_RECOVERY_QUALIFY) || '
         'defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL)\n'
         '#error "resident service image is restricted to the non-loadable snapshot witness"\n'

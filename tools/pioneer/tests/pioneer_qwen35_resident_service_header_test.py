@@ -86,5 +86,12 @@ with tempfile.TemporaryDirectory() as temporary:
     generated.write_text(module.generate(image), encoding='ascii')
     assert not compiles(required)
     assert compiles(required + ['PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS'])
+    sharded = required + ['PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS',
+                          'PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY']
+    assert not compiles(sharded)
+    (image / 'delta-shard.marker').touch()
+    generated.write_text(module.generate(image), encoding='ascii')
+    assert compiles(sharded)
+    assert not compiles(required + ['PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS'])
 
 print('PASS resident image exact packaging and rejected invalid layout; OFFLINE ONLY')

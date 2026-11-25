@@ -35,9 +35,16 @@ case "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" in
        : > "$output/activation-sharing.marker" ;;
     *) exit 2 ;;
 esac
+case "${PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY:-0}" in
+    0) [ ! -e "$graph/delta-shard.marker" ] || exit 2; delta_flags= ;;
+    1) [ -f "$graph/delta-shard.marker" ] && [ "${PIONEER_QWEN35_FUSED_RECURRENCE_COMPILE_ONLY:-0}:${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1:1 ] || exit 2
+       delta_flags=-DPIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+       : > "$output/delta-shard.marker" ;;
+    *) exit 2 ;;
+esac
 flags='-std=c++17 -Os -fno-inline-functions-called-once -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -fstack-usage -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32'
 "$cross-g++" $flags -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
-    -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE $tree_flags $fused_flags $sharing_flags \
+    -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE $tree_flags $fused_flags $sharing_flags $delta_flags \
     -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
     -c "$directory/PioneerQwen35DataflowResidentServiceEntry.cpp" -o "$output/resident-service-entry.o"
 "$cross-as" -march=rv32imf_zicsr -mabi=ilp32 -mno-relax \
@@ -74,11 +81,12 @@ if grep -E '[[:space:]]((fdiv|fsqrt)[.][sd]|fcvt[.](w|wu)[.][sd])[[:space:]]' "$
 fi
 for section in boot text dispatch; do "$cross-objcopy" -O binary -j ".$section" "$output/service.elf" "$output/$section.bin";done
 "$cross-size" -A "$output/service.elf"
-python3 - "$graph" "$output" "${PIONEER_QWEN35_TREE_SETTLEMENT_WITNESS:-0}" <<'PY'
+python3 - "$graph" "$output" "${PIONEER_QWEN35_TREE_SETTLEMENT_WITNESS:-0}" "${PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY:-0}" <<'PY'
 from pathlib import Path
 import sys
 graph,out=map(Path,sys.argv[1:3])
 tree=sys.argv[3]=='1'
+shards=sys.argv[4]=='1'
 entries=[]
 for path in (graph/'service.su',graph/'device-graph.su',graph/'shared-roles.su',out/'resident-service-entry.su'):
     for line in path.read_text().splitlines():
@@ -101,6 +109,23 @@ for marker in markers:
     total+=max(frame for frame,_ in matches)
 if total>8192: raise SystemExit(f'resident graph stack envelope {total} exceeds 8192 bytes')
 print(f'resident_graph_stack_envelope_bytes={total}/8192 (includes 1024-byte allowance; not whole-program proof)')
+if shards:
+    shard_markers=('qwen35_resident_graph_service_main()', 'DataflowResidentServiceRun<IO, BarrierIO>::Tick()',
+        'qwen35_graph_run_descriptor(', 'PioneerQwen35DeviceGraphRun(', 'DataflowDeviceGraph<IO, BarrierIO>::Tick()',
+        'qwen35_graph_execute(', 'DataflowWorkerExecuteAuthorized(', 'PioneerQwen35DataflowDeltaShardWorker(',
+        'DataflowDeltaProgram::ShapeValid()', 'DataflowDeltaProgram::PanelRangesValid(',
+        'DataflowDeltaNormalizeQk(', 'DataflowDeltaHeadGates(', 'DataflowDeltaUpdatePanel(',
+        'DataflowDeltaNormalizeAndGate(', 'DataflowBlackholeDeltaOps::ReadRange(',
+        'DataflowBlackholeDeltaOps::ReadFloatRows(', 'DataflowBlackholeDeltaOps::WriteRange(',
+        'DataflowBlackholeNoc<Noc>::Transfer(')
+    shard_total=1024
+    for marker in shard_markers:
+        matches=[(frame,kind) for name,frame,kind in entries if marker in name]
+        if not matches or any(kind!='static' for _,kind in matches):
+            raise SystemExit('missing or unbounded sharded delta stack frame: '+marker)
+        shard_total+=max(frame for frame,_ in matches)
+    if shard_total>8192: raise SystemExit(f'resident delta shard stack envelope {shard_total} exceeds 8192 bytes')
+    print(f'resident_delta_shard_stack_envelope_bytes={shard_total}/8192 (includes 1024-byte allowance; not whole-program proof)')
 if tree:
     settlement_markers=('qwen35_resident_graph_service_main()', 'DataflowResidentServiceRun<IO, BarrierIO>::Tick()',
         'DataflowResidentLifecycle<IO, BarrierIO>::Tick()', 'DataflowResidentLifecycle<IO, BarrierIO>::Gather()',

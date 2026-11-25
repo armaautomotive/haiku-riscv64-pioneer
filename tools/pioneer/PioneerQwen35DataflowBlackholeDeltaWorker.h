@@ -226,7 +226,7 @@ bool PioneerQwen35DataflowDeltaWorker(const DataflowDeltaInvocation& invocation,
 }
 
 class DataflowBlackholeDeltaOps {
-	const DataflowDeltaInvocation* fInvocation=nullptr;
+	const DataflowDeltaProgram* fProgram=nullptr;
 	DataflowBlackholeNoc<0> fReader;
 	DataflowBlackholeNoc<1> fWriter;
 
@@ -234,26 +234,26 @@ class DataflowBlackholeDeltaOps {
 		unsigned offset,unsigned bytes,uint8_t* output) const
 	{
 		Range range;
-		return fInvocation && output && space.Resolve(row,rows,offset,bytes,range)
+		return fProgram && output && space.Resolve(row,rows,offset,bytes,range)
 			&& DataflowDeltaProgram::AlignedRange(range,bytes)
 			&& fReader.Read(range.address,
-				fInvocation->program.bankRoute[0][range.bank],output,bytes);
+				fProgram->bankRoute[0][range.bank],output,bytes);
 	}
 
 	bool WriteRange(const RowSpace& space,unsigned row,unsigned rows,
 		unsigned offset,unsigned bytes,const uint8_t* input) const
 	{
 		Range range;
-		return fInvocation && input && space.Resolve(row,rows,offset,bytes,range)
+		return fProgram && input && space.Resolve(row,rows,offset,bytes,range)
 			&& DataflowDeltaProgram::AlignedRange(range,bytes)
 			&& fWriter.Write(range.address,
-				fInvocation->program.bankRoute[1][range.bank],input,bytes);
+				fProgram->bankRoute[1][range.bank],input,bytes);
 	}
 
 	bool ReadFloatRows(const RowSpace& space,unsigned firstRow,unsigned rows,
 		float* output) const
 	{
-		if (!fInvocation || !output || !space.Valid() || !rows
+		if (!fProgram || !output || !space.Valid() || !rows
 			|| firstRow>=space.rows || rows>space.rows-firstRow
 			|| space.rowBytes!=sizeof(float) || ((firstRow|rows)&15)) return false;
 		unsigned completed=0;
@@ -280,7 +280,7 @@ class DataflowBlackholeDeltaOps {
 
 	bool ReadTensor(const TensorSpace& tensor,unsigned inputs,float* output) const
 	{
-		if (!fInvocation || !output || tensor.type!=0
+		if (!fProgram || !output || tensor.type!=0
 			|| tensor.inputs!=inputs || !tensor.place.Valid()
 			|| tensor.place.rows!=1
 			|| tensor.place.rowBytes!=inputs*sizeof(float)
@@ -289,81 +289,89 @@ class DataflowBlackholeDeltaOps {
 		return tensor.place.Resolve(0,1,0,inputs*sizeof(float),range)
 			&& DataflowDeltaProgram::AlignedRange(range,inputs*sizeof(float))
 			&& fReader.Read(range.address,
-				fInvocation->program.bankRoute[0][range.bank],
+				fProgram->bankRoute[0][range.bank],
 				reinterpret_cast<uint8_t*>(output),inputs*sizeof(float));
 	}
 
 public:
 	bool Bind(const DataflowDeltaInvocation& invocation)
 	{
-		fInvocation=nullptr;
+		fProgram=nullptr;
 		if (!invocation.Valid()) return false;
-		fInvocation=&invocation;
+		fProgram=&invocation.program;
+		return true;
+	}
+
+	// The shard worker checks its exact panel ranges before calling this.
+	bool BindShardProgram(const DataflowDeltaProgram& program)
+	{
+		fProgram=nullptr;
+		if (!program.ShapeValid()) return false;
+		fProgram=&program;
 		return true;
 	}
 
 	bool ReadParameters(float* negativeA,float* deltaBias,float* alpha,
 		float* beta) const
 	{
-		return fInvocation && ReadTensor(fInvocation->program.negativeA,DeltaHeads,negativeA)
-			&& ReadTensor(fInvocation->program.deltaBias,DeltaHeads,deltaBias)
-			&& ReadFloatRows(fInvocation->program.alpha,0,DeltaHeads,alpha)
-			&& ReadFloatRows(fInvocation->program.beta,0,DeltaHeads,beta);
+		return fProgram && ReadTensor(fProgram->negativeA,DeltaHeads,negativeA)
+			&& ReadTensor(fProgram->deltaBias,DeltaHeads,deltaBias)
+			&& ReadFloatRows(fProgram->alpha,0,DeltaHeads,alpha)
+			&& ReadFloatRows(fProgram->beta,0,DeltaHeads,beta);
 	}
 
 	bool ReadDeltaNorm(float* norm) const
 	{
-		return fInvocation
-			&& ReadTensor(fInvocation->program.deltaNorm,DeltaWidth,norm);
+		return fProgram && ReadTensor(fProgram->deltaNorm,DeltaWidth,norm);
 	}
 
 	bool ReadGateHead(unsigned head,float* gate) const
 	{
-		return fInvocation && head<DeltaHeads && gate
-			&& ReadFloatRows(fInvocation->program.gate,head*DeltaWidth,
+		return fProgram && head<DeltaHeads && gate
+			&& ReadFloatRows(fProgram->gate,head*DeltaWidth,
 				DeltaWidth,gate);
 	}
 
 	bool ReadQueryKey(unsigned head,float* query,float* key) const
 	{
-		if (!fInvocation || head>=DeltaHeads || !query || !key) return false;
+		if (!fProgram || head>=DeltaHeads || !query || !key) return false;
 		const unsigned keyHead=head%DeltaKeyHeads;
-		return ReadFloatRows(fInvocation->program.qkv,keyHead*DeltaWidth,
+		return ReadFloatRows(fProgram->qkv,keyHead*DeltaWidth,
 			DeltaWidth,query)
-			&& ReadFloatRows(fInvocation->program.qkv,
+			&& ReadFloatRows(fProgram->qkv,
 				DataflowDeltaQChannels+keyHead*DeltaWidth,DeltaWidth,key);
 	}
 
 	bool ReadValuePanel(unsigned firstRow,float* output) const
 	{
-		return fInvocation && firstRow<DeltaInner && !(firstRow&15)
-			&& ReadRange(fInvocation->program.qkv,
+		return fProgram && firstRow<DeltaInner && !(firstRow&15)
+			&& ReadRange(fProgram->qkv,
 				DataflowDeltaVBase+firstRow,16,0,DataflowDeltaPanelBytes,
 				reinterpret_cast<uint8_t*>(output));
 	}
 
 	bool ReadStatePanel(unsigned head,unsigned subPanel,float* output) const
 	{
-		return fInvocation && head<DeltaHeads
+		return fProgram && head<DeltaHeads
 			&& subPanel<DataflowDeltaPanelsPerHead
-			&& ReadRange(fInvocation->program.stateRead,head,1,
+			&& ReadRange(fProgram->stateRead,head,1,
 				subPanel*DataflowDeltaStatePanelBytes,
 				DataflowDeltaStatePanelBytes,reinterpret_cast<uint8_t*>(output));
 	}
 
 	bool WriteStatePanel(unsigned head,unsigned subPanel,const float* input) const
 	{
-		return fInvocation && head<DeltaHeads
+		return fProgram && head<DeltaHeads
 			&& subPanel<DataflowDeltaPanelsPerHead
-			&& WriteRange(fInvocation->program.stateWrite,head,1,
+			&& WriteRange(fProgram->stateWrite,head,1,
 				subPanel*DataflowDeltaStatePanelBytes,
 				DataflowDeltaStatePanelBytes,reinterpret_cast<const uint8_t*>(input));
 	}
 
 	bool WriteValuePanel(unsigned firstRow,const float* input) const
 	{
-		return fInvocation && firstRow<DeltaInner && !(firstRow&15)
-			&& WriteRange(fInvocation->program.qkv,
+		return fProgram && firstRow<DeltaInner && !(firstRow&15)
+			&& WriteRange(fProgram->qkv,
 				DataflowDeltaVBase+firstRow,16,0,DataflowDeltaPanelBytes,
 				reinterpret_cast<const uint8_t*>(input));
 	}

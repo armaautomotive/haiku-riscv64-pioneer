@@ -13,6 +13,13 @@
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 namespace PioneerQwen35 {
 
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+template<DataflowDeltaShardPhase Phase> struct DataflowDeltaShardRecordBuilder {
+    static bool BindCore(const DataflowDeltaProgram& program,unsigned core,DataflowDeltaShardInvocation& invocation) {
+        return DataflowDeltaShardBind(program,core,Phase,invocation);
+    }
+};
+#endif
 // Metadata-only speculative recorder. Each Begin/Complete advances only the
 // private planning authority: it is not evidence of device execution. Sink
 // must stage records and verify all page writes before sealing, retain
@@ -151,8 +158,15 @@ public:
 			&& candidate.CompleteConv(p)?0:Fail();
 	}
 	template<class IO> int RunDelta(const DataflowDeltaProgram& p,IO&) {
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+		return candidate.BeginDelta(p)
+			&& Emit<DataflowDeltaShardRecordBuilder<DataflowDeltaShardUpdate>,DataflowDeltaShardInvocation>(p)
+			&& Emit<DataflowDeltaShardRecordBuilder<DataflowDeltaShardNormalize>,DataflowDeltaShardInvocation>(p)
+			&& candidate.CompleteDelta(p)?0:Fail();
+#else
 		return candidate.BeginDelta(p) && Emit<DataflowDeltaProgramBuilder,DataflowDeltaInvocation>(p)
 			&& candidate.CompleteDelta(p)?0:Fail();
+#endif
 	}
 	template<class IO> int RunDenseAttention(const DataflowDenseAttentionProgram& p,IO&) {
 		return candidate.BeginDenseAttention(p) && Emit<DataflowDenseAttentionProgramBuilder,DataflowDenseAttentionInvocation>(p)

@@ -42,6 +42,13 @@ case "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" in
 	: > "$output/activation-sharing.marker" ;;
 *) exit 2 ;;
 esac
+case "${PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY:-0}" in
+0) ;;
+1) [ "$role_graph:${PIONEER_QWEN35_FUSED_RECURRENCE_COMPILE_ONLY:-0}:${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1:1:1 ] || exit 2
+	service_flags="$service_flags -DPIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY"
+	: > "$output/delta-shard.marker" ;;
+*) exit 2 ;;
+esac
 
 "$cross-g++" $flags $service_flags -I"$directory" -I"$sdk/headers" \
 	-idirafter "$sdk/headers/posix" \

@@ -61,7 +61,11 @@ public:
 		return Done(candidate.BeginConv(p) && candidate.CompleteConv(p));
 	}
 	template<class IO> int RunDelta(const DataflowDeltaProgram& p,IO&) {
-		return Done(candidate.BeginDelta(p) && candidate.CompleteDelta(p));
+		const int result=Done(candidate.BeginDelta(p) && candidate.CompleteDelta(p));
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+		if (!result) ++steps;
+#endif
+		return result;
 	}
 	template<class IO> int RunDenseAttention(const DataflowDenseAttentionProgram& p,IO&) {
 		return Done(candidate.BeginDenseAttention(p) && candidate.CompleteDenseAttention(p));

@@ -14,6 +14,7 @@ def generate(directory: Path) -> str:
     for marker in ('activation-sharing.marker', 'fused-recurrence.marker'):
         if not (directory / marker).is_file():
             raise ValueError('missing qualification image marker: ' + marker)
+    sharded = (directory / 'delta-shard.marker').is_file()
     boot = (directory / 'boot.bin').read_bytes()
     text = (directory / 'text.bin').read_bytes()
     dispatch = (directory / 'dispatch.bin').read_bytes()
@@ -56,7 +57,9 @@ def generate(directory: Path) -> str:
         '!defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) || '
         '!defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) || '
         '!defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS) || '
-        'defined(PIONEER_QWEN35_RECOVERY_QUALIFY) || '
+        + ('!defined(PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY) || ' if sharded
+           else 'defined(PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY) || ')
+        + 'defined(PIONEER_QWEN35_RECOVERY_QUALIFY) || '
         'defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL)\n'
         '#error "qualification image is restricted to the non-loadable sharing witness"\n'
         '#endif\nnamespace PioneerQwen35 {\n'

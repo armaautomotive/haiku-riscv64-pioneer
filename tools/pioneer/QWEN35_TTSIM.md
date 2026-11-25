@@ -79,6 +79,35 @@ model result, physical recovery, or a speed measurement. Matrix execution
 requires both experimental simulator patches below; their instruction models
 are not independently qualified.
 
+The separate sharded-delta witness tests a proposed two-stage recurrent
+update. The helper builds the fused, sharing-enabled service and its
+non-loadable driver with `--compile-delta-shard-prototype`, alongside the
+existing recovery, device-dispatch, role-write, shared-role-owner,
+snapshot-takeover and resident-service prototype flags. The build sets a
+distinct stream version and image marker; driver/image packaging guards reject
+a mixed sharded and unsharded build. Generate its synthetic fixture and run it
+with the zero-upper-length patch:
+
+```sh
+c++ -std=c++17 -O2 -ffp-contract=off -Wall -Wextra -Werror \
+  tools/pioneer/tests/pioneer_qwen35_ttsim_delta_shards_fixture.cpp -o /tmp/q35-delta-shards-fixture
+/tmp/q35-delta-shards-fixture /path/to/empty-directory
+python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py \
+  /path/to/zero-upper-length-patched-libttsim.so /path/to/sharded-resident-service-image \
+  /path/to/build/qwen35-shared-role-images --delta-shards-fixture /path/to/empty-directory
+```
+
+All 120 workers update disjoint state panels, then a device graph barrier
+precedes normalization by one worker per head. Another barrier completes the
+second step; a deliberately invalid third record ends the test without a token
+candidate. All 524,288 nonzero-state values and 8,192 QKV values matched the
+existing full-head worker in simulation. Host sanitizer tests additionally
+compare fresh state, reverse worker order and fault handling. This arrangement
+adds one graph step per recurrent layer: the fused prompt/decode schedules
+become 521/524 steps. Its effect on physical throughput is unknown. This
+synthetic, non-loadable witness does not establish physical ownership,
+no-reboot recovery, full-model output or the 100 tokens/sec goal.
+
 For the fixed projection, create the fixture in an existing empty directory:
 
 ```sh

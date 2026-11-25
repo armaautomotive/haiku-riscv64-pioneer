@@ -1261,11 +1261,13 @@ PioneerSessionIO::PublishCommand(unsigned core,unsigned sequence)
 		if (!ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
 			&invocation,sizeof(invocation))
 			|| !invocation.Valid() || invocation.core!=core) return false;
+#ifndef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
 	} else if (magic==PioneerQwen35::DataflowDeltaMagic) {
 		PioneerQwen35::DataflowDeltaInvocation invocation{};
 		if (!ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
 			&invocation,sizeof(invocation))
 			|| !invocation.Valid() || invocation.core!=core) return false;
+#endif
 	} else if (magic==PioneerQwen35::DataflowDenseAttentionMagic) {
 		PioneerQwen35::DataflowDenseAttentionInvocation invocation{};
 		if (!ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
