@@ -23,6 +23,9 @@ Qwen35FabricRecoveryStartLocked(PioneerProbeCookie* inspector,PioneerProbeCookie
         || context->recoveryFabricStartAttempted || context->recoveryFabricStartTicket
         || context->recoveryFabricPciIdleAttempted || context->recoveryFabricPciIdle
         || context->recoveryFabricAuditReleaseAttempted || context->recoveryFabricAuditReleased
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        || context->recoveryFabricPcieAuditAttempted || context->recoveryFabricPcieAudited
+#endif
         || context->recoveryAttempted || context->recoveryMapping || context->recoveryFabricArcOwner
         || !sColdRecoveryRequired || !context->dispatchOwnerRetained || !context->q35PciReservationHeld
         || context->q35PciReleaseAttempted || sRuntimeOwner!=owner || owner->context!=context
@@ -78,5 +81,31 @@ Qwen35FabricRecoveryStartLocked(PioneerProbeCookie* inspector,PioneerProbeCookie
     if (!scope.HostOwnershipValidAfterAuditRelease() || guard->validate(ticket)!=B_OK) return B_DEV_NOT_READY;
     context->recoveryFabricAuditReleased=true;
     result.detail=PIONEER_RECOVERY_DETAIL_FABRIC_AUDIT_RELEASED;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    // These are bounded PCIe samples only. A later fresh-session scope must
+    // still prove exclusion and revalidate access for the entire transfer.
+    auto afterReleasePermit=[&]() {
+        return context->recoveryFabricPciIdle && context->recoveryFabricAuditReleased
+            && context->io.fabricOldMmioDisposeComplete && scope.HostOwnershipValidAfterAuditRelease()
+            && guard->validate(ticket)==B_OK;
+    };
+    const uint32_t priorFlags=PIONEER_FABRIC_PROOF_RESET_SEQUENCE | PIONEER_FABRIC_PROOF_CLOCK_RESTORED
+        | PIONEER_FABRIC_PROOF_FIRMWARE_READY | PIONEER_FABRIC_PROOF_ALL_CORES_HELD
+        | PIONEER_FABRIC_PROOF_NOC_IDLE | PIONEER_FABRIC_PROOF_HOST_DMA_IDLE;
+    auto& evidence=context->recoveryFabricEvidence;
+    if (!afterReleasePermit() || !context->recoveryFabricEvidenceRecorded || evidence.flags!=priorFlags
+        || evidence.fabric_generation!=ticket || evidence.firmware_generation!=ticket) return B_DEV_NOT_READY;
+    result.stage=PIONEER_RECOVERY_STAGE_FABRIC_PCIE_AUDIT;
+    context->recoveryFabricPcieAuditAttempted=true;
+    PioneerQ35PcieIdleAuditResult pcie{};
+    if (!PioneerQ35PcieIdleAudit(context->io,context->Pci(),afterReleasePermit,pcie)
+        || pcie.samples!=3 || !afterReleasePermit()) return B_DEV_NOT_READY;
+    evidence.flags=priorFlags | PIONEER_FABRIC_PROOF_PCIE_HEALTHY;
+    if (!evidence.ReadyForScratchRestore() || !afterReleasePermit()) {
+        evidence.flags=priorFlags;return B_DEV_NOT_READY;
+    }
+    context->recoveryFabricPcieAudited=true;
+    result.detail=PIONEER_RECOVERY_DETAIL_FABRIC_PCIE_AUDITED;
+#endif
     return B_DEV_NOT_READY; // retained scratch/owners and cold state are not yet restored
 }

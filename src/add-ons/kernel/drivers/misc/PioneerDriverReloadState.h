@@ -54,6 +54,8 @@ static_assert(sizeof(PioneerDriverRecoveryProof)==48,
 enum : uint32_t {
 	PIONEER_FABRIC_PROOF_RESET_SEQUENCE = 1u << 0,
 	PIONEER_FABRIC_PROOF_FIRMWARE_READY = 1u << 1,
+	// Three bounded PCIe layout/link/status/AER samples, not a lifetime
+	// exclusion or a guarantee against later PCIe errors.
 	PIONEER_FABRIC_PROOF_PCIE_HEALTHY = 1u << 2,
 	PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED = 1u << 3,
 	PIONEER_FABRIC_PROOF_ALL_CORES_HELD = 1u << 4,
@@ -70,8 +72,8 @@ struct PioneerDriverFabricRecoveryProof {
 	uint32_t noc_busy_mask=0,noc_outstanding_mask=0,host_dma_active=0,retained_owners=0;
 	uint64_t fabric_generation=0,firmware_generation=0;
 	// Before restoring retained scratch, CPU MMIO can be gone while the old
-	// DMA buffers and role mappings remain pinned. PCIe health is still an
-	// independent required fact; current fabric transaction does not set it.
+	// DMA buffers and role mappings remain pinned. PCIe health records only
+	// bounded observations; the transfer scope must separately prove exclusion.
 	bool ReadyForScratchRestore() const {
 		return version==Version && flags==(PIONEER_FABRIC_PROOF_REQUIRED
 			& ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED | PIONEER_FABRIC_PROOF_OWNERS_RELEASED

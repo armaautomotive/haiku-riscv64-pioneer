@@ -4072,6 +4072,9 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 #include "PioneerPostResetPci.h"
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+#include "PioneerQ35PcieIdleAudit.h"
+#endif
 #include "PioneerPostResetMapping.inc"
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 #include "PioneerFirmwareResetTransport.inc"
@@ -4207,6 +4210,7 @@ struct PioneerStoreContext {
 	// mappings and owners remain live, so this can never complete the guard.
 	PioneerDriverFabricRecoveryProof recoveryFabricEvidence={};
 	bool recoveryFabricEvidenceRecorded=false;
+	bool recoveryFabricPcieAuditAttempted=false,recoveryFabricPcieAudited=false;
 #endif
 	bool q35PciReservationHeld=false,q35PciReleaseAttempted=false;
 #endif

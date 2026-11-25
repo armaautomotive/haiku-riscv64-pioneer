@@ -72,9 +72,11 @@ objects, with guard checks and no automatic retry. Host DMA buffers, the role
 owner's mappings, bank claims, snapshots and cold state stay retained. Scratch
 restoration, complete mapping disposal and recovery are still unfinished.
 
-The fresh scratch-restoration session and coordinator can now consume a
-separate fabric proof in the non-loadable witness. Their simulated success
-requires a PCIe-health flag that the current fabric transaction does not
-produce. No real scope or controller calls this path, and the existing
+The fresh scratch-restoration session and coordinator can consume a separate
+fabric proof in the non-loadable witness. The controller now records bounded
+PCIe-health evidence after three matching idle-layout, link, Device Status and
+AER samples. These samples do not prove continuing health or writer exclusion.
+No real scope or controller calls the fresh session, and its existing
 multi-access transfer and close helpers still need physical ownership and
-guard qualification before use on the card.
+guard qualification before use on the card. PCIe link field definitions are
+documented in [Linux's PCI register definitions](https://github.com/torvalds/linux/blob/master/include/uapi/linux/pci_regs.h).

@@ -45,6 +45,7 @@ struct PioneerStoreContext {
     Owner* recoveryFabricArcOwner=nullptr;
     PioneerDriverFabricRecoveryProof recoveryFabricEvidence{};
     bool recoveryFabricEvidenceRecorded=false;
+    bool recoveryFabricPcieAuditAttempted=false,recoveryFabricPcieAudited=false;
     bool dispatchOwnerRetained=true,q35PciReservationHeld=true,q35PciReleaseAttempted=false;
     bool bankStorageOnly=true;uint64 bytes=PioneerResidentBanks::Total;
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricRecoveryTransaction.inc"
@@ -55,6 +56,18 @@ struct PioneerQ35FabricArcCompileScope {};
 template<class IO,class Check> static bool PioneerPreResetDisableMasterGuarded(IO&,Check& check) { return check(); }
 template<class IO,class Saved,class Check> static bool PioneerPostResetPciFinishGuarded(IO&,const Saved&,Check& check,unsigned& stage) {
     stage=3;return check();
+}
+struct PioneerQ35PcieIdleAuditResult { unsigned samples=0; };
+static bool failPcieAudit=false,loseTicketAfterPcie=false;
+static PioneerDriverFabricRecoveryProof* loseTicketOnPcieEvidence=nullptr;
+static int ValidateWithEvidence(uint64 ticket) {
+    if (loseTicketOnPcieEvidence && (loseTicketOnPcieEvidence->flags&PIONEER_FABRIC_PROOF_PCIE_HEALTHY))
+        ticketValid=false;
+    return Validate(ticket);
+}
+template<class IO,class Saved,class Check> static bool PioneerQ35PcieIdleAudit(IO&,const Saved&,Check& check,PioneerQ35PcieIdleAuditResult& result) {
+    if (!check() || failPcieAudit) return false;
+    result.samples=3;if (loseTicketAfterPcie) { ticketValid=false;return true; }return check();
 }
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricRecoveryStart.inc"
 
@@ -82,11 +95,12 @@ int main() {
         cookie.context=&context;sRuntimeOwner=sQwen35ExclusiveCookie=&cookie;sReloadQuiesced=false;sOpenCookies=1;
         tt_pioneer_recovery_run result{};
         assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_DEV_NOT_READY
-            && result.stage==PIONEER_RECOVERY_STAGE_FABRIC_AUDIT_RELEASE
-            && result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_AUDIT_RELEASED
+            && result.stage==PIONEER_RECOVERY_STAGE_FABRIC_PCIE_AUDIT
+            && result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_PCIE_AUDITED
             && context.recoveryFabricStartAttempted && context.recoveryFabricStartTicket==123
             && context.recoveryFabricEvidenceRecorded && !context.recoveryFabricArcOwner
             && !context.recoveryMapping && context.recoveryFabricAuditReleased
+            && context.recoveryFabricPcieAudited && context.recoveryFabricEvidence.ReadyForScratchRestore()
             && context.recoveryFabricPciIdleAttempted && context.recoveryFabricPciIdle && context.io.fabricOldMmioDisposeComplete
             && queue.notifications==7 && sColdRecoveryRequired);
         const unsigned before=queue.io;
@@ -104,9 +118,46 @@ int main() {
         sRuntimeOwner=&owner;sQwen35ExclusiveCookie=&inspector;sReloadQuiesced=false;sOpenCookies=1;
         tt_pioneer_recovery_run result{};
         assert(Qwen35FabricRecoveryStartLocked(&inspector,&owner,&context,&guard,123,10,20,result)==B_DEV_NOT_READY
-            && result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_AUDIT_RELEASED && context.recoveryFabricEvidenceRecorded
+            && result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_PCIE_AUDITED && context.recoveryFabricEvidenceRecorded
             && !context.recoveryMapping && !context.recoveryFabricArcOwner && context.recoveryFabricAuditReleased && sColdRecoveryRequired);
         delete context.recoveryMapping;context.recoveryMapping=nullptr;
+    }
+    {
+        FabricQueue queue{0,0,0};PioneerStoreContext context;PioneerProbeCookie cookie;Guard guard{Validate};
+        device=&queue;mapCount=deleteCount=0;failMap=failDelete=loseTicketOnDelete=-1;
+        changeQueueOnRead=loseTicketOnRead=-1;ticketValid=sColdRecoveryRequired=true;ResetUnit();
+        cookie.context=&context;sRuntimeOwner=sQwen35ExclusiveCookie=&cookie;sReloadQuiesced=false;sOpenCookies=1;
+        failPcieAudit=true;tt_pioneer_recovery_run result{};
+        assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_DEV_NOT_READY
+            && result.stage==PIONEER_RECOVERY_STAGE_FABRIC_PCIE_AUDIT && context.recoveryFabricPcieAuditAttempted
+            && !context.recoveryFabricPcieAudited && context.recoveryFabricEvidenceRecorded
+            && !(context.recoveryFabricEvidence.flags&PIONEER_FABRIC_PROOF_PCIE_HEALTHY)
+            && !context.recoveryFabricEvidence.ReadyForScratchRestore() && sColdRecoveryRequired);
+        failPcieAudit=false;
+    }
+    {
+        FabricQueue queue{0,0,0};PioneerStoreContext context;PioneerProbeCookie cookie;Guard guard{Validate};
+        device=&queue;mapCount=deleteCount=0;failMap=failDelete=loseTicketOnDelete=-1;
+        changeQueueOnRead=loseTicketOnRead=-1;ticketValid=sColdRecoveryRequired=true;ResetUnit();
+        cookie.context=&context;sRuntimeOwner=sQwen35ExclusiveCookie=&cookie;sReloadQuiesced=false;sOpenCookies=1;
+        loseTicketAfterPcie=true;tt_pioneer_recovery_run result{};
+        assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_DEV_NOT_READY
+            && result.stage==PIONEER_RECOVERY_STAGE_FABRIC_PCIE_AUDIT && !ticketValid
+            && !context.recoveryFabricPcieAudited
+            && !(context.recoveryFabricEvidence.flags&PIONEER_FABRIC_PROOF_PCIE_HEALTHY) && sColdRecoveryRequired);
+        loseTicketAfterPcie=false;ticketValid=true;
+    }
+    {
+        FabricQueue queue{0,0,0};PioneerStoreContext context;PioneerProbeCookie cookie;Guard guard{ValidateWithEvidence};
+        device=&queue;mapCount=deleteCount=0;failMap=failDelete=loseTicketOnDelete=-1;
+        changeQueueOnRead=loseTicketOnRead=-1;ticketValid=sColdRecoveryRequired=true;ResetUnit();
+        cookie.context=&context;sRuntimeOwner=sQwen35ExclusiveCookie=&cookie;sReloadQuiesced=false;sOpenCookies=1;
+        loseTicketOnPcieEvidence=&context.recoveryFabricEvidence;tt_pioneer_recovery_run result{};
+        assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_DEV_NOT_READY
+            && result.stage==PIONEER_RECOVERY_STAGE_FABRIC_PCIE_AUDIT && !ticketValid
+            && !context.recoveryFabricPcieAudited && context.recoveryFabricEvidenceRecorded
+            && !(context.recoveryFabricEvidence.flags&PIONEER_FABRIC_PROOF_PCIE_HEALTHY) && sColdRecoveryRequired);
+        loseTicketOnPcieEvidence=nullptr;ticketValid=true;
     }
     {
         FabricQueue queue{0,0,0};PioneerStoreContext context;PioneerProbeCookie cookie;Guard guard{Validate};
