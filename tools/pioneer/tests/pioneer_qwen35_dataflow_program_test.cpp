@@ -69,7 +69,7 @@ static void CheckPackedActivationPages(const uint8_t* cache,unsigned type,unsign
 }
 
 struct UnpackAddressOps {
-	unsigned addresses[2]{},count=0;
+	unsigned addresses[2]{},count=0,loads=0,gives=0;
 	void Config(unsigned index,uint32_t value)
 	{
 		if (index==76 && value!=0x7070) {
@@ -77,7 +77,17 @@ struct UnpackAddressOps {
 			addresses[count++]=(value+1)*16;
 		}
 	}
-	void Op(uint32_t) {}
+	void Op(uint32_t op) {
+		if ((op>>24)==0x42) {
+			assert(op==0x42000081 && !gives);
+			loads++;
+		} else if ((op>>24)==0x43) {
+			assert(op==0x43000121 && loads && !gives);
+			gives++;
+		} else if ((op>>24)==0x08) {
+			assert(gives==1);
+		}
+	}
 	void Drain() {}
 };
 
@@ -276,6 +286,7 @@ static void CheckDynamicWeightAddresses()
 				UnpackAddressOps ops{};
 				assert(PioneerQwen35DataflowVectorUnpack(ops,type,panel,rawBase));
 				assert(ops.count==(span.second?2U:1U));
+				assert(ops.loads==ops.count && ops.gives==1);
 				assert(ops.addresses[0]==rawBase+span.low);
 				if (span.second) assert(ops.addresses[1]==rawBase+span.high);
 			}

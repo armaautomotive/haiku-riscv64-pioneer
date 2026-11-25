@@ -88,12 +88,18 @@ template<class E> static bool PioneerQwen35DataflowVectorUnpack(E& e,
 	e.Config(72,14); e.Config(73,0x13);
 	e.Config(84,0x00400040);
 	e.Config(76,(rawBase+span.low-16)/16);
-	e.Op(span.second?0x42000081:0x420000c1); e.Drain();
+	// Unpack-to-Dst must not flip SrcA: on Blackhole that can desynchronize
+	// the unpack and matrix bank selectors (TEN-3868).
+	e.Op(0x42000081); e.Drain();
 	if (span.second) {
 		e.Config(84,0x00400140);
 		e.Config(76,(rawBase+span.high-16)/16);
-		e.Op(0x420000c1); e.Drain();
+		e.Op(0x42000081); e.Drain();
 	}
+	// Blackhole's clear-and-give form waits for the unpack bank, clears it,
+	// and hands it to the matrix unit without the broken Dst flip. The SFPU
+	// transform below fills that bank using MOVD2A before matrix consumption.
+	e.Op(0x43000121); e.Drain();
 	e.Config(1,0xa0220000); e.Config(64,0x100011); e.Config(72,1);
 	e.Config(73,3); e.Config(76,0x7070); e.Config(84,0x00400040);
 	e.Op(0xb2050004); e.Drain();

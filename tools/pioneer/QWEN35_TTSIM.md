@@ -83,3 +83,27 @@ advanced to an unpack operation the simulator marks untested and then stopped.
 That experimental image is not the production kernel and provides no
 numerical or hardware correctness evidence. No fixed-projection output
 comparison has passed.
+
+The later `tests/ttsim-blackhole-matrix-exploratory.patch` is a different,
+unqualified simulator experiment, applied *after* the zero-upper-length
+patch to a separate checkout at the pinned `ttsim` commit. It models a few
+additional instruction modes and permits only zero writes to otherwise
+unmodelled thread/configuration state. Those zero-state assumptions and the
+new instruction implementations are not independently validated and cannot
+be treated as a golden model. For example:
+
+```sh
+cd /path/to/separate-ttsim-checkout
+patch -p1 < /path/to/HaikuOS/tools/pioneer/tests/ttsim-blackhole-zero-upper-length.patch
+patch -p1 < /path/to/HaikuOS/tools/pioneer/tests/ttsim-blackhole-matrix-exploratory.patch
+python3 make.py src/_out/bh/libttsim.so
+```
+
+With that experimental simulator, the original projection image stops on
+`UndefinedBehavior: SrcA set valid after unpack to Dst (HW erratum TEN-3868)`.
+The rewrite now uses no-flip Dst unpack followed by Blackhole's clear-and-give
+form before `MOVD2A`, as described by [Tenstorrent's SrcA documentation](https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/SrcASrcB.md#hardware-bug-giving-srca-to-the-matrix-unit-after-an-unpacr-to-dst).
+The new image passes that simulator check and reaches the later unsupported
+`SFPMUL` modifier 2. It still has no numerical projection result. These
+observations do not prove correct bank ownership, instruction timing, output,
+or recovery on physical hardware.

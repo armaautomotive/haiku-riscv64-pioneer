@@ -1,0 +1,86 @@
+--- a/data/bh/tensix_regs.json
++++ b/data/bh/tensix_regs.json
+@@ -951 +950,0 @@
+-    "unsupported": true,
+--- a/src/tensix.cpp
++++ b/src/tensix.cpp
+@@ -430,0 +431,2 @@
++        CFG_REG_BANKED_RD(20)
++        CFG_REG_BANKED_RD(21)
+@@ -431,0 +434 @@
++        CFG_REG_BANKED_RD(25)
+@@ -434,0 +438 @@
++        CFG_REG_BANKED_RD(50)
+@@ -472 +476,5 @@
+-        default: TTSIM_ERROR(UnsupportedFunctionality, "reg=%d", reg);
++        default:
++#if TT_ARCH_VERSION == 1
++            if (reg == 6 || reg == 7 || reg == 49) return 0;
++#endif
++            TTSIM_ERROR(UnsupportedFunctionality, "reg=%d", reg);
+@@ -634 +642,5 @@
+-        default: TTSIM_ERROR(UnsupportedFunctionality, "reg=%d", reg);
++        default:
++#if TT_ARCH_VERSION == 1
++            if ((reg == 6 || reg == 7 || reg == 49) && data == 0) break;
++#endif
++            TTSIM_ERROR(UnsupportedFunctionality, "reg=%d data=0x%x", reg, data);
+@@ -1030,0 +1043,12 @@
++    if (pipe == 0) {
++        TTSIM_ASSERT(!(offset & 3), "misaligned offset=0x%x", offset);
++        uint32_t fmt = p_config->RISC_DEST_ACCESS_CTRL_SEC0_fmt;
++        TTSIM_VERIFY(fmt <= 1 && !p_config->RISC_DEST_ACCESS_CTRL_SEC0_unsigned_int,
++            UnimplementedFunctionality, "pipe=0 fmt=%d", fmt);
++        uint32_t addr = offset >> 2;
++        uint32_t row = addr / 16, col = addr % 16;
++        TTSIM_ASSERT(row < DST_ROWS / 2, "row=%d", row);
++        uint32_t value = dst_decode_fp32(read_dst32b(p_tensix, row, col));
++        if (fmt == 1 && (value & 0x80000000)) value = -(value & 0x7fffffff);
++        return value;
++    }
+@@ -1129 +1152,0 @@
+-                TTSIM_VERIFY(src_a_fmt != 1, UnsupportedFunctionality, "use_dst32b fp16");
+@@ -1131 +1154,4 @@
+-                if (src_a_fmt != 4) {
++                if (src_a_fmt == 1) {
++                    value = dst_decode_fp16(dst_val >> 16);
++                    value = ((value & 0x8000) << 16) | ((value & 0x7fff) << 13);
++                } else if (src_a_fmt != 4) {
+@@ -1857,2 +1883,2 @@
+-        TTSIM_VERIFY(src_a_fmt == 14, UnsupportedFunctionality, "int8 src_a_fmt=%d src_b_fmt=%d", src_a_fmt, src_b_fmt);
+-        TTSIM_VERIFY(src_b_fmt == 14, UnsupportedFunctionality, "int8 src_a_fmt=%d src_b_fmt=%d", src_a_fmt, src_b_fmt);
++        TTSIM_VERIFY(src_a_fmt == 14 || src_a_fmt == 1, UnsupportedFunctionality, "int8 src_a_fmt=%d src_b_fmt=%d", src_a_fmt, src_b_fmt);
++        TTSIM_VERIFY(src_b_fmt == 14 || src_b_fmt == 1, UnsupportedFunctionality, "int8 src_a_fmt=%d src_b_fmt=%d", src_a_fmt, src_b_fmt);
+@@ -2547 +2573 @@
+-    uint32_t intermediate_format = p_config->THCON_SEC0_REG1_In_data_format;
++    uint32_t intermediate_format = p_config->ALU_FORMAT_SPEC_REG_Dstacc_override ? p_config->ALU_FORMAT_SPEC_REG_Dstacc_val : p_config->THCON_SEC0_REG1_In_data_format;
+@@ -3714 +3739,0 @@
+-                TTSIM_VERIFY(!unpack_to_dst, UnsupportedFunctionality, "unpack_to_dst=%d in_data_format=%d", unpack_to_dst, in_data_format);
+@@ -3724 +3749,2 @@
+-                    value[c] = ((value[c] & 0x8000) << 16) | ((value[c] & 0x7FFF) << 13);
++                    value[c] = unpack_to_dst ? dst_encode_fp16(value[c])
++                        : ((value[c] & 0x8000) << 16) | ((value[c] & 0x7FFF) << 13);
+@@ -3731 +3757 @@
+-            TTSIM_ERROR(UntestedFunctionality, "zero_write2=%d", zero_write2);
++            for (uint32_t c = 0; c < ROW_SIZE; c++) value[c] = 0;
+@@ -4173 +4199 @@
+-                 (instr_mod0 == 6) || (instr_mod0 == 12) || (instr_mod0 == 14) || (instr_mod0 == 15),
++                 (instr_mod0 == 6) || (instr_mod0 == 12) || (instr_mod0 == 13) || (instr_mod0 == 14) || (instr_mod0 == 15),
+@@ -4231,0 +4258,3 @@
++        } else if (instr_mod0 == 13) {
++            uint32_t raw = sfpu_read_cell16(p_tensix, cell_bank, row, col);
++            value = ((raw >> 15) << 31) | ((raw >> 5) & 0x3ff);
+@@ -5097,0 +5127,4 @@
++            break;
++        case 2:
++            p_tensix->cc = 0xFFFFFFFF;
++            p_tensix->cc_en = imm12_math & 1;
+@@ -5880 +5913,7 @@
+-        default: TTSIM_ERROR(UnsupportedFunctionality, "setc16_reg=%d", setc16_reg);
++        default:
++#if TT_ARCH_VERSION == 1
++            TTSIM_VERIFY(setc16_reg < 68 && setc16_value == 0, UnsupportedFunctionality, "setc16_reg=%d value=%d", setc16_reg, setc16_value);
++            break;
++#else
++            TTSIM_ERROR(UnsupportedFunctionality, "setc16_reg=%d", setc16_reg);
++#endif
