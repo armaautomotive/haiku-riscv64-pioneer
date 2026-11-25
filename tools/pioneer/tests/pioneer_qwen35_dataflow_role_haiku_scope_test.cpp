@@ -33,6 +33,12 @@ static tt_pioneer_profile GoodProfile()
     return p;
 }
 struct PioneerStoreContext;
+#ifdef TEST_SHARED_FABRIC_VIEWS
+struct MockRecoverySession {
+    PioneerStoreContext* fresh=nullptr;
+    PioneerStoreContext* Fresh() const { return fresh; }
+};
+#endif
 #if defined(TEST_SHARED_POST_RESET) && (defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS))
 static void SelectRoleTestWindows(unsigned previous,unsigned next);
 #ifdef TEST_ROLE_STAGE_QUALIFY
@@ -549,7 +555,7 @@ struct PioneerStoreContext {
     bool recoveryFabricPciIdle=false,recoveryFabricAuditReleased=false;
     bool q35PciReservationHeld=true,q35PciReleaseAttempted=false;
     uint64 recoveryFabricStartTicket=0;
-    void* recoveryFreshSession=nullptr;
+    MockRecoverySession* recoveryFreshSession=nullptr;
     PioneerDriverFabricRecoveryProof recoveryFabricEvidence{};
 #endif
     FakeService* qwen35DataflowService=nullptr; FakeGraph* qwen35GraphOwner=nullptr;

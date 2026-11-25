@@ -335,9 +335,13 @@ static void ExerciseFabricViewRetirement(PioneerSessionIO& io)
     auto permit=[]() { return true; };auto noAlias=[](int32_t) { return false; };
     assert(!binding->OpenFabricRecoveryViews(bar,permit,noAlias)); // no fresh session
     gMapCalls=0; // the fake mapper numbers a fresh pass from its first window
-    context->recoveryFreshSession=reinterpret_cast<void*>(1);
+    PioneerStoreContext freshContext;MockRecoverySession freshSession{&freshContext};
+    context->recoveryFreshSession=&freshSession;
     assert(binding->OpenFabricRecoveryViews(bar,permit,noAlias) && binding->FabricRecoveryViewsOpen()
         && !binding->FabricViewsDisposed() && !binding->CanDestroy());
+    assert(!binding->BeginFabricCoreRecovery(io,*io.qwen35BorrowedRoleScope,permit)
+        && !binding->BeginFabricCoreRecovery(freshContext.io,*io.qwen35BorrowedRoleScope,permit)
+        && !binding->FabricCoreRecoveryUsable());
     assert(binding->CloseFabricRecoveryViews(permit,noAlias) && binding->FabricRecoveryViewsClosed()
         && !binding->CanDestroy() && PioneerQ35SharedRoleBindingTestAccess::CodeSnapshot(*binding)==code
         && PioneerQ35SharedRoleBindingTestAccess::RamSnapshot(*binding)==ram);

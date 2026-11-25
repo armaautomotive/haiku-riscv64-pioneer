@@ -33,6 +33,9 @@ class DataflowRoleFleetRecoveryOwner {
     bool fCoreLocalReleaseLedger=false;
     bool fHeldImageOnlyStage=false,fHeldImageOnlyRestored=false;
     bool fCoreResetRestoreAttempted=false;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    bool fFabricCoreRecoveryAttempted=false,fFabricCoreRecoveryActive=false;
+#endif
     bool fCoreRestoreStaged[DataflowBarrierWorkers]{};
     bool fCoreRestoreReleaseAttempted[DataflowBarrierWorkers]{};
     bool fAutoRestoreMayRun[DataflowBarrierWorkers]{};
@@ -237,6 +240,37 @@ public:
     }
     bool AutoRestoreMode() const { return fAutoRestoreMode; }
     bool CoreLocalRestoreMode() const { return fCoreLocalRestoreMode; }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    bool FabricCoreRecoveryAttempted() const { return fFabricCoreRecoveryAttempted; }
+    bool FabricCoreRecoveryActive() const { return fFabricCoreRecoveryActive; }
+    // After a verified fabric hold, a resident auto-restore run interrupted
+    // before any recorded auto restore/cancel can enter the separate
+    // core-local recovery sequence. IO must bind the exact retained ticket,
+    // parent handoff, all snapshots, routes, and lifetime writer exclusion;
+    // these metadata and sampled checks do not establish those facts.
+    // A failed audit is one-shot and retains the original auto-mode owner.
+    template<class IO> bool BeginFabricCoreRecovery(IO& io) {
+        if (fFabricCoreRecoveryAttempted || !fAutoRestoreMode || !fCoreLocalRestoreMode
+            || !fCoreLocalReleaseLedger || !fStackless || fCoreResetRestoreAttempted
+            || (fPhase!=ReleaseAttempted && fPhase!=Faulted)
+            || !io.FabricRecoveryConversionAllowed()) return false;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            if (fAutoRestoreCompleted[core] || fAutoRestoreCancelled[core]
+                || fCoreRestoreStaged[core] || fCoreRestoreReleaseAttempted[core]
+                || !fCoreRestoreHandoff[core].Untouched()) return false;
+        }
+        fFabricCoreRecoveryAttempted=true;fPhase=Faulted;
+        if (!io.FabricRecoveryConversionAllowed() || !AllHeldAndRouted(io)
+            || !VerifyHeldCopyLedger(io) || !VerifyResetDisable(io,true)
+            || !fImages.VerifyStagedAllWithCopies(io)) return false;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++)
+            if (!fRam.StacklessCopiesCaptured(core) && !io.StacklessUncapturedRamProtected(core)) return false;
+        if (!io.FabricRecoveryConversionAllowed() || !VerifyHeldCopyLedger(io)
+            || !VerifyResetDisable(io,true) || !AllHeldAndRouted(io)
+            || !io.FabricRecoveryConversionAllowed()) return false;
+        fAutoRestoreMode=false;fFabricCoreRecoveryActive=true;return true;
+    }
+#endif
     bool CopyAwareReleaseStarted() const { return fCoreLocalReleaseLedger; }
     const uint32_t* OriginalRamWords(unsigned core,unsigned role) const {
         return fRam.OriginalWords(core,role);
