@@ -4,6 +4,9 @@
 
 #include "PioneerQwen35DataflowKernels.h"
 #include "PioneerQwen35DataflowNocReadPipeline.h"
+#if defined(PIONEER_QWEN35_SHARED_ROLE_NOC_SAFETY) || defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS)
+#include "PioneerQwen35DataflowActivationRead.h"
+#endif
 #include "PioneerQ38ProjectionInput.h"
 
 namespace PioneerQwen35 {
@@ -397,6 +400,23 @@ public:
 			|| bytes!=rows*sizeof(float) || !output
 			|| reinterpret_cast<uintptr_t>(output)!=DataflowActivationCacheAddress)
 			return false;
+#if defined(PIONEER_QWEN35_SHARED_ROLE_NOC_SAFETY) || defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS)
+		static_assert(unsigned(DataflowActivationReadMaxBytes)==unsigned(DataflowNocMaxTransfer),
+			"activation chunks must fit the hardware NoC transfer limit");
+		struct Pipeline {
+			DataflowBlackholeNoc<0>::ReadPipelineIO io;
+			DataflowNocReadPipeline<decltype(io)> reads;
+			Pipeline():reads(io) {}
+			bool Start() { return reads.Start(); }
+			bool Issue(uint32_t sequence,uint32_t remote,uint32_t route,uint32_t local,unsigned length) {
+				return reads.Issue(sequence,remote,route,local,length,DataflowNocPollLimit);
+			}
+			bool Complete(uint32_t sequence) { return reads.Complete(sequence,DataflowNocPollLimit); }
+			bool Finish() { return reads.Finish(); }
+		} pipeline;
+		return DataflowActivationReadPipelined(source,fProgram->inputBase,rows,
+			DataflowActivationCacheAddress,fProgram->bankRoute[0],pipeline);
+#else
 		const unsigned rangeEnd=fProgram->inputBase+rows;
 		unsigned covered=0;
 		for (unsigned i=0;i<source.count && covered<rows;i++) {
@@ -429,6 +449,7 @@ public:
 			covered+=partRows;
 		}
 		return covered==rows;
+#endif
 	}
 
 	bool ReadWeight(unsigned bank,uint32_t address,uint8_t* output,unsigned bytes) const

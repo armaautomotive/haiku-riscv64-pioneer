@@ -18,7 +18,10 @@ template<class IO> class DataflowNocReadPipeline {
     static constexpr unsigned Depth=2;
     static constexpr uint32_t FifoEnabled=1U<<16,ClockDisabled=1U<<12;
     IO& fIO;
-    uint32_t fSelf=0,fConfig=0,fExpected[8]{};
+    // Start initializes every counter before fActive permits an issue. Avoid
+    // an aggregate clear here: on freestanding RV32 it can emit a libc
+    // memset dependency in the resident role image.
+    uint32_t fSelf=0,fConfig=0,fExpected[8];
     uint32_t fIssued=0,fRetired=0;
     bool fStarted=false,fActive=false,fFault=false,fInFlight[Depth]{};
 
