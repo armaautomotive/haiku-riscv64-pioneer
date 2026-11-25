@@ -338,6 +338,45 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
             print(f'qwen35_resident_install_stack_envelope_bytes={resident_total}/18432 '
                   '(includes 4096-byte helper allowance; not a whole-program proof)')
 
+    if any('DataflowResidentOwnedRunner<Handle>::Run(' in name and 'PioneerQ35ResidentDriverOwner::Policy' in name
+           for name, _, _ in entries):
+        # The selected resident driver reaches the ioctl through the resident
+        # owner rather than the legacy graph-run witness below. Include both
+        # metadata preparation and fleet audit frames even though they are
+        # separate branches, with an allowance for smaller helpers. Physical
+        # scope is currently denied and must be re-audited when enabled.
+        resident_run_groups = [
+            ('generation', ('DataflowGraphGeneration::Run(',)),
+            ('generation callback', ('DataflowGraphGeneration::Run<', '::<lambda(')),
+            ('graph owner', ('PioneerQ35GraphOwnerRun(',)),
+            ('resident driver bridge', ('PioneerQwen35ResidentDriverOwner.inc:', 'constprop(')),
+            ('owned resident runner', ('DataflowResidentOwnedRunner<Handle>::Run(', 'PioneerQ35ResidentDriverOwner::Policy')),
+            ('resident session', ('DataflowResidentGraphSession::Run(', 'PioneerQ35ResidentDriverOwner::Policy')),
+            ('resident metadata transaction', ('DataflowResidentModelTransaction::Prepare(', 'PioneerQ35ResidentDriverOwner::Scope')),
+            ('metadata decoder', ('DataflowDecoderSequence::Run(', 'DataflowGraphMetadataService')),
+            ('metadata ffn', ('DataflowFfnSequence::Run(', 'DataflowGraphMetadataService')),
+            ('metadata service', ('DataflowGraphMetadata.h:', 'DataflowGraphMetadataService::')),
+            ('authority method', ('DataflowProjectionAuthority::',)),
+            ('program builder', ('DataflowProgramBuilder::Build(',)),
+            ('projection schedule', ('PioneerQ35BuildProjectionProgram(',)),
+            ('host candidate audit', ('PioneerQwen35ResidentHostPci<Raw, Scope>::AuditCandidate(', 'PioneerQ35ResidentDriverOwner::Scope')),
+            ('fleet audit', ('DataflowResidentFleetAudit::Audit(', 'PioneerSessionIO')),
+            ('stable core read', ('PioneerQwen35ResidentFleetAuditPci<Raw, Scope>::ReadStableResidentCore(', 'PioneerSessionIO')),
+            ('PCI read', ('PioneerQwen35DataflowPciMemory<Raw>::ReadCoreMemory(',)),
+            ('PCI map', ('PioneerQwen35DataflowPciMemory<Raw>::SelectMapped(',)),
+        ]
+        resident_run_total = sizes['control'] + 2048
+        for label, markers in resident_run_groups:
+            matches = [(frame, kind) for name, frame, kind in entries
+                       if all(marker in name for marker in markers)]
+            if not matches or any(kind != 'static' for _, kind in matches):
+                raise RuntimeError('missing or unbounded resident run frame: ' + label)
+            resident_run_total += max(frame for frame, _ in matches)
+        if resident_run_total > 18432:
+            raise RuntimeError(f'resident run stack envelope is {resident_run_total} bytes')
+        print(f'qwen35_resident_run_stack_envelope_bytes={resident_run_total}/18432 '
+              '(includes 2048-byte helper allowance; physical scope currently denied)')
+
     # The model transaction is a distinct non-loadable witness. Sum the
     # metadata decoder's measured call frames and conservative branches;
     # this still does not certify a future session/ioctl caller.

@@ -2046,6 +2046,17 @@ public:
 // owned by the session, retained through all uncertain work and destroyed
 // only after the full graph/session release audit. No such lifecycle or
 // public entry exists yet, so it cannot authorize or launch the graph.
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+class PioneerQ35ResidentDriverOwner;
+class PioneerQ35StreamRecordingWitness;
+static PioneerQ35ResidentDriverOwner* PioneerQ35ResidentDriverCreate(PioneerStoreContext&,PioneerQ35GraphOwner*,PioneerQ35StreamRecordingWitness&);
+static bool PioneerQ35ResidentDriverBind(PioneerQ35ResidentDriverOwner*);
+static bool PioneerQ35ResidentDriverReady(const PioneerQ35ResidentDriverOwner*,unsigned);
+static bool PioneerQ35ResidentDriverRetained(const PioneerQ35ResidentDriverOwner*);
+static bool PioneerQ35ResidentDriverDestroy(PioneerQ35ResidentDriverOwner*&);
+static PioneerQwen35::DataflowGraphSessionResult PioneerQ35ResidentDriverRun(PioneerQ35ResidentDriverOwner*,
+	unsigned,unsigned,bool,unsigned,PioneerQwen35::DataflowArgmaxResult&,unsigned&);
+#endif
 class PioneerQ35StreamRecordingWitness {
 	PioneerStoreContext& context;
 	PioneerQ35StreamPageIO io;
@@ -2060,6 +2071,9 @@ class PioneerQ35StreamRecordingWitness {
 	unsigned recordedSlot=PioneerQwen35::ActivationBuffers;
 	unsigned recordedRoutes[2][PioneerQwen35::Banks]{};
 	const PioneerQwen35::DataflowGraphSession* graphSession=nullptr;
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+	const void* residentSession=nullptr;
+#endif
 public:
 	explicit PioneerQ35StreamRecordingWitness(PioneerStoreContext& c)
 		:context(c),io(c),sink(io) {}
@@ -2103,13 +2117,30 @@ public:
 	unsigned SealedSlot() const { return recordedSlot; }
 	bool ReserveGraphSession(const PioneerQwen35::DataflowGraphSession* owner,
 		const PioneerQwen35::DataflowStreamPlan& requested,unsigned slot) {
-		if (!owner || graphSession || !SealedMatches(requested,slot)) return false;
+		if (!owner || graphSession
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+			|| residentSession
+#endif
+			|| !SealedMatches(requested,slot)) return false;
 		graphSession=owner;return true;
 	}
 	bool OwnsGraphSession(const PioneerQwen35::DataflowGraphSession* owner,
 		const PioneerQwen35::DataflowStreamPlan& requested,unsigned slot) const {
 		return owner && graphSession==owner && SealedMatches(requested,slot);
 	}
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+	bool ReserveResidentSession(const void* owner,const PioneerQwen35::DataflowStreamPlan& requested,unsigned slot) {
+		if (!owner || graphSession || residentSession || !SealedMatches(requested,slot)) return false;
+		residentSession=owner;return true;
+	}
+	bool CancelResidentReservation(const void* owner) {
+		if (!owner || residentSession!=owner) return false;
+		residentSession=nullptr;return true;
+	}
+	bool OwnsResidentSession(const void* owner,const PioneerQwen35::DataflowStreamPlan& requested,unsigned slot) const {
+		return owner && residentSession==owner && SealedMatches(requested,slot);
+	}
+#endif
 	PioneerQwen35::DataflowGraphStageLedger& StageLedger() { return stageLedger; }
 };
 
@@ -2284,6 +2315,9 @@ class PioneerQ35GraphOwner {
 	PioneerQwen35::DataflowGraphOwnedRunner runner;
 	PioneerQwen35::DataflowGraphFaultAudit faultAudit;
 	PioneerQwen35::DataflowGraphDiagnosticResult diagnostic;
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+	PioneerQ35ResidentDriverOwner* residentDriver=nullptr;
+#endif
 	bool recorded=false,bound=false,retiredAfterFault=false;
 public:
 	explicit PioneerQ35GraphOwner(PioneerStoreContext& c):context(c),stream(c) {}
@@ -2341,9 +2375,12 @@ public:
 	}
 	bool Bind() {
 #ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
-		// The per-core graph session sends the old host-driven protocol. The
-		// resident command/ack owner must replace it before this path can run.
-		return false;
+		if (!recorded || bound || residentDriver || !stream.SealedPlan() || !context.qwen35DataflowService) return false;
+		residentDriver=PioneerQ35ResidentDriverCreate(context,this,stream);
+		if (!residentDriver) return false;
+		bound=PioneerQ35ResidentDriverBind(residentDriver);
+		if (!bound && !PioneerQ35ResidentDriverDestroy(residentDriver)) sColdRecoveryRequired=true;
+		return bound;
 #else
 		const auto* plan=stream.SealedPlan();
 		if (!recorded || bound || !plan || !context.qwen35DataflowService) return false;
@@ -2353,29 +2390,51 @@ public:
 		return bound;
 #endif
 	}
-	bool ReadyForSlot(unsigned slot) const { return bound && !Retained() && stream.SealedSlot()==slot; }
+	bool ReadyForSlot(unsigned slot) const {
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+		return bound && !Retained() && PioneerQ35ResidentDriverReady(residentDriver,slot);
+#else
+		return bound && !Retained() && stream.SealedSlot()==slot;
+#endif
+	}
 	PioneerQwen35::DataflowGraphSessionResult Run(unsigned position,unsigned token,bool decode,unsigned polls,
 		PioneerQwen35::DataflowArgmaxResult& output,unsigned& stage) {
 		diagnostic.Reset();
 		output={PioneerQwen35::Vocabulary,0,0,0};stage=PioneerQwen35::DataflowDecoderSequenceInvalidRequest;
 		if (!bound || !context.qwen35DataflowProgramScratch) return PioneerQwen35::DataflowGraphSessionInvalid;
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+		const auto result=PioneerQ35ResidentDriverRun(residentDriver,position,token,decode,polls,output,stage);
+#else
 		PioneerQ35GraphBackend backend(context,stream);
 		const auto result=runner.Run(session,context.qwen35DataflowAuthority,position,token,decode,polls,
 			*context.qwen35DataflowProgramScratch,backend,output,stage);
+#endif
 		if (result==PioneerQwen35::DataflowGraphSessionComplete && decode)
 			diagnostic.Set(output);
 		return result;
 	}
 	bool LastResult(PioneerQwen35::DataflowArgmaxResult& output) const {
-		return bound && !Retained() && context.qwen35DataflowService
-			&& context.qwen35DataflowService->Ready() && diagnostic.Read(output);
+		return ReadyForSlot(stream.SealedSlot()) && context.qwen35DataflowService
+#ifndef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+			&& context.qwen35DataflowService->Ready()
+#endif
+			&& diagnostic.Read(output);
 	}
 	bool ReadTrace(unsigned slot,PioneerQwen35::DataflowGraphTraceRecord& output) {
 		using namespace PioneerQwen35;
 		DataflowArgmaxResult result{};
 		return LastResult(result) && DataflowGraphTraceRead(context.io,slot,result,output);
 	}
-	bool Retained() const { return runner.Retained() || (session.Faulted() && !retiredAfterFault); }
+	bool Retained() const {
+		return runner.Retained() || (session.Faulted() && !retiredAfterFault)
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+			|| PioneerQ35ResidentDriverRetained(residentDriver)
+#endif
+			;
+	}
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+	bool DestroyResident() { return PioneerQ35ResidentDriverDestroy(residentDriver); }
+#endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 	bool OwnsRetainedFault(const void* run) const {
 		const auto* retained=session.RetainedRun();
@@ -2398,6 +2457,9 @@ public:
 	}
 	PioneerQwen35::DataflowServiceResult RecoverFaultForClose() {
 		using namespace PioneerQwen35;
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+		return Retained()?DataflowServiceRecoveryPending:DataflowServiceInvalidState;
+#else
 		if (!bound || retiredAfterFault || !runner.Retained() || !session.Faulted())
 			return DataflowServiceInvalidState;
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
@@ -2417,12 +2479,17 @@ public:
 		if (result!=DataflowServiceClosed) return result;
 		retiredAfterFault=true;bound=false;
 		return DataflowServiceClosed;
+#endif
 	}
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	bool ReleaseAfterVerifiedReset(const PioneerDriverRecoveryProof& proof,uint64_t ticket) {
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+		(void)proof;(void)ticket;return !residentDriver && !runner.Retained();
+#else
 		if (!runner.Retained()) return true;
 		PioneerQ35GraphBackend backend(context,stream,&proof,ticket);
 		return runner.ReleaseRetainedAfterRestoration(context.qwen35DataflowAuthority,backend);
+#endif
 	}
 #endif
 };
@@ -2440,6 +2507,9 @@ PioneerQ35GraphOwnerInstallResident(PioneerStoreContext& context,
 static void
 PioneerQ35GraphOwnerDestroy(PioneerQ35GraphOwner* owner)
 {
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+	if (owner && !owner->DestroyResident()) { sColdRecoveryRequired=true;return; }
+#endif
 	PioneerQ35DeleteAligned(owner);
 }
 

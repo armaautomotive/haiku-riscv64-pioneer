@@ -4150,9 +4150,9 @@ static PioneerQwen35::DataflowServiceResult PioneerQ35GraphOwnerInstallResident(
 	PioneerStoreContext& context,const PioneerQwen35::DataflowServiceImageView& image);
 #endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
-static bool PioneerQ35BeginRetainedFaultScope(PioneerStoreContext& context,const PioneerQ35GraphOwner* owner,const void* run);
+static bool __attribute__((unused)) PioneerQ35BeginRetainedFaultScope(PioneerStoreContext& context,const PioneerQ35GraphOwner* owner,const void* run);
 static bool PioneerQ35PromoteRetainedFaultScope(PioneerStoreContext& context);
-static bool PioneerQ35EndRetainedFaultScope(PioneerStoreContext& context,const PioneerQ35GraphOwner* owner,const void* run);
+static bool __attribute__((unused)) PioneerQ35EndRetainedFaultScope(PioneerStoreContext& context,const PioneerQ35GraphOwner* owner,const void* run);
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 static bool PioneerQ35AuditedDescriptorContinuity(PioneerStoreContext& context,unsigned core);
 #endif
@@ -5126,6 +5126,9 @@ template bool PioneerStoreContext::RunQ35FabricRecovery<PioneerQ35FabricHostScop
 #include "PioneerQwen35ResidentHostCompileWitness.inc"
 #include "PioneerQwen35ResidentFleetAuditCompileWitness.inc"
 #include "PioneerQwen35ResidentTemplateCompileWitness.inc"
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+#include "PioneerQwen35ResidentDriverOwner.inc"
+#endif
 #endif
 #include "PioneerQwen35ProjectionScratchCompileWitness.inc"
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
@@ -10342,7 +10345,11 @@ Qwen35DataflowGenerate(PioneerProbeCookie* cookie,void* data,size_t length)
 #endif
 		|| !context->qwen35DataflowAuthority || !context->qwen35DataflowService
 		|| !context->qwen35DataflowProgramScratch
+#ifndef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
 		|| !context->qwen35DataflowService->Ready()) {
+#else
+		) {
+#endif
 		request->result=TT_QWEN35_DATAFLOW_GENERATE_RESULT_REJECTED;
 		request->stage=TT_QWEN35_DATAFLOW_GENERATE_DIAG_SERVICE;
 		request->output_count=0;
@@ -10356,7 +10363,13 @@ Qwen35DataflowGenerate(PioneerProbeCookie* cookie,void* data,size_t length)
 				request->output_count|=16U;
 			if (!context->qwen35DataflowService)
 				request->output_count|=32U;
-			else if (!context->qwen35DataflowService->Ready())
+			else if (
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+				!context->qwen35GraphOwner || !context->qwen35GraphOwner->ReadyForSlot(request->input_slot)
+#else
+				!context->qwen35DataflowService->Ready()
+#endif
+				)
 				request->output_count|=64U;
 		}
 		request->state=TT_QWEN35_DATAFLOW_STATE_EMPTY;
@@ -10618,7 +10631,11 @@ Qwen35DataflowControl(PioneerProbeCookie* cookie,uint32 operation,void* data,siz
 #endif
 			request.state=graphRetained?TT_QWEN35_DATAFLOW_STATE_FAULTED
 				:service->Closed()?TT_QWEN35_DATAFLOW_STATE_CLOSED
-				:service->Ready()?TT_QWEN35_DATAFLOW_STATE_READY
+				:(service->Ready()
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+					|| (context->qwen35GraphOwner && context->qwen35GraphOwner->ReadyForSlot(0))
+#endif
+				)?TT_QWEN35_DATAFLOW_STATE_READY
 				:service->Faulted()?TT_QWEN35_DATAFLOW_STATE_FAULTED
 				:TT_QWEN35_DATAFLOW_STATE_EMPTY;
 			request.next_sequence=service->NextSequence();
