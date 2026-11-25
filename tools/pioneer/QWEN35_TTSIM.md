@@ -125,18 +125,25 @@ then replace its synthetic weight bytes using the real tiled reader:
 c++ -std=c++17 -O2 -Wall -Wextra -Werror \
   tools/pioneer/tests/pioneer_qwen35_ttsim_model_fixture.cpp \
   tools/pioneer/PioneerModelWeightCache.cpp -o /tmp/q35-ttsim-model-fixture
-/tmp/q35-ttsim-model-fixture /path/to/Qwen3.5-4B-Q4_K_M.gguf /path/to/fixture-directory
+/tmp/q35-ttsim-model-fixture /path/to/Qwen3.5-4B-Q4_K_M.gguf /path/to/fixture-directory q4
 python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py \
   /path/to/experimental-libttsim.so /path/to/build/qwen35-dataflow-service-image \
-  /path/to/build/qwen35-shared-role-images --model-projection-fixture /path/to/fixture-directory
+  /path/to/build/qwen35-shared-role-images --model-projection-type q4 \
+  --model-projection-fixture /path/to/fixture-directory
 ```
 
 The fixture generator hashes the complete pinned GGUF on its open file,
 checks file identity through tiled reads, and takes the first 1,920 rows of
-`blk.0.ffn_gate.weight`. The test independently checks the resulting tiled
-weight digest, decodes Q4_K on the host, and compares two resident commands,
-each with 2,560 synthetic input values. It accepts an absolute error of at
-most `2e-6 * max(1, sum(abs(weight * input)))` per row. For the recorded
-fixture the largest observed normalized error was `1.573e-7` in each run.
-This is one tensor slice, in the experimental simulator, not model inference
-or a measurement of P100A speed.
+the selected tensor. The available choices are `q4` for
+`blk.0.ffn_gate.weight`, `q5` for `blk.0.attn_qkv.weight`, and `q6` for
+`token_embd.weight` (the tied output head). Start with a fresh fixed fixture
+directory for each choice, and pass the same choice to both commands.
+
+The test independently checks the resulting tiled weight digest, decodes the
+selected format on the host, and compares two resident commands, each with
+2,560 synthetic input values. It accepts an absolute error of at most
+`2e-6 * max(1, sum(abs(weight * input)))` per row. The largest observed
+normalized errors for Q4_K, Q5_K and Q6_K were `1.573e-7`, `1.216e-7` and
+`8.096e-8`, respectively, in each run. These are three tensor slices in the
+experimental simulator; they do not exercise Q8_0, full-model inference,
+physical recovery, or P100A speed.

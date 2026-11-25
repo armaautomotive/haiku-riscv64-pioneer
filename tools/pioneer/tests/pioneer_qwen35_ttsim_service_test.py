@@ -14,21 +14,36 @@ from pathlib import Path
 import struct
 
 
-def projection_reference(fixture):
-    """Independently decode byte-major Q4_K blocks on the host.
+def projection_reference(fixture, quant, input_offset, tile):
+    """Independently decode byte-major Q4_K, Q5_K or Q6_K on the host.
 
     This is an offline reference for the simulator fixture, not an inference
     path. The fixed synthetic fixture has exactly representable outputs;
     real model weights require a floating-point tolerance.
     """
-    inputs = struct.unpack_from('<2560f', fixture, 2764800)
+    inputs = struct.unpack_from('<2560f', fixture, input_offset)
+    block_bytes = {'q4': 144, 'q5': 176, 'q6': 210}[quant]
     values, norms = [], []
     for row in range(1920):
         total = 0.0
         norm = 0.0
         for block in range(10):
-            base = (row // 16 * 10 + block) * 2304 + row % 16
-            data = fixture[base:base + 2304:16]
+            base = (row // 16 * 10 + block) * tile + row % 16
+            data = fixture[base:base + block_bytes * 16:16]
+            if quant == 'q6':
+                d = struct.unpack_from('<e', data, 208)[0]
+                for pos in range(256):
+                    half, rem = divmod(pos, 128)
+                    group, lane = divmod(rem, 32)
+                    lowbyte = data[half * 64 + (group % 2) * 32 + lane]
+                    low = (lowbyte & 15) if group < 2 else (lowbyte >> 4)
+                    high = (data[128 + half * 32 + lane] >> (group * 2)) & 3
+                    q = (low | (high << 4)) - 32
+                    scale = struct.unpack_from('<b', data, 192 + pos // 16)[0]
+                    term = inputs[block * 256 + pos] * d * scale * q
+                    total += term
+                    norm += abs(term)
+                continue
             d, dmin = struct.unpack_from('<ee', data)
             scales = data[4:16]
             for group in range(8):
@@ -38,16 +53,18 @@ def projection_reference(fixture):
                 else:
                     scale = (scales[group + 4] & 15) | ((scales[group - 4] >> 6) << 4)
                     minimum = (scales[group + 4] >> 4) | ((scales[group] >> 6) << 4)
-                packed = 16 + (group // 2) * 32
+                packed = (48 if quant == 'q5' else 16) + (group // 2) * 32
                 activation = block * 256 + group * 32
                 for j in range(32):
                     q = data[packed + j]
                     q = (q & 15) if group % 2 == 0 else (q >> 4)
+                    if quant == 'q5' and data[16 + j] & (1 << group):
+                        q |= 16
                     term = inputs[activation + j] * (d * scale * q - dmin * minimum)
                     total += term
                     norm += abs(term)
         if not math.isfinite(total) or not math.isfinite(norm):
-            raise ValueError(f'non-finite Q4_K reference at row {row}')
+            raise ValueError(f'non-finite {quant} reference at row {row}')
         values.append(total)
         norms.append(norm)
     return values, norms
@@ -58,6 +75,8 @@ def main():
     parser.add_argument('library', type=Path)
     parser.add_argument('image', type=Path)
     parser.add_argument('roles', type=Path)
+    parser.add_argument('--model-projection-type', choices=('q4', 'q5', 'q6'), default='q4',
+                        help='quantization selected when preparing a model projection fixture')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--projection-fixture', type=Path,
                        help='also execute the separately generated fixed projection')
@@ -141,15 +160,22 @@ def main():
         invocation_size = 0
         projection_fixture = args.projection_fixture or args.model_projection_fixture
         if projection_fixture:
+            quant = args.model_projection_type if args.model_projection_fixture else 'q4'
+            tile = {'q4': 2304, 'q5': 2816, 'q6': 3392}[quant]
+            weight_bytes = 120 * 10 * tile
+            input_offset = (weight_bytes + 4095) & ~4095
+            output_offset = input_offset + 12288
             fixture = (projection_fixture / 'fixture.bin').read_bytes()
             invocations = (projection_fixture / 'invocations.bin').read_bytes()
             expected = (projection_fixture / 'expected.bin').read_bytes()
-            if len(fixture) != 2785280 or len(invocations) != 120 * 1128 or len(expected) != 1920 * 4:
+            if len(fixture) != output_offset + 8192 or len(invocations) != 120 * 1128 or len(expected) != 1920 * 4:
                 raise ValueError('unexpected fixed-projection fixture size')
-            if args.model_projection_fixture and hashlib.sha256(fixture[:2764800]).hexdigest() != (
-                    '550cc5316cf0f1bf1427a0f2d269cc1b74736e6fe9f04751629deb7e1b2ab26d'):
+            digests = {'q4': '550cc5316cf0f1bf1427a0f2d269cc1b74736e6fe9f04751629deb7e1b2ab26d',
+                       'q5': 'decc4d81af4674d2458311a2a5dd7bdbf55cf6ea6ed57a40f6d5b7b8b96babd0',
+                       'q6': 'c59d4ad12f9bfaab96d3b3a94a855d63dfceb4de060b3843f5cef4d09562abf5'}
+            if args.model_projection_fixture and hashlib.sha256(fixture[:weight_bytes]).hexdigest() != digests[quant]:
                 raise ValueError('model fixture weights do not match the pinned 4B tensor slice')
-            values, norms = projection_reference(fixture)
+            values, norms = projection_reference(fixture, quant, input_offset, tile)
             reference = struct.pack('<1920f', *values)
             if args.projection_fixture and reference != expected:
                 raise ValueError('fixed Q4_K fixture does not match the independent reference')
@@ -230,12 +256,10 @@ def main():
         if invocations is not None:
             for run in range(2):
                 if run and projection_fixture:
-                    input_offset = 2764800
                     bits = struct.unpack_from('<2560I', fixture, input_offset)
                     data = struct.pack('<2560I', *(value ^ 0x80000000 for value in bits))
                     bits = struct.unpack('<1920I', expected)
                     expected = struct.pack('<1920I', *(value ^ 0x80000000 for value in bits))
-                    output_offset = 2777088
                     sentinel = fixture[output_offset:output_offset + len(expected)]
                     for address, payload in ((0x4001000 + input_offset, data),
                                              (0x4001000 + output_offset, sentinel)):
@@ -274,7 +298,7 @@ def main():
                 else:
                     raise RuntimeError('operation did not complete on all 120 simulated cores')
                 if projection_fixture:
-                    address = 0x4001000 + 2777088
+                    address = 0x4001000 + output_offset
                     select(2, address, 18, 12)
                     data = read(bar + 0x400000 + (address & 0x1fffff), len(expected))
                     if args.projection_fixture:
@@ -347,7 +371,8 @@ def main():
             if args.projection_fixture:
                 print('PASS two resident 120-core Q4_K projections match 1,920 independently checked values each; SIMULATED ONLY')
             elif args.model_projection_fixture:
-                print('PASS two resident 120-core model-weight Q4_K projections match 1,920 independently checked values each; SIMULATED ONLY')
+                print(f'PASS two resident 120-core model-weight {quant.upper()}_K projections match '
+                      '1,920 independently checked values each; SIMULATED ONLY')
             elif args.silu_fixture:
                 print('PASS two resident 120-core SiLU runs match 9,216 values each; SIMULATED ONLY')
             else:
