@@ -1,0 +1,10 @@
+{
+  "saved_kernel_sha256": "90d6a7f5ccb2a93f42bb0256b050dbd1363ed05bdb3169820676fa45b08e5de8",
+  "reproduced_control_sha256": "90d6a7f5ccb2a93f42bb0256b050dbd1363ed05bdb3169820676fa45b08e5de8",
+  "candidate_kernel_sha256": "0aca1f8546c7da59859b5869c8e5a941638011e846a02792b37d3018e2ffce94",
+  "device_manager_source_sha256": "863ebb7521bfabe1b5d6efe899664aa363d9059045f1c0010afecf119391ec87",
+  "module_source_sha256": "e1f8c4a556801af30ba1a8ecd2c8d43db9c70d80d6abae119edc2c94d62dedc8",
+  "pin_header_sha256": "e36fd3ce503545c09d10113d36738cd8c4e219f3973995a9d808227de00aba28",
+  "jam_actions_sha256": "09db624d6083d0f34567a698ca1e3c0c12ef76d575f117175b5f8814f0876d1e",
+  "installed_or_booted": false
+}
