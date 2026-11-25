@@ -21,13 +21,13 @@ struct CountedMmio : MockIO {
 };
 
 static unsigned Run(unsigned failAt,bool& mappedLoss) {
-    CountedMmio io;tt_pioneer_mmio_result result{};tt_pioneer_mmio_transaction transaction{};
+    CountedMmio io;io.rootPciStatus=0xa5a5;tt_pioneer_mmio_result result{};tt_pioneer_mmio_transaction transaction{};
     unsigned checks=0;
     auto check=[&]() { ++checks;if (checks==failAt) { io.revoked=true;return false; }return true; };
     const bool okay=PioneerQ35GuardedMmioBegin(io,result,transaction,check);
     if (!failAt) {
         assert(okay && result.state==TT_PIONEER_MMIO_READ_OK && io.mapped && io.mmioReads==3);
-        assert(transaction.config_attempted && transaction.map_attempted);
+        assert(transaction.config_attempted && transaction.map_attempted && io.rootPciStatus==0xa5a5);
     } else {
         assert(!okay && io.revoked && !result.restored);
         if (io.writes) assert(transaction.config_attempted);

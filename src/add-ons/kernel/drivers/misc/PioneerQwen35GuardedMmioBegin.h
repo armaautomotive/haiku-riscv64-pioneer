@@ -26,7 +26,14 @@ template<class IO,class Check> struct PioneerQ35GuardedMmioBeginIO {
         const uint32_t value=io.RootRead(offset,size);return Allowed()?value:UINT32_MAX;
     }
     void RootWrite(uint16_t offset,uint8_t size,uint32_t value) {
-        if (Allowed()) { io.RootWrite(offset,size,value);(void)Allowed(); }
+        if (Allowed()) {
+            // SG2042 expands a subword root-command write using the old
+            // status half, which can acknowledge W1C errors. Use a full
+            // dword with zero status bits for the fixed command register.
+            if (offset==4 && size==2) io.RootWrite(offset,4,value&0xffffU);
+            else io.RootWrite(offset,size,value);
+            (void)Allowed();
+        }
     }
     bool Quiet() {
         if (RootRead(0x10,4)!=0 || RootRead(0x14,4)!=0 || (RootRead(0x38,4)&1)!=0

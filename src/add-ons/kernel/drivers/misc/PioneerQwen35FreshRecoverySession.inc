@@ -17,6 +17,7 @@
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
 #include "PioneerQwen35GuardedLeaseEnd.h"
 #include "PioneerQwen35GuardedMmioBegin.h"
+#include "PioneerQwen35GuardedMmioEnd.h"
 #endif
 #endif
 
@@ -409,6 +410,29 @@ public:
             || !scope.FreshRecoveryPostTransferAudit(*this,*fOld,*fFresh,fRestore)
             || !TicketValid(guard) || !verified()) return Retain(scope,FleetAudited);
         fStage=FleetAudited;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        if (fFabric) {
+            bool lost=false;
+            auto allowed=[&]() {
+                if (lost || !TicketValid(guard) || !verified()
+                    || !scope.FreshRecoveryPciAccessAllowed(*this,*fOld,*fFresh,fRestore)
+                    || !TicketValid(guard) || !verified()) { lost=true;return false; }
+                return true;
+            };
+            auto protectedArea=[&](int32_t area) {
+                return fOld->io.ReferencesRecoveryHostArea(area)
+                    || scope.FreshRecoveryAreaProtected(*this,*fOld,*fFresh,fRestore,area);
+            };
+            auto unmap=[&]() {
+                return !fFresh->lease.ready && !fFresh->lease.pending && !fFresh->lease.recovery_required
+                    && fFresh->lease.l1_restored && fFresh->lease.niu_restored && fFresh->lease.tlb_restored
+                    && fFresh->io.FreshRecoveryMmioUnmapReady()
+                    && fFresh->io.DisposeFabricOldMmio(allowed,protectedArea)==B_OK;
+            };
+            if (!PioneerQ35GuardedMmioEnd(fFresh->io,fFresh->Pci(),fFresh->transaction,allowed,unmap))
+                return Retain(scope,PciClosed);
+        } else
+#endif
         if (!PioneerQ38DispatchMmioEnd(fFresh->io,fFresh->Pci(),fFresh->transaction))
             return Retain(scope,PciClosed);
         fStage=PciClosed;

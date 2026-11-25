@@ -2925,6 +2925,20 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 class PioneerQwen35RoleBorrowedScopeWitness;
 #endif
 struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOutputIO {
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+	bool FreshRecoveryMmioUnmapReady() const {
+		return !postResetDisposeAttempted && !fabricOldMmioDisposeAttempted && !readAttempted
+			&& arc.tlb_restored && telemetryAttempted && telemetry.tlb_restored
+			&& resetAttempted && tensix.tlb_restored && dramAttempted
+			&& PioneerDramSamplesIO::dram.tlb_restored && !PioneerDramSamplesIO::dram.recovery_required
+			&& nocAttempted && noc.tlb_restored && !noc.recovery_required
+			&& pathAttempted && path.tlb_restored && !path.recovery_required
+			&& auditAttempted && audit.tlb_restored && !audit.recovery_required;
+	}
+	bool ReferencesRecoveryHostArea(int32_t area) const {
+		return area>=B_OK && (area==PioneerHostPageIO::area || area==outputArea || area==wideArea);
+	}
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
  bool TokenCallScopeMatches();bool TokenModelSourceScope(bool beginning);
  bool TokenInitializationScope(unsigned kind,bool beginning);bool TokenInitializationOtherCoresHeld(unsigned kind);

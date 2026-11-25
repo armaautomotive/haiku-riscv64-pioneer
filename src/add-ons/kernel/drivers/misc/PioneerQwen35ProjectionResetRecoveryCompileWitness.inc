@@ -35,6 +35,10 @@ struct PioneerQ35FreshRecoveryCompileScope {
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
     template<class Receipt> bool FreshRecoveryAuditAccessAllowed(PioneerQ35FreshRecoverySession&,
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRecoveryPciAccessAllowed(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRecoveryAreaProtected(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&,int32_t) const { return false; }
 #endif
     template<class Receipt> bool FreshRecoveryPciIdle(PioneerQ35FreshRecoverySession&,
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }

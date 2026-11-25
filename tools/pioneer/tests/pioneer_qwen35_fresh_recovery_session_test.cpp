@@ -122,11 +122,18 @@ struct PioneerPostResetMapping {
 struct PioneerHostDmaAuditIO { bool AfterNodeId(unsigned) { return Step(2); } };
 struct MockIO : PioneerHostDmaAuditIO {
     bool postResetDisposeComplete=false,fabricOldMmioDisposeComplete=false,quarantined=false;
+    bool freshMmioReady=true,freshMmioDisposed=false;
     template<class Check> bool GuardedRecoveryBaseline(unsigned node,Check& check) {
         return check() && AfterNodeId(node) && check();
     }
     void QuarantineHostPage() { quarantined=true; }
     int ReleaseHostPage() { return Step(17)?B_OK:-1; }
+    bool FreshRecoveryMmioUnmapReady() const { return freshMmioReady && !freshMmioDisposed; }
+    bool ReferencesRecoveryHostArea(int32_t area) const { return area==77; }
+    template<class Check,class Protected> int DisposeFabricOldMmio(Check& check,Protected& protectedArea) {
+        if (!check() || protectedArea(91) || !check()) return B_DEV_NOT_READY;
+        freshMmioDisposed=true;return B_OK;
+    }
 };
 class PioneerQ35FreshRecoverySession;
 struct PioneerStoreContext {
@@ -199,6 +206,13 @@ static bool PioneerQ38DispatchMmioEnd(MockIO&,MockPci& pci,MockTransaction& t) {
     if (!Step(15)) return false;
     pci.restored=1;t.config_attempted=false;return true;
 }
+template<class Check,class Unmap> static bool PioneerQ35GuardedMmioEnd(MockIO& io,MockPci& pci,
+    MockTransaction& t,Check& check,Unmap& unmap) {
+    if (!check() || !unmap()) { t.config_attempted=false;return false; }
+    const bool okay=PioneerQ38DispatchMmioEnd(io,pci,t);
+    if (!check()) { pci.restored=0;return false; }
+    return okay;
+}
 struct PioneerQ35ProjectionResetRecovery {
     bool restored=false;
     template<class Check> static bool TicketCheck(const MockProof&,Check&) { return true; }
@@ -222,7 +236,9 @@ struct Scope {
     bool dropAttachment=false,roleAdmission=true,roleRestored=true;
     bool replaceRoleAtAdmission=false,replaceGraphAtAdmission=false;
     unsigned auditChecks=0,failAuditAt=0,leaseChecks=0,failLeaseAt=0;
-    unsigned setupChecks=0,failSetupAt=0;
+    unsigned setupChecks=0,failSetupAt=0,pciChecks=0,failPciAt=0;
+    bool protectFreshArea=false,poisonLeaseBeforePci=false;
+    unsigned postAuditCalls=0;
     unsigned failBoundary=0,replaceRoleAtBoundary=0;
     bool RecoveryTransactionAdmission(PioneerProbeCookie*,PioneerStoreContext&,pioneer_driver_recovery_guard_v2_info*) { return admission; }
     bool FabricRecoveryTransactionAdmission(PioneerProbeCookie*,PioneerStoreContext&,pioneer_driver_recovery_guard_v2_info*) { return admission; }
@@ -254,9 +270,16 @@ struct Scope {
     bool FreshRecoveryCloseAdmission(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&,const PioneerQ35ProjectionResetRecovery&) { return closeAdmission; }
     bool FreshRecoveryPostTransferAudit(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
-        PioneerStoreContext&,const PioneerQ35ProjectionResetRecovery&) { return true; }
+        PioneerStoreContext& fresh,const PioneerQ35ProjectionResetRecovery&) {
+        if (++postAuditCalls==2 && poisonLeaseBeforePci) fresh.lease.pending=true;
+        return true;
+    }
     bool FreshRecoveryAuditAccessAllowed(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&,const PioneerQ35ProjectionResetRecovery&) { return ++auditChecks!=failAuditAt; }
+    bool FreshRecoveryPciAccessAllowed(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
+        PioneerStoreContext&,const PioneerQ35ProjectionResetRecovery&) { return ++pciChecks!=failPciAt; }
+    bool FreshRecoveryAreaProtected(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
+        PioneerStoreContext&,const PioneerQ35ProjectionResetRecovery&,int32_t area) { return protectFreshArea && area==91; }
     bool FreshRecoveryLeaseAccessAllowed(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&,const PioneerQ35ProjectionResetRecovery&) { return ++leaseChecks!=failLeaseAt; }
     bool FreshRecoveryPciIdle(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
@@ -288,7 +311,7 @@ static void CheckRetained(PioneerQ35FreshRecoverySession* session,PioneerStoreCo
 }
 int main() {
     pioneer_driver_recovery_guard_v2_info guard;
-    unsigned fabricAuditChecks=0,fabricCloseGuardChecks=0;
+    unsigned fabricAuditChecks=0,fabricCloseGuardChecks=0,fabricPciChecks=0;
     for (unsigned invalid=0;invalid<7;invalid++) {
         Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
         int role=1,graph=2;old.qwen35SharedRoleBinding=&role;old.qwen35GraphOwner=&graph;
@@ -403,10 +426,41 @@ int main() {
         const unsigned guardsBeforeClose=guardCalls;
         assert(session->CloseTransport(&guard,scope));
         fabricAuditChecks=scope.auditChecks;fabricCloseGuardChecks=guardCalls-guardsBeforeClose;
-        assert(fabricAuditChecks>16 && fabricCloseGuardChecks>fabricAuditChecks);
+        fabricPciChecks=scope.pciChecks;
+        assert(fabricAuditChecks>16 && fabricCloseGuardChecks>fabricAuditChecks
+            && fabricPciChecks>=4 && session->Fresh()->io.freshMmioDisposed);
         assert(session->Retire(&guard,scope) && !old.recoveryFreshSession && old.qwen35QualificationOwner.RetiredModifiedIdentity(
             &old.qwen35QualificationOwner.scratch,&old.qwen35QualificationOwner.snapshot)
             && old.io.fabricOldMmioDisposeComplete && !old.io.postResetDisposeComplete && !scope.retained);
+    }
+    for (unsigned failedCheck=1;failedCheck<=fabricPciChecks;failedCheck++) {
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
+        old.io.fabricOldMmioDisposeComplete=true;
+        old.recoveryFabricEvidenceRecorded=old.recoveryFabricPciIdleAttempted=old.recoveryFabricPciIdle=true;
+        old.recoveryFabricAuditReleaseAttempted=old.recoveryFabricAuditReleased=true;
+        Scope scope;auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(session->PrepareFabric(&owner,old,&guard,scope) && session->RestoreScratch(&guard,scope));
+        scope.failPciAt=failedCheck;
+        assert(!session->CloseTransport(&guard,scope));CheckRetained(session,old,scope);
+        assert(scope.pciChecks==failedCheck && session->FailureStage()==PioneerQ35FreshRecoverySession::PciClosed);
+        const auto count=operations.size();
+        assert(!session->CloseTransport(&guard,scope) && operations.size()==count);
+        PioneerQ35FreshRecoverySession::DisposeSimulated(session);
+    }
+    for (unsigned refusal=0;refusal<3;refusal++) {
+        Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
+        old.io.fabricOldMmioDisposeComplete=true;
+        old.recoveryFabricEvidenceRecorded=old.recoveryFabricPciIdleAttempted=old.recoveryFabricPciIdle=true;
+        old.recoveryFabricAuditReleaseAttempted=old.recoveryFabricAuditReleased=true;
+        Scope scope;auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
+        assert(session->PrepareFabric(&owner,old,&guard,scope) && session->RestoreScratch(&guard,scope));
+        if (refusal==0) session->Fresh()->io.freshMmioReady=false;
+        if (refusal==1) scope.protectFreshArea=true;
+        if (refusal==2) scope.poisonLeaseBeforePci=true;
+        assert(!session->CloseTransport(&guard,scope));CheckRetained(session,old,scope);
+        assert(session->FailureStage()==PioneerQ35FreshRecoverySession::PciClosed
+            && !session->Fresh()->io.freshMmioDisposed);
+        PioneerQ35FreshRecoverySession::DisposeSimulated(session);
     }
     for (unsigned failedCheck=1;failedCheck<=fabricAuditChecks;failedCheck++) {
         Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
