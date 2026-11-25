@@ -63,3 +63,13 @@ entries in each. File contents, symlink targets and POSIX modes differed only
 for the intentionally replaced kernel and PCI ECAM file. This comparison does
 not verify Haiku-specific package attributes or prove equivalence with the
 recorded Linux-side private package.
+
+## Separate candidate boot helper
+
+A separate helper can be generated only from the exact recorded Linux recovery
+helper; it pins the private candidate BFS image and adds an explicit 64-CPU,
+128-GiB no-SD profile while preserving the original control profile. Offline
+argument and profile tests passed, as did the original helper regression. The
+generated helper and bundle have not been uploaded, kexec-loaded or booted.
+The recorded Linux-side private package and rollback route still require a
+current comparison and verification before a candidate boot.

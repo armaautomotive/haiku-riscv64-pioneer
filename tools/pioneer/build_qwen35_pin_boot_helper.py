@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""Make a separate pinned candidate helper from the recorded recovery helper.
+
+Build only: no target upload, kexec, reboot, driver operation or card access.
+"""
+import argparse
+import hashlib
+import os
+from pathlib import Path
+import subprocess
+
+BASE = '8e85463e4de06fc8b35d0970e697c310f9532df30747c58cc892a1e9fdd9adff'
+OLD = 'memory128-spin-idle7-top-page-nosd-control|memory128-spin-idle7-top-page-nosd-journal-control'
+PROFILE = 'memory128-spin-idle7-pin-nosd-qualification'
+IMAGE = '9e569f8c23ae3726b0be8747f93b7d16c511f4a02f91df23e00bd3703c037b96'
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('recorded_helper', type=Path)
+    parser.add_argument('new_absolute_output', type=Path)
+    args = parser.parse_args()
+    source = args.recorded_helper.read_bytes()
+    if hashlib.sha256(source).hexdigest() != BASE:
+        raise ValueError('recorded recovery helper differs from the pinned baseline')
+    if not args.new_absolute_output.is_absolute():
+        raise ValueError('output path must be absolute')
+    text = source.decode('utf-8')
+    if text.count(OLD) != 4:
+        raise ValueError('unexpected recovery profile layout')
+    # Admit the qualification profile, enforce no-SD and require 64 CPUs.
+    text = text.replace(OLD, OLD + '|' + PROFILE, 3)
+    needle = ' ' + OLD + ')\n'
+    if text.count(needle) != 1:
+        raise ValueError('cannot uniquely locate the recorded artifact branch')
+    candidate = (' ' + PROFILE + ')\n'
+                 '  # Separate candidate only; the recorded control is unchanged.\n'
+                 '  image=$base/memory-2/HaikuPioneerKexecProbe.Image\n'
+                 '  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98\n'
+                 '  bundle=$base/q35-pin-service-20261125/candidate-ram.bfs\n'
+                 '  bundle_hash=' + IMAGE + '\n'
+                 '  memory_gib=128\n'
+                 '  ;;\n')
+    text = text.replace(needle, candidate + needle)
+    fd = os.open(args.new_absolute_output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o700)
+    try:
+        with os.fdopen(fd, 'w') as output:
+            output.write(text)
+        subprocess.run(['sh', '-n', str(args.new_absolute_output)], check=True)
+    except BaseException:
+        args.new_absolute_output.unlink(missing_ok=True)
+        raise
+    print('helper_sha256=' + hashlib.sha256(args.new_absolute_output.read_bytes()).hexdigest())
+    print('PASS private helper generated; not uploaded, loaded or booted')
+
+
+if __name__ == '__main__':
+    main()
