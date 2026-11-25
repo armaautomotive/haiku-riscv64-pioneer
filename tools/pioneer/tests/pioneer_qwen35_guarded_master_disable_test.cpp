@@ -51,6 +51,11 @@ static void Prepare(GuardedIO& io) {
     io.command[0]=io.command[1]=0x406;io.rootPciStatus=0xf900;
     io.accesses=io.afterLoss=0;
 }
+static void PrepareFinish(GuardedIO& io,tt_pioneer_mmio_result& saved) {
+    tt_pioneer_mmio_transaction txn{};
+    assert(BlackholePioneerMmioBegin(io,saved,txn));
+    io.rootPciStatus=0xf900;io.accesses=io.afterLoss=0;
+}
 int main() {
     GuardedIO good;Prepare(good);Permit permit;good.authority=&permit.live;
     assert(PioneerPreResetDisableMasterGuarded(good,permit)
@@ -71,5 +76,32 @@ int main() {
     GuardedIO identity;Prepare(identity);identity.cardID=0xffffffff;
     const unsigned writes=identity.writes;Permit allowed;
     assert(!PioneerPreResetDisableMasterGuarded(identity,allowed) && identity.writes==writes);
-    std::puts("PASS guarded one-shot PCI bus-master disable, ticket loss and dropped writes; SIMULATED ONLY");
+    unsigned finishChecks=0,finishWrites=0;
+    {
+        GuardedIO io;tt_pioneer_mmio_result saved{};PrepareFinish(io,saved);Permit check;io.authority=&check.live;
+        const unsigned previous=io.writes;unsigned stage=0;
+        assert(PioneerPostResetPciFinishGuarded(io,saved,check,stage)
+            && stage==PioneerPostResetPciFinishComplete && io.command[0]==0 && io.command[1]==0
+            && io.rootPciStatus==0xf900 && !io.afterLoss);
+        finishChecks=check.calls;finishWrites=io.writes-previous;
+        assert(finishChecks>50 && finishWrites>2);
+    }
+    for (unsigned lose=1;lose<=finishChecks;lose++) {
+        GuardedIO io;tt_pioneer_mmio_result saved{};PrepareFinish(io,saved);
+        Permit check;check.loseAt=lose;io.authority=&check.live;unsigned stage=0;
+        assert(!PioneerPostResetPciFinishGuarded(io,saved,check,stage) && !io.afterLoss && check.calls==lose);
+    }
+    for (unsigned drop=1;drop<=finishWrites;drop++) {
+        GuardedIO io;tt_pioneer_mmio_result saved{};PrepareFinish(io,saved);
+        const unsigned previous=io.writes;io.droppedWrite=previous+drop;
+        Permit check;io.authority=&check.live;unsigned stage=0;
+        assert(!PioneerPostResetPciFinishGuarded(io,saved,check,stage)
+            && io.writes==previous+drop && io.rootPciStatus==0xf900);
+    }
+    {
+        GuardedIO io;tt_pioneer_mmio_result saved{};PrepareFinish(io,saved);saved.bars_before[0]=0xdeadbeef;
+        const unsigned previous=io.writes;Permit check;unsigned stage=0;
+        assert(!PioneerPostResetPciFinishGuarded(io,saved,check,stage) && io.writes==previous);
+    }
+    std::puts("PASS guarded PCI master disable and idle restoration, ticket loss and dropped writes; SIMULATED ONLY");
 }

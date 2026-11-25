@@ -94,7 +94,9 @@ enum : uint32_t { PIONEER_RECOVERY_DETAIL_FIRMWARE_WAIT=0x46570002,
 // The fabric sequence was audited, but the retained session is not restored.
 enum : uint32_t { PIONEER_RECOVERY_STAGE_FABRIC_PREPARE=14,
 	PIONEER_RECOVERY_STAGE_FABRIC_SEQUENCE=15,
-	PIONEER_RECOVERY_DETAIL_FABRIC_AUDITED=0x46410001 };
+	PIONEER_RECOVERY_STAGE_FABRIC_PCI_IDLE=16,
+	PIONEER_RECOVERY_DETAIL_FABRIC_AUDITED=0x46410001,
+	PIONEER_RECOVERY_DETAIL_FABRIC_PCI_IDLE=0x46410002 };
 // Failure diagnostics, not retry authorizations. The low 24 bits identify
 // the read-only audit or guarded firmware operation that failed.
 enum : uint32_t { PIONEER_RECOVERY_DETAIL_FIRMWARE_PROBE=0x46000000,

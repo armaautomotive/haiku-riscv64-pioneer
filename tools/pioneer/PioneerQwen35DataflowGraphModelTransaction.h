@@ -32,7 +32,8 @@ public:
 	DataflowGraphModelTransaction()=default;
 	DataflowGraphModelTransaction(const DataflowGraphModelTransaction&)=delete;
 	DataflowGraphModelTransaction& operator=(const DataflowGraphModelTransaction&)=delete;
-	bool Prepare(DataflowProjectionAuthority*& live,DataflowProjectionAuthority& after,const DataflowGraphPublisher& publisher,
+	// Keep a measurable frame boundary for the non-loadable graph stack audit.
+	__attribute__((noinline)) bool Prepare(DataflowProjectionAuthority*& live,DataflowProjectionAuthority& after,const DataflowGraphPublisher& publisher,
 		const DataflowGraphRunTicket& ticket,const DataflowDynamicTokenContext& token,
 		unsigned slot,DataflowProjectionProgram& scratch,unsigned& stage)
 	{

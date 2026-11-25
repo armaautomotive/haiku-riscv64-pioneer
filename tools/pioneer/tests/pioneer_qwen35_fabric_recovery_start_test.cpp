@@ -41,9 +41,11 @@ struct PioneerPostResetMapping {
 struct PioneerStoreContext {
     int profile=0;struct { void* qwen35BorrowedRoleScope=nullptr; } io;
     bool recoveryFabricStartAttempted=false,recoveryAttempted=false,dispatchOwnerRetained=true;
+    bool recoveryFabricPciIdleAttempted=false,recoveryFabricPciIdle=false;
     bool q35PciReservationHeld=true,q35PciReleaseAttempted=false,bankStorageOnly=true;
     uint64 bytes=PioneerResidentBanks::Total,recoveryFabricStartTicket=0;
     PioneerPostResetMapping* recoveryMapping=nullptr;void* recoveryFabricArcOwner=nullptr;void* recoveryFreshSession=nullptr;
+    int Pci() const { return 0; }
     template<class Scope> bool RunQ35FabricRecovery(pioneer_driver_recovery_guard_v2_info*,uint64,
         const tt_arc_scratch_result&,tt_arc_queue_result&,PioneerPostResetAuditResult&,
         PioneerQ35PostResetL2Result&,Scope& scope,unsigned& stage) {
@@ -67,6 +69,10 @@ struct PioneerQ35FabricHostScope {
 template<class IO,class Check> static bool PioneerPreResetDisableMasterGuarded(IO&,Check& check) {
     return check() && failAt!=4;
 }
+template<class IO,class Saved,class Check> static bool PioneerPostResetPciFinishGuarded(IO&,const Saved&,Check& check,unsigned& stage) {
+    if (!check()) return false;
+    ++touches;stage=failAt==5?2:3;return failAt!=5 && check();
+}
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricRecoveryStart.inc"
 struct Fixture {
     PioneerStoreContext context;PioneerProbeCookie cookie;pioneer_driver_recovery_guard_v2_info guard;
@@ -80,11 +86,12 @@ struct Fixture {
 };
 int main() {
     {
-        Fixture f;assert(f.Run()==B_DEV_NOT_READY && f.result.stage==PIONEER_RECOVERY_STAGE_FABRIC_SEQUENCE
-            && f.result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_AUDITED && touches==3
+        Fixture f;assert(f.Run()==B_DEV_NOT_READY && f.result.stage==PIONEER_RECOVERY_STAGE_FABRIC_PCI_IDLE
+            && f.result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_PCI_IDLE && touches==4
             && f.context.recoveryAttempted && f.context.recoveryFabricStartTicket==123
-            && f.context.recoveryMapping && f.context.recoveryFabricArcOwner && sColdRecoveryRequired);
-        assert(f.Run()==B_NOT_ALLOWED && touches==3);
+            && f.context.recoveryMapping && f.context.recoveryFabricArcOwner && sColdRecoveryRequired
+            && f.context.recoveryFabricPciIdleAttempted && f.context.recoveryFabricPciIdle);
+        assert(f.Run()==B_NOT_ALLOWED && touches==4);
     }
     for (int failure=1;failure<=3;failure++) {
         Fixture f;failAt=failure;assert(f.Run()==B_DEV_NOT_READY && touches==unsigned(failure)
@@ -99,6 +106,14 @@ int main() {
             && !touches && f.context.recoveryFabricStartAttempted && f.context.recoveryMapping
             && f.context.recoveryFabricStartTicket==123 && sColdRecoveryRequired);
         assert(f.Run()==B_NOT_ALLOWED && !touches);
+    }
+    {
+        Fixture f;failAt=5;
+        assert(f.Run()==B_DEV_NOT_READY && f.result.stage==PIONEER_RECOVERY_STAGE_FABRIC_PCI_IDLE
+            && f.result.detail==2 && touches==4 && f.context.recoveryFabricPciIdleAttempted
+            && !f.context.recoveryFabricPciIdle && f.context.recoveryFabricStartTicket==123
+            && f.context.recoveryMapping && f.context.recoveryFabricArcOwner && sColdRecoveryRequired);
+        assert(f.Run()==B_NOT_ALLOWED && touches==4);
     }
     for (unsigned denied=0;denied<7;denied++) {
         Fixture f;

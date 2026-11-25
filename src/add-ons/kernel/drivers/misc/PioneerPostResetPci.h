@@ -246,4 +246,54 @@ bool PioneerPostResetPciFinish(IO& io,const tt_pioneer_mmio_result& saved,
 	return true;
 }
 
+// Fabric recovery keeps its old owner attached while returning PCI to the
+// saved idle layout. Guard each config access and verify each changed write
+// before allowing another; a failed check or readback is sticky. Unchanged
+// values do not need a write. This is one-shot at the controller level.
+template<class IO,class Check>
+class PioneerGuardedPciFinishIO {
+	IO& fIO;Check& fCheck;bool fLost=false;
+	bool Allowed() { if (fLost || !fCheck()) { fLost=true;return false; } return true; }
+public:
+	PioneerGuardedPciFinishIO(IO& io,Check& check) : fIO(io),fCheck(check) {}
+	const auto& Profile() { return fIO.Profile(); }
+	uint32_t CardRead(unsigned offset,unsigned width) {
+		if (!Allowed()) return UINT32_MAX;
+		const uint32_t value=fIO.CardRead(offset,width);return Allowed()?value:UINT32_MAX;
+	}
+	uint32_t RootRead(unsigned offset,unsigned width) {
+		if (!Allowed()) return UINT32_MAX;
+		const uint32_t value=fIO.RootRead(offset,width);return Allowed()?value:UINT32_MAX;
+	}
+	void CardWrite(unsigned offset,unsigned width,uint32_t value) {
+		const uint32_t before=CardRead(offset,width);
+		if (!Allowed() || before==value) return;
+		fIO.CardWrite(offset,width,value);
+		if (!Allowed() || CardRead(offset,width)!=value) fLost=true;
+	}
+	void RootWrite(unsigned offset,unsigned width,uint32_t value) {
+		// SG2042 command writes use a dword with zero status bits. Compare
+		// only its command half so readback cannot acknowledge W1C status.
+		const unsigned readWidth=offset==4 && width==4?2:width;
+		const uint32_t before=RootRead(offset,readWidth);
+		if (!Allowed() || before==value) return;
+		fIO.RootWrite(offset,width,value);
+		if (!Allowed() || RootRead(offset,readWidth)!=value) fLost=true;
+	}
+	bool Quiet() {
+		if (RootRead(0x10,4)!=0 || RootRead(0x14,4)!=0 || (RootRead(0x38,4)&1)!=0
+			|| !Allowed()) return false;
+		return fIO.QuietCached() && Allowed();
+	}
+	bool Valid() { return Allowed(); }
+};
+
+template<class IO,class Check>
+bool PioneerPostResetPciFinishGuarded(IO& io,const tt_pioneer_mmio_result& saved,
+	Check& check,unsigned& stage)
+{
+	PioneerGuardedPciFinishIO<IO,Check> guarded(io,check);
+	return guarded.Valid() && PioneerPostResetPciFinish(guarded,saved,stage) && guarded.Valid();
+}
+
 #endif

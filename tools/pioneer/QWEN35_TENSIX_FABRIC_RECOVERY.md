@@ -65,3 +65,7 @@ not a binary identity for the installed firmware or a completed recovery.
 The non-loadable transaction also requires three read-only, clear root-port
 uncorrectable AER samples. It does not clear AER, establish continued PCIe
 health or establish that other device writers are excluded.
+After those audits it attempts to restore the saved idle PCI layout once,
+checking the ticket and readback around each changed config write. The old
+owner and host resources remain retained even if PCI reaches idle; scratch
+restoration, old-mapping disposal and complete recovery are still unfinished.

@@ -21,6 +21,7 @@ Qwen35FabricRecoveryStartLocked(PioneerProbeCookie* inspector,PioneerProbeCookie
         || (inspector==owner?owner->finalFreeRetained:(inspector->context || !owner->finalFreeRetained))
         || context->io.qwen35BorrowedRoleScope || context->recoveryFreshSession
         || context->recoveryFabricStartAttempted || context->recoveryFabricStartTicket
+        || context->recoveryFabricPciIdleAttempted || context->recoveryFabricPciIdle
         || context->recoveryAttempted || context->recoveryMapping || context->recoveryFabricArcOwner
         || !sColdRecoveryRequired || !context->dispatchOwnerRetained || !context->q35PciReservationHeld
         || context->q35PciReleaseAttempted || sRuntimeOwner!=owner || owner->context!=context
@@ -48,6 +49,14 @@ Qwen35FabricRecoveryStartLocked(PioneerProbeCookie* inspector,PioneerProbeCookie
     if (!permit() || !context->RunQ35FabricRecovery(guard,ticket,firmware,queue,fleet,l2,scope,stage)) {
         result.detail=stage;return B_DEV_NOT_READY;
     }
-    result.detail=PIONEER_RECOVERY_DETAIL_FABRIC_AUDITED;
+    result.stage=PIONEER_RECOVERY_STAGE_FABRIC_PCI_IDLE;
+    if (!permit()) return B_DEV_NOT_READY;
+    context->recoveryFabricPciIdleAttempted=true;
+    unsigned pciStage=0;
+    if (!PioneerPostResetPciFinishGuarded(context->io,context->Pci(),permit,pciStage) || !permit()) {
+        result.detail=pciStage;return B_DEV_NOT_READY;
+    }
+    context->recoveryFabricPciIdle=true;
+    result.detail=PIONEER_RECOVERY_DETAIL_FABRIC_PCI_IDLE;
     return B_DEV_NOT_READY; // retained scratch/owners and cold state are not yet restored
 }

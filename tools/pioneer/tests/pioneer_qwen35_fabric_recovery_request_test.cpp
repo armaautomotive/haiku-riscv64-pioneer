@@ -45,11 +45,11 @@ int main() {
     {
         Fixture f;ResetCounters();auto r=Request();
         assert(Qwen35FabricRecoveryRequest(&f.cookie,&r,sizeof(r))==B_OK
-            && r.operation_status==B_DEV_NOT_READY && r.detail==PIONEER_RECOVERY_DETAIL_FABRIC_AUDITED
+            && r.operation_status==B_DEV_NOT_READY && r.detail==PIONEER_RECOVERY_DETAIL_FABRIC_PCI_IDLE
             && r.build_tag==PIONEER_DRIVER_BUILD_TAG && !r.new_generation
-            && begins==1 && !aborts && modulePuts==1 && touches==3 && !locked);
+            && begins==1 && !aborts && modulePuts==1 && touches==4 && !locked);
         auto again=Request();assert(Qwen35FabricRecoveryRequest(&f.cookie,&again,sizeof(again))==B_OK
-            && again.operation_status==B_NOT_ALLOWED && begins==1 && touches==3 && !locked);
+            && again.operation_status==B_NOT_ALLOWED && begins==1 && touches==4 && !locked);
     }
     {
         Fixture f;ResetCounters();auto r=Request();r.expected_tag++;

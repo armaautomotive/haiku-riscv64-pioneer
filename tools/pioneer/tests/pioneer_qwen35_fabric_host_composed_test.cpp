@@ -31,6 +31,8 @@ static bool sColdRecoveryRequired=true,sBankStorageOnly=true,sReloadQuiesced=fal
 struct PioneerStoreContext {
     Profile profile;struct { void* qwen35BorrowedRoleScope=nullptr; } io;
     bool recoveryFabricStartAttempted=false,recoveryAttempted=false;uint64 recoveryFabricStartTicket=0;
+    bool recoveryFabricPciIdleAttempted=false,recoveryFabricPciIdle=false;
+    int Pci() const { return 0; }
     void* recoveryFreshSession=nullptr;
     PioneerPostResetMapping* recoveryMapping=nullptr;
     Owner* recoveryFabricArcOwner=nullptr;
@@ -44,6 +46,9 @@ struct PioneerStoreContext {
 struct PioneerQ35FabricArcCompileScope {};
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricHostScope.inc"
 template<class IO,class Check> static bool PioneerPreResetDisableMasterGuarded(IO&,Check& check) { return check(); }
+template<class IO,class Saved,class Check> static bool PioneerPostResetPciFinishGuarded(IO&,const Saved&,Check& check,unsigned& stage) {
+    stage=3;return check();
+}
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricRecoveryStart.inc"
 
 struct Fixture {
@@ -70,11 +75,12 @@ int main() {
         cookie.context=&context;sRuntimeOwner=sQwen35ExclusiveCookie=&cookie;sReloadQuiesced=false;sOpenCookies=1;
         tt_pioneer_recovery_run result{};
         assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_DEV_NOT_READY
-            && result.stage==PIONEER_RECOVERY_STAGE_FABRIC_SEQUENCE
-            && result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_AUDITED
+            && result.stage==PIONEER_RECOVERY_STAGE_FABRIC_PCI_IDLE
+            && result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_PCI_IDLE
             && context.recoveryFabricStartAttempted && context.recoveryFabricStartTicket==123
             && context.recoveryFabricEvidenceRecorded && context.recoveryFabricArcOwner
             && context.recoveryMapping && context.recoveryMapping->q35CloseComplete
+            && context.recoveryFabricPciIdleAttempted && context.recoveryFabricPciIdle
             && queue.notifications==7 && sColdRecoveryRequired);
         const unsigned before=queue.io;
         assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_NOT_ALLOWED
@@ -91,7 +97,7 @@ int main() {
         sRuntimeOwner=&owner;sQwen35ExclusiveCookie=&inspector;sReloadQuiesced=false;sOpenCookies=1;
         tt_pioneer_recovery_run result{};
         assert(Qwen35FabricRecoveryStartLocked(&inspector,&owner,&context,&guard,123,10,20,result)==B_DEV_NOT_READY
-            && result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_AUDITED && context.recoveryFabricEvidenceRecorded
+            && result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_PCI_IDLE && context.recoveryFabricEvidenceRecorded
             && context.recoveryMapping && context.recoveryMapping->q35CloseComplete && sColdRecoveryRequired);
         delete context.recoveryMapping;context.recoveryMapping=nullptr;
     }

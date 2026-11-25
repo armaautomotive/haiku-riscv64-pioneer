@@ -4199,6 +4199,7 @@ struct PioneerStoreContext {
 	// mappings until the complete fabric recovery has been audited.
 	PioneerQ35FabricArcOwner<pioneer_driver_recovery_guard_v2_info>* recoveryFabricArcOwner=NULL;
 	bool recoveryFabricStartAttempted=false;
+	bool recoveryFabricPciIdleAttempted=false,recoveryFabricPciIdle=false;
 	uint64 recoveryFabricStartTicket=0;
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
 	// Partial evidence from this exact retained fabric transaction. The old
