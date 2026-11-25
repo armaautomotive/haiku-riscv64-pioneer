@@ -287,6 +287,11 @@ public:
 #endif
 #endif
     bool CanDestroy() const { return !fViews.HasMappings() && !fOwner.RestorationRequired()
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        // Even an empty-looking owner remains the retained snapshot owner
+        // after a one-shot fabric unmap, until a separate retirement exists.
+        && !fViews.FabricCloseAttempted()
+#endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         && !fTakeover.ResetRequired()
 #endif
@@ -375,6 +380,24 @@ public:
     bool TakeoverResetRequired() const { return fTakeover.ResetRequired(); }
 #endif
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    // Mapping metadata is exposed so the caller can check role areas against
+    // the old session areas *before* either owner removes any mappings.
+    bool FabricViewsReferenceArea(int32_t area) const { return fViews.ReferencesArea(area); }
+    bool FabricViewsDisposed() const { return fViews.FabricCloseComplete(); }
+    template<class Check> bool DisposeFabricViews(Check& check) {
+        if (fContext.qwen35SharedRoleBinding!=this || !sColdRecoveryRequired
+            || !fContext.recoveryFabricEvidenceRecorded || !fContext.recoveryFabricPcieAudited
+            || !fContext.recoveryFabricEvidence.ReadyForScratchRestore()
+            || !fContext.io.fabricOldMmioDisposeComplete || fContext.recoveryMapping
+            || !fContext.q35PciReservationHeld || fContext.q35PciReleaseAttempted || !check()) return false;
+        auto protectedArea=[&](int32_t area) {
+            return area==fContext.io.PioneerHostPageIO::area || area==fContext.io.outputArea
+                || area==fContext.io.wideArea;
+        };
+        return fViews.CloseForFabricRecovery(check,protectedArea);
+    }
+#endif
     // A verified ASIC reset invalidates the old tile images and RAM. Retire
     // the host BAR views without restoring those stale snapshots. The reset
     // and firmware evidence must match this in-kernel recovery ticket, and
@@ -967,6 +990,18 @@ static bool PioneerQ35SharedRoleCopiesCaptured(const PioneerQwen35SharedRoleBind
     return binding && binding->StacklessCopiesCaptured(core);
 }
 static_assert(alignof(PioneerQwen35SharedRoleBinding)<=alignof(void*),"shared role binding requires ordinary kernel allocation");
+
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+// Compile the real binding with the fabric-only methods. The synthetic
+// admission below is not registered as a recovery operation or authority.
+static __attribute__((used,noinline)) bool
+PioneerQ35FabricRoleViewsCompileWitness(PioneerQwen35SharedRoleBinding* binding,int32_t protectedArea,bool allowed)
+{
+    if (!binding || binding->FabricViewsReferenceArea(protectedArea)) return false;
+    auto check=[&]() { return allowed; };
+    return binding->DisposeFabricViews(check);
+}
+#endif
 
 static PioneerQwen35SharedRoleBinding*
 PioneerQ35CreateSharedRoleBinding(PioneerStoreContext& context)

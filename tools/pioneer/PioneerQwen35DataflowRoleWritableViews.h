@@ -23,6 +23,9 @@ template<class Platform> class DataflowRoleWritableViews {
     unsigned fBytes[Count]{};
     uint64_t fBarStart=0,fBarEnd=0;
     bool fAttempted=false,fOpen=false,fImageWriteUnconfirmed=false,fControlWriteUnconfirmed=false;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    bool fFabricCloseAttempted=false,fFabricCloseComplete=false;
+#endif
     template<class Guard> bool Route(unsigned core,Guard& guard) {
         return guard.ProvePinnedBar(fBarStart,fBarEnd) && guard.ProveSelectedRoute(core);
     }
@@ -34,6 +37,39 @@ public:
     DataflowRoleWritableViews& operator=(const DataflowRoleWritableViews&)=delete;
     bool Opened() const { return fOpen; }
     bool HasMappings() const { for (auto area:fArea) if (area>=0) return true; return false; }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    bool ReferencesArea(int32_t area) const {
+        if (area<0) return false;
+        for (auto mapped:fArea) if (mapped==area) return true;
+        return false;
+    }
+    bool FabricCloseAttempted() const { return fFabricCloseAttempted; }
+    bool FabricCloseComplete() const { return fFabricCloseComplete; }
+    // Only CPU mappings are removed. The owner and its RAM/code snapshots
+    // remain intact. The caller must establish held/idle hardware, verify
+    // area ownership and exclude aliases with all retained DMA buffers and
+    // other mapping owners. A partial attempt is never replayed here.
+    template<class Check,class Protected> bool CloseForFabricRecovery(Check& check,Protected& protectedArea) {
+        if (fFabricCloseAttempted || !check()) return false;
+        for (unsigned i=0;i<Count;i++) if (fArea[i]>=0) {
+            if (protectedArea(fArea[i])) return false;
+            for (unsigned j=0;j<i;j++) if (fArea[i]==fArea[j]) return false;
+        }
+        if (!check()) return false;
+        fFabricCloseAttempted=true;fOpen=false;
+        for (unsigned n=Count;n>0;n--) {
+            const unsigned i=n-1;
+            if (fArea[i]<0) continue;
+            if (!check() || !fPlatform.Unmap(fArea[i])) return false;
+            fArea[i]=-1;fView[i]=nullptr;fBytes[i]=0;
+            if (!check()) return false;
+        }
+        if (!check() || HasMappings()) return false;
+        // Preserve the pinned BAR identity for a separately authorized fresh
+        // mapping; CloseForFabricRecovery does not itself reopen anything.
+        fFabricCloseComplete=true;return true;
+    }
+#endif
     // Mapping metadata only; it neither reads the device nor grants access.
     bool ReadViewBound(unsigned which,unsigned offset) const {
         return fOpen && which<Count && fArea[which]>=0 && fView[which]
@@ -44,6 +80,9 @@ public:
     bool ImageWritesConfirmed() const { return !fImageWriteUnconfirmed; }
     bool ControlWritesConfirmed() const { return !fControlWriteUnconfirmed; }
     template<class Guard> bool Open(uint64_t start,uint64_t end,Guard& guard) {
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        if (fFabricCloseAttempted) return false;
+#endif
         if (fAttempted || fOpen || HasMappings() || end<start || end-start==UINT64_MAX
             || !guard.ProvePinnedBar(start,end)) return false;
         uint64_t addresses[Count]{}; unsigned lengths[Count]{};
@@ -64,6 +103,9 @@ public:
     // re-audit snapshots before trying cleanup again. The caller still owns
     // the session and must keep every core held throughout this operation.
     template<class Guard> bool ReopenForRecovery(Guard& guard) {
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        if (fFabricCloseAttempted) return false;
+#endif
         if (!fAttempted || fOpen || !HasMappings() || fBarEnd<fBarStart
             || fBarEnd-fBarStart==UINT64_MAX || !guard.ProvePinnedBar(fBarStart,fBarEnd)) return false;
         const uint64_t bytes=fBarEnd-fBarStart+1;
@@ -187,6 +229,9 @@ public:
         return true;
     }
     bool Close() {
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        if (fFabricCloseAttempted) return false;
+#endif
         fOpen=false;
         bool okay=true;
         for (unsigned n=Count;n>0;n--) {

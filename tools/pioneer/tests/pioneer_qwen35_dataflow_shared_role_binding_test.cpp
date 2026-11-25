@@ -5,6 +5,12 @@
 #define PIONEER_QWEN35_RECOVERY_COMPILE_ONLY 1
 #define PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY 1
 #define PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS 1
+#ifdef TEST_SHARED_FABRIC_VIEWS
+#define PIONEER_QWEN35_FABRIC_GUARD_WITNESS 1
+#ifndef TEST_SHARED_POST_RESET
+#error Fabric view test requires the post-reset harness
+#endif
+#endif
 #ifdef TEST_SHARED_POST_RESET
 #define PIONEER_QWEN35_RECOVERY_RUN_ENABLE 1
 #define PIONEER_QWEN35_SHARED_ROLE_OWNER_TEST 1
@@ -36,6 +42,10 @@ public:
 #ifdef TEST_SHARED_POST_RESET
 struct PioneerQ35SharedRoleBindingTestAccess {
     struct Guard { bool ProvePinnedBar(uint64_t,uint64_t) { return true; } };
+#ifdef TEST_SHARED_FABRIC_VIEWS
+    static const void* CodeSnapshot(const PioneerQwen35SharedRoleBinding& binding) { return binding.fCodeSnapshot; }
+    static const void* RamSnapshot(const PioneerQwen35SharedRoleBinding& binding) { return binding.fRamSnapshot; }
+#endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     struct FailedFirstWrite {
         bool AllRolesHeld(unsigned) { return true; }
@@ -275,6 +285,39 @@ static void ExerciseResetRetirement(PioneerSessionIO& io)
     for (bool mapped:gMapped) assert(!mapped);
     io.postResetDisposeComplete=false;gAllowWrite=false;
 }
+#ifdef TEST_SHARED_FABRIC_VIEWS
+static void ExerciseFabricViewRetirement(PioneerSessionIO& io)
+{
+    auto* context=io.qwen35DataflowContext;
+    context->qwen35SharedRoleBinding=PioneerQ35CreateSharedRoleBinding(*context);
+    auto*& binding=context->qwen35SharedRoleBinding;assert(binding && gLocked);
+    ResetMaps();gAllowWrite=true;assert(PioneerQ35SharedRoleBindingTestAccess::OpenViews(*binding));
+    const void* code=PioneerQ35SharedRoleBindingTestAccess::CodeSnapshot(*binding);
+    const void* ram=PioneerQ35SharedRoleBindingTestAccess::RamSnapshot(*binding);
+    assert(code && ram && binding->FabricViewsReferenceArea(0));
+    sColdRecoveryRequired=true;
+    auto permit=[]() { return true; };
+    assert(!binding->DisposeFabricViews(permit) && !gUnmapCalls);
+    auto& proof=context->recoveryFabricEvidence;
+    proof.flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
+        | PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
+    proof.core_count=DataflowBarrierWorkers;proof.retained_owners=1;
+    proof.fabric_generation=proof.firmware_generation=9;
+    context->recoveryFabricEvidenceRecorded=context->recoveryFabricPcieAudited=true;
+    io.fabricOldMmioDisposeComplete=true;io.PioneerHostPageIO::area=0;
+    assert(!binding->DisposeFabricViews(permit) && !gUnmapCalls); // host-page alias
+    io.PioneerHostPageIO::area=-1;
+    assert(binding->DisposeFabricViews(permit) && binding->FabricViewsDisposed() && gUnmapCalls);
+    assert(!binding->CanDestroy() && context->qwen35SharedRoleBinding==binding
+        && PioneerQ35SharedRoleBindingTestAccess::CodeSnapshot(*binding)==code
+        && PioneerQ35SharedRoleBindingTestAccess::RamSnapshot(*binding)==ram);
+    assert(!binding->DisposeFabricViews(permit));
+    // Test teardown only: these mappings and snapshots are simulated.
+    delete binding;binding=nullptr;context->recoveryFabricEvidenceRecorded=false;
+    context->recoveryFabricPcieAudited=false;io.fabricOldMmioDisposeComplete=false;
+    sColdRecoveryRequired=false;gAllowWrite=false;
+}
+#endif
 #endif
 
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
@@ -976,6 +1019,10 @@ int main()
 #ifdef TEST_SHARED_POST_RESET
     gBorrowedScopeHook=ExerciseResetRetirement;
     assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+#ifdef TEST_SHARED_FABRIC_VIEWS
+    gBorrowedScopeHook=ExerciseFabricViewRetirement;
+    assert(Qwen35DataflowControl(&cookie,5,nullptr,0)==B_OK);
+#endif
 #endif
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(TEST_SHARED_POST_RESET)
     gBorrowedScopeHook=ExerciseCoreLocalBinding;

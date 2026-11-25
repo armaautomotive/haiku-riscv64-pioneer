@@ -93,7 +93,14 @@ struct FakeService {
     bool SharedSnapshotFaultStopPending() const { return faultStopPending; }
 };
 struct FakeGraph { bool retained=false; const void* run=nullptr; bool closePermitted=false; unsigned ackCore=UINT32_MAX; };
+#ifdef TEST_SHARED_FABRIC_VIEWS
+struct PioneerHostPageIO { int32_t area=-1; };
+struct PioneerSessionIO : PioneerHostPageIO {
+    bool fabricOldMmioDisposeComplete=false;
+    int32_t outputArea=-1,wideArea=-1;
+#else
 struct PioneerSessionIO {
+#endif
     tt_pioneer_profile profile=GoodProfile();
     PioneerStoreContext* qwen35DataflowContext=nullptr;
 #ifdef TEST_SHARED_POST_RESET
@@ -536,6 +543,11 @@ struct PioneerStoreContext {
     PioneerSessionIO io; bool bankStorageOnly=true; uint64 bytes=PioneerResidentBanks::Total;
 #ifdef TEST_SHARED_POST_RESET
     void* recoveryMapping=nullptr;
+#endif
+#ifdef TEST_SHARED_FABRIC_VIEWS
+    bool recoveryFabricEvidenceRecorded=false,recoveryFabricPcieAudited=false;
+    bool q35PciReservationHeld=true,q35PciReleaseAttempted=false;
+    PioneerDriverFabricRecoveryProof recoveryFabricEvidence{};
 #endif
     FakeService* qwen35DataflowService=nullptr; FakeGraph* qwen35GraphOwner=nullptr;
 #ifdef TEST_FLEET_INSPECTION_CONTROL
