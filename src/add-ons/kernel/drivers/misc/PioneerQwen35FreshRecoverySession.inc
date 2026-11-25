@@ -16,6 +16,7 @@
 #include "PioneerQwen35ProjectionResetRecovery.h"
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
 #include "PioneerQwen35GuardedLeaseEnd.h"
+#include "PioneerQwen35GuardedMmioBegin.h"
 #endif
 #endif
 
@@ -194,6 +195,18 @@ private:
                 && TicketValid(guard);
         };
         if (!allowed(Attached)) return Retain(scope,Attached);
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        if (fabric) {
+            bool lost=false;
+            auto check=[&]() {
+                if (lost || !TicketValid(guard) || !scope.FreshRecoverySetupAccessAllowed(*this,old,*fresh,Mapped)
+                    || !TicketValid(guard)) { lost=true;return false; }
+                return true;
+            };
+            if (!PioneerQ35GuardedMmioBegin(fresh->io,fresh->Pci(),fresh->transaction,check))
+                return Retain(scope,Mapped);
+        } else
+#endif
         if (!BlackholePioneerMmioBegin(fresh->io,fresh->Pci(),fresh->transaction))
             return Retain(scope,Mapped);
         fStage=Mapped;

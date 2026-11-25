@@ -169,6 +169,9 @@ static int Validate(uint64 ticket) {
 }
 struct pioneer_driver_recovery_guard_v2_info { int (*validate)(uint64)=Validate; };
 static bool BlackholePioneerMmioBegin(MockIO&,MockPci&,MockTransaction& t) { if (!Step(1)) return false;t.config_attempted=true;return true; }
+template<class Check> static bool PioneerQ35GuardedMmioBegin(MockIO& io,MockPci& pci,MockTransaction& t,Check& check) {
+    return check() && BlackholePioneerMmioBegin(io,pci,t) && check();
+}
 static bool PioneerResidentSessionIdle(MockIO&,MockNoc&,unsigned&) { return Step(3); }
 static bool PioneerPrepareHostPage(MockIO&,MockHost& host) { if (!Step(5)) return false;host.state=TT_HOST_PAGE_READY;host.allocated=1;host.released=0;return true; }
 static bool PioneerResidentLeaseBegin(MockIO&,MockNoc&,MockLease& lease) {
@@ -351,7 +354,7 @@ int main() {
             && session->Fresh()->io.quarantined && scope.retained && !old.qwen35QualificationOwner.retained);
         PioneerQ35FreshRecoverySession::DisposeSimulated(session);
     }
-    for (unsigned failure=1;failure<=6;failure++) {
+    for (unsigned failure=1;failure<=8;failure++) {
         Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
         int role=1,graph=2;old.qwen35SharedRoleBinding=&role;old.qwen35GraphOwner=&graph;
         old.qwen35QualificationOwner.active=false;old.qwen35QualificationOwner.retained=false;
@@ -362,7 +365,8 @@ int main() {
         auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
         assert(!session->PrepareFabricRole(&owner,old,&guard,scope) && scope.setupChecks==failure
             && session->CurrentStage()==PioneerQ35FreshRecoverySession::Retained
-            && session->FailureStage()==(failure<=4?PioneerQ35FreshRecoverySession::Baseline:PioneerQ35FreshRecoverySession::Lease)
+            && session->FailureStage()==(failure<=2?PioneerQ35FreshRecoverySession::Mapped
+                :failure<=6?PioneerQ35FreshRecoverySession::Baseline:PioneerQ35FreshRecoverySession::Lease)
             && old.recoveryFreshSession==session && old.qwen35SharedRoleBinding==&role && old.qwen35GraphOwner==&graph
             && old.banks.quarantined && session->Fresh()->io.quarantined && scope.retained
             && !old.qwen35QualificationOwner.retained);
