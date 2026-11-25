@@ -336,7 +336,7 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
                 ('template read', ('DataflowResidentTemplateSetup<Scope>::Adapter<IO>::ReadCoreMemory(', 'PioneerQ35GraphOwner::InstallResident')),
                 ('held fleet wrapper', ('PioneerSessionIO::SharedFleetHeldAndQuiescent(',)),
                 ('held fleet', ('PioneerQwen35SharedRoleBinding::FleetHeldAndQuiescent(',)),
-                ('role hold', ('PioneerQwen35RoleFleetPciIO<IO, Scope, Views>::AllRolesHeld(',)),
+                ('role hold', ('PioneerQwen35RoleFleetPciIO<IO, Scope, Views, Selector>::AllRolesHeld(',)),
                 ('core hold', ('PioneerQwen35DataflowPciMemory<Raw>::CoreHeld(',)),
                 ('core map', ('PioneerQwen35DataflowPciMemory<Raw>::SelectMapped(',)),
                 ('PCI write', ('PioneerQwen35DataflowPciMemory<Raw>::WriteCoreMemoryInternal(',)),

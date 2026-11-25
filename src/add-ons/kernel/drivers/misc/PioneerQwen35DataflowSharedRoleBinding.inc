@@ -7,6 +7,9 @@
 #endif
 #include "PioneerQwen35DataflowFleetInspection.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleStartOrder.h"
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+#include "PioneerQwen35GuardedRoleSelect.h"
+#endif
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 #include "PioneerQwen35LocalRestoreImages.h"
 #include "PioneerQwen35RoleServiceProbeImages.h"
@@ -37,11 +40,13 @@ class PioneerQwen35SharedRoleBinding {
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     bool fFabricConversionAuthorityLost=false;
     template<class Scope,class Check> struct FabricRecoveryAdapter
-        : PioneerQwen35RoleFleetPciIO<PioneerSessionIO,Scope,Views> {
-        Check& check;
+        : PioneerQwen35RoleFleetPciIO<PioneerSessionIO,Scope,Views,
+            PioneerQ35GuardedRoleSelector<PioneerSessionIO,Check>> {
+        using Base=PioneerQwen35RoleFleetPciIO<PioneerSessionIO,Scope,Views,
+            PioneerQ35GuardedRoleSelector<PioneerSessionIO,Check>>;
         FabricRecoveryAdapter(PioneerSessionIO& io,Scope& scope,Views& views,Check& authority)
-            :PioneerQwen35RoleFleetPciIO<PioneerSessionIO,Scope,Views>(io,scope,views),check(authority) {}
-        bool FabricRecoveryConversionAllowed() { return check(); }
+            :Base(io,scope,views,authority) {}
+        bool FabricRecoveryConversionAllowed() { return Base::RoleSelectionAuthorityValid(); }
     };
 #endif
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
@@ -473,7 +478,7 @@ public:
             || !fContext.q35PciReservationHeld || fContext.q35PciReleaseAttempted || !check()) return false;
         FabricRecoveryAdapter<Scope,Check> io(freshIO,scope,fViews,check);
         const bool converted=fOwner.BeginFabricCoreRecovery(io);
-        if (!check()) { fFabricConversionAuthorityLost=true;return false; }
+        if (!io.FabricRecoveryConversionAllowed()) { fFabricConversionAuthorityLost=true;return false; }
         return converted && FabricCoreRecoveryUsable();
     }
 #endif

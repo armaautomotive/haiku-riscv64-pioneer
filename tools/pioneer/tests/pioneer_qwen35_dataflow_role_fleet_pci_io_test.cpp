@@ -185,6 +185,7 @@ struct ChangingRamCopyViews {
         return true;
     }
 };
+#ifndef PIONEER_Q35_FLEET_TEST_NO_MAIN
 int main()
 {
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
@@ -983,3 +984,4 @@ int main()
     assert(release_sem(sLock)==B_OK && !gLocked);
     std::puts("PASS role fleet PCI range translation and guarded MMIO on 120 simulated routes; NO HARDWARE");
 }
+#endif

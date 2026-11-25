@@ -17,11 +17,20 @@
 // The dedicated staging witness instead uses bounded observations and
 // selected-tile rechecks; it does not establish firmware write exclusion.
 // Reset and stop writes require separate, currently unavailable proofs.
-template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
+template<class IO> struct PioneerQ35RoleFleetCoreSelector {
+    explicit PioneerQ35RoleFleetCoreSelector(IO& io):fIO(io) {}
+    bool Select(unsigned core) { return fIO.SelectRuntimeCore(core); }
+    bool Allowed() const { return true; }
+private:
+    IO& fIO;
+};
+template<class IO,class Scope,class Views,class Selector=PioneerQ35RoleFleetCoreSelector<IO>>
+class PioneerQwen35RoleFleetPciIO {
     IO& fIO;
     Scope& fScope;
     Views& fViews;
     PioneerQwen35RoleRouteGuard<IO,Scope> fGuard;
+    Selector fSelector;
     class ImageReadGuard {
         PioneerQwen35RoleFleetPciIO& fOwner;
     public:
@@ -46,7 +55,7 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
             // only then inspect that tile's reset and NoC state.
             && fScope.CanSelectRoleHeldCore(fIO,core)
 #endif
-            && fIO.SelectRuntimeCore(core) && fIO.MapQ38Panel() && fIO.DataflowPanelMappingStable()
+            && fSelector.Select(core) && fIO.MapQ38Panel() && fIO.DataflowPanelMappingStable()
             && fGuard.ProveSelectedRoute(core)
             && PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; })
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
@@ -136,7 +145,7 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
     }
     bool SelectForStop(unsigned core) {
         return core<PioneerQwen35::DataflowBarrierWorkers && fScope.ProveExclusiveRewrite(fIO)
-            && fIO.SelectRuntimeCore(core) && fIO.MapQ38Panel()
+            && fSelector.Select(core) && fIO.MapQ38Panel()
             && fIO.DataflowPanelMappingStable() && fGuard.ProveSelectedRoute(core)
             && PioneerQwen35WithSelectedClock(fIO,core,[&]() {
                 return fIO.ResetRead()==0x6000 && fIO.ResetRead()==0x6000;
@@ -205,7 +214,11 @@ template<class IO,class Scope,class Views> class PioneerQwen35RoleFleetPciIO {
 #endif
 public:
     PioneerQwen35RoleFleetPciIO(IO& io,Scope& scope,Views& views)
-        :fIO(io),fScope(scope),fViews(views),fGuard(io,scope) {}
+        :fIO(io),fScope(scope),fViews(views),fGuard(io,scope),fSelector(io) {}
+    template<class Check>
+    PioneerQwen35RoleFleetPciIO(IO& io,Scope& scope,Views& views,Check& check)
+        :fIO(io),fScope(scope),fViews(views),fGuard(io,scope),fSelector(io,check) {}
+    bool RoleSelectionAuthorityValid() { return fSelector.Allowed(); }
     bool HeldImageStageAllowed() {
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) \
     && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
@@ -249,7 +262,7 @@ public:
         using namespace PioneerQwen35;
         if (attempted || core>=DataflowBarrierWorkers || !fViews.Opened()
             || !fScope.ProveExclusiveRewrite(fIO) || !fScope.ProveRoleReleaseSafe(fIO,core)
-            || !fIO.SelectRuntimeCore(core) || !fIO.MapQ38Panel()
+            || !fSelector.Select(core) || !fIO.MapQ38Panel()
             || !fIO.DataflowPanelMappingStable() || !fGuard.ProveSelectedRoute(core)
             || !PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; })
             || fIO.ResetRead()!=0x47800 || fIO.ResetRead()!=0x47800) return false;
@@ -274,7 +287,7 @@ public:
         using namespace PioneerQwen35;
         if (attempted || core>=DataflowBarrierWorkers || !fViews.Opened()
             || !fScope.ProveExclusiveRewrite(fIO) || !fScope.CanAttemptDedicatedObservedRelease(fIO,core)
-            || !fIO.SelectRuntimeCore(core) || !fIO.MapQ38Panel()
+            || !fSelector.Select(core) || !fIO.MapQ38Panel()
             || !fIO.DataflowPanelMappingStable() || !fGuard.ProveSelectedRoute(core)
             || !PioneerQwen35WithSelectedClock(fIO,core,[&]() {
                 return fIO.ResetRead()==0x47800 && fIO.ResetRead()==0x47800;
@@ -302,7 +315,7 @@ public:
     // cannot exclude a posted write arriving after the reads.
     bool UnconfirmedReleaseHeld(unsigned core) {
         if (core>=PioneerQwen35::DataflowBarrierWorkers || !fScope.ProveExclusiveRewrite(fIO)
-            || !fScope.ProveRoleReleaseWriteDrained(fIO,core) || !fIO.SelectRuntimeCore(core)
+            || !fScope.ProveRoleReleaseWriteDrained(fIO,core) || !fSelector.Select(core)
             || !fIO.MapQ38Panel() || !fIO.DataflowPanelMappingStable()
             || !fGuard.ProveSelectedRoute(core)
             || !PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; })) return false;
@@ -545,7 +558,7 @@ public:
     }
     bool HoldObserved(unsigned core) {
         if (core>=PioneerQwen35::DataflowBarrierWorkers || !fScope.ProveExclusiveRewrite(fIO)
-            || !fScope.ProveRoleHeldAfterAttempt(fIO,core) || !fIO.SelectRuntimeCore(core)
+            || !fScope.ProveRoleHeldAfterAttempt(fIO,core) || !fSelector.Select(core)
             || !fIO.MapQ38Panel() || !fIO.DataflowPanelMappingStable() || !fGuard.ProveSelectedRoute(core)
             || !PioneerQwen35WithSelectedClock(fIO,core,[]() { return true; })) return false;
         return fIO.ResetRead()==0x47800 && fIO.ResetRead()==0x47800
@@ -811,7 +824,7 @@ public:
     bool RestoreCompletionSafe(unsigned core) {
         return core<PioneerQwen35::DataflowBarrierWorkers
             && fScope.ProveRoleRestoreCompletionSafe(fIO,core)
-            && fScope.ProveExclusiveRewrite(fIO) && fIO.SelectRuntimeCore(core)
+            && fScope.ProveExclusiveRewrite(fIO) && fSelector.Select(core)
             && fIO.MapQ38Panel() && fIO.DataflowPanelMappingStable() && fGuard.ProveSelectedRoute(core)
             && PioneerQwen35WithSelectedClock(fIO,core,[&]() {
                 return fIO.ResetRead()==0x7000 && fIO.ResetRead()==0x7000;
@@ -995,7 +1008,7 @@ public:
     // was revoked. Samples are not a fleet-wide exclusion guarantee.
     bool AllRolesHeldForStop(unsigned core) {
         return fScope.ProveRoleDedicatedHeldStatusAllowed(fIO,core)
-            && fIO.SelectRuntimeCore(core) && fIO.MapQ38Panel()
+            && fSelector.Select(core) && fIO.MapQ38Panel()
             && fIO.DataflowPanelMappingStable() && fGuard.ProveSelectedRoute(core)
             && SelectedHeldAndQuiet(core)
             && fScope.ProveRoleDedicatedHeldStatusAllowed(fIO,core)
