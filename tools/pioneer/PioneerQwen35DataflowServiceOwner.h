@@ -147,7 +147,7 @@ class DataflowServiceOwner {
 		, PhaseGraphRunning, PhaseGraphFaulted, PhaseGraphClosing
 #endif
 #ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
-		, PhaseResidentIdle
+		, PhaseResidentIdle, PhaseResidentClosing
 #endif
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
 		, PhaseScratchHeld
@@ -179,6 +179,7 @@ class DataflowServiceOwner {
 #ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
 	const void* fResidentSession=nullptr;
 	const void* fResidentRun=nullptr;
+	bool fResidentCloseAttempted=false;
 #endif
 #endif
 
@@ -871,6 +872,9 @@ public:
 		if (fPhase!=PhaseReady && fPhase!=PhaseFaulted && fPhase!=PhaseInstalling
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 			&& fPhase!=PhaseGraphClosing
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+			&& fPhase!=PhaseResidentClosing
+#endif
 #endif
 			)
 			return DataflowServiceInvalidState;
@@ -882,7 +886,11 @@ public:
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
 		// Preserve the origin of a clean close across a partial stop. A
 		// failed install or graph close must not inherit this admission.
-		if (fPhase==PhaseReady) fSnapshotCleanStopPending=fSharedAttempted;
+		if (fPhase==PhaseReady
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+			|| fPhase==PhaseResidentClosing
+#endif
+			) fSnapshotCleanStopPending=fSharedAttempted;
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		// GraphClosing is reachable only via PermitFaultedGraphClose after
 		// the retained publisher's all-core fault audit has settled. Keep
@@ -952,9 +960,27 @@ public:
 		return FinishClose(io);
 	}
 	public:
+#if defined(PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) \
+	&& defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
+	// Non-loadable witness only. A dedicated scope must prove the exact
+	// idle session, completion acknowledgement and physical stop authority.
+	// Once entered, uncertain stop or resume stays retained for recovery.
+	template<class IO,class Scope>
+	DataflowServiceResult CloseResident(IO& io,const void* session,Scope& scope)
+	{
+		if (fResidentCloseAttempted || !ResidentSessionIdle(session)
+			|| !scope.ResidentCloseAllowed(session,*this,io)) return DataflowServiceInvalidState;
+		fResidentCloseAttempted=true;fPhase=PhaseResidentClosing;
+		return CloseImpl(io,false);
+	}
+#endif
 	template<class IO>
 	DataflowServiceResult Close(IO& io)
 	{
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+		if ((fResidentSession || fResidentCloseAttempted) && fPhase!=PhaseClosed)
+			return DataflowServiceInvalidState;
+#endif
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
 		// A scratch owner must explicitly authorize the held close. Never
 		// resume by falling through the ordinary close after a partial hold.
