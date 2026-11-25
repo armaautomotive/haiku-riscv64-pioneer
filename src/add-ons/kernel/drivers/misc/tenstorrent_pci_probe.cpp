@@ -5306,6 +5306,21 @@ PioneerSessionIO::SharedHostDmaPciSourceStable()
 #define PIONEER_QWEN35_FABRIC_HOST_CONTROLLER 1
 #endif
 #include "PioneerQwen35DataflowSharedRoleBinding.inc"
+#if defined(PIONEER_QWEN35_FABRIC_GUARD_WITNESS) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+#include "PioneerQwen35FabricRoleRecoverySequence.h"
+// Type-check the complete intermediate sequence with the real owners and
+// synthetic scopes. It grants no physical authority and is not an ioctl.
+static __attribute__((used,noinline)) bool
+PioneerQ35FabricRoleSequenceCompileWitness(PioneerQ35FreshRecoverySession& session,
+	PioneerStoreContext& old,pioneer_driver_recovery_guard_v2_info* guard,
+	PioneerQwen35RoleBorrowedScopeWitness& roleScope,bool allowed,unsigned polls)
+{
+	PioneerQ35FreshRecoveryCompileScope scope{allowed};
+	PioneerQ35FabricParentRestoreCompileScope parent{allowed};
+	PioneerQ35FabricFreshViewsCompileGuard bar{allowed};
+	return PioneerQ35RestoreFabricRoleSequence(session,old,guard,scope,roleScope,parent,bar,polls);
+}
+#endif
 #ifdef PIONEER_QWEN35_FABRIC_HOST_CONTROLLER
 #undef PIONEER_QWEN35_FABRIC_HOST_CONTROLLER
 #endif
