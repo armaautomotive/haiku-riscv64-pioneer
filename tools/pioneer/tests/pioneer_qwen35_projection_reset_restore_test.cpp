@@ -13,6 +13,7 @@ struct ResetScope {
     const tt_compute_noc_result* noc=nullptr;const tt_host_page_result* host=nullptr;PioneerResidentLease* lease=nullptr;
     bool allowed=true,retained=false,complete=true,quarantineAtComplete=false,changeRouteAtComplete=false;
     unsigned calls=0,failAt=UINT32_MAX,quarantineAt=UINT32_MAX,changeRouteAt=UINT32_MAX,doorbellsAtRouteChange=0;
+    unsigned accessCalls=0,failAccessAt=0,ticketCalls=0,failTicketAt=0;
     tt_dram_samples_result* oldDram=nullptr;
     template<class IO> bool RecoveryAdmissionAllowed(PioneerQ35ProjectionScratch& scratch,IO&,
         const PioneerResidentBanks& oldOwner,const tt_dram_samples_result&,PioneerResidentBanks& newOwner,
@@ -42,6 +43,15 @@ struct ResetScope {
         return complete && allowed && &scratch==owner && &oldOwner==oldBanks && &newOwner==newBanks
             && &actualNoc==noc && &actualHost==host && &actualLease==lease && ticket==expectedTicket && saved==snapshot;
     }
+    template<class IO> bool RecoveryAccessAllowed(PioneerQ35ProjectionScratch& scratch,IO&,
+        const PioneerResidentBanks& oldOwner,PioneerResidentBanks& newOwner,const tt_compute_noc_result& actualNoc,
+        const tt_host_page_result& actualHost,PioneerResidentLease& actualLease,uint64_t ticket,
+        const uint32_t* saved,unsigned bank,unsigned offset,bool) {
+        return ++accessCalls!=failAccessAt && allowed && &scratch==owner && &oldOwner==oldBanks && &newOwner==newBanks
+            && &actualNoc==noc && &actualHost==host && &actualLease==lease && ticket==expectedTicket
+            && saved==snapshot && bank==0 && offset>=Fixture::ScratchOffset
+            && offset<Fixture::ScratchOffset+Fixture::ScratchBytes;
+    }
     void RetainRecovery(PioneerQ35ProjectionScratch& scratch) { assert(&scratch==owner);retained=true; }
 };
 static PioneerDriverRecoveryProof ResetProof(uint64_t ticket) {
@@ -51,12 +61,32 @@ static PioneerDriverRecoveryProof ResetProof(uint64_t ticket) {
 template<class Device,class Proof>
 static bool Restore(PioneerQ35ProjectionResetRecovery& recovery,PioneerQ35ProjectionScratch& scratch,
     uint64_t ticket,const Proof& proof,ScratchDevice<>& oldDevice,Device& fresh,ResetScope& scope) {
+    auto ticketValid=[&]() { return ++scope.ticketCalls!=scope.failTicketAt; }; // simulated driver guard
     return recovery.Restore(scratch,ticket,proof,fresh.io,scope,oldDevice.banks,oldDevice.dram,
-        fresh.banks,fresh.dram,fresh.noc,fresh.host,fresh.lease,fresh.initialized.data(),fresh.initialized.size());
+        fresh.banks,fresh.dram,fresh.noc,fresh.host,fresh.lease,fresh.initialized.data(),fresh.initialized.size(),ticketValid);
 }
 int main() {
     (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;
     constexpr uint64_t ticket=37;
+    for (unsigned scenario=0;scenario<4;scenario++) {
+        const unsigned failAt=(scenario%2)?3000:1;
+        auto scratch=std::make_unique<PioneerQ35ProjectionScratch>();
+        auto oldDevice=std::make_unique<ScratchDevice<>>();auto fresh=std::make_unique<ScratchDevice<>>();
+        auto recovery=std::make_unique<PioneerQ35ProjectionResetRecovery>();
+        assert(oldDevice->Capture(*scratch) && oldDevice->Stage(*scratch));oldDevice->banks.Quarantine();
+        ResetScope scope;scope.owner=scratch.get();scope.expectedTicket=ticket;
+        scope.oldBanks=&oldDevice->banks;scope.newBanks=&fresh->banks;scope.snapshot=oldDevice->snapshot.data();
+        scope.noc=&fresh->noc;scope.host=&fresh->host;scope.lease=&fresh->lease;
+        if (scenario<2) scope.failAccessAt=failAt; else scope.failTicketAt=failAt;
+        PioneerDriverFabricRecoveryProof proof{};
+        proof.flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
+            | PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
+        proof.core_count=120;proof.retained_owners=1;proof.fabric_generation=proof.firmware_generation=ticket;
+        assert(!Restore(*recovery,*scratch,ticket,proof,*oldDevice,*fresh,scope));
+        assert((scenario<2?scope.accessCalls:scope.ticketCalls)==failAt && scope.retained && recovery->Faulted()
+            && fresh->lease.recovery_required && fresh->io.HostReadMock::quarantined
+            && fresh->banks.Quarantined() && oldDevice->banks.Quarantined());
+    }
     {
         auto scratch=std::make_unique<PioneerQ35ProjectionScratch>();
         auto oldDevice=std::make_unique<ScratchDevice<>>();auto fresh=std::make_unique<ScratchDevice<>>();

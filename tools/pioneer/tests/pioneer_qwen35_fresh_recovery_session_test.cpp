@@ -187,11 +187,13 @@ static bool PioneerQ38DispatchMmioEnd(MockIO&,MockPci& pci,MockTransaction& t) {
 }
 struct PioneerQ35ProjectionResetRecovery {
     bool restored=false;
-    template<class Scope,class Proof>
-    bool Restore(MockScratch&,uint64 ticket,const Proof&,MockIO&,Scope&,
+    template<class Check> static bool TicketCheck(const MockProof&,Check&) { return true; }
+    template<class Check> static bool TicketCheck(const MockFabricProof&,Check& check) { return check(); }
+    template<class Scope,class Proof,class Check>
+    bool Restore(MockScratch&,uint64 ticket,const Proof& proof,MockIO&,Scope&,
         PioneerResidentBanks&,const MockDram&,PioneerResidentBanks&,const MockDram&,
-        const MockNoc&,const MockHost&,MockLease&,const uint8_t*,unsigned pages) {
-        if (ticket!=kTicket || pages!=PioneerResidentBanks::Pages || !Step(7)) return false;
+        const MockNoc&,const MockHost&,MockLease&,const uint8_t*,unsigned pages,Check& check) {
+        if (ticket!=kTicket || pages!=PioneerResidentBanks::Pages || !TicketCheck(proof,check) || !Step(7)) return false;
         restored=true;return true;
     }
     bool VerifiedFor(const MockScratch&,uint64 ticket,const PioneerResidentBanks&,

@@ -46,6 +46,11 @@ struct PioneerQ35FreshRecoveryCompileScope {
     bool RecoveryTransferAllowed(PioneerQ35ProjectionScratch&,PioneerSessionIO&,
         const PioneerResidentBanks&,PioneerResidentBanks&,const tt_compute_noc_result&,const tt_host_page_result&,
         PioneerResidentLease&,uint64_t,const uint32_t*,unsigned,unsigned,bool) const { return allowed; }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    bool RecoveryAccessAllowed(PioneerQ35ProjectionScratch&,PioneerSessionIO&,
+        const PioneerResidentBanks&,PioneerResidentBanks&,const tt_compute_noc_result&,const tt_host_page_result&,
+        PioneerResidentLease&,uint64_t,const uint32_t*,unsigned,unsigned,bool) const { return allowed; }
+#endif
     bool RecoveryCompleteAllowed(PioneerQ35ProjectionScratch&,PioneerSessionIO&,
         const PioneerResidentBanks&,PioneerResidentBanks&,const tt_compute_noc_result&,const tt_host_page_result&,
         PioneerResidentLease&,uint64_t,const uint32_t*) const { return allowed; }

@@ -198,12 +198,13 @@ public:
             || !scope.FreshRecoveryRestoreAdmission(*this,*fOld,*fFresh,fRestore)
             || !TicketValid(guard)) return Retain(scope,ScratchRestoring);
         fStage=ScratchRestoring;
+        auto transferTicketValid=[&]() { return TicketValid(guard); };
         auto restore=[&](const auto& proof) {
             return fRestore.Restore(*scratch,fTicket,proof,fFresh->io,scope,
                 fOld->banks,fOld->baseline.baseline.baseline.baseline.dram,
                 fFresh->banks,fFresh->baseline.baseline.baseline.baseline.dram,
                 fFresh->baseline.baseline.baseline.noc,fFresh->host,fFresh->lease,
-                fFresh->initialized,PioneerResidentBanks::Pages);
+                fFresh->initialized,PioneerResidentBanks::Pages,transferTicketValid);
         };
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
         const bool restored=fFabric?restore(fOld->recoveryFabricEvidence):restore(fOld->recoveryFinishProof);
