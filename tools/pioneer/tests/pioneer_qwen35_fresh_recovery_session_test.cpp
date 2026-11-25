@@ -274,6 +274,11 @@ static bool PioneerQ35FabricRoleRetirementMatches(const PioneerStoreContext& old
     return roleRetirementRecorded && ticket==kTicket && old.recoveryFreshSession
         && old.qwen35SharedRoleBinding && old.qwen35GraphOwner;
 }
+static bool roleDetachPrepared=false;
+template<class Check> static bool PioneerQ35PrepareFabricRoleSessionDetach(PioneerStoreContext& old,uint64 ticket,Check& check) {
+    if (roleDetachPrepared || !PioneerQ35FabricRoleRetirementMatches(old,ticket) || !check()) return false;
+    roleDetachPrepared=true;return check();
+}
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FreshRecoverySession.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35ModifiedRecoveryTransaction.inc"
 
@@ -390,7 +395,7 @@ struct Scope {
 };
 static void Reset() {
     failedOperation=guardCalls=failGuardAt=0;failFreshAllocation=false;auditSourceMismatch=false;operations.clear();
-    roleRetirementSucceeds=true;roleRetirementRecorded=false;
+    roleRetirementSucceeds=true;roleRetirementRecorded=false;roleDetachPrepared=false;
     sColdRecoveryRequired=true;sReloadQuiesced=false;sBankStorageOnly=true;sOpenCookies=1;
 }
 static void CheckRetained(PioneerQ35FreshRecoverySession* session,PioneerStoreContext& old,Scope& scope) {
@@ -746,7 +751,7 @@ int main() {
         const unsigned before=guardCalls;if (failure) failGuardAt=before+failure;
         const bool retired=session->RetireRoleSession(&guard,scope);
         if (!failure) {
-            assert(retired && !old.recoveryFreshSession && old.qwen35SharedRoleBinding==&role
+            assert(retired && roleDetachPrepared && !old.recoveryFreshSession && old.qwen35SharedRoleBinding==&role
                 && old.qwen35GraphOwner==&graph && old.q35PciReservationHeld && !scope.retained);
             roleSessionChecks=guardCalls-before;assert(roleSessionChecks>=2);
         } else {

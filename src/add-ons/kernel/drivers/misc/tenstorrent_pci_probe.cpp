@@ -5267,6 +5267,7 @@ template bool PioneerStoreContext::RunQ35FabricRecovery<PioneerQ35FabricHostScop
 static bool PioneerQ35FabricRoleRestorationMatches(const PioneerStoreContext&,uint64);
 template<class Check> static bool PioneerQ35RecordFabricRoleRetirement(PioneerStoreContext&,uint64,Check&);
 static bool PioneerQ35FabricRoleRetirementMatches(const PioneerStoreContext&,uint64);
+template<class Check> static bool PioneerQ35PrepareFabricRoleSessionDetach(PioneerStoreContext&,uint64,Check&);
 #endif
 #include "PioneerQwen35FreshRecoverySession.inc"
 #include "PioneerQwen35ModifiedRecoveryTransaction.inc"

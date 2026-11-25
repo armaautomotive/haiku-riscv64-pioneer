@@ -43,7 +43,7 @@ class PioneerQwen35SharedRoleBinding {
     const void* fFabricVerifiedSession=nullptr;
     const void* fFabricVerifiedGraph=nullptr;
     uint64 fFabricVerifiedTicket=0;
-    bool fFabricRetirementRecorded=false;
+    bool fFabricRetirementRecorded=false,fFabricSessionDetachPrepared=false,fFabricDestroyAttempted=false;
     PioneerQwen35::DataflowFabricCoreRecoverySequence fFabricCoreSequence;
     template<class Scope,class Check> struct FabricRecoveryAdapter
         : PioneerQwen35RoleFleetPciIO<PioneerSessionIO,Scope,Views,
@@ -462,6 +462,32 @@ public:
             && fContext.io.fabricHostDisposeComplete && fContext.q35PciReservationHeld
             && !fContext.q35PciReleaseAttempted && fCodeSnapshot && fRamSnapshot
             && fOwner.CoveredStateRestored() && fViews.FabricFreshCloseComplete() && !fViews.HasMappings();
+    }
+    template<class Check> bool PrepareFabricSessionDetach(uint64 ticket,Check& check) {
+        if (fFabricSessionDetachPrepared || !check() || !FabricRetirementRecordedForSession(ticket)
+            || !check() || !FabricRetirementRecordedForSession(ticket)) return false;
+        fFabricSessionDetachPrepared=true;
+        if (!check()) { fFabricSessionDetachPrepared=false;return false; }
+        return true;
+    }
+    // Metadata only: final destruction still requires a live guard and a
+    // scope proving owner identity and physical exclusion under the lock.
+    bool FabricDestroyReady(uint64 ticket) const {
+        auto* graph=fContext.qwen35GraphOwner;
+        return !fFabricDestroyAttempted && fFabricSessionDetachPrepared && fFabricRetirementRecorded
+            && !fFabricConversionAuthorityLost && ticket && ticket==fFabricVerifiedTicket
+            && !fContext.recoveryFreshSession && graph && graph==fFabricVerifiedGraph
+            && graph->FabricParentRestored() && graph->FabricGraphRetired(ticket)
+            && fContext.qwen35SharedRoleBinding==this && fContext.recoveryFabricStartTicket==ticket
+            && fContext.recoveryFabricEvidenceRecorded && fContext.recoveryFabricEvidence.ReadyToRetireOneOwner()
+            && fContext.io.fabricHostDisposeComplete && !fContext.recoveryMapping
+            && fContext.q35PciReservationHeld && !fContext.q35PciReleaseAttempted
+            && fCodeSnapshot && fRamSnapshot && fOwner.CoveredStateRestored() && !fOwner.RestorationRequired()
+            && fViews.FabricFreshCloseComplete() && !fViews.HasMappings();
+    }
+    template<class Check> bool BeginFabricDestroy(uint64 ticket,Check& check) {
+        if (!check() || !FabricDestroyReady(ticket) || !check() || !FabricDestroyReady(ticket)) return false;
+        fFabricDestroyAttempted=true;return true;
     }
     bool FabricCoreRecoveryUsable() const {
         return !fFabricConversionAuthorityLost && fContext.recoveryFabricRoleViewsDisposed && fOwner.FabricCoreRecoveryActive()
@@ -1069,6 +1095,7 @@ public:
 };
 
 #if defined(PIONEER_QWEN35_FABRIC_GUARD_WITNESS) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+#include "PioneerQwen35FabricRoleOwnerRelease.h"
 static bool
 PioneerQ35FabricRoleRestorationMatches(const PioneerStoreContext& context,
     uint64 ticket)
@@ -1087,6 +1114,19 @@ PioneerQ35FabricRoleRetirementMatches(const PioneerStoreContext& context,uint64 
 {
     return context.qwen35SharedRoleBinding
         && context.qwen35SharedRoleBinding->FabricRetirementRecordedForSession(ticket);
+}
+template<class Check> static bool
+PioneerQ35PrepareFabricRoleSessionDetach(PioneerStoreContext& context,uint64 ticket,Check& check)
+{
+    return context.qwen35SharedRoleBinding
+        && context.qwen35SharedRoleBinding->PrepareFabricSessionDetach(ticket,check);
+}
+// Synthetic compile witness only. No physical scope currently calls release.
+static __attribute__((used,noinline)) bool
+PioneerQ35FabricRoleOwnerReleaseCompileWitness(PioneerStoreContext& context,uint64 ticket,bool permitted)
+{
+    auto check=[&]() { return permitted; };
+    return PioneerQ35ReleaseFabricRoleOwner(context,ticket,check);
 }
 #endif
 

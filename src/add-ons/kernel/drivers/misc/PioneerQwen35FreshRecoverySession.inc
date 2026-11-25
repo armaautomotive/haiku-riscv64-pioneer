@@ -695,6 +695,7 @@ public:
                 && PioneerQ35FabricRoleRetirementMatches(*fOld,fTicket);
         };
         if (!ready() || !scope.FreshRoleSessionRetirementAllowed(*this,*fOld,*fFresh,fRoleReceipt)
+            || !ready() || !PioneerQ35PrepareFabricRoleSessionDetach(*fOld,fTicket,ready)
             || !ready()) return Retain(scope,RoleOwnerRetired);
         fOld->recoveryFreshSession=nullptr;
         delete this;return true;
