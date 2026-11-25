@@ -27,10 +27,10 @@ enum : unsigned {
     DataflowRoleWriterShimAddress=0x70100,
     DataflowRoleWriterShimLimit=0x70200,
     DataflowRoleShimWords=(DataflowRoleWriterShimLimit-DataflowRoleReaderShimAddress)/4,
-    DataflowRoleReaderCodeAddress=0xb0000,
-    DataflowRoleReaderCodeLimit=0xb5000,
-    DataflowRoleWriterCodeAddress=0xb5000,
-    DataflowRoleWriterCodeLimit=0xb8000,
+    DataflowRoleReaderCodeAddress=PIONEER_Q35_ROLE_READER_CODE,
+    DataflowRoleReaderCodeLimit=PIONEER_Q35_ROLE_WRITER_CODE,
+    DataflowRoleWriterCodeAddress=PIONEER_Q35_ROLE_WRITER_CODE,
+    DataflowRoleWriterCodeLimit=PIONEER_Q35_ROLE_CODE_LIMIT,
     DataflowRoleReaderRamCopy=PIONEER_Q35_ROLE_READER_RAM_COPY,
     DataflowRoleWriterRamCopy=PIONEER_Q35_ROLE_WRITER_RAM_COPY,
     DataflowRoleRamCopyBytes=8192,
@@ -49,6 +49,10 @@ static_assert(DataflowRoleReaderShimLimit==DataflowRoleWriterShimAddress
 static_assert(unsigned(DataflowRoleExtraL1Address)==unsigned(DataflowBarrierL1Limit)
     && DataflowRoleReaderCodeLimit==DataflowRoleWriterCodeAddress
     && DataflowRoleWriterCodeLimit==DataflowRoleReaderRamCopy
+    && PIONEER_Q35_ROLE_READER_RESTORE>=DataflowRoleReaderCodeAddress
+    && PIONEER_Q35_ROLE_READER_RESTORE+0x200<=DataflowRoleReaderCodeLimit
+    && PIONEER_Q35_ROLE_WRITER_RESTORE>=DataflowRoleWriterCodeAddress
+    && PIONEER_Q35_ROLE_WRITER_RESTORE+0x200<=DataflowRoleWriterCodeLimit
     && DataflowRoleReaderRamCopy+DataflowRoleRamCopyBytes==DataflowRoleWriterRamCopy
     && DataflowRoleExtraL1Limit<=0x180000,
     "role code and pre-stack RAM copies occupy disjoint, saved L1 ranges");

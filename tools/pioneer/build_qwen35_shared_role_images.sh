@@ -15,7 +15,7 @@ umask 077
 mkdir -m 700 "$output"
 flags='-std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -fstack-usage -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32'
 case "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" in
-    0) sharing_flags=; sharing_optimization= ;;
+    0) sharing_flags=; sharing_optimization=; sharing_asm=; writer_start=0xb5000; writer_limit=0xb8000; reader_restore=0xb4e00; writer_restore=0xb7e00 ;;
     1) [ "${PIONEER_QWEN35_SHARED_ROLE_GRAPH_COMPILE_ONLY:-0}:${PIONEER_QWEN35_RESIDENT_SERVICE_COMPILE_ONLY:-0}" = 1:1 ] || exit 2
        sharing_flags='-DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS'
        if [ "${PIONEER_QWEN35_FUSED_RECURRENCE_COMPILE_ONLY:-0}" = 1 ]; then
@@ -23,7 +23,8 @@ case "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" in
        else
            sharing_flags="$sharing_flags -DPIONEER_QWEN35_PAIRED_RECURRENCE"
        fi
-       sharing_optimization=-Os ;;
+       sharing_optimization=-Os; sharing_asm=-DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+       writer_start=0xb6000; writer_limit=0xb9000; reader_restore=0xb5e00; writer_restore=0xb8e00 ;;
     *) exit 2 ;;
 esac
 "$cross-g++" $flags $sharing_optimization $sharing_flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
@@ -35,10 +36,10 @@ if [ "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1 ]; then
 		-c "$directory/PioneerQwen35DataflowMemory.cpp" -o "$output/memory.o"
 fi
 "$cross-g++" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
-	-I"$directory" "$directory/blackhole_qwen35_shared_role_start.S" -o "$output/shared-start.o"
+	$sharing_asm -I"$directory" "$directory/blackhole_qwen35_shared_role_start.S" -o "$output/shared-start.o"
 for role in reader writer; do
-	if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70100; start=0xb0000; limit=0xb5000
-	else shim=0x70100; shim_limit=0x70200; start=0xb5000; limit=0xb8000; fi
+	if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70100; start=0xb0000; limit=$reader_restore
+	else shim=0x70100; shim_limit=0x70200; start=$writer_start; limit=$writer_restore; fi
 	set -- "$output/shared-start.o" "$output/shared-roles.o"
 	if [ "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1 ]; then set -- "$@" "$output/memory.o"; fi
 	"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
@@ -63,15 +64,19 @@ done
 python3 - "$output" <<'PY'
 from pathlib import Path
 from struct import iter_unpack
+import os
 import sys
 
 out=Path(sys.argv[1])
+sharing=os.environ.get('PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY')=='1'
+writer_start,writer_limit=(0xb6000,0xb9000) if sharing else (0xb5000,0xb8000)
+guard=('#if !defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)\n' if sharing else '#if defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)\n')+'#error Shared role image layout mismatch\n#endif\n'
 arrays=[]
 parks={}
 loops={}
 for role,shim_start,shim_limit,code_start,code_limit in (
-        ('reader',0x70000,0x70100,0xb0000,0xb5000),
-        ('writer',0x70100,0x70200,0xb5000,0xb8000)):
+        ('reader',0x70000,0x70100,0xb0000,writer_start),
+        ('writer',0x70100,0x70200,writer_start,writer_limit)):
     symbols={}
     for line in (out/f'{role}.symbols').read_text().splitlines():
         parts=line.split()
@@ -91,8 +96,8 @@ for role,shim_start,shim_limit,code_start,code_limit in (
         raise SystemExit(f'{role} park is not an aligned self-loop')
     parks[role]=park
     loops[role]=(loop,loop_end)
-for role,kind,limit in (('reader','shim',0x100),('reader','code',0x5000),
-                        ('writer','shim',0x100),('writer','code',0x3000)):
+for role,kind,limit in (('reader','shim',0x100),('reader','code',writer_start-0xb0000-0x200),
+                        ('writer','shim',0x100),('writer','code',writer_limit-writer_start-0x200)):
     data=(out/f'{role}-{kind}.bin').read_bytes()
     if not data or len(data)>limit or len(data)%4:
         raise SystemExit(f'invalid {role} {kind} image size')
@@ -100,7 +105,7 @@ for role,kind,limit in (('reader','shim',0x100),('reader','code',0x5000),
     words=''.join(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I',data))
     arrays.append(f'inline constexpr unsigned {name}[]={{\n{words}}};\n')
 (out/'PioneerQwen35SharedRoleImages.h').write_text(
-    '#pragma once\nnamespace PioneerQwen35 {\n'
+    '#pragma once\n'+guard+'namespace PioneerQwen35 {\n'
     +''.join(f'inline constexpr unsigned DataflowShared{role.capitalize()}ParkAddress=0x{park:08x}U;\n'
         for role,park in parks.items())
     +''.join(f'inline constexpr unsigned DataflowShared{role.capitalize()}LoopAddress=0x{loop:08x}U;\n'
@@ -123,8 +128,8 @@ PY
 "$cross-g++" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
 	-I"$directory" "$directory/blackhole_qwen35_exclusive_role_start.S" -o "$output/exclusive-start.o"
 for role in reader writer; do
-	if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70100; start=0xb0000; limit=0xb5000
-	else shim=0x70100; shim_limit=0x70200; start=0xb5000; limit=0xb8000; fi
+	if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70100; start=0xb0000; limit=$reader_restore
+	else shim=0x70100; shim_limit=0x70200; start=$writer_start; limit=$writer_restore; fi
 	set -- "$output/exclusive-start.o" "$output/shared-roles.o"
 	if [ "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1 ]; then set -- "$@" "$output/memory.o"; fi
 	"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
@@ -142,13 +147,17 @@ done
 python3 - "$output" <<'PYEXCLUSIVE'
 from pathlib import Path
 from struct import iter_unpack
+import os
 import sys
 
 out=Path(sys.argv[1])
-parts=['#pragma once\nnamespace PioneerQwen35 {\n']
+sharing=os.environ.get('PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY')=='1'
+writer_start,writer_limit=(0xb6000,0xb9000) if sharing else (0xb5000,0xb8000)
+guard=('#if !defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)\n' if sharing else '#if defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)\n')+'#error Exclusive role image layout mismatch\n#endif\n'
+parts=['#pragma once\n'+guard+'namespace PioneerQwen35 {\n']
 for role,base,limit,code_start,code_limit in (
-        ('reader',0x70000,0x70100,0xb0000,0xb5000),
-        ('writer',0x70100,0x70200,0xb5000,0xb8000)):
+        ('reader',0x70000,0x70100,0xb0000,writer_start),
+        ('writer',0x70100,0x70200,writer_start,writer_limit)):
     symbols={}
     for line in (out/f'exclusive-{role}.symbols').read_text().splitlines():
         fields=line.split()

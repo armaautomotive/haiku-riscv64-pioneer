@@ -13,12 +13,17 @@ umask 077
 mkdir -m 700 "$output"
 sh "$directory/build_qwen35_shared_role_images.sh" "$build" "$output/shared"
 PIONEER_QWEN35_LOCAL_RESTORE_PROBE_BUILD=1 sh "$directory/build_qwen35_local_restore_probe_images.sh" "$build" "$output/local-probe"
+sharing_asm=; writer_start=0xb5000; reader_restore=0xb4e00; writer_restore=0xb7e00
+if [ "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1 ]; then
+    sharing_asm=-DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+    writer_start=0xb6000; reader_restore=0xb5e00; writer_restore=0xb8e00
+fi
 "$cross-g++" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
-    -DPIONEER_QWEN35_ROLE_SERVICE_PROBE=1 -I"$directory" \
+    -DPIONEER_QWEN35_ROLE_SERVICE_PROBE=1 $sharing_asm -I"$directory" \
     "$directory/blackhole_qwen35_shared_role_start.S" -o "$output/service-shim.o"
 for role in reader writer; do
-    if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70100; start=0xb0000; limit=0xb5000
-    else shim=0x70100; shim_limit=0x70200; start=0xb5000; limit=0xb8000; fi
+    if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70100; start=0xb0000; limit=$reader_restore
+    else shim=0x70100; shim_limit=0x70200; start=$writer_start; limit=$writer_restore; fi
     set -- "$output/service-shim.o" "$output/shared/shared-roles.o"
     if [ "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1 ]; then set -- "$@" "$output/shared/memory.o"; fi
     "$cross-ld" -m elf32lriscv --no-relax --gc-sections \
@@ -37,13 +42,17 @@ done
 python3 - "$output" <<'PY'
 from pathlib import Path
 from struct import iter_unpack
+import os
 import sys
 
 out=Path(sys.argv[1])
-parts=['#pragma once\nnamespace PioneerQwen35 {\n']
+sharing=os.environ.get('PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY')=='1'
+writer_start,writer_limit,reader_restore,writer_restore=(0xb6000,0xb9000,0xb5e00,0xb8e00) if sharing else (0xb5000,0xb8000,0xb4e00,0xb7e00)
+guard=('#if !defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)\n' if sharing else '#if defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)\n')+'#error Role service restore image layout mismatch\n#endif\n'
+parts=['#pragma once\n'+guard+'namespace PioneerQwen35 {\n']
 for role,shim,shim_end,start,restore,limit in (
-    ('reader',0x70000,0x70100,0xb0000,0xb4e00,0xb5000),
-    ('writer',0x70100,0x70200,0xb5000,0xb7e00,0xb8000)):
+    ('reader',0x70000,0x70100,0xb0000,reader_restore,writer_start),
+    ('writer',0x70100,0x70200,writer_start,writer_restore,writer_limit)):
     startup=(out/f'{role}-shim.bin').read_bytes()
     service=(out/f'{role}-service.bin').read_bytes()
     local_restore=(out/'local-probe'/'local-restore'/f'{role}.bin').read_bytes()

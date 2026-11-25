@@ -4,6 +4,9 @@
 #include "PioneerQwen35DataflowKernels.h"
 #include "PioneerQwen35DataflowActivationReuse.h"
 #include "PioneerQwen35DataflowActivationSums.h"
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+#include "PioneerQwen35DataflowActivationShareProtocol.h"
+#endif
 namespace PioneerQwen35 {
 // Offline multi-role variant: the reader packs the immutable activation once,
 // publishes one input-ready ticket, then streams only weight pages. Compute
@@ -35,7 +38,14 @@ bool PioneerQwen35SharedActivationReader(const DataflowCoreInvocation& program,
     if (!program.assignment.active) { if (reuse) DataflowStoreRelease(reuse->magic,0);return true; }
     const bool reusable=reuse && DataflowActivationReuseHit(*reuse,program);
     if (reuse) DataflowStoreRelease(reuse->magic,0);
-    if (!reusable && !ops.ReadActivation(program.input,program.inputRows,activationCache,
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+    DataflowActivationShareTreePosition share{};
+    if (!reuse || !DataflowActivationShareTreeLocate(program.sharing,program.core,share)) return fail();
+    const bool readLocal=share.parent==DataflowCoreCount;
+#else
+    const bool readLocal=true;
+#endif
+    if (!reusable && readLocal && !ops.ReadActivation(program.input,program.inputRows,activationCache,
             program.inputRows*sizeof(float))) return fail();
     const unsigned tileBytes=program.circularBuffer[0].pageBytes;
     const uint64_t total64=uint64_t(program.assignment.groups)*program.blocks;
@@ -68,8 +78,12 @@ bool PioneerQwen35SharedActivationReader(const DataflowCoreInvocation& program,
     // Start one transfer while packing the activation; issue the second into
     // the other queue page before waiting for the first completion.
     if (!issueNext()) return fail();
-    if (!reusable && (!DataflowPackActivationCache(program,ready,activationCache,ops)
+    if (!reusable && readLocal && (!DataflowPackActivationCache(program,ready,activationCache,ops)
         || !DataflowPrepareActivationSums(activationCache,program.type,program.inputs))) return fail();
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+    if ((!reusable && !readLocal && !ops.ReceiveSharedActivation(program,*reuse,activationCache))
+        || !ops.PublishSharedActivation(program,*reuse)) return fail();
+#endif
     uint32_t readyTicket=0;
     if (!DataflowQueueReserveBack(ready,readyTicket) || readyTicket!=0
         || !DataflowQueuePublishBack(ready,readyTicket)) return fail();

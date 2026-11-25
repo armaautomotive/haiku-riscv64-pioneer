@@ -19,7 +19,7 @@ def generate(directory: Path) -> str:
         raise ValueError('unexpected resident boot jump')
     if not 0 < len(text) <= 0xe000 or len(text) % 4:
         raise ValueError('resident text does not fit its aligned L1 range')
-    if not 0 < len(dispatch) <= 0x6400 or len(dispatch) % 4:
+    if not 0 < len(dispatch) <= 0x7000 or len(dispatch) % 4:
         raise ValueError('resident dispatch does not fit its aligned L1 range')
 
     symbols = {}

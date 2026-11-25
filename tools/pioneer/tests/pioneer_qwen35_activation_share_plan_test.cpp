@@ -5,6 +5,9 @@
 #undef main
 #include "../PioneerQwen35DataflowActivationSharePlan.h"
 #include "../PioneerQwen35DataflowActivationShareTree.h"
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+#include "../PioneerQwen35DataflowActivationShareProtocol.h"
+#endif
 #include "../PioneerQwen35DataflowGraphRunProtocol.h"
 #include <cstring>
 
@@ -20,6 +23,9 @@ struct PlanSink {
     std::unique_ptr<DataflowCoreInvocation[]> commands;
     unsigned index=UINT32_MAX,seen=0,steps=0,active=0,multiple=0;
     bool negativesChecked=false,overlapChecked=false,recordNegativeChecked=false,recordReadChecked=false;
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+    bool protocolChecked=false;
+#endif
     bool Finish() {
         if (!plan) return true;
         assert(seen==DataflowCoreCount && plan->Seal() && plan->Groups());
@@ -51,6 +57,46 @@ struct PlanSink {
                     && DataflowActivationShareTreeLocate(group,tree.parent,parent)
                     && parent.rank==(tree.rank-1)/DataflowActivationShareTreeFanout
                     && parent.count==tree.count);
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+                if (!protocolChecked) {
+                    DataflowActivationSharePacket packet{},expected{},observed{};
+                    assert(DataflowActivationSharePacketBuild(commands[tree.parent],7,3,tree.parent,packet));
+                    assert(DataflowActivationSharePacketBuild(command,7,3,tree.parent,expected));
+                    assert(!std::memcmp(&packet,&expected,sizeof(packet)));
+                    DataflowActivationSharePublish(observed.word,packet);
+                    assert(DataflowActivationSharePacketMatches(observed,command,7,3,tree.parent));
+                    for (unsigned word=0;word<16;word++) {
+                        auto corrupt=observed;corrupt.word[word]^=1;
+                        assert(!DataflowActivationSharePacketMatches(corrupt,command,7,3,tree.parent));
+                    }
+                    assert(!DataflowActivationSharePacketMatches(observed,command,8,3,tree.parent));
+                    assert(!DataflowActivationSharePacketMatches(observed,command,7,4,tree.parent));
+                    assert(!DataflowActivationSharePacketMatches(observed,command,7,3,core));
+                    const unsigned route=DataflowBarrierWorkerRoute(tree.parent);
+                    auto allowed=[&](unsigned remote,unsigned local,unsigned bytes) {
+                        return DataflowActivationSharePeerReadAllowed(command,tree.parent,route,remote,local,bytes);
+                    };
+                    assert(allowed(DataflowActivationShareReadyAddress,DataflowActivationShareScratchAddress,64));
+                    assert(!allowed(DataflowActivationShareReadyAddress,DataflowActivationShareScratchAddress+64,64));
+                    assert(!DataflowActivationSharePeerReadAllowed(command,core,route,
+                        DataflowActivationShareReadyAddress,DataflowActivationShareScratchAddress,64));
+                    assert(!DataflowActivationSharePeerReadAllowed(command,tree.parent,route^1,
+                        DataflowActivationShareReadyAddress,DataflowActivationShareScratchAddress,64));
+                    const unsigned packed=(command.inputs/256)*DataflowInputPageBytes;
+                    const unsigned sums=(command.inputs/256)*DataflowActivationSumsPerChunk*sizeof(int32_t);
+                    for (unsigned offset=0;offset<packed;offset+=64)
+                        assert(allowed(DataflowActivationCacheAddress+offset,DataflowActivationCacheAddress+offset,64));
+                    for (unsigned offset=0;offset<sums;offset+=64)
+                        assert(allowed(DataflowActivationCacheAddress+DataflowActivationSumsOffset+offset,
+                            DataflowActivationCacheAddress+DataflowActivationSumsOffset+offset,64));
+                    assert(!allowed(DataflowActivationCacheAddress+packed-64,DataflowActivationCacheAddress+packed-64,128));
+                    assert(!allowed(DataflowActivationCacheAddress+DataflowActivationSumsOffset+sums-64,
+                        DataflowActivationCacheAddress+DataflowActivationSumsOffset+sums-64,128));
+                    assert(!allowed(DataflowActivationCacheAddress,DataflowActivationCacheAddress,0));
+                    assert(!allowed(DataflowActivationCacheAddress,DataflowActivationCacheAddress,16384+64));
+                    protocolChecked=true;
+                }
+#endif
             }
         }
         if (!negativesChecked) {

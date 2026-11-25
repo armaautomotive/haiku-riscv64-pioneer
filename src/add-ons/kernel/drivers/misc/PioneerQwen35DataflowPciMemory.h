@@ -78,6 +78,11 @@ static inline bool DataflowPciL1Range(unsigned address,unsigned bytes)
 		|| (address>=PioneerQwen35::DataflowBarrierOutbox
 			&& end<=PioneerQwen35::DataflowBarrierReleaseCommit
 				+PioneerQwen35::DataflowBarrierPacketBytes)
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+		|| (address>=PioneerQwen35::DataflowActivationShareReadyAddress
+			&& end<=PioneerQwen35::DataflowActivationShareScratchAddress
+				+PioneerQwen35::DataflowActivationSharePacketBytes)
+#endif
 		|| (address>=PioneerQwen35::DataflowBarrierArrivalBase
 			&& end<=PioneerQwen35::DataflowBarrierArrivalEnd);
 }

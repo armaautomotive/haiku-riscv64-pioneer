@@ -3,6 +3,9 @@
 #define PIONEER_QWEN35_DATAFLOW_BARRIER_SETUP_H
 
 #include "PioneerQwen35DataflowBarrierLayout.h"
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+#include "PioneerQwen35DataflowActivationShareLayout.h"
+#endif
 
 namespace PioneerQwen35 {
 
@@ -23,6 +26,12 @@ bool DataflowBarrierPrepareHeldCore(IO& io,unsigned core)
 	};
 	if (!clear(DataflowBarrierOutbox) || !clear(DataflowBarrierReleasePayload)
 		|| !clear(DataflowBarrierReleaseCommit)) return false;
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+	// No run may reuse an epoch/step until the old ready record is removed.
+	// All workers stay held until every core's clear and readback succeeds.
+	if (!clear(DataflowActivationShareReadyAddress)
+		|| !clear(DataflowActivationShareScratchAddress)) return false;
+#endif
 	const unsigned first=core*DataflowBarrierReleaseFanout+1;
 	for (unsigned worker=first;worker<first+DataflowBarrierReleaseFanout
 		&& worker<DataflowBarrierWorkers;worker++)

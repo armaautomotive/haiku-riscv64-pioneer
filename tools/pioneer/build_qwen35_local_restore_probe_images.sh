@@ -13,8 +13,12 @@ cross="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku"
 umask 077
 mkdir -m 700 "$output"
 sh "$directory/build_qwen35_local_restore_images.sh" "$build" "$output/local-restore"
+sharing_asm=
+if [ "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1 ]; then
+    sharing_asm=-DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+fi
 "$cross-g++" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
-    -I"$directory" "$directory/blackhole_qwen35_local_restore_probe.S" -o "$output/probe.o"
+    $sharing_asm -I"$directory" "$directory/blackhole_qwen35_local_restore_probe.S" -o "$output/probe.o"
 for role in reader writer; do
     if [ "$role" = reader ]; then start=0x70000; limit=0x70100
     else start=0x70100; limit=0x70200; fi
@@ -30,10 +34,14 @@ done
 python3 - "$output" <<'PY'
 from pathlib import Path
 from struct import iter_unpack
+import os
 import sys
 
 out=Path(sys.argv[1])
-parts=['#pragma once\nnamespace PioneerQwen35 {\n']
+sharing=os.environ.get('PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY')=='1'
+writer_start,writer_limit=(0xb6000,0xb9000) if sharing else (0xb5000,0xb8000)
+guard=('#if !defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)\n' if sharing else '#if defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)\n')+'#error Local restore probe layout mismatch\n#endif\n'
+parts=['#pragma once\n'+guard+'namespace PioneerQwen35 {\n']
 def signed(n,bits):
     return n-(1<<bits) if n&(1<<(bits-1)) else n
 def assert_relocatable(data):
@@ -54,8 +62,8 @@ def assert_relocatable(data):
             continue
         if target<0 or target>=len(data) or target%4:
             raise SystemExit('restore image control flow escapes its relocated code')
-for role,start,limit,code_start,code_limit in (('reader',0x70000,0x70100,0xb0000,0xb5000),
-                                                ('writer',0x70100,0x70200,0xb5000,0xb8000)):
+for role,start,limit,code_start,code_limit in (('reader',0x70000,0x70100,0xb0000,writer_start),
+                                                ('writer',0x70100,0x70200,writer_start,writer_limit)):
     symbols={}
     for line in (out/f'{role}.symbols').read_text().splitlines():
         fields=line.split()

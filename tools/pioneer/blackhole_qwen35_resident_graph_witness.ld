@@ -5,6 +5,10 @@ ENTRY(_start)
 SECTIONS {
 	.boot 0x6000 : { KEEP(*(.boot)) }
 	.dispatch 0xa0400 : {
+		/* Shared arithmetic helpers execute from the saved dispatch region,
+		 * leaving space in the primary image for the resident graph. */
+		*service.o(.text._ZL15PioneerGraphFmafff)
+		*service.o(.text._ZL26PioneerGraphDividePositiveff)
 		/* Keep the normalization worker and its graph bridge in the already
 		 * verified dispatch image, leaving room in the primary code region. */
 		*service.o(.text.*PioneerQwen35DataflowRmsWorker*)
@@ -42,7 +46,7 @@ SECTIONS {
 	ASSERT(SIZEOF(.boot)==4,"one fixed boot jump")
 	ASSERT(qwen35_dataflow_entry==0x72000,"fixed dataflow service entry")
 	ASSERT(SIZEOF(.text)<=0xe000,"primary code overlaps L1 queues")
-	/* 0xa0400 + 0x6400 = 0xa6800, below the 0xaa000 invocation. */
-	ASSERT(SIZEOF(.dispatch)>0 && SIZEOF(.dispatch)<=0x6400,"dispatch code exceeds its L1 region")
+	/* 0xa0400 + 0x7000 = 0xa7400, below the 0xaa000 invocation. */
+	ASSERT(SIZEOF(.dispatch)>0 && SIZEOF(.dispatch)<=0x7000,"dispatch code exceeds its L1 region")
 	ASSERT(SIZEOF(.forbidden)==0,"service image cannot use writable globals")
 }

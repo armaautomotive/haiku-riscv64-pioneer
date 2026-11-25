@@ -8,6 +8,9 @@
 #include "PioneerQwen35DataflowActivationRead.h"
 #endif
 #include "PioneerQ38ProjectionInput.h"
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+#include "PioneerQwen35DataflowActivationShareProtocol.h"
+#endif
 
 namespace PioneerQwen35 {
 
@@ -128,18 +131,27 @@ class DataflowBlackholeNoc {
 		return true;
 	}
 
-	template<bool BarrierPeer=false>
+	template<bool BarrierPeer=false,bool ActivationPeer=false>
 	static bool Transfer(bool write,uint32_t remote,unsigned route,
 		uint8_t* local,unsigned bytes,DataflowNocDiagnostic* detail=nullptr,
-		unsigned source=0,unsigned destination=0)
+		unsigned source=0,unsigned destination=0,const DataflowCoreInvocation* shareProgram=nullptr)
 	{
+		(void)shareProgram;
+		static_assert(!(BarrierPeer && ActivationPeer),"peer access modes are exclusive");
 		if (detail) *detail={};
 		const uint32_t localAddress=uint32_t(reinterpret_cast<uintptr_t>(local));
-		const bool rangeOkay=BarrierPeer
+		bool rangeOkay=BarrierPeer
 			?Noc==1 && DataflowBarrierPeerAllowed(write,source,destination,
 				route,remote,localAddress,bytes)
 			:LocalRange(localAddress,bytes) && remote>=BankBase && remote<BankLimit
 				&& bytes<=BankLimit-remote;
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+		if constexpr (ActivationPeer) rangeOkay=Noc==1 && !write && shareProgram
+			&& shareProgram->core==source && DataflowActivationSharePeerReadAllowed(
+				*shareProgram,destination,route,remote,localAddress,bytes);
+#else
+		static_assert(!ActivationPeer,"activation peer reads require the sharing witness");
+#endif
 		if (!local || !rangeOkay || !bytes || bytes>DataflowNocMaxTransfer
 			|| (bytes&63) || (remote&63) || (write && (localAddress&3)) || route>0xfff) {
 			if (detail) detail->stage=DataflowNocTransferInvalid;
@@ -154,7 +166,7 @@ class DataflowBlackholeNoc {
 		const uint32_t rawSelf=*Words(Base+DataflowNocLogicalIdOffset);
 		uint32_t self=0;
 		if (!DataflowNocDecodeLocalRoute(rawSelf,self)
-			|| (BarrierPeer && !DataflowNocRouteMatchesWorker(self,source))) {
+			|| ((BarrierPeer || ActivationPeer) && !DataflowNocRouteMatchesWorker(self,source))) {
 			if (detail) *detail={DataflowNocTransferIdentity,0xff,rawSelf,0};
 			return false;
 		}
@@ -329,6 +341,16 @@ public:
 	}
 #endif
 
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+	// Only the current invocation's fixed parent and activation ranges are
+	// accessible. The caller must establish readiness and NoC1 ownership.
+	bool ReadActivationPeer(const DataflowCoreInvocation& program,unsigned parent,
+		unsigned remote,uint8_t* local,unsigned bytes) const {
+		return Transfer<false,true>(false,remote,DataflowBarrierWorkerRoute(parent),
+			local,bytes,nullptr,program.core,parent,&program);
+	}
+#endif
+
 	// The dispatch barrier has two fixed 64-byte packets per message. This is
 	// not a general peer-write interface and is not enabled by the service yet.
 	bool WriteBarrierPacket(unsigned source,unsigned destination,unsigned remote,
@@ -342,6 +364,9 @@ public:
 class DataflowBlackholeReaderOps {
 	const DataflowCoreInvocation* fProgram=nullptr;
 	DataflowBlackholeNoc<0> fNoc;
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+	DataflowBlackholeNoc<1> fShareNoc;
+#endif
 
 	bool OwnsWeight(unsigned bank,uint32_t address,unsigned bytes) const
 	{
@@ -388,6 +413,49 @@ public:
 		fProgram=&program;
 		return true;
 	}
+
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+	bool ReceiveSharedActivation(const DataflowCoreInvocation& program,
+		const DataflowActivationReuse& reuse,uint8_t* cache) const
+	{
+		DataflowActivationShareTreePosition tree{};
+		const unsigned epoch=DataflowLoadAcquire(reuse.epoch),step=DataflowLoadAcquire(reuse.step);
+		if (fProgram!=&program || reinterpret_cast<uintptr_t>(cache)!=DataflowActivationCacheAddress
+			|| !epoch || !step || !DataflowActivationShareTreeLocate(program.sharing,program.core,tree)
+			|| tree.parent>=DataflowCoreCount) return false;
+		static_assert(unsigned(DataflowActivationShareMaxReadBytes)==unsigned(DataflowNocMaxTransfer),
+			"sharing chunks must fit one hardware NoC transfer");
+		struct IO {
+			const DataflowBlackholeNoc<1>& noc;
+			const DataflowCoreInvocation& program;
+			const DataflowActivationReuse& reuse;
+			bool ContextMatches(unsigned e,unsigned s) const {
+				return DataflowLoadAcquire(reuse.epoch)==e && DataflowLoadAcquire(reuse.step)==s;
+			}
+			bool Read(unsigned parent,unsigned remote,unsigned local,unsigned bytes) const {
+				return noc.ReadActivationPeer(program,parent,remote,
+					reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(local)),bytes);
+			}
+			uint32_t ScratchWord(unsigned i) const {
+				const auto* scratch=reinterpret_cast<volatile uint32_t*>(
+					static_cast<uintptr_t>(DataflowActivationShareScratchAddress));
+				return DataflowLoadAcquire(scratch[i]);
+			}
+		} io{fShareNoc,program,reuse};
+		return DataflowActivationShareReceive(program,epoch,step,io,DataflowNocPollLimit);
+	}
+	bool PublishSharedActivation(const DataflowCoreInvocation& program,
+		const DataflowActivationReuse& reuse) const
+	{
+		const unsigned epoch=DataflowLoadAcquire(reuse.epoch),step=DataflowLoadAcquire(reuse.step);
+		DataflowActivationSharePacket packet{};
+		if (fProgram!=&program || !DataflowActivationSharePacketBuild(program,epoch,step,program.core,packet)
+			|| DataflowLoadAcquire(reuse.epoch)!=epoch || DataflowLoadAcquire(reuse.step)!=step) return false;
+		DataflowActivationSharePublish(reinterpret_cast<volatile uint32_t*>(
+			static_cast<uintptr_t>(DataflowActivationShareReadyAddress)),packet);
+		return true;
+	}
+#endif
 
 	bool ReadActivation(const RowSpace& source,unsigned rows,uint8_t* output,
 		unsigned bytes) const

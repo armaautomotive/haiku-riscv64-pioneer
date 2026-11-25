@@ -12,8 +12,12 @@ case "$output" in /*) ;; *) exit 2;; esac
 cross="$build/cross-tools-riscv64/bin/riscv64-unknown-haiku"
 umask 077
 mkdir -m 700 "$output"
+sharing_asm=
+if [ "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1 ]; then
+    sharing_asm=-DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+fi
 "$cross-g++" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
-    -I"$directory" "$directory/blackhole_qwen35_role_local_restore.S" -o "$output/restore.o"
+    $sharing_asm -I"$directory" "$directory/blackhole_qwen35_role_local_restore.S" -o "$output/restore.o"
 for role in reader writer; do
     if [ "$role" = reader ]; then start=0x70000; limit=0x70100
     else start=0x70100; limit=0x70200; fi
@@ -29,9 +33,12 @@ done
 python3 - "$output" <<'PY'
 from pathlib import Path
 from struct import iter_unpack
+import os
 import sys
 out=Path(sys.argv[1])
-parts=['#pragma once\nnamespace PioneerQwen35 {\n']
+sharing=os.environ.get('PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY')=='1'
+guard=('#if !defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)\n' if sharing else '#if defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)\n')+'#error Local restore image layout mismatch\n#endif\n'
+parts=['#pragma once\n'+guard+'namespace PioneerQwen35 {\n']
 for role,start,limit in (('reader',0x70000,0x70100),('writer',0x70100,0x70200)):
     symbols={}
     for line in (out/f'{role}.symbols').read_text().splitlines():
