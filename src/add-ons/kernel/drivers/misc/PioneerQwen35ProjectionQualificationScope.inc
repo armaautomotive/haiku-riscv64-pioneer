@@ -324,7 +324,11 @@ public:
         unsigned sequence,const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount]) {
         auto* scratch=c.qwen35QualificationOwner.Scratch();
         return &io==&c.io && scratch && RuntimeReady(*scratch,program)
-            && PioneerQwen35DataflowAuditProjectionReceipts(io,program,sequence,receipts);
+            && PioneerQwen35DataflowAuditProjectionReceipts(io,program,sequence,receipts
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+                ,true
+#endif
+            );
     }
     void RetainQualification(const void*,const void* scratch) { Retain(scratch); }
     bool QualificationCloseAllowed(const PioneerQ35ProjectionQualificationOwner& holder,

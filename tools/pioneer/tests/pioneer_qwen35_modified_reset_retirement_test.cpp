@@ -95,7 +95,7 @@ static void Scenario(bool fabric) {
     assert(owner->Active() && owner->Retained() && !owner->Retired());
     scope.invalidate=false;receipt.valid=true;
     PioneerDriverFabricRecoveryProof fabricProof{};
-    fabricProof.flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
+    fabricProof.flags=PIONEER_FABRIC_PROOF_BEFORE_MATRIX & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
         | PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
     fabricProof.core_count=120;fabricProof.retained_owners=1;
     fabricProof.fabric_generation=fabricProof.firmware_generation=37;

@@ -80,10 +80,18 @@ static status_t Qwen35ReleasePciReservation(PioneerStoreContext& c) {
     return failUnreserve?B_DEV_NOT_READY:B_OK;
 }
 struct Scope {
-    bool admission=true,after=true,changeProof=false;
-    bool FabricFinishAdmission(PioneerProbeCookie&,PioneerProbeCookie&,PioneerStoreContext&,uint64) { return admission; }
+    bool admission=true,after=true,changeProof=false,matrix=true,loseMatrixAfterUnreserve=false;
+    bool loseMatrixDuringAdmission=false,loseMatrixDuringAfter=false;
+    bool FabricMatrixQualificationMatches(PioneerProbeCookie&,PioneerProbeCookie&,PioneerStoreContext& c,uint64) {
+        return matrix && (!loseMatrixAfterUnreserve || !c.q35PciReleaseAttempted);
+    }
+    bool FabricFinishAdmission(PioneerProbeCookie&,PioneerProbeCookie&,PioneerStoreContext&,uint64) {
+        if (loseMatrixDuringAdmission) matrix=false;
+        return admission;
+    }
     bool FabricFinishAfterUnreserve(PioneerProbeCookie&,PioneerProbeCookie&,PioneerStoreContext& c,uint64) {
         if (changeProof) c.recoveryFabricEvidence.host_dma_active=1;
+        if (loseMatrixDuringAfter) matrix=false;
         return after;
     }
 };
@@ -100,7 +108,7 @@ struct Fixture {
         context=new PioneerStoreContext;context->qwen35GraphOwner=&graph;cookie.context=context;sRuntimeOwner=&cookie;
         host.inspector=host.owner=&cookie;
         auto& p=context->recoveryFabricEvidence;
-        p.flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OWNERS_RELEASED|PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
+        p.flags=PIONEER_FABRIC_PROOF_BEFORE_MATRIX & ~(PIONEER_FABRIC_PROOF_OWNERS_RELEASED|PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
         p.core_count=120;p.retained_owners=1;p.fabric_generation=p.firmware_generation=ticket;
     }
     status_t Run() { return PioneerQ35FabricFinishLocked(&cookie,&cookie,context,host,&validation,&fabric,ticket,scope,result); }
@@ -136,6 +144,25 @@ int main() {
             && !destructions && f.result.stage!=PIONEER_RECOVERY_STAGE_COMPLETE);
         assert(unreserves==(failure?1U:0U));
         if (failure) assert(f.Run()==B_NOT_ALLOWED && unreserves==1);
+    }
+    {
+        Fixture f;f.scope.matrix=false;
+        assert(f.Run()==B_DEV_NOT_READY && !unreserves && !completions
+            && f.cookie.context==f.context && state.cold && sColdRecoveryRequired.value);
+    }
+    {
+        Fixture f;f.scope.loseMatrixAfterUnreserve=true;
+        assert(f.Run()==B_DEV_NOT_READY && unreserves==1 && !completions
+            && f.cookie.context==f.context && state.cold && sColdRecoveryRequired.value);
+        assert(f.Run()==B_NOT_ALLOWED && unreserves==1);
+    }
+    {
+        Fixture f;f.scope.loseMatrixDuringAdmission=true;
+        assert(f.Run()==B_DEV_NOT_READY && !unreserves && !completions && state.cold);
+    }
+    {
+        Fixture f;f.scope.loseMatrixDuringAfter=true;
+        assert(f.Run()==B_DEV_NOT_READY && unreserves==1 && !completions && state.cold);
     }
     {
         Fixture f;PioneerProbeCookie wrong;f.host.inspector=&wrong;

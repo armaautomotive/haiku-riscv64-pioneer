@@ -16,6 +16,9 @@ for test in pioneer_qwen35_activation_share_startup_test pioneer_qwen35_activati
     ${CXX:-c++} $flags $sharing_flags "$directory/$test.cpp" -o "$temporary/$test"
     ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/$test"
 done
+${CXX:-c++} $flags $sharing_flags -DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS \
+    "$directory/pioneer_qwen35_qualification_sharing_test.cpp" -o "$temporary/qualification-sharing"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/qualification-sharing"
 for mode in ordinary paired fused; do
     case "$mode" in
         ordinary) extra= ;;

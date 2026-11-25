@@ -544,8 +544,19 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 			result.okay=DataflowGraphRunValid(descriptor,core) && descriptor.triggerSequence==sequence
 				&& qwen35_graph_run_descriptor(&descriptor,mailbox);
 			if (!result.okay) DataflowSignalLocalFailure(DataflowFailureQueue);
-		} else
-			result=DataflowWorkerExecuteAuthorized(core,sequence,mailbox);
+		} else {
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+			if (DataflowLoadAcquire(*command)==DataflowProgramMagic) {
+				auto* reuse=reinterpret_cast<DataflowActivationReuse*>(
+					static_cast<uintptr_t>(DataflowActivationReuseAddress));
+				if (!DataflowActivationReuseSetStandalone(*reuse,sequence)) {
+					DataflowSignalLocalFailure(DataflowFailureQueue);
+					result.okay=false;
+				} else result=DataflowWorkerExecuteAuthorized(core,sequence,mailbox);
+			} else
+#endif
+				result=DataflowWorkerExecuteAuthorized(core,sequence,mailbox);
+		}
 #else
 		const DataflowWorkerExecutionResult result=DataflowWorkerExecuteAuthorized(core,sequence,mailbox);
 #endif

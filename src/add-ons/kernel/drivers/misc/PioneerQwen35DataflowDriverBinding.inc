@@ -1277,8 +1277,12 @@ PioneerSessionIO::WaitForCompletion(unsigned core,unsigned sequence,
 static bool
 PioneerQwen35DataflowAuditProjectionReceipts(PioneerSessionIO& io,
 	const PioneerQwen35::DataflowProjectionProgram& program,unsigned sequence,
-	const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount])
+	const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount],
+	bool qualificationSharing=false)
 {
+#ifndef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+	if (qualificationSharing) return false;
+#endif
 	if (!program.Valid() || !sequence) return false;
 	for (unsigned core=0;core<PioneerQwen35::DataflowCoreCount;core++) {
 		if (receipts[core].commandSequence!=sequence
@@ -1294,8 +1298,15 @@ PioneerQwen35DataflowAuditProjectionReceipts(PioneerSessionIO& io,
 			|| !io.ReadCoreMemory(core,PioneerQwen35::DataflowProgramAddress,
 				&invocation,sizeof(invocation))) return false;
 		PioneerQwen35::DataflowCoreInvocation expected{};
-		if (!PioneerQwen35::DataflowProgramBuilder::BindCore(program,core,expected)
-			|| memcmp(&expected,&invocation,sizeof(expected))!=0) return false;
+		if (!PioneerQwen35::DataflowProgramBuilder::BindCore(program,core,expected)) return false;
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+		if (qualificationSharing) {
+			PioneerQwen35::DataflowCoreInvocation shared{};
+			if (!PioneerQwen35::DataflowQualificationBindSharing(program,core,expected,shared)) return false;
+			expected=shared;
+		}
+#endif
+		if (memcmp(&expected,&invocation,sizeof(expected))!=0) return false;
 	}
 	return io.SelectRuntimeCore(0);
 }

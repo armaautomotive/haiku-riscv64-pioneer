@@ -314,7 +314,7 @@ static void ExerciseFabricViewRetirement(PioneerSessionIO& io)
         && PioneerQ35FabricRoleViewsReferenceArea(*context,0));
     assert(!PioneerQ35FabricDisposeRoleViews(*context,scope,&guard,9) && !gUnmapCalls);
     auto& proof=context->recoveryFabricEvidence;
-    proof.flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
+    proof.flags=PIONEER_FABRIC_PROOF_BEFORE_MATRIX & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
         | PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
     proof.core_count=DataflowBarrierWorkers;proof.retained_owners=1;
     proof.fabric_generation=proof.firmware_generation=9;

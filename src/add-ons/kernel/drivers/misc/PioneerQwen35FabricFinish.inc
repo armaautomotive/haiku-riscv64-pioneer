@@ -47,7 +47,14 @@ PioneerQ35FabricFinishLocked(PioneerProbeCookie* inspector,PioneerProbeCookie* o
             && fabric->validate(ticket)==B_OK;
     };
     result.stage=PIONEER_RECOVERY_STAGE_OWNER_RELEASE;
-    if (!ready() || !scope.FabricFinishAdmission(*inspector,*owner,*context,ticket)
+    // Metadata-only scope check for a separately completed fixed projection:
+    // it must bind this ticket and card, audit all 120 workers, verify their
+    // numerical outputs, and verify scratch and service restoration. A reset
+    // response, a held tile, or an idle NoC does not establish this proof.
+    // The physical qualification and its scope do not yet exist.
+    if (!ready() || !scope.FabricMatrixQualificationMatches(*inspector,*owner,*context,ticket)
+        || !ready() || !scope.FabricFinishAdmission(*inspector,*owner,*context,ticket)
+        || !ready() || !scope.FabricMatrixQualificationMatches(*inspector,*owner,*context,ticket)
         || !ready()) return B_DEV_NOT_READY;
     context->recoveryFabricFinishAttempted=true;
     result.stage=PIONEER_RECOVERY_STAGE_UNRESERVE;
@@ -64,11 +71,14 @@ PioneerQ35FabricFinishLocked(PioneerProbeCookie* inspector,PioneerProbeCookie* o
             && host.OwnsAfterReservationRelease(*context,validation,ticket)
             && fabric->validate(ticket)==B_OK;
     };
-    if (!afterUnreserve()
+    if (!afterUnreserve() || !scope.FabricMatrixQualificationMatches(*inspector,*owner,*context,ticket)
+        || !afterUnreserve()
         || !scope.FabricFinishAfterUnreserve(*inspector,*owner,*context,ticket)
+        || !afterUnreserve() || !scope.FabricMatrixQualificationMatches(*inspector,*owner,*context,ticket)
         || !afterUnreserve()) return B_DEV_NOT_READY;
     PioneerDriverFabricRecoveryProof complete=prior;
-    complete.flags|=PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED;
+    complete.flags|=PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED
+        | PIONEER_FABRIC_PROOF_MATRIX_VERIFIED;
     complete.retained_owners=0;
     if (!complete.Complete()) return B_DEV_NOT_READY;
     result.stage=PIONEER_RECOVERY_STAGE_GUARD_COMPLETE;

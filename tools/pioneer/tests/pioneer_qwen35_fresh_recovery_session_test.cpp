@@ -41,7 +41,7 @@ struct MockProof {
 struct MockFabricProof : PioneerDriverFabricRecoveryProof {
     bool valid=true;
     MockFabricProof() {
-        flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
+        flags=PIONEER_FABRIC_PROOF_BEFORE_MATRIX & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
             | PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
         core_count=120;retained_owners=1;fabric_generation=firmware_generation=kTicket;
     }
@@ -157,6 +157,9 @@ struct MockIO : PioneerHostDmaAuditIO {
     }
 };
 class PioneerQ35FreshRecoverySession;
+struct MockMatrixReceipt {
+    template<class... Args> bool Seal(Args&&...) { return false; }
+};
 struct PioneerStoreContext {
     uint64 bytes;
     unsigned profile=123;
@@ -175,6 +178,7 @@ struct PioneerStoreContext {
     PioneerPostResetMapping* recoveryMapping=nullptr;
     MockProof recoveryFinishProof;
     MockFabricProof recoveryFabricEvidence;
+    MockMatrixReceipt recoveryFabricMatrixReceipt;
     PioneerQ35FreshRecoverySession* recoveryFreshSession=nullptr;
     MockQualificationOwner qwen35QualificationOwner;
     PioneerResidentBanks banks;

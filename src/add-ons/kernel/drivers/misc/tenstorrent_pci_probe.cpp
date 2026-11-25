@@ -4212,6 +4212,9 @@ class PioneerQ35FreshRecoverySession;
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 #include "PioneerQwen35ProjectionQualificationOwner.h"
 #endif
+#if defined(PIONEER_QWEN35_FABRIC_GUARD_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY)
+#include "PioneerQwen35FabricMatrixReceipt.h"
+#endif
 struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
 	bool qualificationTraceActive=false;
@@ -4234,6 +4237,7 @@ struct PioneerStoreContext {
 	// Partial evidence from this exact retained fabric transaction. The old
 	// mappings and owners remain live, so this can never complete the guard.
 	PioneerDriverFabricRecoveryProof recoveryFabricEvidence={};
+	PioneerQ35FabricMatrixReceipt recoveryFabricMatrixReceipt;
 	bool recoveryFabricEvidenceRecorded=false;
 	bool recoveryFabricPcieAuditAttempted=false,recoveryFabricPcieAudited=false;
 	bool recoveryFabricRoleViewsDisposed=false;
@@ -5317,6 +5321,19 @@ PioneerSessionIO::SharedHostDmaPciSourceStable()
 #include "PioneerQwen35FabricGraphRetirement.h"
 #include "PioneerQwen35FabricFinish.inc"
 #include "PioneerQwen35FabricRecoveryCoordinator.inc"
+struct PioneerQ35FabricMatrixCompileScope {
+	bool FabricMatrixReceiptSealAllowed(PioneerStoreContext&,PioneerQ35FreshRecoverySession&,
+		PioneerQ35ProjectionQualificationOwner&,PioneerQ35ProjectionScratch&,
+		PioneerQwen35::DataflowProjectionQualificationService&,uint64) const { return false; }
+	void RetainFreshRecovery(PioneerQ35FreshRecoverySession&) const {}
+};
+static __attribute__((used,noinline)) bool
+PioneerQ35FabricMatrixReceiptCompileWitness(PioneerQ35FreshRecoverySession& session,
+	pioneer_driver_recovery_guard_v2_info* guard)
+{
+	PioneerQ35FabricMatrixCompileScope scope{};
+	return session.RecordFabricMatrixQualification(guard,scope);
+}
 // Type-check the complete intermediate sequence with the real owners and
 // synthetic scopes. It grants no physical authority and is not an ioctl.
 static __attribute__((used,noinline)) bool
@@ -5337,6 +5354,13 @@ PioneerQ35FabricGraphRetirementCompileWitness(PioneerStoreContext& context,uint6
 }
 struct PioneerQ35FabricFinishCompileScope {
 	bool allowed;
+	pioneer_driver_recovery_guard_v2_info* guard;
+	// The synthetic witness cannot establish lifetime ownership of the real
+	// qualification receipt; therefore its Matches call always denies.
+	bool FabricMatrixReceiptStillOwned(PioneerStoreContext&,const void*,const void*,const void*,const void*,const void*,uint64) const { return false; }
+	bool FabricMatrixQualificationMatches(PioneerProbeCookie&,PioneerProbeCookie&,PioneerStoreContext& context,uint64 ticket) const {
+		return context.recoveryFabricMatrixReceipt.Matches(context,ticket,guard,*this);
+	}
 	bool FabricFinishAdmission(PioneerProbeCookie&,PioneerProbeCookie&,PioneerStoreContext&,uint64) const { return allowed; }
 	bool FabricFinishAfterUnreserve(PioneerProbeCookie&,PioneerProbeCookie&,PioneerStoreContext&,uint64) const { return allowed; }
 };
@@ -5345,7 +5369,7 @@ PioneerQ35FabricFinishCompileWitness(PioneerProbeCookie* inspector,PioneerProbeC
 	PioneerStoreContext* context,PioneerQ35FabricHostScope& host,pioneer_driver_recovery_guard_v2_info* validation,
 	pioneer_driver_fabric_recovery_guard_info* fabric,uint64 ticket,bool allowed,tt_pioneer_recovery_run& result)
 {
-	PioneerQ35FabricFinishCompileScope scope{allowed};
+	PioneerQ35FabricFinishCompileScope scope{allowed,validation};
 	return PioneerQ35FabricFinishLocked(inspector,owner,context,host,validation,fabric,ticket,scope,result);
 }
 static __attribute__((used,noinline)) status_t
@@ -5355,7 +5379,7 @@ PioneerQ35FabricCoordinatorCompileWitness(PioneerProbeCookie* inspector,PioneerP
 	PioneerQwen35RoleBorrowedScopeWitness& roleScope,bool allowed,tt_pioneer_recovery_run& result)
 {
 	PioneerQ35FreshRecoveryCompileScope scope{allowed};PioneerQ35FabricParentRestoreCompileScope parent{allowed};
-	PioneerQ35FabricFreshViewsCompileGuard bar{allowed};PioneerQ35FabricFinishCompileScope finish{allowed};
+	PioneerQ35FabricFreshViewsCompileGuard bar{allowed};PioneerQ35FabricFinishCompileScope finish{allowed,validation};
 	return PioneerQ35ResumeFabricRoleRecoveryLocked(inspector,owner,context,host,validation,fabric,ticket,polls,
 		scope,roleScope,parent,bar,finish,result);
 }

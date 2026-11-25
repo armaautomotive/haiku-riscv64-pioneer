@@ -74,7 +74,7 @@ static void Scenario(unsigned mode) {
     asic.core_count=120;asic.retained_owners=1;asic.reset_generation=asic.firmware_generation=9;
     auto& fp=context->recoveryFabricEvidence;
     assert(!PioneerQ35ResidentDriverFabricRetired(owner,9));
-    fp.flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
+    fp.flags=PIONEER_FABRIC_PROOF_BEFORE_MATRIX & ~(PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
     fp.core_count=120;fp.retained_owners=1;fp.fabric_generation=fp.firmware_generation=9;
     auto retire=[&](uint64_t ticket) {
         return fabric?PioneerQ35ResidentDriverReleaseAfterFabric(owner,fp,ticket,&guard)

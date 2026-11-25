@@ -6,6 +6,27 @@
 #include "PioneerQwen35DataflowServiceOwner.h"
 
 namespace PioneerQwen35 {
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+// This diagnostic's single program owns one common input and one Q4_K
+// packing for every worker. Build its exact fleet membership from that
+// program; do not reuse this shortcut for multi-program graph recordings.
+inline bool DataflowQualificationBindSharing(const DataflowProjectionProgram& program,
+    unsigned core,const DataflowCoreInvocation& original,DataflowCoreInvocation& output)
+{
+    using Fixture=DataflowProjectionQualification;
+    if (core>=DataflowCoreCount || program.type!=12 || program.inputs!=Fixture::Inputs
+        || program.outputRows!=Fixture::Rows || program.activeCores!=DataflowCoreCount
+        || !DataflowProgramBuilder::BindCore(program,core,output)
+        || memcmp(&original,&output,sizeof(output))!=0) return false;
+    for (unsigned worker=0;worker<DataflowCoreCount;worker++) {
+        if (!program.core[worker].active || program.core[worker].groups!=1) return false;
+        output.sharing.members[worker/32]|=uint32_t(1)<<(worker%32);
+    }
+    output.sharing.leader=0;output.sharing.packing=DataflowActivationSharePacking(output.type);
+    output.sharing.inputKey=DataflowActivationShareInputKey(output);
+    return DataflowCoreHeaderValid(output);
+}
+#endif
 // Heap-owned, one-shot fixed-projection adapter. The caller must hold the
 // exclusive session lock and retain this object, scratch and its scope until
 // service close and scratch retirement. Scope supplies real claim, routing,
@@ -45,8 +66,24 @@ class DataflowProjectionQualificationService {
             return Safe() && AfterIO(io.ReadWorkerSnapshot(c,s));
         }
         bool CoreReady(unsigned c,const DataflowWorkerSnapshot& s) { return Safe() && AfterIO(io.CoreReady(c,s)); }
-        bool WriteInvocation(unsigned c,const DataflowCoreInvocation& v) { return Safe() && AfterIO(io.WriteInvocation(c,v)); }
-        bool InvocationMatches(unsigned c,const DataflowCoreInvocation& v) { return Safe() && AfterIO(io.InvocationMatches(c,v)); }
+        bool WriteInvocation(unsigned c,const DataflowCoreInvocation& v) {
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+            DataflowCoreInvocation shared{};
+            return Safe() && DataflowQualificationBindSharing(owner.program,c,v,shared)
+                && AfterIO(io.WriteInvocation(c,shared));
+#else
+            return Safe() && AfterIO(io.WriteInvocation(c,v));
+#endif
+        }
+        bool InvocationMatches(unsigned c,const DataflowCoreInvocation& v) {
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+            DataflowCoreInvocation shared{};
+            return Safe() && DataflowQualificationBindSharing(owner.program,c,v,shared)
+                && AfterIO(io.InvocationMatches(c,shared));
+#else
+            return Safe() && AfterIO(io.InvocationMatches(c,v));
+#endif
+        }
         bool PublishCommand(unsigned c,unsigned sequence) {
             // A successful publication makes a worker runnable immediately.
             // Switch before attempting the write: even a failed call can

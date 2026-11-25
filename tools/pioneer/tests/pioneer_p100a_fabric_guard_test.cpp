@@ -21,10 +21,11 @@ int main() {
     assert(sFabricRecoveryWitness.begin(generation,&ticket)==B_OK && ticket);
     auto proof=FabricProof(ticket);
     auto partial=proof;
-    partial.flags &= ~(PIONEER_FABRIC_PROOF_OWNERS_RELEASED|PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
+    partial.flags &= ~(PIONEER_FABRIC_PROOF_OWNERS_RELEASED|PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED
+        |PIONEER_FABRIC_PROOF_MATRIX_VERIFIED);
     partial.retained_owners=1;
     assert(partial.ReadyToRetireOneOwner() && !partial.Complete());
-    for (unsigned bit=0;bit<10;bit++) {
+    for (unsigned bit=0;bit<11;bit++) {
         auto invalid=proof;invalid.flags^=1U<<bit;
         assert(sFabricRecoveryWitness.complete(ticket,&invalid,&next)==B_DEV_NOT_READY && !next && Cold());
     }
@@ -45,6 +46,8 @@ int main() {
     auto invalid=proof;invalid.fabric_generation++;
     assert(sFabricRecoveryWitness.complete(ticket,&invalid,&next)==B_DEV_NOT_READY && !next && Cold());
     invalid=proof;invalid.firmware_generation++;
+    assert(sFabricRecoveryWitness.complete(ticket,&invalid,&next)==B_DEV_NOT_READY && !next && Cold());
+    invalid=proof;invalid.version=0x51463301U; // previous contract had no matrix evidence
     assert(sFabricRecoveryWitness.complete(ticket,&invalid,&next)==B_DEV_NOT_READY && !next && Cold());
     assert(sFabricRecoveryWitness.complete(ticket+1,&proof,&next)==B_DEV_NOT_READY && !next && Cold());
     // Identical-sized evidence cannot cross the existing ASIC-reset API.

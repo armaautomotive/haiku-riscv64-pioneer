@@ -353,6 +353,18 @@ public:
         fRoleReceipt={fRoleBinding,fGraphOwner,fTicket};
         fStage=RoleVerified;return true;
     }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    // Called only after a separate fixed-projection run in this fresh session
+    // has audited all workers, checked every output and restored its scratch.
+    // The physical run, ownership scope and call site are not implemented.
+    template<class Scope>
+    bool RecordFabricMatrixQualification(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        if (!fRole || !fFabric || fStage!=RoleVerified || !fOld || !fFresh || !TicketValid(guard)) return false;
+        if (!fOld->recoveryFabricMatrixReceipt.Seal(*fOld,*this,fFresh->qwen35QualificationOwner,
+                fTicket,guard,scope) || !TicketValid(guard)) return Retain(scope,RoleVerified);
+        return true;
+    }
+#endif
 #endif
 
     // Restore through this session's exact fresh resources and retained old

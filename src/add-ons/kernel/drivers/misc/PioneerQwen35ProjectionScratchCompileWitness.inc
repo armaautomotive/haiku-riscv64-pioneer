@@ -161,7 +161,11 @@ public:
     }
     bool AuditQualification(PioneerSessionIO& io,const PioneerQwen35::DataflowProjectionProgram& program,
         unsigned sequence,const PioneerQwen35::DataflowWorkerSnapshot (&receipts)[PioneerQwen35::DataflowCoreCount]) {
-        return permitted && PioneerQwen35DataflowAuditProjectionReceipts(io,program,sequence,receipts);
+        return permitted && PioneerQwen35DataflowAuditProjectionReceipts(io,program,sequence,receipts
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+            ,true
+#endif
+        );
     }
     void RetainQualification(const void*,const void*) {
         if (context) context->qwen35QualificationOwner.Retain();

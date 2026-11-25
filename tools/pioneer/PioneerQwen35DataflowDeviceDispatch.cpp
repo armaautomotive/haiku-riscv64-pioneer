@@ -2,6 +2,10 @@
 #include "PioneerQwen35DataflowDeviceGraph.h"
 #include "PioneerQwen35DataflowDynamicToken.h"
 #include "PioneerQwen35DataflowGraphRunProtocol.h"
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+static_assert(unsigned(PioneerQwen35::DataflowGraphDecodeSteps)<unsigned(PioneerQwen35::DataflowActivationReuseStandaloneStep),
+    "resident graph steps must not collide with standalone sharing records");
+#endif
 #include "PioneerQwen35DataflowGraphAuthorization.h"
 #include "PioneerQwen35DataflowGraphTrace.h"
 #include "PioneerQwen35DataflowGraphProfile.h"

@@ -26,6 +26,19 @@ inline void DataflowActivationReuseSetStep(DataflowActivationReuse& cache,unsign
 	DataflowStoreRelease(cache.step,0);DataflowStoreRelease(cache.epoch,epoch);
 	DataflowStoreRelease(cache.step,step);
 }
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+// Direct fixed-projection qualifications are outside a resident graph. Their
+// sequence is fleet-wide and monotonic; the high step bit keeps their ready
+// records distinct from graph steps even if a later graph reuses the epoch.
+enum : unsigned { DataflowActivationReuseStandaloneStep=0x80000000U };
+inline bool DataflowActivationReuseSetStandalone(DataflowActivationReuse& cache,unsigned sequence)
+{
+	if (!sequence || sequence>DataflowWorkerSequenceLimit) return false;
+	DataflowActivationReuseReset(cache);
+	DataflowActivationReuseSetStep(cache,sequence,DataflowActivationReuseStandaloneStep);
+	return true;
+}
+#endif
 // Q4_K, Q5_K and Q6_K all use the same Q8_K activation quantizer; Q8_0
 // uses a different representation. No projection math is performed here.
 inline unsigned DataflowActivationReusePacking(unsigned type)

@@ -79,7 +79,7 @@ int main() {
         scope.noc=&fresh->noc;scope.host=&fresh->host;scope.lease=&fresh->lease;
         if (scenario<2) scope.failAccessAt=failAt; else scope.failTicketAt=failAt;
         PioneerDriverFabricRecoveryProof proof{};
-        proof.flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
+        proof.flags=PIONEER_FABRIC_PROOF_BEFORE_MATRIX & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
             | PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
         proof.core_count=120;proof.retained_owners=1;proof.fabric_generation=proof.firmware_generation=ticket;
         assert(!Restore(*recovery,*scratch,ticket,proof,*oldDevice,*fresh,scope));
@@ -96,7 +96,7 @@ int main() {
         scope.oldBanks=&oldDevice->banks;scope.newBanks=&fresh->banks;scope.snapshot=oldDevice->snapshot.data();
         scope.noc=&fresh->noc;scope.host=&fresh->host;scope.lease=&fresh->lease;
         PioneerDriverFabricRecoveryProof proof{};
-        proof.flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
+        proof.flags=PIONEER_FABRIC_PROOF_BEFORE_MATRIX & ~(PIONEER_FABRIC_PROOF_OLD_MAPPINGS_DISPOSED
             | PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
         proof.core_count=120;proof.retained_owners=1;proof.fabric_generation=proof.firmware_generation=ticket;
         auto incomplete=proof;incomplete.flags &= ~PIONEER_FABRIC_PROOF_PCIE_HEALTHY;
