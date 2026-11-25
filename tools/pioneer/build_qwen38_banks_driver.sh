@@ -956,8 +956,15 @@ libgcc=$("$cxx" -print-file-name=libgcc.a)
  -o "$output/tenstorrent_pci_probe-driver$variant"
 shasum -a 256 "$output/tenstorrent_pci_probe-driver$variant"
 if [ "${PIONEER_DRIVER_RELOAD:-0}" = 1 ]; then
+ guard_extra=
+ case "${PIONEER_QWEN35_FABRIC_GUARD_COMPILE_ONLY:-0}" in
+  0) ;;
+  1) [ "$variant:${PIONEER_QWEN35_SNAPSHOT_TAKEOVER_COMPILE_ONLY:-0}:${PIONEER_QWEN35_RECOVERY_QUALIFY:-0}:${PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL:-0}" = 60:1:0:0 ] || exit 2
+     guard_extra=-DPIONEER_QWEN35_FABRIC_GUARD_WITNESS ;;
+  *) exit 2 ;;
+ esac
  "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
-  -ffreestanding -fno-use-cxa-atexit -mcmodel=medany -fpic -D_KERNEL_MODE "$@" \
+  -ffreestanding -fno-use-cxa-atexit -mcmodel=medany -fpic -D_KERNEL_MODE $guard_extra "$@" \
   -c "$project/src/add-ons/kernel/drivers/misc/pioneer_p100a_reload_guard.cpp" -o "$output/reload_guard.o"
  "$cxx" -shared -nostdlib -Wl,--no-undefined,-soname=pioneer_p100a_reload_guard \
   "$begin" "$release/system/glue/haiku_version_glue.o" "$output/reload_guard.o" "$kernel" "$libgcc" "$end" \

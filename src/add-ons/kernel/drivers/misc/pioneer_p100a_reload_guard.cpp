@@ -100,8 +100,32 @@ static status_t ValidateRecovery(uint64 ticket)
 	return okay?B_OK:B_DEV_NOT_READY;
 }
 
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+static status_t CompleteFabricRecovery(uint64 ticket,
+	const PioneerDriverFabricRecoveryProof* proof,uint64* newGeneration)
+{
+	if (!ticket || !proof || !newGeneration) return B_BAD_VALUE;
+	*newGeneration=0;
+	status_t status=acquire_sem(sStateLock); if (status!=B_OK) return status;
+	uint32 begunFaultEpoch=0;uint64 generation=0;
+	const uint64 oldGeneration=sState.generation;
+	bool okay=Cold() && sState.CompleteFabricRecovery(ticket,
+		uint32(atomic_get(&sFaultState)),*proof,begunFaultEpoch,generation);
+	if (okay && uint32(atomic_test_and_set(&sFaultState,
+		int32(begunFaultEpoch&~1U),int32(begunFaultEpoch)))!=begunFaultEpoch) {
+		sState.generation=oldGeneration;sState.Fault(oldGeneration);okay=false;
+	}
+	if (okay) *newGeneration=generation;
+	release_sem(sStateLock);return okay?B_OK:B_DEV_NOT_READY;
+}
+#endif
+
 static status_t StandardOps(int32 operation,...)
 {
+#if defined(PIONEER_QWEN35_FABRIC_GUARD_WITNESS) && defined(_KERNEL_MODE)
+	// Never replace the running guard with the experimental contract.
+	(void)operation;return B_NOT_ALLOWED;
+#else
 	if (operation==B_MODULE_INIT) {
 		if (sStateLock>=B_OK) return B_OK;
 		sStateLock=create_sem(1,"P100A persistent driver reload guard");
@@ -110,6 +134,7 @@ static status_t StandardOps(int32 operation,...)
 	// The kernel pins this module for the remainder of this boot. Refuse a
 	// manual unload too;there is no reset shortcut hidden in standard ops.
 	return operation==B_MODULE_UNINIT?B_BUSY:B_BAD_VALUE;
+#endif
 }
 static pioneer_driver_reload_guard_info sGuard={
 	{PIONEER_DRIVER_RELOAD_GUARD_MODULE,B_KEEP_LOADED,StandardOps},1,Attach,Detach,Fault,Cold
@@ -122,6 +147,16 @@ static pioneer_driver_recovery_guard_v2_info sRecoveryGuardV2={
 	{PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE,B_KEEP_LOADED,StandardOps},
 	2,BeginRecovery,CompleteRecovery,AbortRecovery,ValidateRecovery
 };
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+static pioneer_driver_fabric_recovery_guard_info sFabricRecoveryWitness={
+	{PIONEER_DRIVER_FABRIC_RECOVERY_GUARD_MODULE,B_KEEP_LOADED,StandardOps},
+	1,BeginRecovery,CompleteFabricRecovery,AbortRecovery,ValidateRecovery
+};
+#endif
 extern "C" {
-module_info* modules[]={&sGuard.info,&sRecoveryGuard.info,&sRecoveryGuardV2.info,NULL};
+module_info* modules[]={&sGuard.info,&sRecoveryGuard.info,&sRecoveryGuardV2.info,
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+	&sFabricRecoveryWitness.info,
+#endif
+	NULL};
 }

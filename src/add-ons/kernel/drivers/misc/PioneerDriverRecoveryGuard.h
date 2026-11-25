@@ -33,4 +33,20 @@ struct pioneer_driver_recovery_guard_v2_info {
 	status_t (*validate)(uint64 ticket);
 };
 
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+#define PIONEER_DRIVER_FABRIC_RECOVERY_GUARD_MODULE \
+	"generic/pioneer_p100a_reload_guard/fabric-recovery/witness"
+// Experimental and non-loadable. Existing v1/v2 callers continue to use
+// their unchanged full-ASIC-reset proof and module interfaces.
+struct pioneer_driver_fabric_recovery_guard_info {
+	module_info info;
+	uint32 version;
+	status_t (*begin)(uint64 expectedGeneration,uint64* ticket);
+	status_t (*complete)(uint64 ticket,
+		const PioneerDriverFabricRecoveryProof* proof,uint64* newGeneration);
+	status_t (*abort)(uint64 ticket);
+	status_t (*validate)(uint64 ticket);
+};
+#endif
+
 #endif

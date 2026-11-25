@@ -614,6 +614,10 @@ if python3 -B "$root/tools/pioneer/build_qwen35_dataflow.py" --compile-snapshot-
 	"$build" "$temporary/invalid-snapshot-owner" >"$temporary/invalid-snapshot-owner.log" 2>&1; then
 	echo 'snapshot takeover accepted a build without the shared-role owner' >&2; exit 1
 fi
+if python3 -B "$root/tools/pioneer/build_qwen35_dataflow.py" --compile-fabric-guard-prototype \
+	"$build" "$temporary/invalid-fabric-guard" >"$temporary/invalid-fabric-guard.log" 2>&1; then
+	echo 'fabric guard accepted a build without the non-loadable snapshot witness' >&2; exit 1
+fi
 if python3 -B "$root/tools/pioneer/build_qwen35_dataflow.py" --compile-device-dispatch-prototype \
 	--compile-role-write-prototype --compile-shared-role-owner-prototype \
 	--compile-exclusive-takeover-prototype --compile-snapshot-takeover-prototype \

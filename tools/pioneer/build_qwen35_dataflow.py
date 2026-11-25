@@ -49,6 +49,22 @@ def verify_snapshot_witness_refuses_load(build, driver):
     print('snapshot witness init entrypoints reject loading; NO HARDWARE')
 
 
+def verify_fabric_guard_witness_refuses_load(build, guard):
+    objdump = build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-objdump'
+    nm = build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-nm'
+    symbols = subprocess.check_output([nm, '-C', guard], text=True)
+    disassembly = subprocess.check_output(
+        [objdump, '-d', '--disassemble=_ZL11StandardOpsiz', guard], text=True)
+    if ('sFabricRecoveryWitness' not in symbols or 'CompleteFabricRecovery(' not in symbols
+            or '<_ZL11StandardOpsiz>:' not in disassembly
+            or not re.search(r'\blui\s+a0,0x80000\b', disassembly)
+            or not re.search(r'\baddi?\s+a0,a0,15\b', disassembly)
+            or not re.search(r'\bret\b', disassembly)
+            or re.search(r'\b(?:call|jal|jalr)\b', disassembly)):
+        raise RuntimeError('fabric guard witness does not unconditionally reject module loading')
+    print('fabric guard witness rejects module loading; NO HARDWARE')
+
+
 def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_recovery=False,
                                fleet_inspection=False, role_stage=False, role_prestack=False,
                                span_qualification=False, tree_settlement=False):
@@ -526,6 +542,8 @@ def main():
                         help='embed the resident service in the non-loadable snapshot witness')
     parser.add_argument('--compile-tree-settlement-prototype', action='store_true',
                         help='enable experimental device-tree settlement in the non-loadable resident witness')
+    parser.add_argument('--compile-fabric-guard-prototype', action='store_true',
+                        help='compile an explicitly non-loadable fabric-recovery guard witness')
     parser.add_argument('--compile-supported-span-prototype', action='store_true',
                         help='compile the supported-counter Q35 preload into the non-loadable rewrite')
     parser.add_argument('--build-device-dispatch-trial', action='store_true',
@@ -632,6 +650,9 @@ def main():
         parser.error('resident service requires the non-loadable snapshot takeover witness')
     if args.compile_tree_settlement_prototype and not args.compile_resident_service_prototype:
         parser.error('tree settlement requires the non-loadable resident service witness')
+    if args.compile_fabric_guard_prototype and (not args.compile_snapshot_takeover_prototype
+            or args.build_recovery_qualification or args.build_device_dispatch_trial):
+        parser.error('fabric guard requires the non-loadable snapshot takeover witness')
     if args.compile_supported_span_prototype and (not args.compile_device_dispatch_prototype
             or (args.build_recovery_qualification and not args.build_span_qualification)
             or args.build_device_dispatch_trial):
@@ -678,6 +699,8 @@ def main():
         driver_env['PIONEER_QWEN35_RESIDENT_SERVICE_COMPILE_ONLY'] = '1'
     if args.compile_tree_settlement_prototype:
         driver_env['PIONEER_QWEN35_TREE_SETTLEMENT_WITNESS'] = '1'
+    if args.compile_fabric_guard_prototype:
+        driver_env['PIONEER_QWEN35_FABRIC_GUARD_COMPILE_ONLY'] = '1'
     if args.compile_supported_span_prototype:
         driver_env['PIONEER_QWEN35_SUPPORTED_SPAN_COMPILE_ONLY'] = '1'
     if args.build_span_qualification:
@@ -718,6 +741,8 @@ def main():
                                args.compile_tree_settlement_prototype)
     if args.compile_snapshot_takeover_prototype:
         verify_snapshot_witness_refuses_load(build, driver / 'tenstorrent_pci_probe-driver60')
+    if args.compile_fabric_guard_prototype:
+        verify_fabric_guard_witness_refuses_load(build, driver / 'pioneer_p100a_reload_guard')
     if args.compile_resident_service_prototype:
         driver_bytes = (driver / 'tenstorrent_pci_probe-driver60').read_bytes()
         resident = driver / 'qwen35-resident-service-image'
