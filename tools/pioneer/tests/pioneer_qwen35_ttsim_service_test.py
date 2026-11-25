@@ -13,6 +13,38 @@ from pathlib import Path
 import struct
 
 
+def check_fixed_projection_reference(fixture, expected):
+    """Independently decode the synthetic byte-major Q4_K blocks on the host.
+
+    This is an offline reference for the simulator fixture, not an inference
+    path. The fixture is constructed so every resulting integer is exactly
+    representable in binary32.
+    """
+    inputs = struct.unpack_from('<2560f', fixture, 2764800)
+    for row in range(1920):
+        total = 0.0
+        for block in range(10):
+            base = (row // 16 * 10 + block) * 2304 + row % 16
+            data = fixture[base:base + 2304:16]
+            d, dmin = struct.unpack_from('<ee', data)
+            scales = data[4:16]
+            for group in range(8):
+                if group < 4:
+                    scale = scales[group] & 63
+                    minimum = scales[group + 4] & 63
+                else:
+                    scale = (scales[group + 4] & 15) | ((scales[group - 4] >> 6) << 4)
+                    minimum = (scales[group + 4] >> 4) | ((scales[group] >> 6) << 4)
+                packed = 16 + (group // 2) * 32
+                activation = block * 256 + group * 32
+                for j in range(32):
+                    q = data[packed + j]
+                    q = (q & 15) if group % 2 == 0 else (q >> 4)
+                    total += inputs[activation + j] * (d * scale * q - dmin * minimum)
+        if not math.isfinite(total) or struct.pack('<f', total) != expected[row * 4:row * 4 + 4]:
+            raise ValueError(f'Q4_K fixture reference mismatch at row {row}')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('library', type=Path)
@@ -103,6 +135,7 @@ def main():
             expected = (args.projection_fixture / 'expected.bin').read_bytes()
             if len(fixture) != 2785280 or len(invocations) != 120 * 1128 or len(expected) != 1920 * 4:
                 raise ValueError('unexpected fixed-projection fixture size')
+            check_fixed_projection_reference(fixture, expected)
             invocation_size = 1128
             offset = 0
             while offset < len(fixture):
@@ -131,7 +164,7 @@ def main():
             for address, data in ((0x4001000, rms_input), (0x4011000, rms_weight), (0x4021000, bytes(9216 * 4))):
                 select(2, address, 18, 12)
                 write(bar + 0x400000 + (address & 0x1fffff), data)
-        role_stop = 2 if args.projection_fixture else 1
+        role_stop = 3 if args.projection_fixture else 1
         for core in range(120):
             select_worker(core)
             if struct.unpack('<I', read(reset_address, 4))[0] != 0x47800:
@@ -177,8 +210,20 @@ def main():
 
         sequence = 0
         if invocations is not None:
-            for run in range(1 if args.projection_fixture else 2):
-                if run and args.silu_fixture:
+            for run in range(2):
+                if run and args.projection_fixture:
+                    input_offset = 2764800
+                    bits = struct.unpack_from('<2560I', fixture, input_offset)
+                    data = struct.pack('<2560I', *(value ^ 0x80000000 for value in bits))
+                    bits = struct.unpack('<1920I', expected)
+                    expected = struct.pack('<1920I', *(value ^ 0x80000000 for value in bits))
+                    output_offset = 2777088
+                    sentinel = fixture[output_offset:output_offset + len(expected)]
+                    for address, payload in ((0x4001000 + input_offset, data),
+                                             (0x4001000 + output_offset, sentinel)):
+                        select(2, address, 18, 12)
+                        write(bar + 0x400000 + (address & 0x1fffff), payload)
+                elif run and args.silu_fixture:
                     gates = struct.unpack('<9216f', gate)
                     ups = struct.unpack('<9216f', up)
                     gate = struct.pack('<9216f', *(-value for value in gates))
@@ -266,7 +311,7 @@ def main():
         print('PASS compiled Q35 service and reader/writer roles start and stop on 120 Blackhole simulator cores; NO HARDWARE')
         if invocations is not None:
             if args.projection_fixture:
-                print('PASS fixed Q4_K matrix projection matches all 1,920 expected values; SIMULATED ONLY')
+                print('PASS two resident 120-core Q4_K projections match 1,920 independently checked values each; SIMULATED ONLY')
             elif args.silu_fixture:
                 print('PASS two resident 120-core SiLU runs match 9,216 values each; SIMULATED ONLY')
             else:

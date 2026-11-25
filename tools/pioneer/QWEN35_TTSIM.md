@@ -81,8 +81,7 @@ A separate temporary experiment changed the matrix format and removed some
 configuration writes/readbacks solely to investigate simulator coverage. It
 advanced to an unpack operation the simulator marks untested and then stopped.
 That experimental image is not the production kernel and provides no
-numerical or hardware correctness evidence. No fixed-projection output
-comparison has passed.
+numerical or hardware correctness evidence.
 
 The later `tests/ttsim-blackhole-matrix-exploratory.patch` is a different,
 unqualified simulator experiment, applied *after* the zero-upper-length
@@ -103,7 +102,18 @@ With that experimental simulator, the original projection image stops on
 `UndefinedBehavior: SrcA set valid after unpack to Dst (HW erratum TEN-3868)`.
 The rewrite now uses no-flip Dst unpack followed by Blackhole's clear-and-give
 form before `MOVD2A`, as described by [Tenstorrent's SrcA documentation](https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/SrcASrcB.md#hardware-bug-giving-srca-to-the-matrix-unit-after-an-unpacr-to-dst).
-The new image passes that simulator check and reaches the later unsupported
-`SFPMUL` modifier 2. It still has no numerical projection result. These
-observations do not prove correct bank ownership, instruction timing, output,
+The new image passes that simulator check. After the exploratory simulator
+was extended to model `SFPMUL` modifier 2 using its existing fused
+multiply-add implementation, the fixed Q4_K projection completed twice
+without reloading the service. Each run used all 120 simulated workers, ten
+256-element blocks per output row, and compared 1,920 results bit-for-bit.
+Before execution, a separate host reference decodes the fixture's Q4_K
+blocks and checks its expected results; the second command reverses every
+input sign and resets the output sentinels. A deliberately corrupted weight
+was rejected by the reference check.
+
+The fixture uses synthetic weights and inputs in one simulated DRAM bank. Its
+successful result depends on the experimental simulator changes, which have
+not been independently qualified. It does not prove general Q4_K accuracy,
+correct bank ownership, instruction timing, full-model output, throughput,
 or recovery on physical hardware.

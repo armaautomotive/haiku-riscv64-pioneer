@@ -70,12 +70,21 @@
 +        } else if (instr_mod0 == 13) {
 +            uint32_t raw = sfpu_read_cell16(p_tensix, cell_bank, row, col);
 +            value = ((raw >> 15) << 31) | ((raw >> 5) & 0x3ff);
-@@ -5097,0 +5127,4 @@
+@@ -5025 +5054 @@
+-    TTSIM_VERIFY(instr_mod1 <= 1, UnsupportedFunctionality, "instr_mod1=%d", instr_mod1);
++    TTSIM_VERIFY(instr_mod1 <= 3, UnsupportedFunctionality, "instr_mod1=%d", instr_mod1);
+@@ -5041,0 +5071,3 @@
++        #if TT_ARCH_VERSION >= 1
++        p_tensix->l_regs[lreg_dest][lane] = (instr_mod1 & 2) ? sfpu_mad(a, b, 0x80000000) : sfpu_mul<false>(a, b);
++#else
+@@ -5042,0 +5075 @@
++#endif
+@@ -5097,0 +5131,4 @@
 +            break;
 +        case 2:
 +            p_tensix->cc = 0xFFFFFFFF;
 +            p_tensix->cc_en = imm12_math & 1;
-@@ -5880 +5913,7 @@
+@@ -5880 +5917,7 @@
 -        default: TTSIM_ERROR(UnsupportedFunctionality, "setc16_reg=%d", setc16_reg);
 +        default:
 +#if TT_ARCH_VERSION == 1
