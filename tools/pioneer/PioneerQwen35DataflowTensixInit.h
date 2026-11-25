@@ -14,6 +14,16 @@ static_assert(DataflowTensixSourceAHeader>=0x6e000
 	&& DataflowTensixSourceBHeader+16==DataflowTensixSourceBTile
 	&& DataflowTensixSourceBTile+256<=0x72000,
 	"source windows stay in the saved L1 region before the service image");
+// Only these thread-configuration indices below 68 contain Blackhole
+// fields. A blanket SETC16 sweep also touches uninstantiated indices, which
+// the Tenstorrent reference simulator rejects. Reset the implemented fields
+// explicitly; index zero is issued and drained separately by the caller.
+inline bool DataflowTensixThreadConfigPresent(unsigned index)
+{
+	return index<=3 || index==5 || index==7 || (index>=11 && index<=19)
+		|| (index>=28 && index<=35) || (index>=37 && index<=41)
+		|| (index>=47 && index<=54);
+}
 // VectorUnpack restores the ordinary SrcA selector (3), whereas the
 // qualified integer SFPU accumulator loads its FP32 metadata to Dst and
 // assumes the fixed-format selector (0x13). The matrix has drained before

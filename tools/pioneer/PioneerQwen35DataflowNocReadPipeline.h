@@ -41,16 +41,21 @@ template<class IO> class DataflowNocReadPipeline {
     // A dropped doorbell can leave an ID counter at zero, which must not be
     // confused with a fast completion. Prove this particular command was
     // accepted before permitting another issue or publishing its page.
-    bool WaitAccepted(unsigned polls) {
+    bool WaitAccepted(unsigned id,unsigned polls) {
         for (unsigned n=0;n<polls;n++) {
             uint32_t observed=0;
             if (!StableConfig()) return false;
             const auto fifo=DataflowNocCheckFifo([&](unsigned off) { return fIO.Read(off); },observed);
             if (fifo==DataflowNocFifoBadConfig || fifo==DataflowNocFifoOverflow) return false;
             if (fifo!=DataflowNocFifoReady) continue;
-            const uint32_t accepted=fIO.Counter(2);
-            if (accepted==fExpected[2]) return true;
-            if (accepted!=fExpected[2]-1U) return false;
+            // The ID was idle before this submission. A nonzero outstanding
+            // count proves the new request was received; if it completed
+            // immediately, the total response count reaches the issued count.
+            // An earlier response alone cannot satisfy the latter condition.
+            const uint32_t outstanding=fIO.Read(0x240+id*4)&255U;
+            const uint32_t responses=fIO.Counter(0);
+            if (outstanding>1 || fExpected[0]-responses>2U) return false;
+            if (responses==fExpected[0] || outstanding) return true;
         }
         return false;
     }
@@ -106,7 +111,7 @@ public:
             if (DataflowNocCounterSupported(i)) fExpected[i]+=DataflowNocCounterDelta(false,bytes,i);
         fIssued++;
         fIO.Fence();fIO.Write(0x40,1);(void)fIO.Read(0x40);fIO.Fence();
-        return (WaitInitiator(polls) && WaitAccepted(polls)) || Fail();
+        return (WaitInitiator(polls) && WaitAccepted(id,polls)) || Fail();
     }
     // FIFO entries can be invisible to counters. Wait for all initiator FIFOs
     // to empty before using this ID's outstanding count as completion.

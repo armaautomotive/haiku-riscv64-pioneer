@@ -53,15 +53,15 @@ int main()
 		FifoRegisters regs; regs.config=1U<<16;
 		uint32_t expected[8]={}; unsigned counterReads=0;
 		auto fifo=[&](unsigned offset) { return regs.Read(offset); };
-		auto counter=[&](unsigned i) { assert(i<8 && i!=1); ++counterReads; return 0U; };
+		auto counter=[&](unsigned i) { assert(i==0 || i==4); ++counterReads; return 0U; };
 		regs.available=0x1010100fU;
 		assert(!DataflowNocFifoCountersComplete(fifo,counter,expected) && !counterReads);
 		regs.available=0x10101010U; regs.overflow=1;
 		assert(!DataflowNocFifoCountersComplete(fifo,counter,expected) && !counterReads);
 		regs.overflow=0;
-		assert(DataflowNocFifoCountersComplete(fifo,counter,expected) && counterReads==7);
-		expected[2]=1;
-		assert(!DataflowNocFifoCountersComplete(fifo,counter,expected) && counterReads==14);
+		assert(DataflowNocFifoCountersComplete(fifo,counter,expected) && counterReads==2);
+		expected[4]=1;
+		assert(!DataflowNocFifoCountersComplete(fifo,counter,expected) && counterReads==4);
 	}
 	// A stale return-coordinate register may contain a plausible but unrelated
 	// core. The worker and driver must both read the logical-ID register.
@@ -96,25 +96,24 @@ int main()
 	assert(!DataflowNocCommandWordMatches(7,0x2090,0x2090^0x2000));
 	assert(!DataflowNocCommandWordMatches(7,0x2090,0x2090^2));
 	assert(!DataflowNocCommandWordMatches(5,0x81,0x481));
-	// 0x20c is unsupported on Blackhole. Neither the baseline nor any poll
-	// may read it, while all supported counters still gate completion.
+	// Only read-response and write-acknowledgement counts gate completion.
 	for (unsigned mode=0;mode<2;mode++) {
 		const bool write=mode!=0;
 		uint32_t observed[8]={0xffffffffU,0xdeadbeefU,3,4,5,6,3,8};
 		unsigned reads=0;
-		auto read=[&](unsigned i) { assert(i<8 && i!=1);reads++;return observed[i]; };
+		auto read=[&](unsigned i) { assert(i==0 || i==4);reads++;return observed[i]; };
 		uint32_t expected[8]{};
 		DataflowNocCaptureExpected(read,write,2048,expected);
-		assert(reads==7 && expected[1]==0);
+		assert(reads==2 && expected[1]==0);
 		for (unsigned i=0;i<8;i++) if (DataflowNocCounterSupported(i))
 			observed[i]+=DataflowNocCounterDelta(write,2048,i);
 		unsigned mismatch=0;uint32_t value=0;
 		assert(DataflowNocMatchingCounters(read,expected,&mismatch,&value)==DataflowNocSupportedCounterMask
-			&& reads==14 && mismatch==8);
-		observed[3]++;
+			&& reads==4 && mismatch==8);
+		observed[0]++;
 		assert(DataflowNocMatchingCounters(read,expected,&mismatch,&value)
-			==(DataflowNocSupportedCounterMask & ~(1U<<3))
-			&& mismatch==3 && value==observed[3]);
+			==(DataflowNocSupportedCounterMask & ~(1U<<0))
+			&& mismatch==0 && value==observed[0]);
 	}
 	std::puts("PASS dataflow NoC logical return route and marked static-VC1 read/write commands; NO HARDWARE");
 }

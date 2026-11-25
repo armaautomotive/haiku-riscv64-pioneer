@@ -44,11 +44,14 @@ inline DataflowNocFifoStatus DataflowNocCheckFifo(Read read,uint32_t& observed)
 	observed=after; return DataflowNocFifoReady;
 }
 
-// Blackhole documents NIU_MST_RD_DATA_WORD_RECEIVED (0x20c) as
-// UnsupportedFunctionality when read. Keep its historical diagnostic slot,
-// but never access it or use it as a completion condition.
+// Track the two end-to-end completion counters: read responses after their
+// L1 writes and non-posted write acknowledgements after the remote write.
+// The caller must exclusively own this NIU and also check FIFO and outstanding
+// IDs. Starting/sent/accepted counts do not prove data completion and cost
+// extra register reads. Blackhole does not support reading the data-word
+// received counter (0x20c). See:
 // https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Counters.md
-constexpr uint32_t DataflowNocSupportedCounterMask=0xfdU;
+constexpr uint32_t DataflowNocSupportedCounterMask=0x11U;
 inline bool DataflowNocCounterSupported(unsigned index) {
 	return index<8 && (DataflowNocSupportedCounterMask & (1U<<index));
 }

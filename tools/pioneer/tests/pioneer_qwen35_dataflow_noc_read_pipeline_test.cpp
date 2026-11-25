@@ -9,7 +9,7 @@ struct MockNoc {
     uint32_t regs[0x300/4]{};
     uint32_t counters[8]{};
     unsigned issues=0,fences=0;
-    bool failReadback=false,stuckDoorbell=false,dropDoorbell=false,quiet=true;
+    bool failReadback=false,stuckDoorbell=false,dropDoorbell=false,completeImmediately=false,extraResponse=false,quiet=true;
     MockNoc() { regs[0x100/4]=1U<<16;regs[0x64/4]=0x10101010;regs[0x148/4]=0x81; }
     uint32_t Read(unsigned off) {
         assert(!(off&3) && off<sizeof(regs));
@@ -25,6 +25,8 @@ struct MockNoc {
             assert(id<2 && !regs[(0x240+id*4)/4]);
             regs[(0x240+id*4)/4]=1;issues++;
             if (!stuckDoorbell) { counters[2]++;counters[6]++;regs[off/4]=0; }
+            if (completeImmediately) Complete(id);
+            if (extraResponse) counters[0]+=2;
         }
     }
     void Fence() { fences++; }
@@ -118,6 +120,24 @@ int main() {
         assert(!p.Issue(0,0x8000000,0x82,0x90000,64,2));
         assert(p.Faulted() && p.Issued()==1 && !io.issues);
         assert(!p.Complete(0,2)); // a dropped request never becomes a ready page
+    }
+    {
+        MockNoc io;io.completeImmediately=true;DataflowNocReadPipeline<MockNoc> p(io);
+        assert(p.Start() && p.Issue(0,0x8000000,0x82,0x90000,64,2));
+        assert(p.Complete(0,2) && p.Finish() && io.counters[0]==1);
+    }
+    {
+        MockNoc io;DataflowNocReadPipeline<MockNoc> p(io);
+        assert(p.Start() && p.Issue(0,0x8000000,0x82,0x90000,64,2));
+        io.Complete(0);io.dropDoorbell=true;
+        assert(!p.Issue(1,0x8000040,0x82,0x98000,64,2));
+        assert(p.Faulted() && io.issues==1); // previous response cannot prove this submission
+    }
+    {
+        MockNoc io;DataflowNocReadPipeline<MockNoc> p(io);
+        assert(p.Start());io.extraResponse=true;
+        assert(!p.Issue(0,0x8000000,0x82,0x90000,64,2));
+        assert(p.Faulted() && io.issues==1); // impossible response count poisons the pipeline
     }
     {
         MockNoc io;DataflowNocReadPipeline<MockNoc> p(io);
