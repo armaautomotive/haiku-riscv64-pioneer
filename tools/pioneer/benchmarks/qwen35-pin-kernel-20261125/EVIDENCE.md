@@ -73,3 +73,17 @@ argument and profile tests passed, as did the original helper regression. The
 generated helper and bundle have not been uploaded, kexec-loaded or booted.
 The recorded Linux-side private package and rollback route still require a
 current comparison and verification before a candidate boot.
+
+## Recorded private-package candidate
+
+The authorized reboot reached Linux and verified the preserved control BFS
+and pinned recovery helper hashes. The preserved private HPKG was retrieved
+read-only and matched its recorded SHA-256 `7a830442362ba511bdfc08f6d99e26df5813475861d3583a90cb62cbef1f3cea`.
+The original candidate extraction differed from this package only in the
+kernel, across 5,857 entries compared by content, symlink target and POSIX
+mode. This does not compare Haiku package attributes. The builder was changed
+to start from that exact private package and replace only the kernel. The
+new BFS SHA-256 is `3bc902182084edd40b8b98032a57e2f86f44b362be144117e08d0373763d30bf`;
+the generated helper SHA-256 is `d39f631eba34876f0ba1b064ebec215147962203f376c206783eea08dbf5d8fd`.
+These supersede the earlier candidate BFS and helper. The new candidate has
+not been uploaded, kexec-loaded or booted.

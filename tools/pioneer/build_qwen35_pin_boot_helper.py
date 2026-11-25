@@ -12,7 +12,7 @@ import subprocess
 BASE = '8e85463e4de06fc8b35d0970e697c310f9532df30747c58cc892a1e9fdd9adff'
 OLD = 'memory128-spin-idle7-top-page-nosd-control|memory128-spin-idle7-top-page-nosd-journal-control'
 PROFILE = 'memory128-spin-idle7-pin-nosd-qualification'
-IMAGE = '9e569f8c23ae3726b0be8747f93b7d16c511f4a02f91df23e00bd3703c037b96'
+IMAGE = '3bc902182084edd40b8b98032a57e2f86f44b362be144117e08d0373763d30bf'
 
 
 def main():

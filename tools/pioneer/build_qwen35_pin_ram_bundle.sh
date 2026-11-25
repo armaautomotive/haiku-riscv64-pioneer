@@ -1,33 +1,30 @@
 #!/bin/sh
 # Prepare a private RAM boot bundle only. Never writes target disks or boots it.
 set -eu
-[ "$#" = 5 ] || { echo 'usage: build_qwen35_pin_ram_bundle.sh BUILD BASE_HPKG CANDIDATE_KERNEL ROOT_ECAM NEW_OUTPUT' >&2; exit 2; }
+[ "$#" = 4 ] || { echo 'usage: build_qwen35_pin_ram_bundle.sh BUILD RECORDED_PRIVATE_HPKG CANDIDATE_KERNEL NEW_OUTPUT' >&2; exit 2; }
 build=$(CDPATH= cd -- "$1" && pwd)
 source=$2
 kernel=$3
-ecam=$4
-output=$5
+output=$4
 case "$output" in /*) ;; *) exit 2;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 2
-for input in "$source" "$kernel" "$ecam"; do [ -f "$input" ] && [ ! -L "$input" ] || exit 2; done
+for input in "$source" "$kernel"; do [ -f "$input" ] && [ ! -L "$input" ] || exit 2; done
 hash_is() { [ "$(shasum -a 256 "$1" | awk '{print $1}')" = "$2" ]; }
-hash_is "$source" 6a40c785862ab19913a7cf0b9ef64c90fd5998cda2c22c6636edc8f3463b348a
+hash_is "$source" 7a830442362ba511bdfc08f6d99e26df5813475861d3583a90cb62cbef1f3cea
 hash_is "$kernel" 6b43356be4b4f5974c555b06599b89d8008825fcbc26b40e8eb57b5edfde1372
-hash_is "$ecam" 23e65e2a9a3e886fc7d1429901db6534f2cc7a9077f121d3e334f4cf839cf11d
 package=$build/objects/darwin/arm64/release/tools/package/package
 bfs=$build/objects/darwin/arm64/release/tools/bfs_shell/bfs_shell
 [ -x "$package" ] && [ -x "$bfs" ] || exit 2
 umask 077
 mkdir -m 700 "$output"
-mkdir -p "$output/replacement/add-ons/kernel/busses/pci" "$output/verify/add-ons/kernel/busses/pci"
+mkdir -p "$output/replacement" "$output/verify/add-ons/kernel/busses/pci"
 cp "$source" "$output/candidate.hpkg"
 cp "$kernel" "$output/replacement/kernel_riscv64"
-cp "$ecam" "$output/replacement/add-ons/kernel/busses/pci/ecam"
-chmod 755 "$output/replacement/kernel_riscv64" "$output/replacement/add-ons/kernel/busses/pci/ecam"
+chmod 755 "$output/replacement/kernel_riscv64"
 "$package" list -p "$source" > "$output/original.paths"
 [ "$(grep -cx 'kernel_riscv64' "$output/original.paths")" = 1 ]
 [ "$(grep -cx 'add-ons/kernel/busses/pci/ecam' "$output/original.paths")" = 1 ]
-"$package" add -1 -f -C "$output/replacement" "$output/candidate.hpkg" kernel_riscv64 add-ons/kernel/busses/pci/ecam > "$output/package-add.log" 2>&1
+"$package" add -1 -f -C "$output/replacement" "$output/candidate.hpkg" kernel_riscv64 > "$output/package-add.log" 2>&1
 "$package" list -p "$output/candidate.hpkg" > "$output/candidate.paths"
 LC_ALL=C sort "$output/original.paths" > "$output/original.sorted"
 LC_ALL=C sort "$output/candidate.paths" > "$output/candidate.sorted"
@@ -36,7 +33,7 @@ cmp "$output/original.sorted" "$output/candidate.sorted"
 "$package" extract -C "$output/verify" "$output/candidate.hpkg" add-ons/kernel/busses/pci/ecam > "$output/extract-ecam.log" 2>&1
 hash_is "$output/verify/kernel_riscv64" 6b43356be4b4f5974c555b06599b89d8008825fcbc26b40e8eb57b5edfde1372
 hash_is "$output/verify/add-ons/kernel/busses/pci/ecam" 23e65e2a9a3e886fc7d1429901db6534f2cc7a9077f121d3e334f4cf839cf11d
-hash_is "$source" 6a40c785862ab19913a7cf0b9ef64c90fd5998cda2c22c6636edc8f3463b348a
+hash_is "$source" 7a830442362ba511bdfc08f6d99e26df5813475861d3583a90cb62cbef1f3cea
 truncate -s 314572800 "$output/candidate-ram.bfs"
 "$bfs" --initialize "$output/candidate-ram.bfs" PioneerQ35Pin 'block_size 2048' > "$output/initialize.log" 2>&1
 printf '%s\n' 'mkdir /myfs/system' 'mkdir /myfs/system/packages' \

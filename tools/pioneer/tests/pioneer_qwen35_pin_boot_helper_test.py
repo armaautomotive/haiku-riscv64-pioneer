@@ -32,7 +32,7 @@ profile=memory128-spin-idle7-pin-nosd-qualification
 . "$1/artifacts"
 [ "$memory_gib" = 128 ]
 [ "$bundle" = "$base/q35-pin-service-20261125/candidate-ram.bfs" ]
-[ "$bundle_hash" = 9e569f8c23ae3726b0be8747f93b7d16c511f4a02f91df23e00bd3703c037b96 ]
+[ "$bundle_hash" = 3bc902182084edd40b8b98032a57e2f86f44b362be144117e08d0373763d30bf ]
 [ "$image_hash" = b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98 ]
 profile=memory128-spin-idle7-top-page-nosd-control
 . "$1/artifacts"
