@@ -31,6 +31,52 @@ static void PrepareClose(PioneerPostResetMapping& mapping) {
 int main()
 {
     tt_pioneer_profile profile;unsigned total=0;
+    unsigned openTotal=0;
+    {
+        permitRevoked=false;ResetFake();PioneerPostResetMapping mapping(profile);Permit permit;
+        assert(mapping.OpenQ35Guarded(permit) && mapping.ready && mapping.savedValid && !accessesAfterRevoke);
+        openTotal=permit.calls;assert(openTotal>50);
+    }
+    const unsigned openFailures[]={1,2,3,17,50,openTotal/2,openTotal-1,openTotal};
+    for (unsigned mode=0;mode<2;mode++) for (unsigned failure:openFailures) {
+        permitRevoked=false;ResetFake();PioneerPostResetMapping mapping(profile);Permit permit;
+        permit.failAt=failure;permit.transient=mode!=0;
+        assert(!mapping.OpenQ35Guarded(permit) && permitRevoked && !mapping.ready && !accessesAfterRevoke);
+        const unsigned before=deviceAccesses;assert(!mapping.OpenQ35Guarded(permit) && deviceAccesses==before);
+    }
+    unsigned probeTotal=0;
+    {
+        permitRevoked=false;ResetFake();PioneerPostResetMapping mapping(profile);Permit open;
+        assert(mapping.OpenQ35Guarded(open));Permit permit;tt_arc_scratch_result arc{};
+        assert(mapping.ProbeQ35FabricFirmwareGuarded(3,arc,permit) && mapping.firmwareReady
+            && mapping.topologyReady && arc.state==TT_ARC_SCRATCH_READY && !accessesAfterRevoke);
+        probeTotal=permit.calls;assert(probeTotal>100);
+    }
+    const unsigned probeFailures[]={1,2,3,17,50,probeTotal/4,probeTotal/2,
+        probeTotal*3/4,probeTotal-1,probeTotal};
+    for (unsigned mode=0;mode<2;mode++) for (unsigned failure:probeFailures) {
+        permitRevoked=false;ResetFake();PioneerPostResetMapping mapping(profile);Permit open;
+        assert(mapping.OpenQ35Guarded(open));Permit permit;permit.failAt=failure;permit.transient=mode!=0;
+        tt_arc_scratch_result arc{};deviceAccesses=accessesAfterRevoke=0;
+        assert(!mapping.ProbeQ35FabricFirmwareGuarded(3,arc,permit) && permitRevoked
+            && !mapping.firmwareReady && !mapping.topologyReady && !accessesAfterRevoke);
+        const unsigned before=deviceAccesses;
+        assert(!mapping.ProbeQ35FabricFirmwareGuarded(3,arc,permit) && deviceAccesses==before);
+    }
+    {
+        permitRevoked=false;ResetFake();PioneerPostResetMapping mapping(profile);Permit open;
+        assert(mapping.OpenQ35Guarded(open));Permit permit;tt_arc_scratch_result arc{};
+        q35TlbWrites=0;dropQ35TlbWrite=1;
+        assert(!mapping.ProbeQ35FabricFirmwareGuarded(3,arc,permit) && q35TlbWrites==1
+            && !mapping.firmwareReady && !mapping.topologyReady);
+    }
+    {
+        permitRevoked=false;ResetFake();PioneerPostResetMapping mapping(profile);Permit open;
+        assert(mapping.OpenQ35Guarded(open));Permit permit;tt_arc_scratch_result arc{};
+        csmPage[0x1000/4]^=1;
+        assert(!mapping.ProbeQ35FabricFirmwareGuarded(3,arc,permit)
+            && !mapping.firmwareReady && !mapping.topologyReady);
+    }
     {
         PioneerPostResetMapping mapping(profile);Prepare(mapping);Permit permit;
         PioneerPostResetAuditResult result;

@@ -1,0 +1,51 @@
+/* SPDX-License-Identifier: MIT */
+// One-shot retained-session controller for the non-loadable snapshot witness.
+// The caller owns sLock and an active v2 guard ticket. Success of the fabric
+// sequence is not complete recovery: all old owners and the cold latch remain.
+#if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_DEVICE_DISPATCH) \
+    || !defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) || !defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) \
+    || defined(PIONEER_QWEN35_RECOVERY_QUALIFY)
+#error Fabric recovery start is restricted to the non-loadable snapshot witness
+#endif
+#include "PioneerRecoveryProtocol.h"
+static status_t
+Qwen35FabricRecoveryStartLocked(PioneerProbeCookie* inspector,PioneerProbeCookie* owner,
+    PioneerStoreContext* context,pioneer_driver_recovery_guard_v2_info* guard,uint64 ticket,
+    thread_id thread,team_id team,tt_pioneer_recovery_run& result)
+{
+    if (!inspector || !owner || !context || !guard || guard->version!=2 || !guard->validate
+        || !ticket || thread<0 || team<0 || find_thread(NULL)!=thread
+        || inspector->magic!=0x50313030 || inspector->team!=team || owner->magic!=0x50313030
+        || sQwen35ExclusiveCookie!=inspector || sOpenCookies!=1 || sReloadQuiesced
+        || !sBankStorageOnly || !context->bankStorageOnly || context->bytes!=PioneerResidentBanks::Total
+        || (inspector==owner?owner->finalFreeRetained:(inspector->context || !owner->finalFreeRetained))
+        || context->io.qwen35BorrowedRoleScope || context->recoveryFreshSession
+        || context->recoveryFabricStartAttempted || context->recoveryFabricStartTicket
+        || context->recoveryAttempted || context->recoveryMapping || context->recoveryFabricArcOwner
+        || !sColdRecoveryRequired || !context->dispatchOwnerRetained || !context->q35PciReservationHeld
+        || context->q35PciReleaseAttempted || sRuntimeOwner!=owner || owner->context!=context
+        || guard->validate(ticket)!=B_OK)
+        return B_NOT_ALLOWED;
+    // Allocate before consuming the one-shot; allocation alone has not
+    // touched the device and can be safely refused without retaining a ticket.
+    context->recoveryMapping=new(std::nothrow) PioneerPostResetMapping(context->profile);
+    if (!context->recoveryMapping) return B_NO_MEMORY;
+    // Keep the ticket, mapping and owner reachable after any observation or
+    // uncertain operation. This attempt cannot be replayed automatically.
+    context->recoveryFabricStartAttempted=true;context->recoveryFabricStartTicket=ticket;
+    context->recoveryAttempted=true;
+    PioneerQ35FabricHostScope scope(inspector,owner,context,guard,ticket,thread,team);
+    auto permit=[&]() { return scope.HostOwnershipValid() && guard->validate(ticket)==B_OK; };
+    result.stage=PIONEER_RECOVERY_STAGE_FABRIC_PREPARE;
+    if (!permit() || !context->recoveryMapping->OpenQ35Guarded(permit)) return B_DEV_NOT_READY;
+    tt_arc_scratch_result firmware{};
+    if (!permit() || !context->recoveryMapping->ProbeQ35FabricFirmwareGuarded(100,firmware,permit))
+        return B_DEV_NOT_READY;
+    tt_arc_queue_result queue{};PioneerPostResetAuditResult fleet{};PioneerQ35PostResetL2Result l2{};
+    unsigned stage=0;result.stage=PIONEER_RECOVERY_STAGE_FABRIC_SEQUENCE;
+    if (!permit() || !context->RunQ35FabricRecovery(guard,ticket,firmware,queue,fleet,l2,scope,stage)) {
+        result.detail=stage;return B_DEV_NOT_READY;
+    }
+    result.detail=PIONEER_RECOVERY_DETAIL_FABRIC_AUDITED;
+    return B_DEV_NOT_READY; // retained scratch/owners and cold state are not yet restored
+}

@@ -341,6 +341,98 @@ struct PioneerPostResetMapping : ConfigIO {
 		for (unsigned i=0;i<3;i++) if (root(0x24+4*i,4)!=plan.bridge[i]) return false;
 		return allowed();
 	}
+	// The mapping stays attached to its retained context on every failure.
+	// A revoked guard stops all subsequent mapping and PCI/MMIO accesses.
+	template<class Check> bool OpenQ35Guarded(Check& check) {
+		if (attempted) return false;
+		attempted=true;bool lost=false;
+		auto allowed=[&]() { if (lost || !check()) { lost=true;return false; } return true; };
+		if (!allowed() || !PioneerMinimumBarLayoutMatches(profile) || !PciReadyQ35(allowed)
+			|| profile.bar0_host_start>UINT64_MAX-0x1fd05000) return false;
+		const uint32 offsets[]={0x1fc00000,0x1fd04000,0x19312000,0x19320000,0x19180000,0x19230000,0x19200000};
+		const size_t lengths[]={B_PAGE_SIZE,B_PAGE_SIZE,B_PAGE_SIZE,0x12000,B_PAGE_SIZE,B_PAGE_SIZE,0x20000};
+		void* views[7]={};
+		for (unsigned i=0;i<7;i++) {
+			if (!allowed()) return false;
+			uint32 flags=B_KERNEL_READ_AREA;if (!i) flags|=B_KERNEL_WRITE_AREA;
+			areas[i]=map_physical_memory("P100A guarded fabric recovery window",
+				profile.bar0_host_start+offsets[i],lengths[i],B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY,
+				flags,&views[i]);
+			if (!allowed() || areas[i]<B_OK || !views[i]) return false;
+		}
+		tlb=(volatile uint32*)((uint8*)views[0]+0x96c);node=(const volatile uint32*)views[1];
+		reset=(const volatile uint32*)((const uint8*)views[2]+0x1b0);noc=(const volatile uint32*)views[3];
+		hdma=(const volatile uint32*)views[4];scratch=(const volatile uint32*)views[5];csm=(const volatile uint32*)views[6];
+		if (!allowed()) return false;
+		const uint32 id=PioneerRead32(node+0x44/4);
+		if (!allowed() || ((id&0xfff)!=2 && (id&0xfff)!=11)) return false;
+		for (unsigned i=0;i<3;i++) {
+			if (!allowed()) return false;
+			saved[i]=PioneerRead32(tlb+i);
+			if (!allowed()) return false;
+			dmaSaved[i]=PioneerRead32(tlb-3+i);
+			if (!allowed()) return false;
+		}
+		if ((saved[2]|dmaSaved[2])&0xffffc000) return false;
+		savedValid=true;ready=true;return true;
+	}
+	template<class Check> struct Q35GuardedFirmwareIO {
+		PioneerPostResetMapping& m;Check& check;bool lost=false;
+		bool Allowed() { if (lost || !check()) { lost=true;return false; } return true; }
+		uint32 TlbRead(unsigned word) {
+			if (!Allowed()) return UINT32_MAX;
+			const uint32 value=m.TlbRead(word);return Allowed()?value:uint32(UINT32_MAX);
+		}
+		void TlbWrite(unsigned word,uint32 value) {
+			if (!Allowed()) return;
+			m.TlbWrite(word,value);
+			if (!Allowed()) return;
+			const uint32 observed=m.TlbRead(word);
+			if (!Allowed() || observed!=value) lost=true;
+		}
+		uint32 ScratchRead(unsigned word) {
+			if (!Allowed()) return UINT32_MAX;
+			const uint32 value=m.ScratchRead(word);return Allowed()?value:uint32(UINT32_MAX);
+		}
+		uint32 CsmRead(uint32 address) {
+			if (!Allowed()) return UINT32_MAX;
+			const uint32 value=m.CsmRead(address);return Allowed()?value:uint32(UINT32_MAX);
+		}
+	};
+	// Initial firmware admission for the real fabric controller. A failure is
+	// one-shot: the retained mapping and guard ticket must not be replayed.
+	template<class Check> bool ProbeQ35FabricFirmwareGuarded(unsigned pollLimit,tt_arc_scratch_result& result,Check& check) {
+		result={};firmwareDiagnostic=1;
+		if (firmwareAttempted || !ready || !savedValid || !scratch || !csm || !node
+			|| queueAttempted || !pollLimit || pollLimit>100) return false;
+		firmwareAttempted=true;Q35GuardedFirmwareIO<Check> adapter{*this,check};
+		auto permit=[&]() { return adapter.Allowed(); };
+		if (!PciReadyQ35(permit)) return false;
+		for (unsigned word=0;word<3;word++) if (adapter.TlbRead(word)!=saved[word]) return false;
+		bool bootReady=false;firmwareDiagnostic=2;
+		for (unsigned poll=0;poll<pollLimit;poll++) {
+			if (!permit()) return false;
+			if (BlackholeArcScratchProbe(adapter,result)) { bootReady=true;break; }
+			if (!permit() || !result.tlb_restored || result.state!=TT_ARC_SCRATCH_NOT_READY) return false;
+			if (poll+1<pollLimit && (!permit() || snooze(100000)!=B_OK || !permit())) return false;
+		}
+		if (!bootReady || !permit()) return false;
+		tt_arc_telemetry_result telemetry{};firmwareDiagnostic=3;
+		if (!BlackholeArcTelemetryProbe(adapter,result,telemetry) || !permit()
+			|| (telemetry.present_mask&0x3c1)!=0x3c1 || telemetry.values[0]!=0x12050001
+			|| telemetry.values[6]!=0xf7 || telemetry.values[7]!=0x5515
+			|| telemetry.values[8]!=0 || telemetry.values[9]!=0xfff) return false;
+		tt_dram_samples_result candidate{};firmwareDiagnostic=4;
+		for (unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++) {
+			if (!permit()) return false;
+			candidate.source[i]=PioneerRead32(node+BlackholeDramSourceOffset(i)/4);
+			if (!permit()) return false;
+		}
+		for (unsigned word=0;word<3;word++) if (adapter.TlbRead(word)!=saved[word]) return false;
+		if (!permit() || !PciReadyQ35(permit) || !BlackholeDramBuildRoutes(candidate) || !permit()) return false;
+		firmwareTelemetry=telemetry;topology=candidate;firmwareReady=true;topologyReady=true;
+		firmwareDiagnostic=0;return true;
+	}
 	template<class Check> bool SourceStableQ35(Check& check) {
 		if (!ready || !firmwareReady || !topologyReady || !node || !PciReadyQ35(check)) return false;
 		for (unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++) {
@@ -359,29 +451,7 @@ struct PioneerPostResetMapping : ConfigIO {
 			|| !savedValid || !scratch || !csm || baseline.version!=1
 			|| baseline.state!=TT_ARC_SCRATCH_READY || !baseline.tlb_restored
 			|| !baseline.telemetry_present) return false;
-		struct Adapter {
-			PioneerPostResetMapping& m;Check& check;bool lost=false;
-			bool Allowed() { if (lost || !check()) { lost=true;return false; } return true; }
-			uint32 TlbRead(unsigned word) {
-				if (!Allowed()) return UINT32_MAX;
-				const uint32 value=m.TlbRead(word);return Allowed()?value:uint32(UINT32_MAX);
-			}
-			void TlbWrite(unsigned word,uint32 value) {
-				if (!Allowed()) return;
-				m.TlbWrite(word,value);
-				if (!Allowed()) return;
-				const uint32 observed=m.TlbRead(word);
-				if (!Allowed() || observed!=value) lost=true;
-			}
-			uint32 ScratchRead(unsigned word) {
-				if (!Allowed()) return UINT32_MAX;
-				const uint32 value=m.ScratchRead(word);return Allowed()?value:uint32(UINT32_MAX);
-			}
-			uint32 CsmRead(uint32 address) {
-				if (!Allowed()) return UINT32_MAX;
-				const uint32 value=m.CsmRead(address);return Allowed()?value:uint32(UINT32_MAX);
-			}
-		} adapter{*this,check};
+		Q35GuardedFirmwareIO<Check> adapter{*this,check};
 		auto permit=[&]() { return adapter.Allowed(); };
 		if (!SourceStableQ35(permit) || !permit()) return false;
 		uint32 original[3]{};

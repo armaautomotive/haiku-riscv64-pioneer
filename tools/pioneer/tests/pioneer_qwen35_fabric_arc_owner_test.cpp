@@ -151,6 +151,13 @@ struct PioneerPostResetMapping {
     uint32 saved[3]={1,2,3};
     tt_arc_telemetry_result firmwareTelemetry=FabricQueue::Health();
     bool pciReady=true,corruptAuditResult=false,corruptL2Result=false,corruptFirmwareResult=false;unsigned sourceReads=0;
+    PioneerPostResetMapping()=default;
+    explicit PioneerPostResetMapping(const Profile& p):profile(p) {}
+    template<class Check> bool OpenQ35Guarded(Check& check) { return check() && ready && savedValid && check(); }
+    template<class Check> bool ProbeQ35FabricFirmwareGuarded(unsigned limit,tt_arc_scratch_result& firmware,Check& check) {
+        if (limit!=100 || !check() || !firmwareReady || !topologyReady) return false;
+        firmware=FabricQueue::Arc();return check();
+    }
     bool PciReady() const { return pciReady; }
     bool SourceStable() { ++sourceReads;return pciReady; }
     template<class Check> bool PciReadyQ35(Check& check) { return check() && PciReady() && check(); }

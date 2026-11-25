@@ -4194,6 +4194,8 @@ struct PioneerStoreContext {
 	// Non-loadable rewrite only. The context retains this owner and its
 	// mappings until the complete fabric recovery has been audited.
 	PioneerQ35FabricArcOwner<pioneer_driver_recovery_guard_v2_info>* recoveryFabricArcOwner=NULL;
+	bool recoveryFabricStartAttempted=false;
+	uint64 recoveryFabricStartTicket=0;
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
 	// Partial evidence from this exact retained fabric transaction. The old
 	// mappings and owners remain live, so this can never complete the guard.
@@ -5206,6 +5208,7 @@ template bool PioneerStoreContext::RunQ35FabricRecovery<PioneerQ35FabricArcCompi
 template bool PioneerStoreContext::RunQ35FabricRecovery<PioneerQ35FabricHostScope>(
 	pioneer_driver_recovery_guard_v2_info*,uint64,const tt_arc_scratch_result&,tt_arc_queue_result&,
 	PioneerPostResetAuditResult&,PioneerQ35PostResetL2Result&,PioneerQ35FabricHostScope&,unsigned&);
+#include "PioneerQwen35FabricRecoveryStart.inc"
 #endif
 
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
@@ -12667,6 +12670,58 @@ Qwen35RecoveryRun(PioneerProbeCookie* cookie,void* data,size_t length)
 {
 	return Qwen35RecoveryRequest(cookie,data,length,false);
 }
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) \
+	&& defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_RECOVERY_QUALIFY)
+// PIONEER_Q35_FABRIC_REQUEST_BEGIN
+static status_t
+Qwen35FabricRecoveryRequest(PioneerProbeCookie* inspector,void* data,size_t length)
+{
+	if (!inspector || !data || length!=sizeof(tt_pioneer_recovery_run)) return B_BAD_VALUE;
+	const thread_id thread=find_thread(NULL);thread_info info={};
+	status_t status=get_thread_info(thread,&info);
+	if (status!=B_OK || info.team!=inspector->team) return status!=B_OK?status:B_NOT_ALLOWED;
+	tt_pioneer_recovery_run result={};status=user_memcpy(&result,data,sizeof(result));
+	if (status!=B_OK || !PioneerRecoveryRunRequest(result)) return status!=B_OK?status:B_BAD_VALUE;
+	status=acquire_sem(sLock);if (status!=B_OK) return status;
+	PioneerProbeCookie* owner=sRuntimeOwner;
+	PioneerStoreContext* context=owner?owner->context:NULL;
+	if (!sReloadGuard || !sReloadGeneration || result.expected_tag!=PIONEER_DRIVER_BUILD_TAG
+		|| result.expected_generation!=sReloadGeneration) result.operation_status=B_BAD_VALUE;
+	else if (!owner || !context || !sColdRecoveryRequired || sReloadQuiesced || sOpenCookies!=1
+		|| sQwen35ExclusiveCookie!=inspector || !sBankStorageOnly || !context->bankStorageOnly
+		|| (inspector==owner?owner->finalFreeRetained:(inspector->context || !owner->finalFreeRetained))
+		|| !context->dispatchOwnerRetained || !context->q35PciReservationHeld || context->q35PciReleaseAttempted
+		|| context->io.qwen35BorrowedRoleScope || context->recoveryFreshSession
+		|| context->recoveryFabricStartAttempted || context->recoveryFabricStartTicket || context->recoveryAttempted
+		|| context->recoveryMapping || context->recoveryFabricArcOwner) result.operation_status=B_NOT_ALLOWED;
+	else {
+		pioneer_driver_recovery_guard_v2_info* guard=NULL;
+		status=get_module(PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE,(module_info**)&guard);
+		if (status!=B_OK) result.operation_status=status;
+		else {
+			uint64 ticket=0;
+			if (!guard || guard->version!=2 || !guard->begin || !guard->abort || !guard->validate)
+				status=B_BAD_VALUE;
+			else status=guard->begin(sReloadGeneration,&ticket);
+			if (status!=B_OK || !ticket) result.operation_status=status!=B_OK?status:B_DEV_NOT_READY;
+			else {
+				result.operation_status=Qwen35FabricRecoveryStartLocked(inspector,owner,context,guard,ticket,thread,info.team,result);
+				if (!context->recoveryFabricStartAttempted) {
+					const status_t aborted=guard->abort(ticket);
+					if (aborted!=B_OK) result.operation_status=aborted;
+				}
+			}
+			put_module(PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE);
+		}
+	}
+	result.build_tag=PIONEER_DRIVER_BUILD_TAG;
+	status=user_memcpy(data,&result,sizeof(result));
+	const status_t unlock=release_sem(sLock);
+	if (unlock!=B_OK) { sColdRecoveryRequired=true;return unlock; }
+	return status;
+}
+// PIONEER_Q35_FABRIC_REQUEST_END
+#endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 static status_t
 Qwen35RecoveryForce(PioneerProbeCookie* cookie,void* data,size_t length)
@@ -12779,6 +12834,11 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return Qwen35RecoveryStatus(instance,data,length);
 	if (operation==TT_PCI_PROBE_RECOVERY_RUN)
 		return Qwen35RecoveryRun(instance,data,length);
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) \
+	&& defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_RECOVERY_QUALIFY)
+	if (operation==TT_PCI_PROBE_RECOVERY_FABRIC)
+		return Qwen35FabricRecoveryRequest(instance,data,length);
+#endif
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 	if (operation==TT_PCI_PROBE_RECOVERY_FORCE)
 		return Qwen35RecoveryForce(instance,data,length);

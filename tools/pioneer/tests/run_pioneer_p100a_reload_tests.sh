@@ -93,6 +93,14 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  "$directory/pioneer_qwen35_fabric_host_composed_test.cpp" -o "$temporary/q35-fabric-host-composed-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/q35-fabric-host-composed-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_qwen35_fabric_recovery_start_test.cpp" -o "$temporary/q35-fabric-recovery-start-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/q35-fabric-recovery-start-test"
+awk '/PIONEER_Q35_FABRIC_REQUEST_BEGIN/ {copying=1;next} /PIONEER_Q35_FABRIC_REQUEST_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+ "$source" > "$temporary/pioneer_q35_fabric_request.inc"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined -I"$temporary" \
+ "$directory/pioneer_qwen35_fabric_recovery_request_test.cpp" -o "$temporary/q35-fabric-recovery-request-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/q35-fabric-recovery-request-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_qwen35_risc_reset_sample_test.cpp" -o "$temporary/q35-risc-reset-sample-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/q35-risc-reset-sample-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \

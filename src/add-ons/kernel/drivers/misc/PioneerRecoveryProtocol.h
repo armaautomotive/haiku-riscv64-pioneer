@@ -12,6 +12,8 @@
 #define TT_PCI_PROBE_RECOVERY_QUALIFY (B_DEVICE_OP_CODES_END+0x61e5)
 // Fixed, read-only evidence from a restricted qualification session.
 #define TT_PCI_PROBE_RECOVERY_PCIE_EVIDENCE (B_DEVICE_OP_CODES_END+0x61e6)
+// Non-loadable snapshot witness only: start the one-shot Tensix fabric path.
+#define TT_PCI_PROBE_RECOVERY_FABRIC (B_DEVICE_OP_CODES_END+0x61eb)
 
 enum : uint32_t {
 	PIONEER_PCIE_TRACE_BEFORE_RESET=0,
@@ -89,6 +91,10 @@ enum : uint32_t {
 enum : uint32_t { PIONEER_RECOVERY_DETAIL_FIRMWARE_WAIT=0x46570002,
 	PIONEER_RECOVERY_DETAIL_MAPPING_WAIT=0x4d500002,
 	PIONEER_RECOVERY_DETAIL_PREPARE_WAIT=0x50520002 };
+// The fabric sequence was audited, but the retained session is not restored.
+enum : uint32_t { PIONEER_RECOVERY_STAGE_FABRIC_PREPARE=14,
+	PIONEER_RECOVERY_STAGE_FABRIC_SEQUENCE=15,
+	PIONEER_RECOVERY_DETAIL_FABRIC_AUDITED=0x46410001 };
 // Failure diagnostics, not retry authorizations. The low 24 bits identify
 // the read-only audit or guarded firmware operation that failed.
 enum : uint32_t { PIONEER_RECOVERY_DETAIL_FIRMWARE_PROBE=0x46000000,

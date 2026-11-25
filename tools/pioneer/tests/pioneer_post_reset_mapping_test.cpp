@@ -75,6 +75,7 @@ struct ConfigIO {
 	}
 };
 static int map_physical_memory(const char*,uint64_t addr,size_t size,int addressSpec,uint32 flags,void** out) {
+	TrackAccess();
 	assert(addressSpec==(B_ANY_KERNEL_ADDRESS|B_UNCACHED_MEMORY));
 	assert((flags&B_KERNEL_READ_AREA) && !(flags&B_UNCACHED_MEMORY));
 	const unsigned call=mapCalls++;if(int(call)==failMap)return mapFailureStatus;

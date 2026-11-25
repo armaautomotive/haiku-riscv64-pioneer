@@ -12,7 +12,8 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadState.h"
 using pioneer_driver_recovery_guard_v2_info=Guard;
 using PioneerQ35FabricArcCompileOwner=Owner;
-using thread_id=int;using team_id=int;
+using thread_id=int;using team_id=int;using status_t=int;
+enum { B_NOT_ALLOWED=-1,B_NO_MEMORY=-2,B_DEV_NOT_READY=-3,B_DEVICE_OP_CODES_END=1000 };
 struct thread_info { team_id team; };
 static thread_id find_thread(const char*) { return 10; }
 static int get_thread_info(thread_id,thread_info* info) { info->team=20;return B_OK; }
@@ -28,6 +29,9 @@ static uint64 sReloadGeneration=1;
 static unsigned sOpenCookies=1;
 static bool sColdRecoveryRequired=true,sBankStorageOnly=true,sReloadQuiesced=false;
 struct PioneerStoreContext {
+    Profile profile;struct { void* qwen35BorrowedRoleScope=nullptr; } io;
+    bool recoveryFabricStartAttempted=false,recoveryAttempted=false;uint64 recoveryFabricStartTicket=0;
+    void* recoveryFreshSession=nullptr;
     PioneerPostResetMapping* recoveryMapping=nullptr;
     Owner* recoveryFabricArcOwner=nullptr;
     PioneerDriverFabricRecoveryProof recoveryFabricEvidence{};
@@ -39,6 +43,7 @@ struct PioneerStoreContext {
 };
 struct PioneerQ35FabricArcCompileScope {};
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricHostScope.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricRecoveryStart.inc"
 
 struct Fixture {
     FabricQueue queue{0,0,0};PioneerPostResetMapping mapping;PioneerStoreContext context;
@@ -57,6 +62,54 @@ struct Fixture {
     bool Run() { return context.RunQ35FabricRecovery(&guard,123,firmware,reply,fleet,l2,*scope,stage); }
 };
 int main() {
+    {
+        FabricQueue queue{0,0,0};PioneerStoreContext context;PioneerProbeCookie cookie;Guard guard{Validate};
+        device=&queue;mapCount=deleteCount=0;failMap=failDelete=loseTicketOnDelete=-1;
+        changeQueueOnRead=loseTicketOnRead=-1;ticketValid=sColdRecoveryRequired=true;ResetUnit();
+        cookie.context=&context;sRuntimeOwner=sQwen35ExclusiveCookie=&cookie;sReloadQuiesced=false;sOpenCookies=1;
+        tt_pioneer_recovery_run result{};
+        assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_DEV_NOT_READY
+            && result.stage==PIONEER_RECOVERY_STAGE_FABRIC_SEQUENCE
+            && result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_AUDITED
+            && context.recoveryFabricStartAttempted && context.recoveryFabricStartTicket==123
+            && context.recoveryFabricEvidenceRecorded && context.recoveryFabricArcOwner
+            && context.recoveryMapping && context.recoveryMapping->q35CloseComplete
+            && queue.notifications==7 && sColdRecoveryRequired);
+        const unsigned before=queue.io;
+        assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_NOT_ALLOWED
+            && queue.io==before);
+        delete context.recoveryMapping;context.recoveryMapping=nullptr;
+    }
+    {
+        // An old faulted owner may have closed its fd; a newly admitted
+        // inspector must still operate on that exact retained context.
+        FabricQueue queue{0,0,0};PioneerStoreContext context;PioneerProbeCookie owner,inspector;Guard guard{Validate};
+        device=&queue;mapCount=deleteCount=0;failMap=failDelete=loseTicketOnDelete=-1;
+        changeQueueOnRead=loseTicketOnRead=-1;ticketValid=sColdRecoveryRequired=true;ResetUnit();
+        owner.context=&context;owner.finalFreeRetained=true;
+        sRuntimeOwner=&owner;sQwen35ExclusiveCookie=&inspector;sReloadQuiesced=false;sOpenCookies=1;
+        tt_pioneer_recovery_run result{};
+        assert(Qwen35FabricRecoveryStartLocked(&inspector,&owner,&context,&guard,123,10,20,result)==B_DEV_NOT_READY
+            && result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_AUDITED && context.recoveryFabricEvidenceRecorded
+            && context.recoveryMapping && context.recoveryMapping->q35CloseComplete && sColdRecoveryRequired);
+        delete context.recoveryMapping;context.recoveryMapping=nullptr;
+    }
+    {
+        FabricQueue queue{0,0,0};PioneerStoreContext context;PioneerProbeCookie cookie;Guard guard{Validate};
+        device=&queue;mapCount=deleteCount=0;failMap=failDelete=loseTicketOnDelete=-1;
+        changeQueueOnRead=loseTicketOnRead=-1;ticketValid=sColdRecoveryRequired=true;ResetUnit();dropReset=4;
+        cookie.context=&context;sRuntimeOwner=sQwen35ExclusiveCookie=&cookie;sReloadQuiesced=false;sOpenCookies=1;
+        tt_pioneer_recovery_run result{};
+        assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_DEV_NOT_READY
+            && result.stage==PIONEER_RECOVERY_STAGE_FABRIC_SEQUENCE && result.detail==5
+            && context.recoveryFabricStartAttempted && context.recoveryFabricStartTicket==123
+            && context.recoveryFabricArcOwner && context.recoveryFabricArcOwner->CurrentPhase()==Owner::Failed
+            && context.recoveryMapping && !context.recoveryFabricEvidenceRecorded && sColdRecoveryRequired);
+        const unsigned before=queue.io;
+        assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_NOT_ALLOWED
+            && queue.io==before);
+        delete context.recoveryMapping;context.recoveryMapping=nullptr;
+    }
     {
         Fixture f;
         const bool result=f.Run();

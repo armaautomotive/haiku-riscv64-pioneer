@@ -4,9 +4,11 @@ The pinned Tenstorrent system-firmware v18.5.0 source includes a Tensix reset
 sequence in [`app/smc/pytest/e2e_smoke.py`](https://github.com/tenstorrent/tt-system-firmware/blob/80b056af360a58730756467d5cc8df8db789640d/app/smc/pytest/e2e_smoke.py),
 `tensix_reset_sequence`. It is a candidate for recovering a faulted resident
 rewrite without resetting the PCIe endpoint. The complete sequence is wired
-inside a retained, non-loadable recovery transaction and has been simulated;
-no live recovery controller calls it, and it has not been tried on this
-Pioneer. Its context-owned queue adapter, eight RISC reset-unit writes and
+inside a retained, non-loadable recovery transaction and has been simulated.
+A one-shot private recovery request now prepares the guarded mapping and
+calls that transaction for a retained faulted session; it is present only in
+the non-loadable witness and has not been tried on this Pioneer. Its
+context-owned queue adapter, eight RISC reset-unit writes and
 120-worker unicast soft-reset pass retain the owner on uncertain failure.
 Unicast coverage and the expected all-ones reset-unit readback remain
 unverified on the card. The owner also requires an automatic-clock baseline,
@@ -42,10 +44,10 @@ That result does not establish whether the Tensix-only sequence succeeds or
 fails. Do not repeat the failed ASIC reset as a substitute for testing this
 candidate.
 
-Before any physical trial, connect this sequence to the real retained-owner
-recovery path rather than making another detached witness. Establish exclusive
-admission and serialization with firmware messages, PCI mappings and all NoC
-users; retain owner, snapshots and quarantine on an uncertain step; and define
+Before any physical trial, complete restoration and retirement in the
+retained-owner recovery path. Establish exclusive admission and serialization
+with firmware messages, PCI mappings and all NoC users; retain owner, snapshots
+and quarantine on an uncertain step; and define
 which steps can safely be resumed without reissuing a reset. Check the actual
 firmware identity and message response conventions, clock state restoration,
 all eight reset-unit words, the broadcast's harvested-core coverage, and the
