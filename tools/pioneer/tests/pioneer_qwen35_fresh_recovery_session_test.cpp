@@ -181,6 +181,9 @@ template<class Check> static bool PioneerQ35GuardedMmioBegin(MockIO& io,MockPci&
 }
 static bool PioneerResidentSessionIdle(MockIO&,MockNoc&,unsigned&) { return Step(3); }
 static bool PioneerPrepareHostPage(MockIO&,MockHost& host) { if (!Step(5)) return false;host.state=TT_HOST_PAGE_READY;host.allocated=1;host.released=0;return true; }
+template<class Check> static bool PioneerQ35GuardedPrepareHostPage(MockIO& io,MockHost& host,Check& check) {
+    return check() && PioneerPrepareHostPage(io,host) && check();
+}
 static bool PioneerResidentLeaseBegin(MockIO&,MockNoc&,MockLease& lease) {
     if (!Step(6)) return false;
     lease.ready=true;return true;
@@ -377,7 +380,7 @@ int main() {
             && session->Fresh()->io.quarantined && scope.retained && !old.qwen35QualificationOwner.retained);
         PioneerQ35FreshRecoverySession::DisposeSimulated(session);
     }
-    for (unsigned failure=1;failure<=8;failure++) {
+    for (unsigned failure=1;failure<=10;failure++) {
         Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
         int role=1,graph=2;old.qwen35SharedRoleBinding=&role;old.qwen35GraphOwner=&graph;
         old.qwen35QualificationOwner.active=false;old.qwen35QualificationOwner.retained=false;
@@ -389,7 +392,8 @@ int main() {
         assert(!session->PrepareFabricRole(&owner,old,&guard,scope) && scope.setupChecks==failure
             && session->CurrentStage()==PioneerQ35FreshRecoverySession::Retained
             && session->FailureStage()==(failure<=2?PioneerQ35FreshRecoverySession::Mapped
-                :failure<=6?PioneerQ35FreshRecoverySession::Baseline:PioneerQ35FreshRecoverySession::Lease)
+                :failure<=6?PioneerQ35FreshRecoverySession::Baseline
+                :failure<=8?PioneerQ35FreshRecoverySession::Host:PioneerQ35FreshRecoverySession::Lease)
             && old.recoveryFreshSession==session && old.qwen35SharedRoleBinding==&role && old.qwen35GraphOwner==&graph
             && old.banks.quarantined && session->Fresh()->io.quarantined && scope.retained
             && !old.qwen35QualificationOwner.retained);

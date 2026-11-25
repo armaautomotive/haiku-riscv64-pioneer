@@ -18,6 +18,7 @@
 #include "PioneerQwen35GuardedLeaseEnd.h"
 #include "PioneerQwen35GuardedMmioBegin.h"
 #include "PioneerQwen35GuardedMmioEnd.h"
+#include "PioneerQwen35GuardedHostPage.h"
 #endif
 #endif
 
@@ -240,6 +241,17 @@ private:
             return Retain(scope,Banks);
         fStage=Banks;
         if (!allowed(Banks)) return Retain(scope,Banks);
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        if (fabric) {
+            bool lost=false;
+            auto check=[&]() {
+                if (lost || !TicketValid(guard) || !scope.FreshRecoverySetupAccessAllowed(*this,old,*fresh,Host)
+                    || !TicketValid(guard)) { lost=true;return false; }
+                return true;
+            };
+            if (!PioneerQ35GuardedPrepareHostPage(fresh->io,fresh->host,check)) return Retain(scope,Host);
+        } else
+#endif
         if (!PioneerPrepareHostPage(fresh->io,fresh->host)) return Retain(scope,Host);
         fStage=Host;
         if (!allowed(Host)) return Retain(scope,Host);
