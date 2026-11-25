@@ -254,12 +254,12 @@ public:
         }
         fPhase=Captured; return true;
     }
-    // Deferred mode snapshots no private RAM before release. IO must prove
-    // that the prior RAM state can be preserved and that partial releases
-    // and unsnapshotted tiles can be recovered before admitting this mode.
-    template<class IO> bool CaptureAllStackless(uint32_t* code,unsigned codeWords,uint32_t* ram,
+    // Capture only held images and reset-control words. This does not read
+    // private RAM, write images, or authorize any release; StageImages still
+    // requires the stronger fleet-preparation proof independently.
+    template<class IO> bool CaptureAllStacklessHeldImages(uint32_t* code,unsigned codeWords,uint32_t* ram,
         unsigned ramWords,IO& io) {
-        if (fPhase!=Empty || !AllStacklessPreparationSafe(io)) return false;
+        if (fPhase!=Empty || !AllHeldAndRouted(io)) return false;
         for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
             uint32_t first=0,second=0;
             if (!io.AllRolesHeld(core) || !io.ReadResetDisable(core,first)
@@ -272,9 +272,21 @@ public:
         if (!fImages.CaptureAll(code,codeWords,io) || !fRam.PrepareStackless(ram,ramWords)) {
             fPhase=Unavailable; return false;
         }
+        if (!AllHeldAndRouted(io)) { fPhase=Unavailable; return false; }
         fStackless=true;
-        if (!AllStacklessPreparationSafe(io)) { fPhase=Faulted; return false; }
         fPhase=Captured; return true;
+    }
+    bool StacklessHeldImagesCaptured() const {
+        return fPhase==Captured && fStackless && fRam.StacklessCapturePrepared();
+    }
+    // The legacy combined admission keeps the stronger pre/post checks.
+    // They cover prior RAM preservation and recovery of partial releases.
+    template<class IO> bool CaptureAllStackless(uint32_t* code,unsigned codeWords,uint32_t* ram,
+        unsigned ramWords,IO& io) {
+        if (fPhase!=Empty || !AllStacklessPreparationSafe(io)
+            || !CaptureAllStacklessHeldImages(code,codeWords,ram,ramWords,io)) return false;
+        if (!AllStacklessPreparationSafe(io)) { fPhase=Faulted; return false; }
+        return true;
     }
     template<class IO> bool CaptureStacklessCore(unsigned core,IO& io) {
         if (!fStackless || fPhase!=ReleaseAttempted) return false;

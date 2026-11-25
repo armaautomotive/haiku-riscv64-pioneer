@@ -210,9 +210,17 @@ public:
             return false;
         }
 #endif
+        // Installation may begin its read-only held-image capture before
+        // the stronger stackless staging and release proofs exist.
+#ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
+        return CheckFleet(scope,[&](unsigned core) {
+            return scope->ProveRoleFleetHeldAndQuiet(c.io,core);
+        },false);
+#else
         return CheckFleet(scope,[&](unsigned core) {
             return scope->ProveRoleStacklessFleetPreparationSafe(c.io,core);
         },false);
+#endif
     }
     bool QualificationLeaseMatches(const PioneerQ35ProjectionScratch& scratch,unsigned bank,unsigned address,
         unsigned bytes,const unsigned (&routes)[2][PioneerQwen35::Banks]) const {

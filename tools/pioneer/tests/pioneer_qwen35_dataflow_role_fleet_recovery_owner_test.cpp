@@ -229,6 +229,25 @@ int main()
     std::vector<uint32_t> ramSnapshot(DataflowRoleFleetRecoveryOwner::RamWords());
     const uint32_t codeA[]={1,2,3},codeB[]={4,5},shimA[]={6,7},shimB[]={8,9};
     {
+        // Held image capture is read-only; missing release preparation must
+        // still deny staging without a single image or private-RAM write.
+        RecoveryIO io;io.stacklessPreparation=false;
+        const auto originalCode=io.code,originalRam=io.ram,originalBoots=io.boots,
+            originalShims=io.shims,originalDisable=io.resetDisable;
+        DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.SelectAutoRestoreMode()
+            && owner.CaptureAllStacklessHeldImages(codeSnapshot.data(),codeSnapshot.size(),
+                ramSnapshot.data(),ramSnapshot.size(),io)
+            && owner.StacklessHeldImagesCaptured() && owner.Untouched());
+        assert(!io.writes && !io.privateRamReads && io.code==originalCode && io.ram==originalRam
+            && io.boots==originalBoots && io.shims==originalShims && io.resetDisable==originalDisable);
+        assert(!owner.StageImages(codeA,3,codeB,2,shimA,2,shimB,2,io)
+            && owner.RestorationRequired() && !io.writes && !io.privateRamReads);
+        DataflowRoleFleetRecoveryOwner combined;
+        assert(!combined.CaptureAllStackless(codeSnapshot.data(),codeSnapshot.size(),
+            ramSnapshot.data(),ramSnapshot.size(),io) && combined.Untouched());
+    }
+    {
         RecoveryIO io;const auto original=io.resetDisable;
         DataflowRoleFleetRecoveryOwner owner;
         assert(owner.SelectComputeLocalRamPreservation());

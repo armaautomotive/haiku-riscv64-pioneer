@@ -312,12 +312,12 @@ int main() {
         assert(!scope.QualificationInstallationAllowed(*scratch,context)
             && borrowed.inspections==1 && !context.qwen35QualificationOwner.Retained());
         borrowed.inspectionOkay=true;
-        borrowed.preparation=true;borrowed.deniedPreparationCore=7;
+        borrowed.deniedHeldCore=7;
         assert(!scope.QualificationInstallationAllowed(*scratch,context)
             && context.io.runtimeCore==0 && context.io.selected==0
-            && borrowed.inspections==2 && !context.qwen35QualificationOwner.Retained() && !sColdRecoveryRequired);
-        borrowed.deniedPreparationCore=UINT32_MAX;
-        assert(scope.QualificationInstallationAllowed(*scratch,context) && borrowed.inspections==3);
+            && borrowed.inspections==1 && !context.qwen35QualificationOwner.Retained() && !sColdRecoveryRequired);
+        borrowed.deniedHeldCore=UINT32_MAX;
+        assert(scope.QualificationInstallationAllowed(*scratch,context) && borrowed.inspections==2);
         auto* qualification=context.qwen35QualificationOwner.Qualification();
         assert(qualification && qualification->Bind(*scratch,scope,0,Fixture::ScratchAddress,
             context.qwen35DataflowRoutes) && qualification->IsUnstarted());

@@ -346,6 +346,15 @@ public:
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
         return fTakeover.Stage(RoleImage(),io);
 #else
+#if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE)
+        if (PioneerQ35QualificationHeldOwnerAllowed(fContext,fContext.io)) {
+            if (!fOwner.CaptureAllStacklessHeldImages(fCodeSnapshot,DataflowRoleFleetRecoveryOwner::CodeWords(),
+                    fRamSnapshot,DataflowRoleFleetRecoveryOwner::RamWords(),io)) return false;
+            // The held-image capture itself does not prove staging, prior
+            // private-RAM preservation, or partial-release recovery.
+            if (!scope->ProveRoleStacklessFleetPreparationSafe(fContext.io,fContext.io.runtimeCore)) return false;
+        } else
+#endif
         if (!fOwner.CaptureAllStackless(fCodeSnapshot,DataflowRoleFleetRecoveryOwner::CodeWords(),
                 fRamSnapshot,DataflowRoleFleetRecoveryOwner::RamWords(),io)) return false;
         const auto image=RoleImage();

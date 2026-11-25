@@ -78,6 +78,9 @@ struct PioneerQ35SharedRoleBindingTestAccess {
             route(binding.fContext.io,*scope);
         return binding.SelectQualificationCaptureRoot(*scope,route);
     }
+    static bool HeldImagesCaptured(const PioneerQwen35SharedRoleBinding& binding) {
+        return binding.fOwner.StacklessHeldImagesCaptured();
+    }
     static void ExerciseSnapshotHoldLedger(PioneerQwen35SharedRoleBinding& b) {
         constexpr unsigned core=7;
         assert(!PioneerQ35SharedRoleSnapshotHoldTransition(&b,core,false));
@@ -373,8 +376,12 @@ static void ExerciseQualificationCaptureRoot(PioneerSessionIO& io)
     assert(io.SelectRuntimeCore(119));
     // The real inspector restores worker 119, then the binding must select
     // worker zero before held inspection. Later preparation remains denied.
-    assert(!io.SharedCaptureAndStageHeld() && io.runtimeCore==0 && !sColdRecoveryRequired
-        && gMapCalls==DataflowRolePhysicalControl+1);
+    const unsigned resetWrites=io.sharedResetWrites;
+    assert(!io.SharedCaptureAndStageHeld() && io.runtimeCore==119 && !sColdRecoveryRequired
+        && gMapCalls==DataflowRolePhysicalControl+1
+        && PioneerQ35SharedRoleBindingTestAccess::HeldImagesCaptured(*binding)
+        && io.sharedResetWrites==resetWrites
+        && gMemory[DataflowRolePhysicalExtraCode][0]==0x76540000U+DataflowRolePhysicalExtraCode);
     assert(io.SharedFinalizeBeforeResume() && PioneerQ35DestroySharedRoleBinding(binding));
     context->qwen35SharedRoleBinding=nullptr;gQualificationHeldOwnerAllowed=false;
     io.simulateArc=false;io.simulateHdma=false;ResetMaps();
