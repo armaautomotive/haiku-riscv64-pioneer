@@ -93,18 +93,33 @@ def main():
                        help='also execute a fixture prepared from the pinned 4B model')
     group.add_argument('--fused-model-fixture', type=Path,
                        help='execute full QKV, Alpha and Beta model projections on 120 workers')
+    group.add_argument('--resident-templates', type=Path,
+                       help='start the resident graph image using synthetic per-core templates')
     group.add_argument('--silu-fixture', type=Path,
                        help='also execute the separately generated 120-core SiLU operation')
     group.add_argument('--rms-fixture', type=Path,
                        help='also execute the separately generated 120-core RMS normalization')
+    parser.add_argument('--resident-corrupt-core', type=int,
+                        help='corrupt one resident template to exercise its startup fault')
+    parser.add_argument('--resident-fault-command', type=Path,
+                        help='submit a resident command against deliberately invalid stream records')
     args = parser.parse_args()
+    if args.resident_corrupt_core is not None and (not args.resident_templates
+            or not 0 <= args.resident_corrupt_core < 120):
+        parser.error('--resident-corrupt-core requires resident templates and a core in 0..119')
+    if args.resident_fault_command and (not args.resident_templates or args.resident_corrupt_core is not None):
+        parser.error('--resident-fault-command requires resident templates and no corrupt core')
+    resident_templates = args.resident_templates.read_bytes() if args.resident_templates else None
+    if resident_templates is not None and len(resident_templates) != 120 * 512:
+        raise ValueError('unexpected resident-template fixture size')
     image = args.image
     if not (image / 'activation-sharing.marker').is_file():
         raise ValueError('expected sharing-enabled standalone service image')
     boot = (image / 'boot.bin').read_bytes()
     text = (image / 'text.bin').read_bytes()
     dispatch = (image / 'dispatch.bin').read_bytes()
-    if boot != bytes.fromhex('6fc00600') or not 0 < len(text) <= 0xe000 or not 0 < len(dispatch) <= 0x5c00:
+    dispatch_limit = 0x7000 if resident_templates is not None else 0x5c00
+    if boot != bytes.fromhex('6fc00600') or not 0 < len(text) <= 0xe000 or not 0 < len(dispatch) <= dispatch_limit:
         raise ValueError('invalid service image layout')
     if len(text) % 4 or len(dispatch) % 4:
         raise ValueError('unaligned service image')
@@ -251,6 +266,13 @@ def main():
             write(mailbox_address, struct.pack('<16I', *words))
             write(role_address, struct.pack('<16I', 0x31524d35, 2, *([0] * 14)))
             write(handoff_address, bytes(12))
+            if resident_templates is not None:
+                template = bytearray(resident_templates[core * 512:(core + 1) * 512])
+                if core == args.resident_corrupt_core:
+                    template[0] ^= 1
+                write(bar + 0xab100, bytes(template))
+                write(bar + 0xab550, bytes([0xa5]) * 16)
+                write(bar + 0xab580, bytes([0xa5]) * 4)
             write32(bar, jump(0, 0x70000))
             write32(bar + 0x12000, jump(0x12000, 0x70100))
             write32(reset_address, 0x7000)  # Release BRISC and NCRISC only.
@@ -277,10 +299,59 @@ def main():
         for core in range(120):
             select_worker(core)
             words = struct.unpack('<16I', read(mailbox_address, 64))
+            if core == args.resident_corrupt_core:
+                if words[5:8] != (6, 4, 6):
+                    raise RuntimeError(f'core {core}: corrupt template did not fault: {words}')
+                continue
             if words[5:8] != (1, 0, 0) or words[15] != core:
                 raise RuntimeError(f'core {core}: service failed startup: {words}')
+            if resident_templates is not None and (read(bar + 0xab550, 16) != bytes(4) + bytes([0xa5]) * 12
+                                                    or read(bar + 0xab580, 4) != bytes(4)):
+                raise RuntimeError(f'core {core}: resident initialization did not run')
             if invocations is not None:
                 write(bar + 0xaa000, invocations[core * invocation_size:(core + 1) * invocation_size])
+
+        if args.resident_fault_command:
+            command = args.resident_fault_command.read_bytes()
+            if len(command) != 128:
+                raise ValueError('unexpected resident fault command size')
+            # The fixture assigns one stream per worker in bank 0. Explicitly
+            # zero the first record rather than relying on simulator RAM state.
+            for core in range(120):
+                address = 0x04000000 + core * 0x100000
+                select(2, address, 18, 12)
+                write(bar + 0x400000 + (address & 0x1fffff), bytes(2048))
+            select_worker(0)
+            write(bar + 0xab080, command[:64])
+            write(bar + 0xab0c0, command[64:])
+            for attempt in range(100):
+                lib.libttsim_clock(100000)
+                snapshots = []
+                for core in range(120):
+                    select_worker(core)
+                    snapshots.append(struct.unpack('<16I', read(mailbox_address, 64)))
+                if all(words[5] == 4 for words in snapshots):
+                    break
+                if any(words[5] not in (1, 2, 4) for words in snapshots):
+                    raise RuntimeError('unexpected resident state while testing invalid records')
+            else:
+                raise RuntimeError('resident fault did not reach all 120 simulated workers')
+            for core, words in enumerate(snapshots):
+                if (words[2:8] != (1, 0, 1, 4, 4, 5)
+                        or words[9:15] != (0x31464735, 1, 0, 120, 0x80000004, 0)
+                        or words[15] != core):
+                    raise RuntimeError(f'core {core}: unexpected graph fault: {words}')
+            lib.libttsim_clock(50000)
+            for core, before in enumerate(snapshots):
+                select_worker(core)
+                if struct.unpack('<16I', read(mailbox_address, 64)) != before:
+                    raise RuntimeError(f'core {core}: graph fault was not retained')
+            select_worker(0)
+            if struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
+                raise RuntimeError('faulted resident graph published a candidate')
+            print('PASS resident command reached 120 simulated workers; invalid stream records '
+                  'produced retained fetch faults without a completion candidate; NO HARDWARE')
+            return
 
         sequence = 0
         if invocations is not None:
@@ -402,6 +473,9 @@ def main():
         for core in range(120):
             select_worker(core)
             words = struct.unpack('<16I', read(mailbox_address, 64))
+            if core == args.resident_corrupt_core:
+                write32(role_address + 32, role_stop)
+                continue
             if words[2:8] != (sequence, sequence, sequence, 1, 0, 0):
                 raise RuntimeError(f'core {core}: service did not return to ready: {words}')
             write32(role_address + 32, role_stop)
@@ -411,12 +485,26 @@ def main():
         for core in range(120):
             select_worker(core)
             words = struct.unpack('<16I', read(mailbox_address, 64))
+            if core == args.resident_corrupt_core:
+                if words[5:8] != (6, 4, 6):
+                    raise RuntimeError(f'core {core}: startup fault was not retained: {words}')
+                roles = struct.unpack('<16I', read(role_address, 64))
+                if roles[8:11] != (role_stop, role_stop, role_stop):
+                    raise RuntimeError(f'core {core}: reader/writer did not stop: {roles}')
+                continue
             if words[2:8] != (sequence, sequence, sequence, 5, 0, 0) or words[15] != core:
                 raise RuntimeError(f'core {core}: service did not stop cleanly: {words}')
             roles = struct.unpack('<16I', read(role_address, 64))
             if roles[8:11] != (role_stop, role_stop, role_stop):
                 raise RuntimeError(f'core {core}: reader/writer did not stop: {roles}')
-        print('PASS compiled Q35 service and reader/writer roles start and stop on 120 Blackhole simulator cores; NO HARDWARE')
+        if resident_templates is not None:
+            if args.resident_corrupt_core is None:
+                print('PASS compiled resident graph service starts and stops on 120 simulator cores; NO HARDWARE')
+            else:
+                print(f'PASS corrupt resident template faults core {args.resident_corrupt_core}; '
+                      'other cores stop; SIMULATED ONLY')
+        else:
+            print('PASS compiled Q35 service and reader/writer roles start and stop on 120 Blackhole simulator cores; NO HARDWARE')
         if invocations is not None:
             if args.fused_model_fixture:
                 print('PASS two resident 116+2+2 QKV/Alpha/Beta projections match '

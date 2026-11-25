@@ -21,6 +21,34 @@ and starts and stops BRISC, NCRISC and TRISC0 on 120 simulated workers. The
 simulator starts from its own reset state; this is not evidence that the
 physical card's existing firmware, caches, or RAM can be taken over safely.
 
+The distinct resident graph image can also be checked with synthetic graph
+templates. Build the fixture and use a new output path for each file:
+
+```sh
+c++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  tools/pioneer/tests/pioneer_qwen35_ttsim_resident_fixture.cpp -o /tmp/q35-resident-fixture
+/tmp/q35-resident-fixture /tmp/q35-resident-templates.bin /tmp/q35-resident-command.bin
+python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py \
+  /path/to/unmodified-libttsim.so /path/to/build/qwen35-resident-service-image \
+  /path/to/build/qwen35-shared-role-images --resident-templates /tmp/q35-resident-templates.bin
+```
+
+This uses the sharing-enabled fused-recurrence image and checks initialization
+and clean idle stop of its compiled resident entrypoint on all 120 simulated
+workers. Add `--resident-corrupt-core 67` to corrupt one template: that worker
+must retain a startup fault while the other services and all reader/writer
+roles stop. Neither test starts a model graph.
+
+For a graph fault test, use the simulator with the zero-upper-length patch
+described below, the same resident image and fixture, and add
+`--resident-fault-command /tmp/q35-resident-command.bin`. The test explicitly
+zeros each synthetic stream's first record and submits one compact command to
+the root. The device's resident fanout reaches all 120 workers, which report
+and retain the expected first-record fetch fault; the root must not publish a
+completion candidate. Upstream `ttsim` stops at the unsupported upper-length
+register in this path. The test proves neither successful graph execution nor
+physical fault recovery, and it does not exercise model weights or performance.
+
 For the fixed projection, create the fixture in an existing empty directory:
 
 ```sh
