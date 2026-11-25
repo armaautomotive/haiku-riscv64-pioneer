@@ -57,10 +57,10 @@ with tempfile.TemporaryDirectory() as temporary:
     rejected('boot.bin', b'\0' * 4)
     rejected('text.bin', b'\0' * len(code))
     rejected('dispatch.bin', b'')
-    (image / 'dispatch.bin').write_bytes(b'\0' * 0x6000)
+    (image / 'dispatch.bin').write_bytes(b'\0' * 0x6400)
     module.generate(image)
     (image / 'dispatch.bin').write_bytes(dispatch)
-    rejected('dispatch.bin', b'\0' * (0x6000 + 4))
+    rejected('dispatch.bin', b'\0' * (0x6400 + 4))
     rejected('symbols.txt', symbols.replace('00072004', '00072002').encode())
     rejected('symbols.txt', symbols.replace('000a0404', '000a0408').encode())
     rejected('symbols.txt', (symbols + '00072000 T qwen35_dataflow_entry\n').encode())
@@ -77,9 +77,14 @@ with tempfile.TemporaryDirectory() as temporary:
         return subprocess.run(command + ['-D' + define for define in defines],
                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
     assert compiles(required)
+    assert not compiles(required + ['PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS'])
     for absent in required:
         assert not compiles([define for define in required if define != absent])
     for forbidden in ('PIONEER_QWEN35_RECOVERY_QUALIFY', 'PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL'):
         assert not compiles(required + [forbidden])
+    (image / 'activation-sharing.marker').touch()
+    generated.write_text(module.generate(image), encoding='ascii')
+    assert not compiles(required)
+    assert compiles(required + ['PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS'])
 
 print('PASS resident image exact packaging and rejected invalid layout; OFFLINE ONLY')

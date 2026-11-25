@@ -25,6 +25,15 @@ int main() {
 	assert(stage==DataflowDecoderSequenceComplete && sink->Sealed()
 		&& storage->writes==274*DataflowCoreCount && storage->raw.memory.size()==274*DataflowCoreCount);
 	assert(!live->ActivationReady(0) && live->ConvNextPosition(0)==0 && candidate->ConvNextPosition(0)==1);
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+	unsigned sharedRecords=0;
+	auto checkSharing=[&](const DataflowStreamRecord& record) {
+		if (record.header[5]!=DataflowProgramMagic) return;
+		DataflowCoreInvocation command{};std::memcpy(&command,record.payload,sizeof(command));
+		assert(DataflowCoreHeaderValid(command));
+		if (command.assignment.active) ++sharedRecords;
+	};
+#endif
 	for (unsigned core=0;core<DataflowCoreCount;core++) {
 		const auto& lease=plan->lease[core];
 		for (unsigned index:{0U,273U}) {
@@ -35,10 +44,19 @@ int main() {
 			assert(it!=storage->raw.memory.end());
 			DataflowStreamRecord actual{};std::memcpy(&actual,it->second.data(),sizeof(actual));
 			assert(DataflowStreamRecordStructureValid(actual,111,index*2+1,core));
+		#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+			checkSharing(actual);
+		#endif
 			std::memcpy(&actual,it->second.data()+512,sizeof(actual));
 			assert(DataflowStreamRecordStructureValid(actual,111,index*2+2,core));
+		#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+			checkSharing(actual);
+		#endif
 		}
 	}
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+	assert(sharedRecords);
+#endif
 	assert(PioneerResidentLeaseEnd(storage->raw,storage->noc,storage->lease));
 	assert(storage->raw.ReleaseHostPage()==0);storage->raw.Safe();
 	puts("PASS full graph recorder into protected page store: 548 steps, 120 cores; SIMULATED DEVICE");

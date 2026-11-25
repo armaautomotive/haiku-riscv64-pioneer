@@ -8,11 +8,27 @@
 #include "PioneerQwen35DataflowGraphWorkspace.h"
 #include "PioneerQwen35ProgramSchedule.h"
 
+#if defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS) \
+    && (!defined(PIONEER_QWEN35_DEVICE_DISPATCH) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) \
+        || (!defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS) && !defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)) \
+        || defined(PIONEER_QWEN35_RECOVERY_QUALIFY) \
+        || defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL))
+#error Activation sharing is restricted to the non-loadable shared graph witness
+#endif
+#if defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS) && defined(__GNUC__) && !defined(__clang__)
+#define PIONEER_Q35_SHARE_SIZE __attribute__((optimize("Os")))
+#else
+#define PIONEER_Q35_SHARE_SIZE
+#endif
 namespace PioneerQwen35 {
 
 enum : unsigned {
 	DataflowProgramMagic=0x31504635,
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+	DataflowProgramVersion=4,
+#else
 	DataflowProgramVersion=3,
+#endif
 	DataflowCoreCount=120,
 	DataflowMaxSegments=13,
 	DataflowCircularBufferCount=3,
@@ -646,6 +662,21 @@ inline bool DataflowProjectionMatchesRecurrentOutput(const DeviceLayout& manifes
 	return false;
 }
 
+enum : unsigned { DataflowActivationShareMaskWords=(DataflowCoreCount+31)/32 };
+static_assert(DataflowCoreCount==120 && DataflowActivationShareMaskWords==4,
+	"activation membership masks cover exactly 120 workers");
+struct DataflowActivationShareMembership {
+	uint32_t members[DataflowActivationShareMaskWords]{};
+	uint32_t leader=DataflowCoreCount,packing=0,inputKey=0;
+};
+inline unsigned DataflowActivationSharePacking(unsigned type) {
+	return type==8?8U:(type==12 || type==13 || type==14)?12U:0U;
+}
+struct DataflowCoreInvocation;
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+PIONEER_Q35_SHARE_SIZE inline bool DataflowActivationShareValid(const DataflowCoreInvocation&);
+#endif
+
 // Compact per-core invocation copied into local L1. The host builder keeps the
 // full 120-core schedule; each device core receives only its own assignment.
 struct DataflowCoreInvocation {
@@ -655,8 +686,11 @@ struct DataflowCoreInvocation {
 	DataflowCircularBuffer circularBuffer[DataflowCircularBufferCount];
 	RowSpace weights,input,output;
 	DataflowCoreProgram assignment;
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+	DataflowActivationShareMembership sharing;
+#endif
 
-	bool Valid() const
+	PIONEER_Q35_SHARE_SIZE bool Valid() const
 	{
 		if (magic!=DataflowProgramMagic || version!=DataflowProgramVersion
 			|| core>=DataflowCoreCount || !PioneerQwen35Projection::Supports(type,inputs)
@@ -676,6 +710,9 @@ struct DataflowCoreInvocation {
 			|| output.rowBytes!=sizeof(float) || output.unit!=16
 			|| inputFragmentCount!=input.count || outputFragmentCount!=output.count
 			|| !DataflowLocalCircularBuffersValid(circularBuffer)) return false;
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+		if (!DataflowActivationShareValid(*this)) return false;
+#endif
 		for (unsigned c=0;c<DataflowCircularBufferCount;c++) {
 			const auto& buffer=circularBuffer[c];
 			const unsigned address=c==0?DataflowWeightBufferAddress
@@ -718,6 +755,44 @@ struct DataflowCoreInvocation {
 		return groupsSeen==assignment.groups;
 	}
 };
+// A short consistency check only; it is not authentication or proof that
+// two workers have the same model-owned input or may exchange data.
+inline uint32_t DataflowActivationShareInputKey(const DataflowCoreInvocation& invocation)
+{
+	uint32_t hash=2166136261U;
+	auto add=[&](uint32_t word) { hash=(hash^word)*16777619U; };
+	add(invocation.inputBase);add(invocation.inputRows);add(DataflowActivationSharePacking(invocation.type));
+	add(invocation.input.rows);add(invocation.input.rowBytes);add(invocation.input.count);add(invocation.input.unit);
+	for (unsigned i=0;i<invocation.input.count;i++) {
+		const auto& part=invocation.input.parts[i];
+		add(part.bank);add(part.address);add(part.firstRow);add(part.rows);
+	}
+	for (unsigned bank=0;bank<Banks;bank++) add(invocation.bankRoute[0][bank]);
+	return hash;
+}
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+inline bool DataflowActivationShareValid(const DataflowCoreInvocation& invocation)
+{
+	const auto& group=invocation.sharing;
+	if (!group.packing) {
+		if (group.leader!=DataflowCoreCount || group.inputKey)
+			return false;
+		for (unsigned word:group.members) if (word) return false;
+		return true;
+	}
+	if (!invocation.assignment.active || invocation.core>=DataflowCoreCount
+		|| !invocation.input.Valid()
+		|| group.packing!=DataflowActivationSharePacking(invocation.type)
+		|| group.leader>=DataflowCoreCount || group.inputKey!=DataflowActivationShareInputKey(invocation)
+		|| (group.members[3]&0xff000000U)
+		|| !(group.members[invocation.core/32]&(uint32_t(1)<<(invocation.core%32)))
+		|| !(group.members[group.leader/32]&(uint32_t(1)<<(group.leader%32)))) return false;
+	for (unsigned core=0;core<group.leader;core++)
+		if (group.members[core/32]&(uint32_t(1)<<(core%32))) return false;
+	return true;
+}
+#endif
+#undef PIONEER_Q35_SHARE_SIZE
 static_assert(DataflowProgramAddress>=DataflowLocalBufferEnd
 	&& DataflowProgramAddress>=0xa0400 && DataflowProgramRegionEnd<=0xb0000
 	&& sizeof(DataflowCoreInvocation)<=DataflowProgramRegionBytes

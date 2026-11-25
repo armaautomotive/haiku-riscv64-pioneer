@@ -234,7 +234,11 @@ inline bool DataflowQueuePopFront(DataflowQueueView& queue,uint32_t ticket)
 
 inline bool DataflowCoreHeaderValid(const DataflowCoreInvocation& program)
 {
-	return program.Valid();
+	return program.Valid()
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+		&& (!program.assignment.active || program.sharing.packing)
+#endif
+		;
 }
 
 inline bool DataflowBindQueues(const DataflowCoreInvocation& program,

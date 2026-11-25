@@ -673,6 +673,12 @@ sh "$directory/run_pioneer_qwen35_activation_pipeline_tests.sh"
 "$cxx" -std=c++17 -Os -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \
     -I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
     -c "$directory/pioneer_qwen35_activation_share_plan_target_probe.cpp" -o "$temporary/activation-share-host.o"
+"$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -ffreestanding -fstack-usage \
+    -mcmodel=medany -fpic -D_KERNEL_MODE -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+    -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS \
+    -DPIONEER_QWEN35_PAIRED_RECURRENCE -DPIONEER_QWEN35_FUSED_RECURRENCE \
+    -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+    -c "$directory/pioneer_qwen35_dataflow_stream_recorder_kernel_probe.cpp" -o "$temporary/activation-share-recorder-host.o"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -pthread \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_program_test.cpp" \
 	-o "$temporary/dataflow-program-test"
@@ -1279,6 +1285,11 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_stream_recording_integration_test.cpp" \
 	-o "$temporary/stream-recording-integration-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/stream-recording-integration-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS \
+    -DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS "$directory/pioneer_qwen35_stream_recording_integration_test.cpp" \
+    -o "$temporary/sharing-stream-recording-integration-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sharing-stream-recording-integration-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dynamic_token_test.cpp" \
 	-o "$temporary/dynamic-token-test"

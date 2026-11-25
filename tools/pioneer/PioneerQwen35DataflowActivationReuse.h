@@ -30,7 +30,7 @@ inline void DataflowActivationReuseSetStep(DataflowActivationReuse& cache,unsign
 // uses a different representation. No projection math is performed here.
 inline unsigned DataflowActivationReusePacking(unsigned type)
 {
-	return type==8?8U:(type==12 || type==13 || type==14)?12U:0U;
+	return DataflowActivationSharePacking(type);
 }
 inline bool DataflowActivationReuseDisjoint(const RowSpace& input,const RowSpace& output)
 {

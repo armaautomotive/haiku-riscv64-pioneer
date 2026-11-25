@@ -14,18 +14,38 @@ sdk="$build/objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_d
 umask 077
 mkdir -m 700 "$output"
 flags='-std=c++17 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -fstack-usage -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32'
-"$cross-g++" $flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+case "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" in
+    0) sharing_flags=; sharing_optimization= ;;
+    1) [ "${PIONEER_QWEN35_SHARED_ROLE_GRAPH_COMPILE_ONLY:-0}:${PIONEER_QWEN35_RESIDENT_SERVICE_COMPILE_ONLY:-0}" = 1:1 ] || exit 2
+       sharing_flags='-DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS'
+       if [ "${PIONEER_QWEN35_FUSED_RECURRENCE_COMPILE_ONLY:-0}" = 1 ]; then
+           sharing_flags="$sharing_flags -DPIONEER_QWEN35_PAIRED_RECURRENCE -DPIONEER_QWEN35_FUSED_RECURRENCE"
+       else
+           sharing_flags="$sharing_flags -DPIONEER_QWEN35_PAIRED_RECURRENCE"
+       fi
+       sharing_optimization=-Os ;;
+    *) exit 2 ;;
+esac
+"$cross-g++" $flags $sharing_optimization $sharing_flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 	-c "$directory/PioneerQwen35DataflowSharedRoles.cpp" -o "$output/shared-roles.o"
+if [ "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1 ]; then
+	# Size optimization may emit local structure-copy helpers; link the same
+	# freestanding implementations used by the resident graph image.
+	"$cross-g++" $flags -Os -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+		-c "$directory/PioneerQwen35DataflowMemory.cpp" -o "$output/memory.o"
+fi
 "$cross-g++" -c -x assembler-with-cpp -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
 	-I"$directory" "$directory/blackhole_qwen35_shared_role_start.S" -o "$output/shared-start.o"
 for role in reader writer; do
 	if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70100; start=0xb0000; limit=0xb5000
 	else shim=0x70100; shim_limit=0x70200; start=0xb5000; limit=0xb8000; fi
+	set -- "$output/shared-start.o" "$output/shared-roles.o"
+	if [ "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1 ]; then set -- "$@" "$output/memory.o"; fi
 	"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
 		--defsym ROLE_SHIM_ADDRESS=$shim --defsym ROLE_SHIM_LIMIT=$shim_limit \
 		--defsym ROLE_ADDRESS=$start --defsym ROLE_LIMIT=$limit \
 		-e "qwen35_shared_${role}_start" -T "$directory/blackhole_qwen35_shared_role_witness.ld" \
-		"$output/shared-start.o" "$output/shared-roles.o" -o "$output/$role.elf"
+		"$@" -o "$output/$role.elf"
 	"$cross-nm" -u "$output/$role.elf" > "$output/$role.imports"
 	test ! -s "$output/$role.imports"
 	"$cross-nm" -n "$output/$role.elf" > "$output/$role.symbols"
@@ -105,11 +125,13 @@ PY
 for role in reader writer; do
 	if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70100; start=0xb0000; limit=0xb5000
 	else shim=0x70100; shim_limit=0x70200; start=0xb5000; limit=0xb8000; fi
+	set -- "$output/exclusive-start.o" "$output/shared-roles.o"
+	if [ "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1 ]; then set -- "$@" "$output/memory.o"; fi
 	"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
 		--defsym ROLE_SHIM_ADDRESS=$shim --defsym ROLE_SHIM_LIMIT=$shim_limit \
 		--defsym ROLE_ADDRESS=$start --defsym ROLE_LIMIT=$limit \
 		-e "qwen35_shared_${role}_start" -T "$directory/blackhole_qwen35_shared_role_witness.ld" \
-		"$output/exclusive-start.o" "$output/shared-roles.o" -o "$output/exclusive-$role.elf"
+		"$@" -o "$output/exclusive-$role.elf"
 	"$cross-nm" -u "$output/exclusive-$role.elf" > "$output/exclusive-$role.imports"
 	test ! -s "$output/exclusive-$role.imports"
 	"$cross-nm" -n "$output/exclusive-$role.elf" > "$output/exclusive-$role.symbols"

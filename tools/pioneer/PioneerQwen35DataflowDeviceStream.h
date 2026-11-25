@@ -11,7 +11,11 @@ namespace PioneerQwen35 {
 enum : unsigned {
 	DataflowStreamBindingMagic=0x31425335,
 	DataflowStreamRecordMagic=0x31525335,
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+	DataflowStreamVersion=2,
+#else
 	DataflowStreamVersion=1,
+#endif
 	DataflowStreamRecordBytes=2048,
 	DataflowStreamHeaderWords=16,
 	DataflowStreamPayloadWords=(DataflowStreamRecordBytes/4)-DataflowStreamHeaderWords,
@@ -131,6 +135,15 @@ inline uint32_t DataflowStreamChecksum(const uint32_t* words,unsigned count)
 
 // Host-side encoder: the existing authority must first authorize the exact
 // program and bind it to this core. Valid() checks shape, not model ownership.
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+template<class Invocation> inline bool DataflowStreamSharingReady(const Invocation&) { return true; }
+inline bool DataflowStreamSharingReady(const DataflowCoreInvocation& invocation)
+{
+	// DataflowStreamEncode has already called Valid(), including the full
+	// membership check; this only excludes an unassigned active command.
+	return !invocation.assignment.active || invocation.sharing.packing;
+}
+#endif
 template<class Invocation>
 bool DataflowStreamEncode(const Invocation& invocation,unsigned epoch,unsigned step,
 	DataflowStreamRecord& record)
@@ -139,7 +152,11 @@ bool DataflowStreamEncode(const Invocation& invocation,unsigned epoch,unsigned s
 	if (!epoch || !step || step>DataflowStreamMaxRecords || !invocation.Valid()
 		|| invocation.core>=DataflowCoreCount || (bytes&3)
 		|| bytes!=DataflowStreamInvocationBytes(invocation.magic)
-		|| bytes>sizeof(record.payload)) return false;
+		|| bytes>sizeof(record.payload)
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+		|| !DataflowStreamSharingReady(invocation)
+#endif
+		) return false;
 	const uintptr_t sourceAddress=reinterpret_cast<uintptr_t>(&invocation);
 	const uintptr_t recordAddress=reinterpret_cast<uintptr_t>(&record);
 	if (sourceAddress>UINTPTR_MAX-bytes || recordAddress>UINTPTR_MAX-sizeof(record)

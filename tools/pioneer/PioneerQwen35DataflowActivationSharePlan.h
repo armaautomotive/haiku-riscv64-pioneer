@@ -9,30 +9,6 @@ namespace PioneerQwen35 {
 // It makes no device write and grants no peer, NoC, or firmware authority.
 // The caller must bind its result to immutable, independently authorized graph
 // records; each device must still verify its own command and peer routes.
-enum : unsigned { DataflowActivationShareMaskWords=(DataflowCoreCount+31)/32 };
-struct DataflowActivationShareMembership {
-    uint32_t members[DataflowActivationShareMaskWords]{};
-    uint32_t leader=DataflowCoreCount,packing=0,inputKey=0;
-};
-
-inline uint32_t DataflowActivationShareInputKey(const DataflowCoreInvocation& invocation)
-{
-    // This detects accidental disagreement; it is not authentication and a
-    // matching hash alone never authorizes a transfer or proves equality.
-    uint32_t hash=2166136261U;
-    auto add=[&](uint32_t word) { hash=(hash^word)*16777619U; };
-    add(invocation.inputBase);add(invocation.inputRows);
-    add(DataflowActivationReusePacking(invocation.type));
-    add(invocation.input.rows);add(invocation.input.rowBytes);
-    add(invocation.input.count);add(invocation.input.unit);
-    for (unsigned i=0;i<invocation.input.count;i++) {
-        const auto& part=invocation.input.parts[i];
-        add(part.bank);add(part.address);add(part.firstRow);add(part.rows);
-    }
-    for (unsigned bank=0;bank<Banks;bank++) add(invocation.bankRoute[0][bank]);
-    return hash;
-}
-
 // Allocate this object outside the kernel stack. One Add per logical core,
 // including inactive cores, is required before sealing. Grouping compares
 // the full source layout and routes, rather than relying on the short key.

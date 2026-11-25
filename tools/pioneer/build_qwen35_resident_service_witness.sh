@@ -28,9 +28,16 @@ case "${PIONEER_QWEN35_FUSED_RECURRENCE_COMPILE_ONLY:-0}" in
     1) [ -f "$graph/fused-recurrence.marker" ] || exit 2; fused_flags=-DPIONEER_QWEN35_FUSED_RECURRENCE ;;
     *) exit 2 ;;
 esac
+case "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" in
+    0) [ ! -e "$graph/activation-sharing.marker" ] || exit 2; sharing_flags= ;;
+    1) [ -f "$graph/activation-sharing.marker" ] || exit 2
+       sharing_flags=-DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+       : > "$output/activation-sharing.marker" ;;
+    *) exit 2 ;;
+esac
 flags='-std=c++17 -Os -fno-inline-functions-called-once -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -fstack-usage -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32'
 "$cross-g++" $flags -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
-    -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE $tree_flags $fused_flags \
+    -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE $tree_flags $fused_flags $sharing_flags \
     -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
     -c "$directory/PioneerQwen35DataflowResidentServiceEntry.cpp" -o "$output/resident-service-entry.o"
 "$cross-as" -march=rv32imf_zicsr -mabi=ilp32 -mno-relax \

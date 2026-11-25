@@ -18,7 +18,7 @@ struct PlanSink {
     std::unique_ptr<DataflowActivationSharePlan> plan;
     std::unique_ptr<DataflowCoreInvocation[]> commands;
     unsigned index=UINT32_MAX,seen=0,steps=0,active=0,multiple=0;
-    bool negativesChecked=false,overlapChecked=false;
+    bool negativesChecked=false,overlapChecked=false,recordNegativeChecked=false,recordReadChecked=false;
     bool Finish() {
         if (!plan) return true;
         assert(seen==DataflowCoreCount && plan->Seal() && plan->Groups());
@@ -28,6 +28,12 @@ struct PlanSink {
             if (!command.assignment.active) { assert(!plan->Get(core,group));continue; }
             ++active;assert(plan->Get(core,group) && group.packing==DataflowActivationReusePacking(command.type)
                 && group.inputKey==DataflowActivationShareInputKey(command));
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+            assert(DataflowCoreHeaderValid(command) && command.sharing.leader==group.leader
+                && command.sharing.packing==group.packing && command.sharing.inputKey==group.inputKey);
+            for (unsigned word=0;word<DataflowActivationShareMaskWords;word++)
+                assert(command.sharing.members[word]==group.members[word]);
+#endif
             unsigned leader=DataflowCoreCount;
             for (unsigned peer=0;peer<DataflowCoreCount;peer++) {
                 const bool member=(group.members[peer/32]>>(peer%32))&1U;
@@ -59,6 +65,21 @@ struct PlanSink {
             auto invalid=std::make_unique<DataflowActivationSharePlan>();
             auto bad=commands[0];bad.core=DataflowCoreCount;
             assert(!invalid->Add(bad) && !invalid->Seal());
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+            for (unsigned core=0;core<DataflowCoreCount;core++) if (commands[core].assignment.active) {
+                auto broken=commands[core];broken.sharing.members[core/32]&=~(uint32_t(1)<<(core%32));
+                assert(!broken.Valid() && !DataflowCoreHeaderValid(broken));
+                broken=commands[core];broken.sharing.inputKey^=1;
+                assert(!broken.Valid() && !DataflowCoreHeaderValid(broken));
+                broken=commands[core];broken.sharing.members[3]|=0x80000000U;
+                assert(!broken.Valid() && !DataflowCoreHeaderValid(broken));
+                broken=commands[core];broken.sharing={};
+                assert(broken.Valid() && !DataflowCoreHeaderValid(broken));
+                DataflowStreamRecord record{};
+                assert(!DataflowStreamEncode(broken,1,1,record));
+                break;
+            }
+#endif
             negativesChecked=true;
         }
         if (!overlapChecked) for (unsigned core=0;core<DataflowCoreCount;core++) {
@@ -66,6 +87,9 @@ struct PlanSink {
             if (!bad.assignment.active || bad.inputBase>bad.output.rows
                 || bad.inputRows>bad.output.rows-bad.inputBase) continue;
             bad.input=bad.output;bad.inputFragmentCount=bad.input.count;
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+            bad.sharing={};
+#endif
             if (!bad.Valid()) continue;
             assert(!DataflowActivationReuseDisjoint(bad.input,bad.output));
             auto overlap=std::make_unique<DataflowActivationSharePlan>();
@@ -77,10 +101,12 @@ struct PlanSink {
         plan.reset();commands.reset();seen=0;return true;
     }
     bool Begin(const DataflowStreamPlan&) { return true; }
-    bool StageRecord(const DataflowStreamBinding& binding,const Range&,unsigned step,
+    bool StageRecord(const DataflowStreamBinding& binding,const Range& lease,unsigned step,
         const DataflowStreamRecord& record) {
+        (void)lease;
         if (step!=index) { assert(Finish());index=step; }
         if (record.header[5]!=DataflowProgramMagic) return true;
+        assert(DataflowStreamRecordStructureValid(record,binding.epoch,step+1,binding.core));
         if (!plan) {
             plan=std::make_unique<DataflowActivationSharePlan>();
             commands=std::make_unique<DataflowCoreInvocation[]>(DataflowCoreCount);
@@ -88,11 +114,62 @@ struct PlanSink {
         assert(binding.core<DataflowCoreCount && binding.core==seen);
         std::memcpy(&commands[binding.core],record.payload,sizeof(DataflowCoreInvocation));
         assert(commands[binding.core].core==binding.core && plan->Add(commands[binding.core]));
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+        if (!recordNegativeChecked && commands[binding.core].assignment.active) {
+            auto changed=commands[binding.core];changed.sharing.inputKey^=1;
+            auto forged=record;std::memcpy(forged.payload,&changed,sizeof(changed));
+            forged.header[7]=DataflowStreamChecksum(forged.payload,forged.header[6]/4);
+            assert(DataflowStreamRecordStructureValid(forged,binding.epoch,step+1,binding.core)
+                && !DataflowCoreHeaderValid(changed));
+            forged=record;forged.header[1]=1;
+            assert(!DataflowStreamRecordStructureValid(forged,binding.epoch,step+1,binding.core));
+            recordNegativeChecked=true;
+        }
+        if (!recordReadChecked && commands[binding.core].assignment.active) {
+            struct Read {
+                const DataflowStreamRecord& record;const DataflowStreamBinding& binding;
+                unsigned step;bool corrupt=false;
+                bool ReadStream(unsigned bank,unsigned address,unsigned route,uint8_t* out,unsigned bytes) {
+                    if (bank!=binding.bank || route!=binding.route
+                        || address!=binding.base+step*DataflowStreamRecordBytes || bytes>sizeof(record)) return false;
+                    std::memcpy(out,&record,bytes);
+                    if (corrupt) out[64+offsetof(DataflowCoreInvocation,sharing)]^=1;
+                    return true;
+                }
+            } io{record,binding,step};
+            DataflowStreamRecord staging{};alignas(64) uint32_t output[DataflowProgramRegionBytes/4]{};
+            auto unchanged=[](DataflowStreamRecord&) { return true; };
+            const unsigned warmBytes=DataflowStreamRecordReadBytes(record.header[6]);
+            assert(warmBytes<sizeof(record) && DataflowStreamFetchTransform(io,binding,lease,
+                commands[binding.core].bankRoute,binding.core,step,staging,output,sizeof(output),
+                unchanged,nullptr,warmBytes));
+            DataflowCoreInvocation copied{};std::memcpy(&copied,output,sizeof(copied));
+            assert(DataflowCoreHeaderValid(copied)
+                && std::memcmp(&copied.sharing,&commands[binding.core].sharing,sizeof(copied.sharing))==0);
+            io.corrupt=true;
+            assert(!DataflowStreamFetchTransform(io,binding,lease,commands[binding.core].bankRoute,
+                binding.core,step,staging,output,sizeof(output),unchanged,nullptr,warmBytes) && !output[0]);
+            recordReadChecked=true;
+        }
+#endif
         ++seen;return true;
     }
     bool Seal(const DataflowStreamPlan&) { return Finish(); }
     void Abort() { assert(false); }
 };
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+struct PartialProjectionSink {
+    unsigned projections=0;bool aborted=false,sealed=false;
+    bool Begin(const DataflowStreamPlan&) { return true; }
+    bool StageRecord(const DataflowStreamBinding& binding,const Range&,unsigned,
+        const DataflowStreamRecord& record) {
+        if (record.header[5]!=DataflowProgramMagic) return true;
+        ++projections;return binding.core!=53;
+    }
+    bool Seal(const DataflowStreamPlan&) { sealed=true;return true; }
+    void Abort() { aborted=true; }
+};
+#endif
 int main() {
     (void)&q35_share_fixture_main;
     auto fixture=std::make_unique<Fixture>();
@@ -109,6 +186,15 @@ int main() {
         0,42,0,true,sink,*record,*projection,stage));
     assert(stage==DataflowDecoderSequenceComplete && sink.negativesChecked && sink.overlapChecked
         && sink.steps && sink.active);
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+    assert(sink.recordNegativeChecked && sink.recordReadChecked
+        && DataflowStreamVersion==2 && DataflowProgramVersion==4);
+    auto rejected=std::make_unique<DataflowProjectionAuthority>();
+    PartialProjectionSink failed;stage=0;
+    assert(!DataflowStreamRecording::Build(fixture->packed,*live,*rejected,*stream,fixture->routes,
+        0,42,0,true,failed,*record,*projection,stage));
+    assert(failed.aborted && !failed.sealed && failed.projections==54 && !live->ActivationReady(0));
+#endif
     std::printf("PASS %u recorded projection steps, %u active shards, %u mixed-group steps; "
         "exact peer masks and retained planner failures; SIMULATED ONLY\n",sink.steps,sink.active,sink.multiple);
 }

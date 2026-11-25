@@ -19,11 +19,13 @@ PIONEER_QWEN35_LOCAL_RESTORE_PROBE_BUILD=1 sh "$directory/build_qwen35_local_res
 for role in reader writer; do
     if [ "$role" = reader ]; then shim=0x70000; shim_limit=0x70100; start=0xb0000; limit=0xb5000
     else shim=0x70100; shim_limit=0x70200; start=0xb5000; limit=0xb8000; fi
+    set -- "$output/service-shim.o" "$output/shared/shared-roles.o"
+    if [ "${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1 ]; then set -- "$@" "$output/shared/memory.o"; fi
     "$cross-ld" -m elf32lriscv --no-relax --gc-sections \
         --defsym ROLE_SHIM_ADDRESS="$shim" --defsym ROLE_SHIM_LIMIT="$shim_limit" \
         --defsym ROLE_ADDRESS="$start" --defsym ROLE_LIMIT="$limit" \
         -e "qwen35_shared_${role}_start" -T "$directory/blackhole_qwen35_shared_role_witness.ld" \
-        "$output/service-shim.o" "$output/shared/shared-roles.o" -o "$output/$role.elf"
+        "$@" -o "$output/$role.elf"
     "$cross-nm" -u "$output/$role.elf" > "$output/$role.imports"
     test ! -s "$output/$role.imports"
     "$cross-nm" -n "$output/$role.elf" > "$output/$role.symbols"

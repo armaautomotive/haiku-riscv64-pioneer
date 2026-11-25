@@ -5,6 +5,9 @@
 #include "PioneerQwen35DataflowDecoderSequence.h"
 #include "PioneerQwen35DataflowStreamPlan.h"
 #include "PioneerQwen35DataflowProjectionPair.h"
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+#include "PioneerQwen35DataflowActivationSharePlan.h"
+#endif
 #include <new>
 
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
@@ -23,6 +26,30 @@ template<class Sink> class DataflowStreamRecorder {
 	DataflowStreamRecord& record;
 	unsigned steps=0;
 	bool failed=false;
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+	// Bind the complete fleet once before emitting any record for this step.
+	// The heap owns the exact invocations used to build the group masks, so
+	// a second bind cannot silently change an input or output after planning.
+	template<class Bind> bool EmitSharedProjection(Bind bind) {
+		if (failed || steps>=plan.count) return false;
+		auto* sharing=new(std::nothrow) DataflowActivationSharePlan;
+		auto* commands=new(std::nothrow) DataflowCoreInvocation[DataflowCoreCount]();
+		if (!sharing || !commands) { delete sharing;delete[] commands;failed=true;return false; }
+		bool okay=true;
+		for (unsigned core=0;core<DataflowCoreCount && okay;core++)
+			okay=bind(core,commands[core]) && commands[core].core==core && sharing->Add(commands[core]);
+		if (okay) okay=sharing->Seal();
+		for (unsigned core=0;core<DataflowCoreCount && okay;core++) {
+			auto& invocation=commands[core];
+			if (invocation.assignment.active) okay=sharing->Get(core,invocation.sharing);
+			if (okay) okay=DataflowStreamEncode(invocation,plan.epoch,steps+1,record)
+				&& sink.StageRecord(plan.binding[core],plan.lease[core],steps,record);
+		}
+		delete[] commands;delete sharing;
+		if (!okay) { failed=true;return false; }
+		steps++;return true;
+	}
+#endif
 	template<class Builder,class Invocation,class Program>
 	bool Emit(const Program& program) {
 		if (failed || steps>=plan.count) return false;
@@ -47,8 +74,13 @@ public:
 			&& candidate.CompleteEmbedding(p)?0:Fail();
 	}
 	template<class IO> __attribute__((noinline)) int RunProjection(const DataflowProjectionProgram& p,IO&) {
+	#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+		auto bind=[&](unsigned core,DataflowCoreInvocation& out) { return DataflowProgramBuilder::BindCore(p,core,out); };
+		return candidate.Begin(p) && EmitSharedProjection(bind) && candidate.Complete(p)?0:Fail();
+	#else
 		return candidate.Begin(p) && Emit<DataflowProgramBuilder,DataflowCoreInvocation>(p)
 			&& candidate.Complete(p)?0:Fail();
+	#endif
 	}
 	// The caller must build both programs from this candidate before calling;
 	// this path advances only speculative metadata until the full graph passes.
@@ -58,6 +90,10 @@ public:
 			|| !candidate.Authorize(a) || !candidate.Authorize(b)
 			|| !candidate.Begin(a) || !candidate.Complete(a)
 			|| !candidate.Begin(b) || !candidate.Complete(b)) return Fail();
+	#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+		auto bind=[&](unsigned core,DataflowCoreInvocation& out) { return DataflowProjectionPair::BindCore(a,b,core,out); };
+		return EmitSharedProjection(bind)?0:Fail();
+	#else
 		// Kept off Haiku's small kernel stack; the model graph is recorded
 		// once, and no allocation occurs in the resident token loop.
 		auto* invocation=new(std::nothrow) DataflowCoreInvocation;
@@ -71,6 +107,7 @@ public:
 		}
 		delete invocation;
 		steps++;return 0;
+	#endif
 	}
 #ifdef PIONEER_QWEN35_FUSED_RECURRENCE
 	template<class IO> __attribute__((noinline)) int RunIndependentProjectionTriple(const DataflowProjectionProgram& a,
@@ -80,6 +117,10 @@ public:
 			|| !candidate.Begin(a) || !candidate.Complete(a)
 			|| !candidate.Begin(b) || !candidate.Complete(b)
 			|| !candidate.Begin(c) || !candidate.Complete(c)) return Fail();
+	#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+		auto bind=[&](unsigned core,DataflowCoreInvocation& out) { return DataflowProjectionTriple::BindCore(a,b,c,core,out); };
+		return EmitSharedProjection(bind)?0:Fail();
+	#else
 		auto* invocation=new(std::nothrow) DataflowCoreInvocation;
 		if (!invocation) return Fail();
 		for (unsigned core=0;core<DataflowCoreCount;core++) {
@@ -90,6 +131,7 @@ public:
 			}
 		}
 		delete invocation;steps++;return 0;
+	#endif
 	}
 #endif
 	template<class IO> int RunRms(const DataflowRmsProgram& p,IO&) {

@@ -19,7 +19,12 @@ for mode in ordinary paired fused; do
         ${CXX:-c++} $flags $extra "$directory/$test.cpp" -o "$temporary/$test-$mode"
         ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/$test-$mode"
     done
+    ${CXX:-c++} $flags $extra -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+        -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS \
+        "$directory/pioneer_qwen35_activation_share_plan_test.cpp" -o "$temporary/sharing-record-$mode"
+    ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sharing-record-$mode"
 done
+python3 "$directory/pioneer_qwen35_activation_sharing_guard_test.py"
 ${CXX:-c++} $flags -DPIONEER_QWEN35_PAIRED_RECURRENCE -DPIONEER_QWEN35_FUSED_RECURRENCE \
     "$directory/pioneer_qwen35_projection_triple_test.cpp" -o "$temporary/triple"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/triple"
@@ -28,3 +33,8 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/met
 ${CXX:-c++} $flags -DPIONEER_QWEN35_PAIRED_RECURRENCE -DPIONEER_QWEN35_FUSED_RECURRENCE \
     "$directory/pioneer_qwen35_dynamic_token_test.cpp" -o "$temporary/fused-dynamic"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fused-dynamic"
+${CXX:-c++} $flags -DPIONEER_QWEN35_PAIRED_RECURRENCE -DPIONEER_QWEN35_FUSED_RECURRENCE \
+    -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS \
+    -DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS \
+    "$directory/pioneer_qwen35_dynamic_token_test.cpp" -o "$temporary/sharing-dynamic"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sharing-dynamic"

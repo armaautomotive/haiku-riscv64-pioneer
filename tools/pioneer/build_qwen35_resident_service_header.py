@@ -11,6 +11,7 @@ from struct import iter_unpack, unpack
 
 
 def generate(directory: Path) -> str:
+    sharing = (directory / 'activation-sharing.marker').is_file()
     boot = (directory / 'boot.bin').read_bytes()
     text = (directory / 'text.bin').read_bytes()
     dispatch = (directory / 'dispatch.bin').read_bytes()
@@ -18,7 +19,7 @@ def generate(directory: Path) -> str:
         raise ValueError('unexpected resident boot jump')
     if not 0 < len(text) <= 0xe000 or len(text) % 4:
         raise ValueError('resident text does not fit its aligned L1 range')
-    if not 0 < len(dispatch) <= 0x6000 or len(dispatch) % 4:
+    if not 0 < len(dispatch) <= 0x6400 or len(dispatch) % 4:
         raise ValueError('resident dispatch does not fit its aligned L1 range')
 
     symbols = {}
@@ -51,7 +52,9 @@ def generate(directory: Path) -> str:
         '!defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || '
         '!defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) || '
         '!defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) || '
-        'defined(PIONEER_QWEN35_RECOVERY_QUALIFY) || '
+        + ('!defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS) || ' if sharing
+           else 'defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS) || ')
+        + 'defined(PIONEER_QWEN35_RECOVERY_QUALIFY) || '
         'defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL)\n'
         '#error "resident service image is restricted to the non-loadable snapshot witness"\n'
         '#endif\nnamespace PioneerQwen35 {\n'
