@@ -59,6 +59,11 @@ class PioneerQ35ResidentDriverOwner {
     Session session;
     PioneerQwen35::DataflowResidentOwnedRunner<Handle> runner;
     Handle* active=nullptr;
+    // One spare of each per-token object is kept by the resident owner.
+    // Neither is reused while a run is active or retained. Reconstructing
+    // in place resets the one-shot transport and candidate authority.
+    Handle* idleHandle=nullptr;
+    PioneerQwen35::DataflowProjectionAuthority* idleCandidate=nullptr;
     bool bound=false,scopeRetained=false,reservationRetained=false;
 
     bool BaseSafe() const {
@@ -127,18 +132,34 @@ class PioneerQ35ResidentDriverOwner {
         }
         Handle* NewResidentRun() {
             if (owner.active) return nullptr;
-            owner.active=PioneerQ35NewAligned<Handle>(owner);return owner.active;
+            if (owner.idleHandle) {
+                auto* p=owner.idleHandle;owner.idleHandle=nullptr;
+                p->~Handle();owner.active=::new (p) Handle(owner);
+            } else owner.active=PioneerQ35NewAligned<Handle>(owner);
+            return owner.active;
         }
         PioneerQwen35::DataflowProjectionAuthority* NewResidentCandidate() {
             static_assert(alignof(PioneerQwen35::DataflowProjectionAuthority)<=alignof(void*),
                 "authority requires ordinary kernel allocation");
-            return new(std::nothrow) PioneerQwen35::DataflowProjectionAuthority;
+            using Authority=PioneerQwen35::DataflowProjectionAuthority;
+            if (!owner.idleCandidate) return new(std::nothrow) Authority;
+            auto* p=owner.idleCandidate;
+            if (p==owner.context.qwen35DataflowAuthority) { sColdRecoveryRequired=true;return nullptr; }
+            owner.idleCandidate=nullptr;p->~Authority();return ::new (p) Authority;
         }
         void DeleteResidentRun(Handle* handle) {
             if (!handle || owner.active!=handle) { sColdRecoveryRequired=true;return; }
-            owner.active=nullptr;PioneerQ35DeleteAligned(handle);
+            owner.active=nullptr;
+            if (owner.idleHandle) { sColdRecoveryRequired=true;PioneerQ35DeleteAligned(handle);return; }
+            owner.idleHandle=handle;
         }
-        void DeleteResidentCandidate(PioneerQwen35::DataflowProjectionAuthority* authority) { delete authority; }
+        void DeleteResidentCandidate(PioneerQwen35::DataflowProjectionAuthority* authority) {
+            if (!authority) return;
+            if (authority==owner.context.qwen35DataflowAuthority || authority==owner.idleCandidate) {
+                sColdRecoveryRequired=true;return;
+            }
+            if (owner.idleCandidate) delete authority;else owner.idleCandidate=authority;
+        }
         bool ResidentCommitAllowed(const Session& requested,const Run& run) {
             return owner.active && &run==&owner.active->run && &requested==&owner.session
                 && owner.HandleSafe(owner.active,run.command) && owner.PhysicalRuntimeProof(owner.context.io,run.command);
@@ -157,6 +178,11 @@ class PioneerQ35ResidentDriverOwner {
 public:
     PioneerQ35ResidentDriverOwner(PioneerStoreContext& c,PioneerQ35GraphOwner* g,PioneerQ35StreamRecordingWitness& s)
         :context(c),graph(g),stream(s) {}
+    ~PioneerQ35ResidentDriverOwner() {
+        PioneerQ35DeleteAligned(idleHandle);
+        if (idleCandidate==context.qwen35DataflowAuthority && idleCandidate) sColdRecoveryRequired=true;
+        else delete idleCandidate;
+    }
     bool Bind() {
         const auto* plan=stream.SealedPlan();
         if (bound || !plan || !context.qwen35DataflowService) return false;
@@ -179,7 +205,7 @@ public:
         return result;
     }
     bool CanDestroy() const {
-        return !Retained() && !active && (!bound
+        return !Retained() && !active && (!idleCandidate || idleCandidate!=context.qwen35DataflowAuthority) && (!bound
             || (context.qwen35DataflowService && context.qwen35DataflowService->Closed()));
     }
     PioneerQwen35::DataflowResidentSessionResult RunToken(unsigned position,unsigned token,bool decode,unsigned polls,
