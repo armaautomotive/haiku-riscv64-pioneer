@@ -12,7 +12,8 @@ struct Role {
         attempted=true;return true;
     }
 };
-struct Context { Role* qwen35SharedRoleBinding=nullptr;int* qwen35GraphOwner=nullptr;void* recoveryFreshSession=nullptr; };
+struct Context { Role* qwen35SharedRoleBinding=nullptr;int* qwen35GraphOwner=nullptr;void* recoveryFreshSession=nullptr;
+    bool recoveryFabricRoleOwnerReleaseAttempted=false,recoveryFabricRoleOwnerReleased=false; };
 struct Check {
     unsigned calls=0,failAt=0;bool live=true;
     bool operator()() { if (++calls==failAt) live=false;return live; }
@@ -29,10 +30,12 @@ int main() {
         destroyed=0;int graph=1;Context ctx{new Role,&graph,nullptr};Check check;check.failAt=fail;
         const bool released=PioneerQ35ReleaseFabricRoleOwner(ctx,7,check);
         if (!fail) {
-            assert(released && !ctx.qwen35SharedRoleBinding && ctx.qwen35GraphOwner==&graph && destroyed==1);
+            assert(released && !ctx.qwen35SharedRoleBinding && ctx.qwen35GraphOwner==&graph && destroyed==1
+                && ctx.recoveryFabricRoleOwnerReleaseAttempted && ctx.recoveryFabricRoleOwnerReleased);
             checks=check.calls;assert(checks>=5);
         } else {
-            assert(!released && ctx.qwen35GraphOwner==&graph && destroyed<=1);
+            assert(!released && ctx.qwen35GraphOwner==&graph && destroyed<=1
+                && !ctx.recoveryFabricRoleOwnerReleased);
             if (ctx.qwen35SharedRoleBinding) {
                 assert(!destroyed);
                 if (ctx.qwen35SharedRoleBinding->attempted) {

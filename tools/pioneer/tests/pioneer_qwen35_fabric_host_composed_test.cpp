@@ -49,6 +49,8 @@ struct PioneerStoreContext {
     bool recoveryFabricEvidenceRecorded=false;
     bool recoveryFabricPcieAuditAttempted=false,recoveryFabricPcieAudited=false;
     bool recoveryFabricRoleViewsDisposed=false;
+    bool recoveryFabricRoleOwnerReleaseAttempted=false,recoveryFabricRoleOwnerReleased=false;
+    bool recoveryFabricGraphRetirementAttempted=false,recoveryFabricGraphRetirementRecorded=false;
     bool dispatchOwnerRetained=true,q35PciReservationHeld=true,q35PciReleaseAttempted=false;
     bool bankStorageOnly=true;uint64 bytes=PioneerResidentBanks::Total;
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricRecoveryTransaction.inc"
@@ -106,6 +108,19 @@ struct Fixture {
     bool Run() { return context.RunQ35FabricRecovery(&guard,123,firmware,reply,fleet,l2,*scope,stage); }
 };
 int main() {
+    for (unsigned stale=0;stale<4;stale++) {
+        FabricQueue queue{0,0,0};PioneerStoreContext context;PioneerProbeCookie cookie;Guard guard{Validate};
+        device=&queue;mapCount=deleteCount=0;failMap=failDelete=loseTicketOnDelete=-1;
+        changeQueueOnRead=loseTicketOnRead=-1;ticketValid=sColdRecoveryRequired=true;ResetUnit();
+        cookie.context=&context;sRuntimeOwner=sQwen35ExclusiveCookie=&cookie;sReloadQuiesced=false;sOpenCookies=1;
+        if (stale==0) context.recoveryFabricRoleOwnerReleaseAttempted=true;
+        if (stale==1) context.recoveryFabricRoleOwnerReleased=true;
+        if (stale==2) context.recoveryFabricGraphRetirementAttempted=true;
+        if (stale==3) context.recoveryFabricGraphRetirementRecorded=true;
+        tt_pioneer_recovery_run result{};
+        assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_NOT_ALLOWED
+            && !context.recoveryFabricStartAttempted && !context.recoveryMapping && !queue.io);
+    }
     {
         FabricQueue queue{0,0,0};PioneerStoreContext context;PioneerProbeCookie cookie;Guard guard{Validate};
         device=&queue;mapCount=deleteCount=0;failMap=failDelete=loseTicketOnDelete=-1;

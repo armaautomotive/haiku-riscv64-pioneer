@@ -14,18 +14,27 @@ bool PioneerQ35ReleaseFabricRoleOwner(Context& context,uint64_t ticket,Check& ch
 {
     auto* role=context.qwen35SharedRoleBinding;
     auto* graph=context.qwen35GraphOwner;
-    if (!role || !graph || !ticket || context.recoveryFreshSession) return false;
+    if (!role || !graph || !ticket || context.recoveryFreshSession
+        || context.recoveryFabricRoleOwnerReleaseAttempted || context.recoveryFabricRoleOwnerReleased) return false;
     auto before=[&]() {
         return context.qwen35SharedRoleBinding==role && context.qwen35GraphOwner==graph
             && !context.recoveryFreshSession && check()
             && context.qwen35SharedRoleBinding==role && context.qwen35GraphOwner==graph
             && !context.recoveryFreshSession;
     };
-    if (!before() || !role->BeginFabricDestroy(ticket,before) || !before()) return false;
+    if (!before() || !role->BeginFabricDestroy(ticket,before)) return false;
+    context.recoveryFabricRoleOwnerReleaseAttempted=true;
+    if (!before()) return false;
     delete role;
     context.qwen35SharedRoleBinding=nullptr;
-    return !context.recoveryFreshSession && context.qwen35GraphOwner==graph
-        && check() && !context.recoveryFreshSession && context.qwen35GraphOwner==graph
-        && !context.qwen35SharedRoleBinding;
+    if (context.recoveryFreshSession || context.qwen35GraphOwner!=graph || !check()
+        || context.recoveryFreshSession || context.qwen35GraphOwner!=graph || context.qwen35SharedRoleBinding)
+        return false;
+    context.recoveryFabricRoleOwnerReleased=true;
+    if (!check() || context.recoveryFreshSession || context.qwen35GraphOwner!=graph
+        || context.qwen35SharedRoleBinding) {
+        context.recoveryFabricRoleOwnerReleased=false;return false;
+    }
+    return true;
 }
 #endif

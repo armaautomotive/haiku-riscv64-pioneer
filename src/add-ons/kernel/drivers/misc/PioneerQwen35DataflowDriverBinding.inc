@@ -2126,6 +2126,21 @@ public:
 	}
 	const PioneerQwen35::DataflowStreamPlan* SealedPlan() const { return recorded?&plan:nullptr; }
 	unsigned SealedSlot() const { return recordedSlot; }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+	// Identity and ranges only. The sticky bank owner is this graph's sink,
+	// including when the bank is quarantined; no page access is authorized.
+	bool FabricRetainedBankClaimMatches() const {
+		using namespace PioneerQwen35;
+		if (!recorded || !plan.ready || !sink.Sealed()
+			|| !context.banks.Q35StreamClaimIdentity(&sink,DataflowCoreCount)) return false;
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			const auto& lease=plan.lease[core];
+			if (lease.address<BankBase || !context.banks.Q35RetainedSealedRange(&sink,core,
+				{lease.bank,lease.address-BankBase,lease.bytes})) return false;
+		}
+		return true;
+	}
+#endif
 	bool ReserveGraphSession(const PioneerQwen35::DataflowGraphSession* owner,
 		const PioneerQwen35::DataflowStreamPlan& requested,unsigned slot) {
 		if (!owner || graphSession
@@ -2576,6 +2591,21 @@ public:
 #else
 		(void)ticket;return false;
 #endif
+	}
+	// Graph storage contains the sticky stream-bank claim owner. It must not
+	// be freed independently of the old bank/context, even after its run has
+	// retired and the role owner has gone away.
+	bool FabricContextRetirementReady(uint64_t ticket) const {
+		return ticket && context.qwen35GraphOwner==this && !context.recoveryFreshSession
+			&& !context.qwen35SharedRoleBinding && context.recoveryFabricRoleOwnerReleaseAttempted
+			&& context.recoveryFabricRoleOwnerReleased && !context.recoveryMapping
+			&& context.recoveryFabricStartTicket==ticket && context.recoveryFabricEvidenceRecorded
+			&& context.recoveryFabricEvidence.ReadyToRetireOneOwner()
+			&& context.io.fabricOldMmioDisposeComplete && context.io.fabricHostDisposeComplete
+			&& context.q35PciReservationHeld && !context.q35PciReleaseAttempted
+			&& context.qwen35DataflowService && context.qwen35DataflowMemory
+			&& context.qwen35DataflowAuthority && context.qwen35DataflowProgramScratch
+			&& stream.FabricRetainedBankClaimMatches() && FabricGraphRetired(ticket);
 	}
 #endif
 #endif

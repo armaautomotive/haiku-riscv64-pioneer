@@ -561,6 +561,8 @@ struct PioneerStoreContext {
     bool recoveryFabricEvidenceRecorded=false,recoveryFabricPcieAudited=false;
     bool recoveryFabricPciIdle=false,recoveryFabricAuditReleased=false;
     bool recoveryFabricRoleViewsDisposed=false;
+    bool recoveryFabricRoleOwnerReleaseAttempted=false,recoveryFabricRoleOwnerReleased=false;
+    bool recoveryFabricGraphRetirementAttempted=false,recoveryFabricGraphRetirementRecorded=false;
     bool q35PciReservationHeld=true,q35PciReleaseAttempted=false;
     uint64 recoveryFabricStartTicket=0;
     MockRecoverySession* recoveryFreshSession=nullptr;

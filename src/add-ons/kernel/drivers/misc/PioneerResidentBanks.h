@@ -189,6 +189,14 @@ public:
 		const auto& actual=q35StreamRanges[index];
 		return actual.bank==expected.bank && actual.offset==expected.offset && actual.bytes==expected.bytes;
 	}
+	// Identity metadata only, including a quarantined claim. This does not
+	// authorize access or clear the sticky claim; its owner must outlive the
+	// bank context. Used when a recovered graph is retained for final teardown.
+	bool Q35RetainedSealedRange(const void* owner,unsigned index,const PioneerQ35StreamBankRange& expected) const {
+		if (!q35StreamSealed || !Q35StreamClaimIdentity(owner,120) || index>=q35StreamCount) return false;
+		const auto& actual=q35StreamRanges[index];
+		return actual.bank==expected.bank && actual.offset==expected.offset && actual.bytes==expected.bytes;
+	}
 	bool Q35StreamPage(const tt_dram_samples_result& baseline,const void* owner,
 		unsigned bank,uint64_t offset,bool write,uint32_t& address,uint32_t& route,uint32_t& index) const {
 		if (!owner || owner!=q35StreamOwner || (write && q35StreamSealed)

@@ -34,6 +34,8 @@ Qwen35FabricRecoveryStartLocked(PioneerProbeCookie* inspector,PioneerProbeCookie
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
         || context->recoveryFabricPcieAuditAttempted || context->recoveryFabricPcieAudited
         || context->recoveryFabricRoleViewsDisposed
+        || context->recoveryFabricRoleOwnerReleaseAttempted || context->recoveryFabricRoleOwnerReleased
+        || context->recoveryFabricGraphRetirementAttempted || context->recoveryFabricGraphRetirementRecorded
 #endif
         || context->recoveryAttempted || context->recoveryMapping || context->recoveryFabricArcOwner
         || !sColdRecoveryRequired || !context->dispatchOwnerRetained || !context->q35PciReservationHeld

@@ -4237,6 +4237,8 @@ struct PioneerStoreContext {
 	bool recoveryFabricEvidenceRecorded=false;
 	bool recoveryFabricPcieAuditAttempted=false,recoveryFabricPcieAudited=false;
 	bool recoveryFabricRoleViewsDisposed=false;
+	bool recoveryFabricRoleOwnerReleaseAttempted=false,recoveryFabricRoleOwnerReleased=false;
+	bool recoveryFabricGraphRetirementAttempted=false,recoveryFabricGraphRetirementRecorded=false;
 #endif
 	bool q35PciReservationHeld=false,q35PciReleaseAttempted=false;
 #endif
@@ -5311,6 +5313,7 @@ PioneerSessionIO::SharedHostDmaPciSourceStable()
 #include "PioneerQwen35DataflowSharedRoleBinding.inc"
 #if defined(PIONEER_QWEN35_FABRIC_GUARD_WITNESS) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
 #include "PioneerQwen35FabricRoleRecoverySequence.h"
+#include "PioneerQwen35FabricGraphRetirement.h"
 // Type-check the complete intermediate sequence with the real owners and
 // synthetic scopes. It grants no physical authority and is not an ioctl.
 static __attribute__((used,noinline)) bool
@@ -5322,6 +5325,12 @@ PioneerQ35FabricRoleSequenceCompileWitness(PioneerQ35FreshRecoverySession& sessi
 	PioneerQ35FabricParentRestoreCompileScope parent{allowed};
 	PioneerQ35FabricFreshViewsCompileGuard bar{allowed};
 	return PioneerQ35RestoreFabricRoleSequence(session,old,guard,scope,roleScope,parent,bar,polls);
+}
+static __attribute__((used,noinline)) bool
+PioneerQ35FabricGraphRetirementCompileWitness(PioneerStoreContext& context,uint64 ticket,bool allowed)
+{
+	auto check=[&]() { return allowed; };
+	return PioneerQ35RecordFabricGraphRetirement(context,ticket,check);
 }
 #endif
 #ifdef PIONEER_QWEN35_FABRIC_HOST_CONTROLLER

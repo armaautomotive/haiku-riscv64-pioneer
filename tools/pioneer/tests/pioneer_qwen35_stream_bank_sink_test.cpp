@@ -72,6 +72,8 @@ int main() {
 	assert(refused.raw.ReleaseHostPage()==0);refused.raw.Safe();
 	Storage storage;auto sink=std::make_unique<DataflowStreamPageSink<Storage>>(storage);
 	assert(sink->Begin(plan));
+	const auto retainedRange=PioneerQ35StreamBankRange{plan.lease[0].bank,plan.lease[0].address-BankBase,plan.lease[0].bytes};
+	assert(!storage.banks.Q35RetainedSealedRange(sink.get(),0,retainedRange));
 	assert(!sink->SealedMatches(plan));
 	assert(!sink->Seal(plan));
 	uint32_t address=0,route=0,index=0;
@@ -119,6 +121,16 @@ int main() {
 	}
 	storage.banks.Quarantine();
 	assert(!sink->SealedMatches(plan));
+	assert(storage.banks.Q35RetainedSealedRange(sink.get(),0,retainedRange)
+		&& !storage.banks.Q35RetainedSealedRange(&storage,0,retainedRange)
+		&& !storage.banks.Q35RetainedSealedRange(sink.get(),120,retainedRange));
+	for (unsigned core=0;core<DataflowCoreCount;core++) {
+		const auto& lease=plan.lease[core];
+		assert(storage.banks.Q35RetainedSealedRange(sink.get(),core,
+			{lease.bank,lease.address-BankBase,lease.bytes}));
+	}
+	auto wrongRetainedRange=retainedRange;wrongRetainedRange.offset+=4096;
+	assert(!storage.banks.Q35RetainedSealedRange(sink.get(),0,wrongRetainedRange));
 	assert(PioneerResidentLeaseEnd(storage.raw,storage.noc,storage.lease));
 	assert(storage.raw.ReleaseHostPage()==0);storage.raw.Safe();
 	Storage failed;auto broken=std::make_unique<DataflowStreamPageSink<Storage>>(failed);
