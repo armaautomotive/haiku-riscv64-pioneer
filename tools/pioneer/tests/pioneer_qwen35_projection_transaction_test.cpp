@@ -86,6 +86,22 @@ int main() {
     uint32_t stage=0,routeStage=0,routeCore=0;bool output=false,cleaned=false;
     assert(!bad.RunDataflowQualificationTransaction(scope,stage,routeStage,routeCore,output,cleaned)
         && !output && cleaned && stage==14 && !bad.qwen35QualificationOwner.retained);
+    Context receiptSuccess;unsigned receiptCalls=0;
+    auto receipt=[&]() {
+        ++receiptCalls;
+        assert(receiptSuccess.calls.back()==13 && !receiptSuccess.qwen35QualificationOwner.retained);
+        return true;
+    };
+    assert(receiptSuccess.RunDataflowQualificationTransactionWithReceipt(scope,receipt,stage,routeStage,routeCore,output,cleaned)
+        && receiptCalls==1 && cleaned && receiptSuccess.calls.back()==14);
+    Context receiptDenied;auto deny=[&]() { assert(receiptDenied.calls.back()==13);return false; };
+    assert(!receiptDenied.RunDataflowQualificationTransactionWithReceipt(scope,deny,stage,routeStage,routeCore,output,cleaned)
+        && output && !cleaned && stage==13 && receiptDenied.qwen35QualificationOwner.retained
+        && receiptDenied.calls.back()==13);
+    Context invalidWithReceipt;invalidWithReceipt.badOutput=true;receiptCalls=0;
+    auto forbidden=[&]() { ++receiptCalls;return true; };
+    assert(!invalidWithReceipt.RunDataflowQualificationTransactionWithReceipt(scope,forbidden,stage,routeStage,routeCore,output,cleaned)
+        && !output && cleaned && receiptCalls==0);
     Context failedAbandon;failedAbandon.failure=2;failedAbandon.failAbandon=true;
     assert(!failedAbandon.RunDataflowQualificationTransaction(scope,stage,routeStage,routeCore,output,cleaned)
         && failedAbandon.abandoned && failedAbandon.qwen35QualificationOwner.retained && !cleaned);

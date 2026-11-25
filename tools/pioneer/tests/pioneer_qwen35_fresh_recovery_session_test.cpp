@@ -158,7 +158,9 @@ struct MockIO : PioneerHostDmaAuditIO {
 };
 class PioneerQ35FreshRecoverySession;
 struct MockMatrixReceipt {
+    bool valid=true;
     template<class... Args> bool Seal(Args&&...) { return false; }
+    template<class... Args> bool Matches(Args&&...) const { return valid; }
 };
 struct PioneerStoreContext {
     uint64 bytes;
@@ -314,6 +316,8 @@ struct Scope {
         if (loseRoleEvidence) old.fabricRoleRestorationReady=false;
         return roleRestored;
     }
+    template<class Receipt> bool FreshRoleRecoveryAfterMatrixQualification(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) { return true; }
     template<class Receipt> bool FreshRoleRecoveryCloseAdmission(PioneerQ35FreshRecoverySession&,
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) { return roleCloseAdmission; }
     template<class Receipt> bool FreshRoleRecoveryPostLeaseAudit(PioneerQ35FreshRecoverySession&,
@@ -469,7 +473,7 @@ int main() {
     }
     // A role session keeps both owners and host pages after closing only its
     // fresh transport. Selection must return to root before lease cleanup.
-    for (unsigned scenario=0;scenario<10;scenario++) {
+    for (unsigned scenario=0;scenario<11;scenario++) {
         Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
         int role=1,graph=2,replacement=3;old.qwen35SharedRoleBinding=&role;old.qwen35GraphOwner=&graph;
         old.qwen35QualificationOwner.active=false;old.qwen35QualificationOwner.retained=false;
@@ -490,6 +494,8 @@ int main() {
         if (scenario==7) failGuardAt=guardCalls+1;
         if (scenario==8) scope.roleCloseAdmission=false;
         if (scenario==9) scope.rolePostLease=false;
+        if (scenario==10) old.recoveryFabricMatrixReceipt.valid=false;
+        const unsigned beforeClose=operations.size();
         const bool closed=session->CloseRoleTransport(&guard,scope);
         if (!scenario) {
             assert(closed && fresh->io.runtimeCore==0 && fresh->io.freshMmioDisposed
@@ -514,6 +520,7 @@ int main() {
                 && scope.retained && old.recoveryFreshSession==session && old.banks.quarantined
                 && fresh->banks.quarantined && fresh->io.quarantined && old.q35PciReservationHeld
                 && !old.qwen35QualificationOwner.retained);
+            if (scenario==10) assert(operations.size()==beforeClose);
         }
         PioneerQ35FreshRecoverySession::DisposeSimulated(session);
     }

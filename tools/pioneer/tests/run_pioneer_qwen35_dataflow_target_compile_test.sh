@@ -1311,6 +1311,8 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror \
 	-o "$temporary/resident-dispatch-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-dispatch-test"
 python3 -B "$directory/pioneer_qwen35_resident_service_header_test.py"
+python3 -B "$directory/pioneer_qwen35_qualification_service_header_test.py"
+python3 -B "$directory/pioneer_qwen35_selected_service_image_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_graph_owner_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_model_transaction_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_graph_session_test.py"

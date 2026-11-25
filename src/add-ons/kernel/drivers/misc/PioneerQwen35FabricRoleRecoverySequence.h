@@ -45,6 +45,10 @@ bool PioneerQ35RestoreFabricRoleSequence(Session& session,Context& old,Guard* gu
         || !allowed() || !role->VerifyFabricRolesAfterParent(fresh->io,roleScope,allowed)
         || !allowed() || !role->CloseFabricRecoveryViews(allowed,protectedArea)
         || !allowed() || !session.VerifyRoleRestoration(guard,scope)
+        // This callback must run the fixed projection under the same ticket,
+        // close and restore its resources, and seal its matrix receipt. It
+        // must guard every hardware operation independently of this sequence.
+        || !allowed() || !scope.FabricRoleQualifyMatrix(session,old,*fresh,guard,ticket)
         || !allowed() || !session.CloseRoleTransport(guard,scope)
         || !allowed() || !session.DisposeRoleOldHostBuffers(guard,scope)
         || !allowed() || !session.PublishRoleMappingsDisposed(guard,scope)

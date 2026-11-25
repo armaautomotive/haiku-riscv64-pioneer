@@ -535,6 +535,8 @@ public:
     // This closes only the fresh transport. The scope must prove the role and
     // parent graph were restored, their mappings closed, and the root lease
     // close cannot invalidate either; it must revalidate after lease close.
+    // Its matrix and post-diagnostic restoration callbacks are metadata-only:
+    // they may not access hardware after the fresh transport starts closing.
     // The old owner, snapshots, host pages and PCI reservation stay retained.
     template<class Scope>
     bool CloseRoleTransport(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
@@ -542,7 +544,10 @@ public:
         auto verified=[&]() {
             return fRoleReceipt.ticket==fTicket && fRoleReceipt.binding==fRoleBinding
                 && fRoleReceipt.graph==fGraphOwner && fOld->qwen35SharedRoleBinding==fRoleBinding
-                && fOld->qwen35GraphOwner==fGraphOwner && fFresh->io.fleetEnabled;
+                && fOld->qwen35GraphOwner==fGraphOwner && fFresh->io.fleetEnabled
+                && fOld->recoveryFabricMatrixReceipt.Matches(*fOld,fTicket,guard,scope)
+                && scope.FreshRoleRecoveryAfterMatrixQualification(*this,*fOld,*fFresh,fRoleReceipt)
+                && fOld->recoveryFabricMatrixReceipt.Matches(*fOld,fTicket,guard,scope);
         };
         if (!TicketValid(guard) || !verified()
             || !scope.FreshRoleRecoveryCloseAdmission(*this,*fOld,*fFresh,fRoleReceipt)

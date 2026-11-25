@@ -23,6 +23,12 @@ struct PioneerQ35FreshRecoveryCompileScope {
         PioneerStoreContext&,uint64) const { return allowed; }
     bool FreshRoleRecoveryRestored(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&) const { return allowed; }
+    bool FabricRoleQualifyMatrix(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
+        PioneerStoreContext&,pioneer_driver_recovery_guard_v2_info*,uint64) const { return false; }
+    bool FabricMatrixReceiptStillOwned(PioneerStoreContext&,const void*,const void*,const void*,const void*,
+        const void*,uint64) const { return false; }
+    template<class Receipt> bool FreshRoleRecoveryAfterMatrixQualification(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return false; }
     template<class Receipt> bool FreshRoleRecoveryCloseAdmission(PioneerQ35FreshRecoverySession&,
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
     template<class Receipt> bool FreshRoleRecoveryPostLeaseAudit(PioneerQ35FreshRecoverySession&,

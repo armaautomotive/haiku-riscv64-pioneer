@@ -21,12 +21,12 @@ struct Session {
     uint64 Ticket() const { return ticket; }
     void RetainUncertain(Scope&) { retained=true; }
     bool VerifyRoleRestoration(Guard*,Scope&) { return Step(7); }
-    bool CloseRoleTransport(Guard*,Scope&) { return Step(8); }
-    bool DisposeRoleOldHostBuffers(Guard*,Scope&) { return Step(9); }
-    bool PublishRoleMappingsDisposed(Guard*,Scope&) { return Step(10); }
-    bool RetireRoleGraph(Guard*,Scope&) { return Step(11); }
-    bool ReleaseRoleFreshHostPage(Guard*,Scope&) { return Step(12); }
-    bool RecordRoleOwnerRetirement(Guard*,Scope&) { return Step(13); }
+    bool CloseRoleTransport(Guard*,Scope&) { return Step(9); }
+    bool DisposeRoleOldHostBuffers(Guard*,Scope&) { return Step(10); }
+    bool PublishRoleMappingsDisposed(Guard*,Scope&) { return Step(11); }
+    bool RetireRoleGraph(Guard*,Scope&) { return Step(12); }
+    bool ReleaseRoleFreshHostPage(Guard*,Scope&) { return Step(13); }
+    bool RecordRoleOwnerRetirement(Guard*,Scope&) { return Step(14); }
 };
 struct RoleScope {};struct ParentScope {};struct Bar {};
 struct Role {
@@ -56,6 +56,7 @@ struct Scope {
         return access;
     }
     bool FabricRoleSequenceAreaProtected(Session&,Context&,Context&,uint64,int32_t) const { return protect; }
+    bool FabricRoleQualifyMatrix(Session&,Context&,Context&,Guard*,uint64) { return Step(8); }
 };
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricRoleRecoverySequence.h"
 static void Reset() { step=failStep=checks=failCheck=0;operations.clear(); }
@@ -68,11 +69,11 @@ int main() {
         failCheck=failure;
         const bool okay=PioneerQ35RestoreFabricRoleSequence(session,old,&guard,scope,rs,ps,bar,5);
         if (!failure) {
-            assert(okay && !session.retained && operations==std::vector<unsigned>({1,2,3,4,5,6,7,8,9,10,11,12,13}));
+            assert(okay && !session.retained && operations==std::vector<unsigned>({1,2,3,4,5,6,7,8,9,10,11,12,13,14}));
             guardChecks=checks;assert(guardChecks>24);
         } else assert(!okay && session.retained);
     }
-    for (unsigned failure=1;failure<=13;failure++) {
+    for (unsigned failure=1;failure<=14;failure++) {
         Reset();Context old,fresh;Role role;Graph graph;Session session;Guard guard;Scope scope;RoleScope rs;ParentScope ps;Bar bar;
         session.fresh=&fresh;old.recoveryFreshSession=&session;old.qwen35SharedRoleBinding=&role;old.qwen35GraphOwner=&graph;
         failStep=failure;

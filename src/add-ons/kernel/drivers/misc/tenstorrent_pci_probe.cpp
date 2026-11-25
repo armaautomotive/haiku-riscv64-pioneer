@@ -5169,8 +5169,8 @@ public:
 // PIONEER_Q35_PROJECTION_TRANSACTION_BEGIN
 	// One locked diagnostic sequence. A valid comparison and complete cleanup
 	// are independent: bad math must still permit restoration, never success.
-	template<class Scope>
-	bool RunDataflowQualificationTransaction(Scope& scope,uint32_t& stage,
+	template<class Scope,class Receipt>
+	bool RunDataflowQualificationTransactionWithReceipt(Scope& scope,Receipt& receipt,uint32_t& stage,
 		uint32_t& routeStage,uint32_t& routeCore,bool& outputVerified,bool& cleaned) {
 		using Owner=PioneerQ35ProjectionQualificationOwner;
 		using namespace PioneerQwen35;
@@ -5216,9 +5216,19 @@ public:
 		stage=12;
 		if (FinishDataflowQualificationClose(scope)!=DataflowServiceClosed) return retainFailure();
 		stage=13;
+		// The receipt needs the restored scratch and audited qualification to
+		// remain owned. Never seal a matrix proof for an incorrect result.
+		if (outputVerified && !receipt()) return retainFailure();
 		if (!RetireDataflowQualification(scope)) return retainFailure();
 		stage=14;cleaned=true;
 		return outputVerified;
+	}
+	template<class Scope>
+	bool RunDataflowQualificationTransaction(Scope& scope,uint32_t& stage,
+		uint32_t& routeStage,uint32_t& routeCore,bool& outputVerified,bool& cleaned) {
+		auto noReceipt=[]() { return true; };
+		return RunDataflowQualificationTransactionWithReceipt(scope,noReceipt,stage,routeStage,routeCore,
+			outputVerified,cleaned);
 	}
 // PIONEER_Q35_PROJECTION_TRANSACTION_END
 #endif
@@ -5358,6 +5368,7 @@ PioneerSessionIO::SharedHostDmaPciSourceStable()
 #include "PioneerQwen35DataflowSharedRoleBinding.inc"
 #if defined(PIONEER_QWEN35_FABRIC_GUARD_WITNESS) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
 #include "PioneerQwen35FabricRoleRecoverySequence.h"
+#include "PioneerQwen35FabricMatrixQualification.h"
 #include "PioneerQwen35FabricGraphRetirement.h"
 #include "PioneerQwen35FabricFinish.inc"
 #include "PioneerQwen35FabricRecoveryCoordinator.inc"
@@ -5365,6 +5376,10 @@ struct PioneerQ35FabricMatrixCompileScope {
 	bool FabricMatrixReceiptSealAllowed(PioneerStoreContext&,PioneerQ35FreshRecoverySession&,
 		PioneerQ35ProjectionQualificationOwner&,PioneerQ35ProjectionScratch&,
 		PioneerQwen35::DataflowProjectionQualificationService&,uint64) const { return false; }
+	bool FabricMatrixRunAdmission(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,PioneerStoreContext&,uint64) const { return false; }
+	bool FabricMatrixRunAccessAllowed(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,PioneerStoreContext&,uint64) const { return false; }
+	bool FabricMatrixRunComplete(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,PioneerStoreContext&,uint64) const { return false; }
+	bool FabricMatrixReceiptStillOwned(PioneerStoreContext&,const void*,const void*,const void*,const void*,const void*,uint64) const { return false; }
 	void RetainFreshRecovery(PioneerQ35FreshRecoverySession&) const {}
 };
 static __attribute__((used,noinline)) bool
@@ -5374,6 +5389,20 @@ PioneerQ35FabricMatrixReceiptCompileWitness(PioneerQ35FreshRecoverySession& sess
 	PioneerQ35FabricMatrixCompileScope scope{};
 	return session.RecordFabricMatrixQualification(guard,scope);
 }
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+static __attribute__((used,noinline)) bool
+PioneerQ35FabricMatrixTransactionCompileWitness(PioneerQ35FreshRecoverySession& session,
+	PioneerStoreContext& old,pioneer_driver_recovery_guard_v2_info* guard)
+{
+	auto* fresh=session.Fresh();
+	if (!fresh) return false;
+	PioneerQ35FabricMatrixCompileScope scope{};
+	PioneerQ35ProjectionQualificationScope qualification(*fresh);
+	uint32_t stage=0,routeStage=0,routeCore=0;bool output=false,cleaned=false;
+	return PioneerQ35RunFabricMatrixQualification(session,old,*fresh,guard,scope,qualification,
+		stage,routeStage,routeCore,output,cleaned);
+}
+#endif
 // Type-check the complete intermediate sequence with the real owners and
 // synthetic scopes. It grants no physical authority and is not an ioctl.
 static __attribute__((used,noinline)) bool
