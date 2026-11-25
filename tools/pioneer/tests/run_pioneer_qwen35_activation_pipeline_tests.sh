@@ -15,6 +15,10 @@ for mode in ordinary paired fused; do
     esac
     ${CXX:-c++} $flags $extra "$directory/pioneer_qwen35_activation_read_graph_test.cpp" -o "$temporary/$mode"
     ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/$mode"
+    for test in pioneer_qwen35_activation_sharing_inventory pioneer_qwen35_activation_share_plan_test; do
+        ${CXX:-c++} $flags $extra "$directory/$test.cpp" -o "$temporary/$test-$mode"
+        ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/$test-$mode"
+    done
 done
 ${CXX:-c++} $flags -DPIONEER_QWEN35_PAIRED_RECURRENCE -DPIONEER_QWEN35_FUSED_RECURRENCE \
     "$directory/pioneer_qwen35_projection_triple_test.cpp" -o "$temporary/triple"

@@ -670,6 +670,9 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -pthread \
 	-o "$temporary/role-coordinator-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-coordinator-test"
 sh "$directory/run_pioneer_qwen35_activation_pipeline_tests.sh"
+"$cxx" -std=c++17 -Os -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \
+    -I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+    -c "$directory/pioneer_qwen35_activation_share_plan_target_probe.cpp" -o "$temporary/activation-share-host.o"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -pthread \
 	-fsanitize=address,undefined "$directory/pioneer_qwen35_dataflow_program_test.cpp" \
 	-o "$temporary/dataflow-program-test"
