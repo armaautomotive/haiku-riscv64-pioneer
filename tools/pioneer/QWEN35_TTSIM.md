@@ -37,7 +37,15 @@ half of `NOC_AT_LEN_BE`, which the rewrite sets to zero. For exploration only,
 `tests/ttsim-blackhole-zero-upper-length.patch` lets the simulator read and
 write that zero value while still rejecting nonzero values. Apply it to a
 separate simulator checkout and rebuild; do not confuse this patched binary
-with the upstream reference. The projection then reaches matrix setup but
-terminates on the simulator's unsupported `Dstacc_override` mode. No output
-comparison has passed. Do not disable or bypass that simulator check or alter
-the physical matrix format merely to make the test pass.
+with the upstream reference. The production projection then stops on a
+`SETC16` index absent from the simulator's supported register model. The
+actual [Blackhole register definitions](https://github.com/tenstorrent/tt-metal/blob/81989dcdb8f9b340c932ae7a71a346f4f08703eb/tt_metal/hw/inc/blackhole/cfg_defines.h)
+include fields absent from that model, so the device initialization still
+resets the full documented thread-state range.
+
+A separate temporary experiment changed the matrix format and removed some
+configuration writes/readbacks solely to investigate simulator coverage. It
+advanced to an unpack operation the simulator marks untested and then stopped.
+That experimental image is not the production kernel and provides no
+numerical or hardware correctness evidence. No fixed-projection output
+comparison has passed.

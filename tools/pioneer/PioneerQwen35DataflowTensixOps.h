@@ -93,8 +93,7 @@ class DataflowBlackholeTensixOps {
 	bool Setup()
 	{
 		fEmitter.Op(0xb2000000); fEmitter.Drain();
-		for (unsigned i=1;i<68;i++)
-			if (DataflowTensixThreadConfigPresent(i)) fEmitter.Op(0xb2000000|(i<<16));
+		for (unsigned i=1;i<68;i++) fEmitter.Op(0xb2000000|(i<<16));
 		fEmitter.Op(0xb2020001); fEmitter.Op(0xb2030001);
 		fEmitter.Op(0xb2050004); fEmitter.Drain();
 		static const uint8_t indices[]={0,1,2,3,6,7,220,20,24,28,50,56,59,

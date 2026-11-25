@@ -18,13 +18,6 @@ struct ReadbackSelector {
 
 int main()
 {
-	const unsigned indices[]={0,1,2,3,5,7,11,12,13,14,15,16,17,18,19,
-		28,29,30,31,32,33,34,35,37,38,39,40,41,47,48,49,50,51,52,53,54};
-	for (unsigned index=0;index<80;index++) {
-		bool present=false;
-		for (unsigned expected:indices) present|=index==expected;
-		assert(PioneerQwen35::DataflowTensixThreadConfigPresent(index)==present);
-	}
 	uint32_t sourceA[6], sourceB[6], tile[66];
 	for (auto& value:sourceA) value=0xdeadbeef;
 	for (auto& value:sourceB) value=0xdeadbeef;
