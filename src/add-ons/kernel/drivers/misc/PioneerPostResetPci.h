@@ -117,6 +117,10 @@ class PioneerGuardedMasterDisableIO {
 public:
 	PioneerGuardedMasterDisableIO(IO& io,Check& check) : fIO(io),fCheck(check) {}
 	const auto& Profile() { return fIO.Profile(); }
+	uint64_t Size(unsigned bar) {
+		if (!Allowed()) return UINT64_MAX;
+		const uint64_t value=fIO.Size(bar);return Allowed()?value:UINT64_MAX;
+	}
 	uint32_t CardRead(unsigned offset,unsigned width) {
 		if (!Allowed()) return UINT32_MAX;
 		uint32_t value=fIO.CardRead(offset,width);return Allowed()?value:UINT32_MAX;

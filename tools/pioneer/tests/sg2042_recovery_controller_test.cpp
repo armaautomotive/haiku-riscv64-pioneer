@@ -110,6 +110,16 @@ int main()
 	assert(controller.WriteSg2042Config(0,0,0,PCI_command+3,1,0x20)==B_OK && *commandStatus==0x20000402);
 	*commandStatus=0xf9100402;
 	assert(controller.WriteSg2042Config(0,0,0,PCI_command,4,0x20000403)==B_OK && *commandStatus==0x20000403);
+	// A bridge-control halfword write becomes an aligned dword. The reset
+	// caller sends zero for discard-timer W1C status even if that status
+	// appeared after its earlier read; the interrupt line/pin remain intact.
+	auto* interruptBridge=reinterpret_cast<uint32*>(controller.root+0x3c);
+	*interruptBridge=0x04030122;
+	assert(controller.WriteSg2042Config(0,0,0,0x3e,2,0x43)==B_OK
+		&& *interruptBridge==0x00430122);
+	*interruptBridge=0x04430122;
+	assert(controller.WriteSg2042Config(0,0,0,0x3e,2,0x03)==B_OK
+		&& *interruptBridge==0x00030122);
 	other.fStartBus=0xc0;
 	*reinterpret_cast<uint32*>(other.root+4)=0xf9100402;
 	assert(other.WriteSg2042Config(0,0,0,PCI_command,2,0x403)==B_OK

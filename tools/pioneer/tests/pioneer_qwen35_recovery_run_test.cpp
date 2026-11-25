@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 #define B_DEVICE_OP_CODES_END 1000
 #define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026112100010121)
+#ifdef TEST_LINK_RESET
+#define PIONEER_QWEN35_LINK_RESET_WITNESS 1
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerPcieLinkReset.h"
+#endif
 #ifdef TEST_FIRMWARE_RESET
 #define PIONEER_QWEN35_FIRMWARE_RESET_WITNESS 1
 #endif
@@ -35,6 +39,10 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerFirmwareResetTrace.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerPcieRootAerSnapshot.h"
 using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uint64_t;using status_t=int;
+#ifdef TEST_LINK_RESET
+using bigtime_t=int64_t;
+static unsigned linkWrites=0;static bool failLinkAssert=false,failLinkRestore=false,fakeLinkReady=true;
+#endif
 constexpr int B_OK=0,B_BAD_VALUE=-1,B_NOT_ALLOWED=-2,B_BUSY=-3,B_DEV_NOT_READY=-4,B_NO_MEMORY=-5;
 static unsigned failStage=0,abortCount=0,completeCount=0,contextDeleted=0,cookieDeleted=0;
 static bool failPayloadRead=false,failPayloadRestore=false,failFirmwareQueue=false,failDbi=false;
@@ -125,11 +133,33 @@ struct BlackholeAsicResetResult {
 struct FakeProfile {};
 struct PioneerSessionIO {
 	bool postResetDisposeComplete=false;
+#ifdef TEST_LINK_RESET
+	uint32 linkControl=3;
+#endif
 #ifdef TEST_LIVE_TAKEOVER
 	void* qwen35BorrowedRoleScope=nullptr;
 #endif
-	uint32 CardRead(uint16,uint8){return 0;}
+	uint32 CardRead(uint16 offset,uint8){
+#ifdef TEST_LINK_RESET
+		if(offset==0)return 0xb1401e52;
+		if(offset==0x2c)return 0x00431e52;
+		if(offset==4)return 0x402;
+#else
+		(void)offset;
+#endif
+		return 0;
+	}
 	uint32 RootRead(uint16 offset,uint8){
+#ifdef TEST_LINK_RESET
+		if(offset==0)return 0x20421e30;
+		if(offset==8)return 0x06040000;
+		if(offset==0x18)return 0x003f0100;
+		if(offset==4)return 0x402;
+		if(offset==0x3e)return linkControl;
+		if(offset==0x100)return 0x00010001;
+		if(offset==0x104)return 0;
+		if(offset==0x134)return 0x01000000;
+#endif
 #ifdef TEST_RECOVERY_QUALIFY
 		if (fakeAerAvailable && !(fakeAerFailAfterPre && fakeResetIssued)) {
 			if (offset==0) return 0x20421e30;
@@ -145,6 +175,13 @@ struct PioneerSessionIO {
 #endif
 		(void)offset;return 0;
 	}
+#ifdef TEST_LINK_RESET
+	void RootWrite(uint16 offset,uint8 size,uint32 value){
+		assert(offset==0x3e && size==2);++linkWrites;
+		trace.push_back(value&0x40?9001:9002);
+		linkControl=failLinkAssert && (value&0x40)?value&~0x40U:value;
+	}
+#endif
 	void CardWrite(uint16 offset,uint8 size,uint32 value){
 #ifdef TEST_RECOVERY_QUALIFY
 		if (offset==0x930 && size==4 && value==0x11) fakeResetIssued=true;
@@ -189,6 +226,27 @@ template<class IO> static bool BlackholeAsicResetResumeWait(IO&,unsigned,Blackho
 static bool PioneerPostResetPciRestore(PioneerSessionIO&,PioneerPostResetPciResult& r) {
 	r.stage=4;return Step(PIONEER_RECOVERY_STAGE_PCI_RESTORE);
 }
+#ifdef TEST_LINK_RESET
+template<class IO> struct PioneerQ35PcieAuditAccess {IO& io;};
+template<class IO> static bool PioneerQ35PcieLinkSample(IO&,unsigned,unsigned& speed,unsigned& width) {
+	speed=4;width=16;return fakeLinkReady;
+}
+template<class IO,class Check> struct PioneerGuardedMasterDisableIO {
+	IO& io;Check& check;
+	PioneerGuardedMasterDisableIO(IO& owned,Check& authority):io(owned),check(authority) {}
+	uint32 RootRead(uint16 offset,uint8 size) {return check()?io.RootRead(offset,size):UINT32_MAX;}
+	bool Valid(){return check();}
+};
+template<class IO,class Check> static bool PioneerPostResetPciRestore(PioneerGuardedMasterDisableIO<IO,Check>&,PioneerPostResetPciResult& r) {
+	r.stage=4;trace.push_back(9003);return !failLinkRestore;
+}
+template<class IO,class Check> static bool PioneerPciePayloadRestore(PioneerGuardedMasterDisableIO<IO,Check>&,const PioneerPciePayloadSnapshot&) {
+	trace.push_back(9004);return true;
+}
+template<class IO,class Check> static bool PioneerPreResetDisableMaster(PioneerGuardedMasterDisableIO<IO,Check>&) {
+	trace.push_back(9005);return true;
+}
+#endif
 struct FakePciResult {uint32 version=1,commands_before[2]={},bridge_before[3]={0x0001fff1,0,0},bars_before[6]={12,0,12,0,12,0};};
 static bool PioneerPostResetPciFinish(PioneerSessionIO&,const FakePciResult&,unsigned& stage) {
 	stage=2;return Step(PIONEER_RECOVERY_STAGE_PCI_IDLE);
@@ -357,6 +415,9 @@ static status_t user_memcpy(void* dst,const void* src,size_t n){memcpy(dst,src,n
 static tt_pioneer_recovery_run Request(){tt_pioneer_recovery_run r={};r.version=1;r.expected_tag=PIONEER_DRIVER_BUILD_TAG;r.expected_generation=3;return r;}
 static void Setup() {
 	failStage=abortCount=completeCount=contextDeleted=cookieDeleted=0;trace.clear();
+#ifdef TEST_LINK_RESET
+	linkWrites=0;failLinkAssert=failLinkRestore=false;fakeLinkReady=true;
+#endif
 #ifdef TEST_RECOVERY_QUALIFY
 	fakeCardPciStatus=fakeRootPciStatus=0;fakeAerAvailable=true;fakeAerFailAfterPre=false;
 	fakeAerPre=0;fakeAerPost=0x20;fakeResetIssued=false;
@@ -382,7 +443,42 @@ static void Setup() {
 	sRuntimeOwner=new PioneerProbeCookie;sRuntimeOwner->context=new PioneerStoreContext;sRuntimeOwner->finalFreeRetained=true;
 }
 static void Cleanup(){if(sRuntimeOwner){delete sRuntimeOwner->context;delete sRuntimeOwner;sRuntimeOwner=nullptr;}}
+#ifdef TEST_LINK_RESET
+int main(){
+	PioneerProbeCookie inspector;
+	Setup();auto r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && !sColdRecoveryRequired && linkWrites==2);
+	const auto assertIt=std::find(trace.begin(),trace.end(),9001);
+	const auto releaseIt=std::find(trace.begin(),trace.end(),9002);
+	const auto restoreIt=std::find(trace.begin(),trace.end(),9003);
+	const auto payloadIt=std::find(trace.begin(),trace.end(),9004);
+	const auto disableIt=std::find(trace.begin(),trace.end(),9005);
+	const auto asicIt=std::find(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET);
+	assert(assertIt<releaseIt && releaseIt<restoreIt && restoreIt<payloadIt
+		&& payloadIt<disableIt && disableIt<asicIt && asicIt!=trace.end());
+	for(unsigned fault=0;fault<3;fault++) {
+		Setup();failLinkAssert=fault==0;failLinkRestore=fault==1;fakeLinkReady=fault!=2;
+		r=Request();assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK
+			&& r.operation_status==B_DEV_NOT_READY && sRuntimeOwner && sColdRecoveryRequired
+			&& linkWrites==2 && abortCount==1 && !completeCount);
+		const auto previous=trace;r=Request();
+		assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_NOT_ALLOWED
+			&& linkWrites==2 && trace==previous);
+		Cleanup();
+	}
 #ifdef TEST_FIRMWARE_RESET
+	Setup();resetTimeout=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& sRuntimeOwner && sRuntimeOwner->context->recoveryResetPending && linkWrites==2
+		&& firmwareStarts==1 && firmwareResumes==1);
+	resetTimeout=false;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_OK
+		&& !sRuntimeOwner && linkWrites==2 && firmwareStarts==1 && firmwareResumes==2);
+#endif
+	puts("PASS actual recovery orchestration: link, PCI restore, ASIC reset and no replay after failure; SIMULATED ONLY");
+}
+#elif defined(TEST_FIRMWARE_RESET)
 int main(){
 	PioneerProbeCookie inspector;
 	#ifdef TEST_RECOVERY_QUALIFY

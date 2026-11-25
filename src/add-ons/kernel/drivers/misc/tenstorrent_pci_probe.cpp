@@ -12149,6 +12149,13 @@ DriverReloadControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_
 #ifdef PIONEER_QWEN35_INPLACE_RECOVERY
 #include "PioneerRecoveryProtocol.h"
 #include "PioneerPcieRootAerSnapshot.h"
+#ifdef PIONEER_QWEN35_LINK_RESET_WITNESS
+#if !defined(PIONEER_QWEN35_ROOT_RECOVERY_GATEWAY_WITNESS) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY)
+#error The link-reset sequence requires the non-loadable root recovery gateway
+#endif
+#include "PioneerPcieLinkReset.h"
+#include "PioneerQ35PcieIdleAudit.h"
+#endif
 // PIONEER_QWEN35_RECOVERY_STATUS_BEGIN
 static status_t
 Qwen35RecoveryStatus(PioneerProbeCookie* cookie,void* data,size_t length)
@@ -12242,6 +12249,28 @@ struct Qwen35RecoveryResetIO {
 		#endif
 	}
 };
+
+#ifdef PIONEER_QWEN35_LINK_RESET_WITNESS
+struct Qwen35LinkResetIO {
+	PioneerSessionIO& io;
+	pioneer_driver_recovery_guard_v2_info* guard;
+	uint64 ticket;
+	bool lost=false;
+	bool Allowed() {
+		if (lost || !guard || !guard->validate || guard->validate(ticket)!=B_OK) lost=true;
+		return !lost;
+	}
+	uint32 RootRead(uint16 offset,uint8 size) { return Allowed()?io.RootRead(offset,size):UINT32_MAX; }
+	uint32 CardRead(uint16 offset,uint8 size) { return Allowed()?io.CardRead(offset,size):UINT32_MAX; }
+	void RootWrite(uint16 offset,uint8 size,uint32 value) { if (Allowed()) io.RootWrite(offset,size,value); }
+	bool DelayUs(bigtime_t delay) { return Allowed() && snooze(delay)==B_OK && Allowed(); }
+	bool RootLinkReady() {
+		PioneerQ35PcieAuditAccess<Qwen35LinkResetIO> access{*this};
+		unsigned speed=0,width=0;
+		return Allowed() && PioneerQ35PcieLinkSample(access,1,speed,width) && Allowed();
+	}
+};
+#endif
 
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 // A resumed cleanup can be arbitrarily later than the original audit. Reopen
@@ -12594,6 +12623,32 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 		context->recoveryPayload=payload;
 #else
 		if (!prepared) return fail(B_DEV_NOT_READY);
+#endif
+#ifdef PIONEER_QWEN35_LINK_RESET_WITNESS
+		// The controller lease surrounds this entire non-loadable recovery
+		// witness. No failure after a link pulse permits automatic replay.
+		Qwen35LinkResetIO linkIo{context->io,guard,ticket};
+		PioneerPcieLinkReset<Qwen35LinkResetIO> linkReset;
+		if (!linkReset.Run(linkIo,101)) {
+			const auto& evidence=linkReset.Result();
+			r.detail=0x4c000000U|(uint32(evidence.assertAttempted)<<19)
+				|(uint32(evidence.assertConfirmed)<<18)|(uint32(evidence.deassertAttempted)<<17)
+				|(uint32(evidence.deassertConfirmed)<<16)|(evidence.failedAt<<8)|evidence.stage;
+			return fail(B_DEV_NOT_READY);
+		}
+		auto linkAuthority=[&]() { return linkIo.Allowed(); };
+		PioneerGuardedMasterDisableIO<PioneerSessionIO,decltype(linkAuthority)>
+			linkPci(context->io,linkAuthority);
+		uint32 linkAer=0,linkSource=0;
+		PioneerPostResetPciResult linkRestore{};
+		r.stage=PIONEER_RECOVERY_STAGE_PCI_RESTORE;
+		if (!PioneerPcieRootAerSnapshot(linkPci,linkAer,linkSource) || linkAer
+			|| !PioneerPostResetPciRestore(linkPci,linkRestore)
+			|| !PioneerPciePayloadRestore(linkPci,payload)
+			|| !PioneerPreResetDisableMaster(linkPci) || !linkPci.Valid()) {
+			r.detail=0x4c010000U|linkRestore.stage;
+			return fail(B_DEV_NOT_READY);
+		}
 #endif
 #ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
 		Qwen35QualificationTrace(context,PIONEER_PCIE_TRACE_BEFORE_RESET);

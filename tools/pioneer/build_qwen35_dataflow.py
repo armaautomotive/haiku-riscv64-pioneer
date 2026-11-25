@@ -544,6 +544,8 @@ def main():
                         help='compile the experimental recovery body into a non-loadable driver')
     parser.add_argument('--compile-root-recovery-gateway', action='store_true',
                         help='connect recovery to the non-loadable SG2042 controller gateway')
+    parser.add_argument('--compile-link-reset-witness', action='store_true',
+                        help='compile the non-loadable pre-ASIC PCIe link-reset sequence')
     parser.add_argument('--compile-device-dispatch-prototype', action='store_true',
                         help='compile incomplete device dispatch into a non-loadable driver')
     parser.add_argument('--compile-role-write-prototype', action='store_true',
@@ -682,6 +684,8 @@ def main():
     if args.compile_root_recovery_gateway and (not args.compile_snapshot_takeover_prototype
             or args.build_recovery_qualification or args.build_device_dispatch_trial):
         parser.error('root recovery gateway requires the non-loadable snapshot prototype')
+    if args.compile_link_reset_witness and not args.compile_root_recovery_gateway:
+        parser.error('link reset witness requires the non-loadable root recovery gateway')
 
     build = args.haiku_build.resolve(strict=True)
     output = args.new_output.absolute()
@@ -711,6 +715,8 @@ def main():
         driver_env['PIONEER_QWEN35_RECOVERY_COMPILE_ONLY'] = '1'
     if args.compile_root_recovery_gateway:
         driver_env['PIONEER_QWEN35_ROOT_RECOVERY_GATEWAY_WITNESS'] = '1'
+    if args.compile_link_reset_witness:
+        driver_env['PIONEER_QWEN35_LINK_RESET_WITNESS'] = '1'
     if args.compile_device_dispatch_prototype:
         driver_env['PIONEER_QWEN35_DEVICE_DISPATCH_COMPILE_ONLY'] = '1'
     if args.compile_role_write_prototype:
