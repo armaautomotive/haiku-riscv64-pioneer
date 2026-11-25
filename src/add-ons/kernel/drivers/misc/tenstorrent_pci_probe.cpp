@@ -4769,7 +4769,18 @@ private:
 	};
 // PIONEER_Q35_PROJECTION_INTERNAL_SCOPE_END
 #endif
-	PioneerQwen35::DataflowServiceResult InstallDataflowServiceResources() {
+	PioneerQwen35::DataflowServiceResult InstallDataflowServiceResources(bool fixedQualification=false) {
+// PIONEER_Q35_INSTALL_QUALIFICATION_GUARD_BEGIN
+		if (fixedQualification) {
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
+			if (!qwen35QualificationInternalActive || !qwen35QualificationOwner.Active()
+				|| qwen35QualificationOwner.Retained() || !qwen35QualificationOwner.Scratch()
+				|| qwen35GraphOwner) return PioneerQwen35::DataflowServiceInvalidState;
+#else
+			return PioneerQwen35::DataflowServiceInvalidState;
+#endif
+		}
+// PIONEER_Q35_INSTALL_QUALIFICATION_GUARD_END
 		if (qwen35DataflowMemory || qwen35DataflowService
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 			|| qwen35SharedRoleBinding
@@ -4819,11 +4830,16 @@ private:
 				/sizeof(PioneerQwen35::DataflowServiceDispatchWords[0]))
 #endif
 		};
+// PIONEER_Q35_INSTALL_ROUTE_BEGIN
 #ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
-		const auto result=PioneerQ35GraphOwnerInstallResident(*this,image);
+		// The one-shot qualification owns a service but deliberately has no
+		// graph owner. Ordinary resident installation still requires the graph.
+		const auto result=fixedQualification?qwen35DataflowService->Install(image,io)
+			:PioneerQ35GraphOwnerInstallResident(*this,image);
 #else
 		const auto result=qwen35DataflowService->Install(image,io);
 #endif
+// PIONEER_Q35_INSTALL_ROUTE_END
 // PIONEER_Q35_INSTALL_CLEANUP_BEGIN
 		if (!qwen35DataflowService->Started()) {
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
@@ -4955,7 +4971,7 @@ public:
 		QualificationInternalScope admission(qwen35QualificationInternalActive);
 		if (!scope.QualificationInstallationAllowed(scratch,*this))
 			return PioneerQwen35::DataflowServiceInvalidState;
-		const auto result=InstallDataflowServiceResources();
+		const auto result=InstallDataflowServiceResources(true);
 		if (result!=PioneerQwen35::DataflowServiceComplete
 			&& qwen35DataflowService && qwen35DataflowService->Started()) qwen35QualificationOwner.Retain();
 		return result;
