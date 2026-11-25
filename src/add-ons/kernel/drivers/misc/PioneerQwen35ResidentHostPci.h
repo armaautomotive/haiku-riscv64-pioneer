@@ -65,14 +65,25 @@ template<class Raw,class Scope> class PioneerQwen35ResidentHostPci {
         if (!Ready(operation)) return false;
         value=io.Q38PanelRead(address);return Ready(operation);
     }
+    bool ReadWords(unsigned operation,unsigned address,uint32_t* words,unsigned count) {
+        if (!words || !count) return false;
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+        // Like StoreBatch, this requires exclusive ownership for the whole
+        // group, not just a point-in-time check at its boundaries.
+        if (!Ready(operation)) return false;
+        for (unsigned i=0;i<count;i++) words[i]=io.Q38PanelRead(address+4*i);
+        return Ready(operation);
+#else
+        for (unsigned i=0;i<count;i++) if (!Read(operation,address+4*i,words[i])) return false;
+        return true;
+#endif
+    }
     bool ReadOutput() {
         using namespace PioneerQwen35;
         uint32_t first[DataflowWorkerMailboxBytes/4]{},second[DataflowWorkerMailboxBytes/4]{};
-        for (unsigned i=0;i<DataflowWorkerMailboxBytes/4;i++)
-            if (!Read(Audit,DataflowWorkerMailboxAddress+4*i,first[i])) return false;
+        if (!ReadWords(Audit,DataflowWorkerMailboxAddress,first,DataflowWorkerMailboxBytes/4)) return false;
         io.Pause();
-        for (unsigned i=0;i<DataflowWorkerMailboxBytes/4;i++)
-            if (!Read(Audit,DataflowWorkerMailboxAddress+4*i,second[i])) return false;
+        if (!ReadWords(Audit,DataflowWorkerMailboxAddress,second,DataflowWorkerMailboxBytes/4)) return false;
         if (memcmp(first,second,sizeof(first))) return false;
         DataflowWorkerMailbox mailbox{};memcpy(&mailbox,second,sizeof(mailbox));
         DataflowArgmaxResult result{};
@@ -86,8 +97,7 @@ template<class Raw,class Scope> class PioneerQwen35ResidentHostPci {
     bool CandidateStillMatches() {
         using namespace PioneerQwen35;
         uint32_t words[8]{};
-        for (unsigned i=0;i<8;i++)
-            if (!Read(Audit,DataflowResidentCandidateAddress+4*i,words[i])) return false;
+        if (!ReadWords(Audit,DataflowResidentCandidateAddress,words,8)) return false;
         DataflowResidentCandidate candidate{};memcpy(&candidate,words,sizeof(candidate));
         return DataflowResidentCandidateMatches(candidate,command);
     }
@@ -146,11 +156,11 @@ public:
         if (marker>command.trigger) { Retain();return CandidateRetained; }
 #endif
         uint32_t a[8]{},b[8]{};
-        for (unsigned i=0;i<8;i++) if (!Read(ReadCandidate,DataflowResidentCandidateAddress+4*i,a[i])) {
+        if (!ReadWords(ReadCandidate,DataflowResidentCandidateAddress,a,8)) {
             Retain();return CandidateRetained;
         }
         io.Pause();
-        for (unsigned i=0;i<8;i++) if (!Read(ReadCandidate,DataflowResidentCandidateAddress+4*i,b[i])) {
+        if (!ReadWords(ReadCandidate,DataflowResidentCandidateAddress,b,8)) {
             Retain();return CandidateRetained;
         }
         // An in-progress publication or a prior token is not a receipt.
@@ -177,8 +187,12 @@ public:
         // Clear word zero, write the other words, and commit the exact trigger
         // last. An old or partially written acknowledgement cannot match.
         if (!Store(Acknowledge,DataflowResidentCandidateAckAddress,0)) return Retain();
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+        if (!StoreBatch(Acknowledge,DataflowResidentCandidateAckAddress+4,words+1,3)) return Retain();
+#else
         for (unsigned i=1;i<4;i++)
             if (!Store(Acknowledge,DataflowResidentCandidateAckAddress+4*i,words[i])) return Retain();
+#endif
         if (!Store(Acknowledge,DataflowResidentCandidateAckAddress,words[0])) return Retain();
         phase=Acknowledged;return true;
     }

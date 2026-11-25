@@ -3,8 +3,11 @@
 #define PIONEER_QWEN35_TREE_SETTLEMENT 1
 #include "resident-host-fixture.inc"
 struct PollRaw : ResidentRaw {
-    unsigned reads=0;bool tear=false;
-    uint32_t Q38PanelRead(unsigned address) { ++reads;return ResidentRaw::Q38PanelRead(address); }
+    unsigned reads=0,revokeAt=UINT32_MAX;bool tear=false;bool* authority=nullptr;
+    uint32_t Q38PanelRead(unsigned address) {
+        ++reads;if (authority && reads==revokeAt) *authority=false;
+        return ResidentRaw::Q38PanelRead(address);
+    }
     void Pause() {
         if (tear) {
             panel[(DataflowResidentCandidateAddress-DataflowPciL1ViewBase)/4+3]^=1;
@@ -30,10 +33,19 @@ int main() {
         auto* marker=raw->panel+(DataflowResidentCandidateAddress-DataflowPciL1ViewBase)/4+7;
         *marker=command.trigger-1;raw->reads=0;
         assert(host.PollCandidate()==decltype(host)::CandidateWaiting && raw->reads==1);
-        PutCandidate(*raw,command);raw->reads=0;
+        PutCandidate(*raw,command);raw->reads=0;const unsigned checks=scope.checks;
         assert(host.PollCandidate()==decltype(host)::CandidateReady && raw->reads==17);
+        assert(scope.checks-checks==15);
         DataflowArgmaxResult out{};
         assert(host.AuditCandidate() && host.AcknowledgeCandidate() && host.Output(out) && out.token==42);
+    }
+    {
+        auto raw=std::make_unique<PollRaw>();ResidentScope scope;
+        PioneerQwen35ResidentHostPci<PollRaw,ResidentScope> host(*raw,scope);
+        assert(host.Submit(command));PutCandidate(*raw,command);raw->reads=0;
+        raw->authority=&scope.allowed;raw->revokeAt=3;
+        assert(host.PollCandidate()==decltype(host)::CandidateRetained && raw->reads==9
+            && scope.retained && !host.AcknowledgeCandidate());
     }
     {
         auto raw=std::make_unique<PollRaw>();ResidentScope scope;
@@ -58,6 +70,18 @@ int main() {
         raw->panel[(DataflowResidentCandidateAddress-DataflowPciL1ViewBase)/4+7]=command.trigger;raw->reads=0;
         assert(host.PollCandidate()==decltype(host)::CandidateRetained && raw->reads==17
             && host.IsRetained() && !host.AcknowledgeCandidate());
+    }
+    for (unsigned dropped=0;dropped<5;dropped++) {
+        auto raw=std::make_unique<PollRaw>();ResidentScope scope;
+        PioneerQwen35ResidentHostPci<PollRaw,ResidentScope> host(*raw,scope);
+        assert(host.Submit(command));PutCandidate(*raw,command);
+        assert(host.PollCandidate()==decltype(host)::CandidateReady && host.AuditCandidate());
+        raw->panel[(DataflowResidentCandidateAckAddress-DataflowPciL1ViewBase)/4]=1;
+        raw->drop=int(raw->writes+dropped);
+        assert(!host.AcknowledgeCandidate() && host.IsRetained() && scope.retained);
+        const unsigned writes=raw->writes;
+        assert(!host.AcknowledgeCandidate() && raw->writes==writes);
+        if (dropped) assert(!raw->panel[(DataflowResidentCandidateAckAddress-DataflowPciL1ViewBase)/4]);
     }
     puts("PASS waiting candidate uses one read and rejects future or corrupt commits; SIMULATED ONLY");
 }

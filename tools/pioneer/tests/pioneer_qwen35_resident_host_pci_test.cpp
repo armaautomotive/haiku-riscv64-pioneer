@@ -122,7 +122,7 @@ int main() {
         assert(host.Submit(command));PutCandidate(*io,command);assert(host.PollCandidate()==Host::CandidateReady);
         scope.audit=false;assert(!host.AuditCandidate() && scope.retained && !host.AcknowledgeCandidate());
     }
-    for (int drop:{33,34,37}) {
+    for (int drop:{33,34,35,36,37}) {
         auto io=std::make_unique<ResidentRaw>();ResidentScope scope;Host host(*io,scope);
         assert(host.Submit(command));PutCandidate(*io,command);
         assert(host.PollCandidate()==Host::CandidateReady && host.AuditCandidate());
