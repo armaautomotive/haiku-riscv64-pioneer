@@ -134,6 +134,17 @@ public:
         using namespace PioneerQwen35;
         if (phase!=Published) return CandidateInvalid;
         if (!Select(ReadCandidate)) return phase==Retained?CandidateRetained:CandidateInvalid;
+#ifdef PIONEER_QWEN35_TREE_SETTLEMENT
+        // The worker publishes the trigger last. While it is absent or from
+        // an earlier token, one read is sufficient; validate the full record
+        // twice only after this exact trigger appears.
+        uint32_t marker=0;
+        if (!Read(ReadCandidate,DataflowResidentCandidateAddress+7*4,marker)) {
+            Retain();return CandidateRetained;
+        }
+        if (marker<command.trigger) return CandidateWaiting;
+        if (marker>command.trigger) { Retain();return CandidateRetained; }
+#endif
         uint32_t a[8]{},b[8]{};
         for (unsigned i=0;i<8;i++) if (!Read(ReadCandidate,DataflowResidentCandidateAddress+4*i,a[i])) {
             Retain();return CandidateRetained;

@@ -387,7 +387,8 @@ def verify_kernel_stack_budget(driver_directory, qualification=False, firmware_r
             resident_run_total += max(frame for frame, _ in tree_audit)
         if tree_settlement:
             for label, marker in (('compact submit', '::Submit('), ('compact batch', '::StoreBatch('),
-                                  ('compact reserved check', '::ReservedPayloadClear(')):
+                                  ('compact reserved check', '::ReservedPayloadClear('),
+                                  ('candidate poll', '::PollCandidate(')):
                 matches = [(frame, kind) for name, frame, kind in entries
                            if 'PioneerQwen35ResidentHostPci<Raw, Scope>' in name
                            and 'PioneerSessionIO' in name and marker in name]
