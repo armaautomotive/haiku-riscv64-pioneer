@@ -11,6 +11,9 @@ SECTIONS {
 		/* The setup helper executes from the same saved, audited dispatch
 		 * image; keeping it here leaves room for the resident matrix path. */
 		*service.o(.text.*DataflowBlackholeTensixOps*TensixBeginOutput*)
+		/* The shared compute image owns this matrix helper. Its range is
+		 * saved and installed with the rest of the dispatch image. */
+		*shared-roles.o(.text.*DataflowBlackholeTensixOps*MatrixPanel*)
 		*service.o(.text.qwen35_graph_execute)
 		*device-stream.o(.text .text.* .rodata .rodata.* .srodata .srodata.*)
 		*device-barrier.o(.text .text.* .rodata .rodata.* .srodata .srodata.*)
@@ -36,6 +39,7 @@ SECTIONS {
 	ASSERT(SIZEOF(.boot)==4,"one fixed boot jump")
 	ASSERT(qwen35_dataflow_entry==0x72000,"fixed dataflow service entry")
 	ASSERT(SIZEOF(.text)<=0xe000,"primary code overlaps L1 queues")
-	ASSERT(SIZEOF(.dispatch)>0 && SIZEOF(.dispatch)<=0x5c00,"dispatch code exceeds its L1 region")
+	/* 0xa0400 + 0x6000 = 0xa6400, below the 0xaa000 invocation. */
+	ASSERT(SIZEOF(.dispatch)>0 && SIZEOF(.dispatch)<=0x6000,"dispatch code exceeds its L1 region")
 	ASSERT(SIZEOF(.forbidden)==0,"service image cannot use writable globals")
 }

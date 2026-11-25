@@ -724,7 +724,9 @@ fi
 	-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE -I"$root/tools/pioneer" -I"$sdk/headers" \
 	-idirafter "$sdk/headers/posix" -c "$root/tools/pioneer/PioneerQwen35DataflowServiceImage.cpp" \
 	-o "$temporary/role-graph-service.o"
-"$cxx" $role_flags -I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+"$cxx" $role_flags -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+	-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE \
+	-I"$root/tools/pioneer" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 	-c "$root/tools/pioneer/PioneerQwen35DataflowSharedRoles.cpp" -o "$temporary/role-graph-compute.o"
 mkdir "$temporary/role-graph"
 for piece in stream barrier; do

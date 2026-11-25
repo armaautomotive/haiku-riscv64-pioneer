@@ -55,6 +55,10 @@ fi
 for symbol in qwen35_resident_graph_service_main qwen35_graph_run_descriptor qwen35_shared_compute_coordinate; do
     grep -E "jalr.*<$symbol>" "$output/disassembly.txt" >/dev/null
 done
+# The resident projection must be compiled with graph flags; otherwise its
+# first-projection trace silently disappears from the linked compute body.
+grep -E 'jalr.*DataflowBlackholeTensixOps.*TraceProjection' "$output/disassembly.txt" >/dev/null
+grep -E 'jalr.*DataflowBlackholeTensixOps.*MatrixPanel' "$output/disassembly.txt" >/dev/null
 if grep -E '[[:space:]](amo[a-z]+[.]w|lr[.]w|sc[.]w)[[:space:]]' "$output/disassembly.txt" >/dev/null; then
     echo 'resident service witness uses unsupported atomics' >&2;exit 1
 fi

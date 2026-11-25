@@ -141,7 +141,7 @@ class DataflowBlackholeTensixOps {
 		return fProgram && fProgram->core==0 && !block && !panel
 			&& DataflowLoadAcquire(*progress)==DataflowGraphProgressWord(3,DataflowGraphProgressExecute);
 	}
-	void TraceProjection(unsigned slot,const volatile uint32_t* values) const
+	__attribute__((noinline)) void TraceProjection(unsigned slot,const volatile uint32_t* values) const
 	{
 		auto* record=Words(DataflowGraphTraceAddress
 			+slot*sizeof(DataflowGraphTraceRecord));

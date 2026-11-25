@@ -66,7 +66,7 @@ case "$dispatch" in
 	"$cross-g++" $flags -O2 $graph_flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 		-c "$directory/PioneerQwen35DataflowDeviceDispatch.cpp" -o "$output/device-graph.o"
 	if [ "$role_graph" = 1 ]; then
-		"$cross-g++" $flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
+		"$cross-g++" $flags $graph_flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 			-c "$directory/PioneerQwen35DataflowSharedRoles.cpp" -o "$output/shared-roles.o"
 		"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
 			-u PioneerQwen35DeviceGraphRun \
