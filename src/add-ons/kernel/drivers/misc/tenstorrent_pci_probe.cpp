@@ -5124,6 +5124,7 @@ template bool PioneerStoreContext::RunQ35FabricRecovery<PioneerQ35FabricHostScop
 #if defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) && defined(PIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY)
 #include "PioneerQwen35ProjectionQualificationScope.inc"
 #include "PioneerQwen35ResidentHostCompileWitness.inc"
+#include "PioneerQwen35ResidentFleetAuditCompileWitness.inc"
 #include "PioneerQwen35ResidentTemplateCompileWitness.inc"
 #endif
 #include "PioneerQwen35ProjectionScratchCompileWitness.inc"
