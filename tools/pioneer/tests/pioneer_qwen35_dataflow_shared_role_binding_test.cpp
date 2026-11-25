@@ -84,6 +84,38 @@ struct PioneerQ35SharedRoleBindingTestAccess {
     static void MarkReleaseAttempt(PioneerQwen35SharedRoleBinding& binding,unsigned core,bool value) {
         binding.fReleaseAttempted[core]=value;
     }
+#ifdef TEST_PRESERVATION_ROLLBACK
+    // Simulate a successful preparation because the production release
+    // admission remains denied; the subsequent rollback uses the real scope.
+    static bool SimulatePreservationArm(PioneerQwen35SharedRoleBinding& b) {
+        auto* scope=b.Scope();if (!scope) return false;
+        struct SimulatedPreparation : PioneerQwen35SharedRoleBinding::Adapter {
+            PioneerSessionIO& io;
+            SimulatedPreparation(PioneerSessionIO& device,PioneerQwen35RoleBorrowedScopeWitness& s,
+                PioneerQwen35SharedRoleBinding::Views& views)
+                :PioneerQwen35SharedRoleBinding::Adapter(device,s,views),io(device) {}
+            bool StacklessFleetPreparationSafe(unsigned core) { return core<DataflowBarrierWorkers; }
+            bool WriteResetDisable(unsigned core,uint32_t value) {
+                if (!io.SelectRuntimeCore(core) || !gMapped[DataflowRolePhysicalControl]) return false;
+                gMemory[DataflowRolePhysicalControl][0x224/4]=value;return true;
+            }
+        } simulated(b.fContext.io,*scope,b.fViews);
+        return b.fOwner.PreparePossibleRelease(simulated);
+    }
+    static void CheckControlRollbackOnly(PioneerQwen35SharedRoleBinding& b) {
+        auto* scope=b.Scope();auto& io=b.fContext.io;assert(scope && io.SelectRuntimeCore(0));
+        const uint32_t current=gMemory[DataflowRolePhysicalControl][0x224/4];
+        const uint32_t original=RoleWindowInitial(0,DataflowRolePhysicalControl);
+        assert(!scope->ProveRoleControlWriteSafe(io,0,current,original));
+        assert(b.BeginHeldImageMutation(3));
+        // The owner is still Armed here. The actual restore changes it to
+        // Faulted before accepting even the saved control value.
+        assert(!scope->ProveRoleControlWriteSafe(io,0,current,original)
+            && !scope->ProveRoleControlWriteSafe(io,0,current,original^2U));
+        b.fHeldImageMutation=0;
+        assert(!scope->ProveRoleControlWriteSafe(io,0,current,original));
+    }
+#endif
     static void ExerciseSnapshotHoldLedger(PioneerQwen35SharedRoleBinding& b) {
         constexpr unsigned core=7;
         assert(!PioneerQ35SharedRoleSnapshotHoldTransition(&b,core,false));
@@ -386,11 +418,17 @@ static void ExerciseQualificationCaptureRoot(PioneerSessionIO& io)
     assert(io.SharedCaptureAndStageHeld() && !sColdRecoveryRequired
         && gMapCalls==DataflowRolePhysicalControl+1 && io.sharedResetWrites==resetWrites);
     assert(!io.SharedArmAndBeginRelease() && !io.SharedStartCore(0) && io.sharedResetWrites==resetWrites);
+#ifdef TEST_PRESERVATION_ROLLBACK
+    assert(PioneerQ35SharedRoleBindingTestAccess::SimulatePreservationArm(*binding));
+#endif
     context->qwen35DataflowService->capturePending=false;
     context->qwen35DataflowService->faulted=true;
     gQualificationHeldOwnerAllowed=false;
     gQualificationHeldRollbackOwnerAllowed=true;
     assert(PioneerQ35CanAbortUnstagedQualification(binding));
+#ifdef TEST_PRESERVATION_ROLLBACK
+    PioneerQ35SharedRoleBindingTestAccess::CheckControlRollbackOnly(*binding);
+#endif
     PioneerQ35SharedRoleBindingTestAccess::MarkReleaseAttempt(*binding,7,true);
     assert(!PioneerQ35CanAbortUnstagedQualification(binding));
     PioneerQ35SharedRoleBindingTestAccess::MarkReleaseAttempt(*binding,7,false);
@@ -404,6 +442,9 @@ static void ExerciseQualificationCaptureRoot(PioneerSessionIO& io)
         assert(io.SelectRuntimeCore(core));
         for (unsigned window=0;window<=DataflowRolePhysicalExtraCode;window++)
             assert(gMemory[window][0]==RoleWindowInitial(core,window));
+#ifdef TEST_PRESERVATION_ROLLBACK
+        assert(gMemory[DataflowRolePhysicalControl][0x224/4]==RoleWindowInitial(core,DataflowRolePhysicalControl));
+#endif
     }
     assert(io.SharedFinalizeBeforeResume() && PioneerQ35DestroySharedRoleBinding(binding));
     context->qwen35SharedRoleBinding=nullptr;gQualificationHeldOwnerAllowed=false;

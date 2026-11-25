@@ -635,7 +635,7 @@ static bool gRoleMisrouteInjected=false;
 static std::vector<std::vector<uint32_t>> gRoleTileWindows[DataflowBarrierWorkers];
 static uint32_t RoleWindowInitial(unsigned core,unsigned window) {
     const uint32_t value=(0x76540000U+window) ^ (core*0x10001U);
-#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+#if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) || defined(TEST_PRESERVATION_ROLLBACK)
     // The modeled reset-PC overrides are disabled on every tile.
     if (window==DataflowRolePhysicalControl) return value&~1U;
 #endif
@@ -673,7 +673,7 @@ static void SelectRoleTestWindows(unsigned previous,unsigned next) {
         }
     }
     if (gRoleWindowCore!=actual) {
-#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+#if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) || defined(TEST_PRESERVATION_ROLLBACK)
         constexpr unsigned lastWindow=DataflowRolePhysicalControl;
 #else
         constexpr unsigned lastWindow=DataflowRolePhysicalExtraCode;
@@ -717,7 +717,7 @@ area_id map_physical_memory(const char*,phys_addr_t physical,size_t bytes,uint32
     if (int(index)==gFailMap) return -1;
     gMemory[index].assign(bytes/4,0x76540000U+index); gMapped[index]=true;
 #if defined(TEST_SHARED_POST_RESET) && (defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS))
-#ifdef PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY
+#if defined(PIONEER_QWEN35_ROLE_FLEET_SERVICE_QUALIFY) || defined(TEST_PRESERVATION_ROLLBACK)
     constexpr unsigned lastWindow=DataflowRolePhysicalControl;
 #else
     constexpr unsigned lastWindow=DataflowRolePhysicalExtraCode;
@@ -741,7 +741,12 @@ status_t delete_area(area_id area) {
 #if defined(TEST_SHARED_POST_RESET) && (defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS) || defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS))
     // Unmapping a view does not discard device memory. Preserve the last
     // selected tile in the backing model before retiring the mock view.
-    if (gPerCoreRoleWindows && unsigned(area)<=DataflowRolePhysicalExtraCode) {
+#ifdef TEST_PRESERVATION_ROLLBACK
+    constexpr unsigned lastWindow=DataflowRolePhysicalControl;
+#else
+    constexpr unsigned lastWindow=DataflowRolePhysicalExtraCode;
+#endif
+    if (gPerCoreRoleWindows && unsigned(area)<=lastWindow) {
         auto& tile=gRoleTileWindows[gRoleWindowCore][unsigned(area)];
         assert(tile.size()==gMemory[area].size());
         std::copy(gMemory[area].begin(),gMemory[area].end(),tile.begin());

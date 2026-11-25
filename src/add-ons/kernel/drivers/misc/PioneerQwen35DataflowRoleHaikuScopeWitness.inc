@@ -32,6 +32,8 @@ static bool PioneerQ35SharedRoleSnapshotHoldTransition(const PioneerQwen35Shared
 static bool PioneerQ35SharedRoleProjectionInFlightLedger(const PioneerQwen35SharedRoleBinding*);
 #if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE)
 static bool PioneerQ35SharedRoleHeldImageAccess(const PioneerQwen35SharedRoleBinding*,bool);
+static bool PioneerQ35SharedRoleHeldControlRollbackAccess(const PioneerQwen35SharedRoleBinding*);
+static bool PioneerQ35SharedRoleResetRollbackTransition(const PioneerQwen35SharedRoleBinding*,unsigned,uint32_t,uint32_t);
 #endif
 #endif
 static bool PioneerQ35SharedRoleSavedRamSources(const PioneerQwen35SharedRoleBinding*,unsigned,
@@ -297,13 +299,21 @@ public:
             && io.DataflowPanelMappingStable()
             && PioneerQ35SharedRoleHeldImageAccess(fContext->qwen35SharedRoleBinding,rollback);
     }
+    bool ProveRoleHeldControlRollbackAllowed(PioneerSessionIO& io) const {
+        return fContext && PioneerQ35QualificationHeldRollbackOwnerAllowed(*fContext,io)
+            && ProveExclusiveRewrite(io) && io.SharedRoleFirmwareMatches() && io.DataflowPanelMappingStable()
+            && PioneerQ35SharedRoleHeldControlRollbackAccess(fContext->qwen35SharedRoleBinding);
+    }
 #endif
 // PIONEER_Q35_SCOPE_RESET_CONTROL_BEGIN
     bool ProveRoleControlWriteSafe(PioneerSessionIO& io,unsigned core,uint32_t expected,uint32_t desired) const {
 #if defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) && defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS)
 #if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
-        if (fContext && (PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)
-            || PioneerQ35QualificationHeldRollbackOwnerAllowed(*fContext,io))) return false;
+        if (fContext && PioneerQ35QualificationHeldRollbackOwnerAllowed(*fContext,io))
+            return ProveRoleHeldControlRollbackAllowed(io) && io.runtimeCore==core
+                && ProveRoleFleetHeldAndQuiet(io,core)
+                && PioneerQ35SharedRoleResetRollbackTransition(fContext->qwen35SharedRoleBinding,core,expected,desired);
+        if (fContext && PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)) return false;
 #endif
         return ProveRoleMemoryReadSafe(io,core,PioneerQwen35::DataflowRolePhysicalExtraCode)
             && PioneerQ35SharedRoleResetTransition(fContext->qwen35SharedRoleBinding,core,expected,desired)
@@ -323,7 +333,8 @@ public:
             && ProveExclusiveRewrite(io) && io.SharedRoleFirmwareMatches()
             && (PioneerQ35QualificationHeldOwnerAllowed(*fContext,io)
                 || (PioneerQ35QualificationHeldRollbackOwnerAllowed(*fContext,io)
-                    && PioneerQ35SharedRoleHeldImageAccess(fContext->qwen35SharedRoleBinding,true)));
+                    && (PioneerQ35SharedRoleHeldImageAccess(fContext->qwen35SharedRoleBinding,true)
+                        || PioneerQ35SharedRoleHeldControlRollbackAccess(fContext->qwen35SharedRoleBinding))));
 #else
         (void)io;(void)core;return false;
 #endif

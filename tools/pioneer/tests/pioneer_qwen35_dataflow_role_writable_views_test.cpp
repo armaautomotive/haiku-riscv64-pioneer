@@ -178,6 +178,18 @@ int main()
     {
         Reset(); Guard guard; Platform platform; platform.guard=&guard;
         DataflowRoleWritableViews<Platform> views(platform);
+        assert(views.Open(BarStart,BarEnd,guard) && views.ControlWritesConfirmed());
+        guard.control=false;
+        assert(!views.WriteResetDisable(3,0,1,guard) && views.ControlWritesConfirmed());
+        guard.control=true;platform.driftAfter=platform.writes+1;
+        assert(!views.WriteResetDisable(3,0,1,guard) && !views.ControlWritesConfirmed());
+        guard.route=true;platform.driftAfter=0;
+        assert(views.WriteResetDisable(3,1,0,guard) && !views.ControlWritesConfirmed());
+        assert(views.Close());
+    }
+    {
+        Reset(); Guard guard; Platform platform; platform.guard=&guard;
+        DataflowRoleWritableViews<Platform> views(platform);
         failMap=4;
         assert(!views.Open(BarStart,BarEnd,guard) && views.HasMappings());
         failUnmap=2; assert(!views.Close() && views.HasMappings());

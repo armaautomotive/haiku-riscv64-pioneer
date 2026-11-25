@@ -39,7 +39,7 @@ class PioneerQwen35SharedRoleBinding {
     unsigned fRuntimeObservationCore=PioneerQwen35::DataflowBarrierWorkers;
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
     bool fUnstagedQualificationAbort=false;
-    unsigned fHeldImageMutation=0; // 1: stage, 2: pre-release rollback
+    unsigned fHeldImageMutation=0; // 1: stage, 2: image rollback, 3: control rollback
     bool fSnapshotFleetParked=false;
 #endif
     bool fAutoRestoreParked[PioneerQwen35::DataflowBarrierWorkers]{};
@@ -95,15 +95,23 @@ public:
                      : !(fOwner.StacklessHeldImagesCaptured() || fOwner.HeldImageRollbackReady())) return false;
         return true;
     }
+    bool HeldControlRollbackAccessAllowed() const {
+        return fHeldImageMutation==3 && !sColdRecoveryRequired && !fReleaseAuthorized
+            && fContext.qwen35SharedRoleBinding==this && fCaptureAttempted
+            && fViews.Opened() && fCodeSnapshot && fRamSnapshot
+            && (fOwner.HeldPreservationRollbackReady() || fOwner.HeldImageRollbackReady());
+    }
     // The session lock serializes this interval. Check the release ledger
     // once at entry; no release can start without fReleaseAuthorized, which
     // remains false throughout the operation. Per-word checks stay O(1).
     bool BeginHeldImageMutation(unsigned mode) {
-        if ((mode!=1 && mode!=2) || fHeldImageMutation || fReleaseAuthorized) return false;
+        if ((mode!=1 && mode!=2 && mode!=3) || fHeldImageMutation || fReleaseAuthorized
+            || (mode==3 && !fViews.ControlWritesConfirmed())) return false;
         for (unsigned core=0;core<PioneerQwen35::DataflowBarrierWorkers;core++)
             if (fReleaseAttempted[core] || fStackReleaseAttempted[core] || fHoldAttempted[core]) return false;
         fHeldImageMutation=mode;
-        if (!HeldImageAccessAllowed(mode==2)) { fHeldImageMutation=0;return false; }
+        if (!(mode==3?HeldControlRollbackAccessAllowed():HeldImageAccessAllowed(mode==2)))
+            { fHeldImageMutation=0;return false; }
         return true;
     }
     // This admits only an attempted cleanup, not a completed restoration.
@@ -111,12 +119,14 @@ public:
     bool CanAbortUnstagedQualification() {
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
         auto* scope=Scope();auto& io=fContext.io;
-        if ((!fUnstagedQualificationAbort && !fOwner.HeldImageRollbackReady()) || !scope || sColdRecoveryRequired
+        if ((!fUnstagedQualificationAbort && !fOwner.HeldImageRollbackReady()
+                && !fOwner.HeldPreservationRollbackReady()) || !scope || sColdRecoveryRequired
             || fContext.qwen35SharedRoleBinding!=this || !fContext.qwen35DataflowService
             || !fContext.qwen35DataflowService->Faulted() || !fCaptureAttempted
-            || fReleaseAuthorized || !fViews.Opened() || !fViews.ImageWritesConfirmed()
+            || fReleaseAuthorized || !fViews.Opened() || !fViews.ImageWritesConfirmed() || !fViews.ControlWritesConfirmed()
             || !fCodeSnapshot || !fRamSnapshot
-            || (!fOwner.StacklessHeldImagesCaptured() && !fOwner.HeldImageRollbackReady())
+            || (!fOwner.StacklessHeldImagesCaptured() && !fOwner.HeldImageRollbackReady()
+                && !fOwner.HeldPreservationRollbackReady())
             || io.runtimeCore>=PioneerQwen35::DataflowBarrierWorkers) return false;
         for (unsigned core=0;core<PioneerQwen35::DataflowBarrierWorkers;core++)
             if (fReleaseAttempted[core] || fStackReleaseAttempted[core] || fHoldAttempted[core]) return false;
@@ -260,6 +270,11 @@ public:
         return fCodeSnapshot && fRamSnapshot
             && fOwner.ResetDisableTransitionMatches(core,expected,desired);
     }
+#if defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+    bool ResetDisableRollbackTransitionMatches(unsigned core,uint32_t expected,uint32_t desired) const {
+        return fCodeSnapshot && fRamSnapshot && fOwner.ResetDisableRollbackTransitionMatches(core,expected,desired);
+    }
+#endif
 #endif
     bool CanDestroy() const { return !fViews.HasMappings() && !fOwner.RestorationRequired()
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
@@ -758,6 +773,12 @@ public:
         Adapter io(fContext.io,*scope,fViews);
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 #ifndef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
+        if (fOwner.HeldPreservationRollbackReady()) {
+            if (!BeginHeldImageMutation(3)) return false;
+            const bool restored=fOwner.RestoreHeldPreservationBeforeRelease(io);
+            fHeldImageMutation=0;
+            if (!restored) return false;
+        }
         if (fOwner.HeldImageRollbackReady()) {
             if (!BeginHeldImageMutation(2)) return false;
             const bool restored=fOwner.RestoreHeldImagesBeforeRelease(io);
@@ -848,6 +869,17 @@ static bool
 PioneerQ35SharedRoleHeldImageAccess(const PioneerQwen35SharedRoleBinding* binding,bool rollback)
 {
     return binding && binding->HeldImageAccessAllowed(rollback);
+}
+static bool
+PioneerQ35SharedRoleHeldControlRollbackAccess(const PioneerQwen35SharedRoleBinding* binding)
+{
+    return binding && binding->HeldControlRollbackAccessAllowed();
+}
+static bool
+PioneerQ35SharedRoleResetRollbackTransition(const PioneerQwen35SharedRoleBinding* binding,
+    unsigned core,uint32_t expected,uint32_t desired)
+{
+    return binding && binding->ResetDisableRollbackTransitionMatches(core,expected,desired);
 }
 static bool
 PioneerQ35CanAbortUnstagedQualification(PioneerQwen35SharedRoleBinding* binding)

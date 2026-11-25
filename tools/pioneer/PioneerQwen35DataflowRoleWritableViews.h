@@ -22,7 +22,7 @@ template<class Platform> class DataflowRoleWritableViews {
     volatile uint32_t* fView[Count]{};
     unsigned fBytes[Count]{};
     uint64_t fBarStart=0,fBarEnd=0;
-    bool fAttempted=false,fOpen=false,fImageWriteUnconfirmed=false;
+    bool fAttempted=false,fOpen=false,fImageWriteUnconfirmed=false,fControlWriteUnconfirmed=false;
     template<class Guard> bool Route(unsigned core,Guard& guard) {
         return guard.ProvePinnedBar(fBarStart,fBarEnd) && guard.ProveSelectedRoute(core);
     }
@@ -42,6 +42,7 @@ public:
     // Sticky for this mapping lifetime: a failed post-store check may leave a
     // posted write in flight. A later successful write cannot prove it drained.
     bool ImageWritesConfirmed() const { return !fImageWriteUnconfirmed; }
+    bool ControlWritesConfirmed() const { return !fControlWriteUnconfirmed; }
     template<class Guard> bool Open(uint64_t start,uint64_t end,Guard& guard) {
         if (fAttempted || fOpen || HasMappings() || end<start || end-start==UINT64_MAX
             || !guard.ProvePinnedBar(start,end)) return false;
@@ -175,10 +176,15 @@ public:
             || !guard.ProveControlWriteAllowed(core,expected,desired)
             || !Route(core,guard) || fPlatform.ReadWord(fView[which]+offset/4)!=expected
             || !guard.ProveControlWriteAllowed(core,expected,desired) || !Route(core,guard)) return false;
+        const bool previousUnconfirmed=fControlWriteUnconfirmed;
+        fControlWriteUnconfirmed=true;
+        asm volatile("" ::: "memory");
         fPlatform.WriteWord(fView[which]+offset/4,desired);
-        return Route(core,guard) && guard.ProveControlWriteAllowed(core,expected,desired)
+        if (!(Route(core,guard) && guard.ProveControlWriteAllowed(core,expected,desired)
             && Route(core,guard) && fPlatform.ReadWord(fView[which]+offset/4)==desired
-            && guard.ProveControlWriteAllowed(core,expected,desired) && Route(core,guard);
+            && guard.ProveControlWriteAllowed(core,expected,desired) && Route(core,guard))) return false;
+        fControlWriteUnconfirmed=previousUnconfirmed;
+        return true;
     }
     bool Close() {
         fOpen=false;

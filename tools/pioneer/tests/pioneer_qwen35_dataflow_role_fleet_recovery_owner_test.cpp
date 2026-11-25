@@ -12,10 +12,12 @@ struct RecoveryIO {
     bool corruptPriorDisableOnWrite=false;
     bool stacklessPreparation=true,stacklessSafe=true,uncapturedProtected=true;
     bool heldImageStageAllowed=false,heldImageRollbackAllowed=false,heldImageWritesConfirmed=true;
+    bool heldPreservationRollbackAllowed=false,heldPreservationWritesConfirmed=true;
     bool coreRestoreProof=false,restoreReleaseReady=false,staleRestoreReceipt=false;
     bool restoreCompletion=false,restoreCompletedHeld=false;
     bool autoArmProof=false,autoHeldProof=false,autoCancelProof=false,autoRetirementProof=false;
     const DataflowRoleFleetRecoveryOwner* transitionOwner=nullptr;
+    bool expectRollbackTransitions=false;
     unsigned validatedTransitions=0;
     bool expectCancelledRetirement[DataflowBarrierWorkers]{};
     DataflowRoleSnapshotHandoff restoreHandoff[DataflowBarrierWorkers]{};
@@ -52,6 +54,8 @@ struct RecoveryIO {
     bool HeldImageStageAllowed() const { return heldImageStageAllowed; }
     bool HeldImageRollbackAllowed() const { return heldImageRollbackAllowed; }
     bool HeldImageWritesConfirmed() const { return heldImageWritesConfirmed; }
+    bool HeldPreservationRollbackAllowed() const { return heldPreservationRollbackAllowed; }
+    bool HeldPreservationWritesConfirmed() const { return heldPreservationWritesConfirmed; }
     bool StacklessUncapturedRamProtected(unsigned core) const {
         return held && uncapturedProtected && core<DataflowBarrierWorkers;
     }
@@ -155,13 +159,17 @@ struct RecoveryIO {
             assert(transitionOwner->ResetDisableTransitionMatches(core,resetDisable[core],value));
             assert(!transitionOwner->ResetDisableTransitionMatches(core,resetDisable[core],value^0x80000000U));
             assert(!transitionOwner->ResetDisableTransitionMatches(DataflowBarrierWorkers,resetDisable[core],value));
+            if (expectRollbackTransitions) {
+                assert(transitionOwner->ResetDisableRollbackTransitionMatches(core,resetDisable[core],value));
+                assert(!transitionOwner->ResetDisableRollbackTransitionMatches(core,resetDisable[core],value^2U));
+            }
             ++validatedTransitions;
         }
         ++writes; resetDisable[core]=value;
         if (corruptPriorDisableOnWrite && core==37) {
             resetDisable[0]^=1; corruptPriorDisableOnWrite=false;
         }
-        if (core==failDisableCore) { failDisableCore=UINT32_MAX; return false; }
+        if (core==failDisableCore) { failDisableCore=UINT32_MAX;heldPreservationWritesConfirmed=false;return false; }
         return true;
     }
     bool Read(unsigned core,unsigned address,uint32_t* out,unsigned bytes) {
@@ -232,6 +240,58 @@ int main()
     std::vector<uint32_t> codeSnapshot(DataflowRoleFleetRecoveryOwner::CodeWords());
     std::vector<uint32_t> ramSnapshot(DataflowRoleFleetRecoveryOwner::RamWords());
     const uint32_t codeA[]={1,2,3},codeB[]={4,5},shimA[]={6,7},shimB[]={8,9};
+    {
+        // The control snapshot can be restored after successful preparation,
+        // before the copy-aware release ledger has been entered.
+        RecoveryIO io;DataflowRoleFleetRecoveryOwner owner;
+        const auto originalCode=io.code,originalRam=io.ram,originalBoots=io.boots,
+            originalShims=io.shims,originalDisable=io.resetDisable;
+        assert(owner.SelectAutoRestoreMode() && owner.SelectComputeLocalRamPreservation()
+            && owner.CaptureAllStacklessHeldImages(codeSnapshot.data(),codeSnapshot.size(),
+                ramSnapshot.data(),ramSnapshot.size(),io));
+        io.heldImageStageAllowed=true;io.heldImageRollbackAllowed=true;io.transitionOwner=&owner;
+        assert(owner.StageHeldImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
+        assert(owner.PreparePossibleRelease(io) && owner.HeldPreservationRollbackReady()
+            && !owner.HeldImageRollbackReady());
+        const unsigned before=io.writes;
+        assert(!owner.RestoreHeldPreservationBeforeRelease(io) && io.writes==before);
+        io.heldPreservationRollbackAllowed=true;io.heldPreservationWritesConfirmed=false;
+        assert(!owner.RestoreHeldPreservationBeforeRelease(io) && io.writes==before);
+        io.heldPreservationWritesConfirmed=true;io.expectRollbackTransitions=true;
+        assert(owner.RestoreHeldPreservationBeforeRelease(io) && owner.HeldImageRollbackReady());
+        assert(owner.RestoreHeldImagesBeforeRelease(io) && owner.VerifyAfterResidentRestore(io));
+        assert(io.code==originalCode && io.ram==originalRam && io.boots==originalBoots
+            && io.shims==originalShims && io.resetDisable==originalDisable && !io.privateRamReads);
+    }
+    {
+        // A failed preservation write may still be in flight; do not restore
+        // controls or images until an independent recovery can drain it.
+        RecoveryIO io;DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.SelectAutoRestoreMode()
+            && owner.CaptureAllStacklessHeldImages(codeSnapshot.data(),codeSnapshot.size(),
+                ramSnapshot.data(),ramSnapshot.size(),io));
+        io.heldImageStageAllowed=true;io.heldImageRollbackAllowed=true;
+        assert(owner.StageHeldImages(codeA,3,codeB,2,shimA,2,shimB,2,io));
+        io.failDisableCore=17;io.heldPreservationRollbackAllowed=true;
+        assert(!owner.PreparePossibleRelease(io) && owner.HeldPreservationRollbackReady());
+        const unsigned before=io.writes;
+        assert(!owner.RestoreHeldPreservationBeforeRelease(io) && io.writes==before
+            && !owner.HeldImageRollbackReady());
+    }
+    {
+        // Once copy-aware release ownership has begun, this earlier
+        // rollback must not overwrite the retained release state.
+        RecoveryIO io;DataflowRoleFleetRecoveryOwner owner;
+        assert(owner.SelectAutoRestoreMode()
+            && owner.CaptureAllStacklessHeldImages(codeSnapshot.data(),codeSnapshot.size(),
+                ramSnapshot.data(),ramSnapshot.size(),io));
+        io.heldImageStageAllowed=true;io.heldPreservationRollbackAllowed=true;
+        assert(owner.StageHeldImages(codeA,3,codeB,2,shimA,2,shimB,2,io)
+            && owner.PreparePossibleRelease(io) && owner.BeginReleaseAttempt(io));
+        const unsigned before=io.writes;
+        assert(!owner.HeldPreservationRollbackReady()
+            && !owner.RestoreHeldPreservationBeforeRelease(io) && io.writes==before);
+    }
     {
         // Stage only after the held-fleet admission, then restore all image
         // windows before any reset release without touching private RAM.
