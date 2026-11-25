@@ -51,6 +51,9 @@
 	modules that can't be loaded from disk.
 */
 extern module_info gDeviceManagerModule;
+#ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS
+extern module_info gPioneerDeviceManagerPinModule;
+#endif
 extern module_info gDeviceRootModule;
 extern module_info gDeviceGenericModule;
 extern module_info gFrameBufferConsoleModule;
@@ -61,6 +64,9 @@ extern module_info gDeviceFileSystem;
 
 static module_info* sBuiltInModules[] = {
 	&gDeviceManagerModule,
+#ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS
+	&gPioneerDeviceManagerPinModule,
+#endif
 	&gDeviceRootModule,
 	&gDeviceGenericModule,
 	&gFrameBufferConsoleModule,

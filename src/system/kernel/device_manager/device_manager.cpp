@@ -212,6 +212,45 @@ static device_node *sRootNode;
 static recursive_lock sLock;
 static const char* sGenericContextPath;
 
+#ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS
+#include "PioneerDeviceManagerPinModule.h"
+
+// PIONEER_DM_DRIVER_PIN_BEGIN
+static status_t
+pioneer_run_with_initialized_driver(device_node* node,
+	pioneer_dm_pinned_operation operation, void* argument, status_t* operationStatus)
+{
+	if (node == NULL || operation == NULL || operationStatus == NULL)
+		return B_BAD_VALUE;
+	*operationStatus = B_ERROR;
+	{
+		RecursiveLocker locker(sLock);
+		if (!node->IsRegistered() || !node->IsInitialized()
+			|| (node->Flags() & NODE_FLAG_DEVICE_REMOVED) != 0)
+			return B_NOT_ALLOWED;
+		status_t status = node->InitDriver();
+		if (status != B_OK)
+			return status;
+	}
+	// Do not hold the device-manager lock across the caller's operation.
+	// Device removal can still run and must be handled by the caller.
+	*operationStatus = operation(argument);
+	{
+		RecursiveLocker locker(sLock);
+		node->UninitDriver();
+	}
+	return B_OK;
+}
+// PIONEER_DM_DRIVER_PIN_END
+
+// This separate module is absent from ordinary kernels. It is intended only
+// for qualification of the synchronous lifetime contract.
+pioneer_dm_driver_pin_module_info gPioneerDeviceManagerPinModule = {
+	{ PIONEER_DEVICE_MANAGER_PIN_MODULE, 0, NULL },
+	pioneer_run_with_initialized_driver
+};
+#endif
+
 
 //	#pragma mark -
 
@@ -1349,6 +1388,7 @@ device_node::AcquireResources(const io_resource* resources)
 }
 
 
+// PIONEER_DM_INIT_LIFETIME_BEGIN
 status_t
 device_node::InitDriver()
 {
@@ -1421,6 +1461,7 @@ device_node::UninitDriver()
 
 	return true;
 }
+// PIONEER_DM_INIT_LIFETIME_END
 
 
 void

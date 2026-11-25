@@ -44,10 +44,10 @@ status_t GetPioneerPciProfile(device_manager_info*, const pci_info&,
 	tt_pioneer_profile&);
 // The callback runs synchronously while the validated device-tree nodes,
 // including the PCI controller node, remain referenced. It may use the
-// controller cookie only until it returns. A node reference does NOT pin its
-// driver or cookie against device removal; callers must provide that separate
-// lifetime protection. The profile validates identity and topology; it does
-// not establish DMA, MMIO or firmware exclusion.
+// controller cookie only until it returns. The private device-manager pin
+// service must be available to retain the initialized card, root port and
+// their ancestors; bare node references are insufficient. Pins do not prevent removal or
+// establish DMA, MMIO, topology stability or firmware exclusion.
 typedef status_t (*pioneer_pci_controller_operation)(void* controllerCookie,
 	void* argument);
 status_t WithPioneerPciController(device_manager_info*, const pci_info&,

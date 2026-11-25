@@ -13,6 +13,8 @@ awk '/PIONEER_Q35_ROOT_RECOVERY_GATEWAY_BEGIN/ {copying=1;next} /PIONEER_Q35_ROO
  "$source" > "$temporary/pioneer_q35_root_recovery_gateway.inc"
 awk 'BEGIN {copying=0} /^namespace \{/ {copying=1} copying {print} END {if(!copying)exit 1}' \
  "$directory/../../../src/add-ons/kernel/drivers/misc/PioneerPciProfile.cpp" > "$temporary/pioneer_pci_profile_actual.inc"
+awk '/PIONEER_DM_DRIVER_PIN_BEGIN/ {copying=1;next} /PIONEER_DM_DRIVER_PIN_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+ "$directory/../../../src/system/kernel/device_manager/device_manager.cpp" > "$temporary/pioneer_dm_driver_pin.inc"
 for pair in DRIVER_RELOAD_STATE:reload_state DRIVER_RELOAD_CONTROL:reload_control PROBE_LOCK:lock QWEN35_PROBE_OPEN:probe_open QWEN35_PROBE_FREE:probe_free QWEN35_RECOVERY_STATUS:recovery_status QWEN35_RECOVERY_RUN:recovery_run QWEN35_DBI_CAPTURE:dbi_capture Q38_DISPATCH_COOKIE_RELEASE:cookie_release; do
  section=${pair%%:*}; name=${pair#*:}
  awk -v begin="PIONEER_${section}_BEGIN" -v end="PIONEER_${section}_END" '
@@ -66,9 +68,12 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pio
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I"$temporary" "$directory/pioneer_qwen35_root_recovery_gateway_test.cpp" -o "$temporary/pioneer-q35-root-recovery-gateway-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pioneer-q35-root-recovery-gateway-test"
-${CXX:-c++} -std=gnu++20 -O1 -g -Wall -Wextra -Werror -Wno-missing-field-initializers -fsanitize=address,undefined \
+${CXX:-c++} -std=gnu++20 -O1 -g -Wall -Wextra -Werror -Wno-missing-field-initializers -fsanitize=address,undefined -pthread \
  -I"$temporary" "$directory/pioneer_pci_profile_controller_test.cpp" -o "$temporary/pioneer-pci-profile-controller-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pioneer-pci-profile-controller-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined -pthread \
+ -I"$temporary" "$directory/pioneer_device_manager_pin_test.cpp" -o "$temporary/pioneer-device-manager-pin-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pioneer-device-manager-pin-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_post_reset_audit_test.cpp" -o "$temporary/post-reset-audit-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/post-reset-audit-test"

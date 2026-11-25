@@ -12767,9 +12767,9 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 // The profile holds the actual controller node throughout the synchronous
 // call. This only serializes controller-mediated PCI configuration; it does
 // not prove downstream topology stability, MMIO/DMA exclusion or firmware
-// quiescence. A node reference does not pin the controller driver against
-// removal, and the complete callback's lock ordering is unaudited. Neither
-// witness can be loaded until both are solved.
+// quiescence. The profile requires a device-manager initialization pin, but
+// device removal can still invalidate hardware and the complete callback's
+// lock ordering is unaudited. Neither witness is ready for hardware.
 // PIONEER_Q35_ROOT_RECOVERY_GATEWAY_BEGIN
 struct Qwen35RootRecoveryCall {
 	PioneerProbeCookie* inspector;
