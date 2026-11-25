@@ -22,6 +22,7 @@ Qwen35FabricRecoveryStartLocked(PioneerProbeCookie* inspector,PioneerProbeCookie
         || context->io.qwen35BorrowedRoleScope || context->recoveryFreshSession
         || context->recoveryFabricStartAttempted || context->recoveryFabricStartTicket
         || context->recoveryFabricPciIdleAttempted || context->recoveryFabricPciIdle
+        || context->recoveryFabricAuditReleaseAttempted || context->recoveryFabricAuditReleased
         || context->recoveryAttempted || context->recoveryMapping || context->recoveryFabricArcOwner
         || !sColdRecoveryRequired || !context->dispatchOwnerRetained || !context->q35PciReservationHeld
         || context->q35PciReleaseAttempted || sRuntimeOwner!=owner || owner->context!=context
@@ -57,6 +58,25 @@ Qwen35FabricRecoveryStartLocked(PioneerProbeCookie* inspector,PioneerProbeCookie
         result.detail=pciStage;return B_DEV_NOT_READY;
     }
     context->recoveryFabricPciIdle=true;
-    result.detail=PIONEER_RECOVERY_DETAIL_FABRIC_PCI_IDLE;
+    result.stage=PIONEER_RECOVERY_STAGE_FABRIC_OLD_MMIO;
+    auto cleanupPermit=[&]() {
+        return context->recoveryFabricPciIdleAttempted && context->recoveryFabricPciIdle
+            && context->recoveryFabricArcOwner && context->recoveryMapping
+            && permit();
+    };
+    const status_t disposed=context->io.DisposeFabricOldMmio(cleanupPermit);
+    if (disposed!=B_OK || !cleanupPermit()) { result.detail=uint32_t(disposed);return B_DEV_NOT_READY; }
+    result.stage=PIONEER_RECOVERY_STAGE_FABRIC_AUDIT_RELEASE;
+    if (!cleanupPermit() || !context->io.fabricOldMmioDisposeComplete
+        || !context->recoveryMapping->q35CloseComplete
+        || context->recoveryFabricArcOwner->CurrentPhase()!=PioneerQ35FabricArcCompileOwner::Retired)
+        return B_DEV_NOT_READY;
+    context->recoveryFabricAuditReleaseAttempted=true;
+    delete context->recoveryFabricArcOwner;context->recoveryFabricArcOwner=NULL;
+    if (!permit()) return B_DEV_NOT_READY;
+    delete context->recoveryMapping;context->recoveryMapping=NULL;
+    if (!scope.HostOwnershipValidAfterAuditRelease() || guard->validate(ticket)!=B_OK) return B_DEV_NOT_READY;
+    context->recoveryFabricAuditReleased=true;
+    result.detail=PIONEER_RECOVERY_DETAIL_FABRIC_AUDIT_RELEASED;
     return B_DEV_NOT_READY; // retained scratch/owners and cold state are not yet restored
 }

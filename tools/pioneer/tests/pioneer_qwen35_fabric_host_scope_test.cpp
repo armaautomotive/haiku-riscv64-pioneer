@@ -62,6 +62,13 @@ int main() {
     pioneer_driver_recovery_guard_v2_info guard;
     PioneerQ35FabricHostScope live(&owner,&owner,&context,&guard,42,10,20);
     assert(live.HostOwnershipValid());
+    assert(!live.HostOwnershipValidAfterAuditRelease());
+    context.recoveryMapping=nullptr;
+    assert(!live.HostOwnershipValid() && live.HostOwnershipValidAfterAuditRelease());
+    PioneerQ35FabricArcCompileOwner attached;
+    context.recoveryFabricArcOwner=&attached;assert(!live.HostOwnershipValidAfterAuditRelease());
+    context.recoveryFabricArcOwner=nullptr;ticketValid=false;assert(!live.HostOwnershipValidAfterAuditRelease());
+    ticketValid=true;context.recoveryMapping=&mapping;
     sReloadGeneration++;assert(!live.HostOwnershipValid());sReloadGeneration--;
     sOpenCookies++;assert(!live.HostOwnershipValid());sOpenCookies--;
     sReloadQuiesced=true;assert(!live.HostOwnershipValid());sReloadQuiesced=false;

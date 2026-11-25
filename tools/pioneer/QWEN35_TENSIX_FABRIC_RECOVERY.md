@@ -66,6 +66,8 @@ The non-loadable transaction also requires three read-only, clear root-port
 uncorrectable AER samples. It does not clear AER, establish continued PCIe
 health or establish that other device writers are excluded.
 After those audits it attempts to restore the saved idle PCI layout once,
-checking the ticket and readback around each changed config write. The old
-owner and host resources remain retained even if PCI reaches idle; scratch
-restoration, old-mapping disposal and complete recovery are still unfinished.
+checking the ticket and readback around each changed config write. The
+non-loadable controller then removes the old CPU MMIO views and closed audit
+objects, with guard checks and no automatic retry. Host DMA buffers, the role
+owner's mappings, bank claims, snapshots and cold state stay retained. Scratch
+restoration, complete mapping disposal and recovery are still unfinished.

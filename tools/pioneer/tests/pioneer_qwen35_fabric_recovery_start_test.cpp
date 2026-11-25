@@ -28,7 +28,9 @@ struct pioneer_driver_recovery_guard_v2_info {
 struct tt_arc_scratch_result { unsigned version=1; };
 struct tt_arc_queue_result {};struct PioneerPostResetAuditResult {};struct PioneerQ35PostResetL2Result {};
 struct PioneerPostResetMapping {
+    bool q35CloseComplete=false;
     explicit PioneerPostResetMapping(int) {}
+    ~PioneerPostResetMapping() { if (failAt==8) ticketValid=false; }
     template<class Check> bool OpenQ35Guarded(Check& check) {
         if (!check()) return false;
         ++touches;return failAt!=1 && check();
@@ -38,22 +40,37 @@ struct PioneerPostResetMapping {
         ++touches;return failAt!=2 && check();
     }
 };
+struct PioneerQ35FabricArcCompileOwner {
+    enum Phase { Retired };
+    Phase CurrentPhase() const { return Retired; }
+    ~PioneerQ35FabricArcCompileOwner() { if (failAt==7) ticketValid=false; }
+};
 struct PioneerStoreContext {
-    int profile=0;struct { void* qwen35BorrowedRoleScope=nullptr; } io;
+    int profile=0;struct {
+        void* qwen35BorrowedRoleScope=nullptr;bool fabricOldMmioDisposeAttempted=false,fabricOldMmioDisposeComplete=false;
+        template<class Check> status_t DisposeFabricOldMmio(Check& check) {
+            if (!check()) return B_DEV_NOT_READY;
+            fabricOldMmioDisposeAttempted=true;++touches;
+            if (failAt==6 || !check()) return B_DEV_NOT_READY;
+            fabricOldMmioDisposeComplete=true;return B_OK;
+        }
+    } io;
     bool recoveryFabricStartAttempted=false,recoveryAttempted=false,dispatchOwnerRetained=true;
     bool recoveryFabricPciIdleAttempted=false,recoveryFabricPciIdle=false;
+    bool recoveryFabricAuditReleaseAttempted=false,recoveryFabricAuditReleased=false;
     bool q35PciReservationHeld=true,q35PciReleaseAttempted=false,bankStorageOnly=true;
     uint64 bytes=PioneerResidentBanks::Total,recoveryFabricStartTicket=0;
-    PioneerPostResetMapping* recoveryMapping=nullptr;void* recoveryFabricArcOwner=nullptr;void* recoveryFreshSession=nullptr;
+    PioneerPostResetMapping* recoveryMapping=nullptr;PioneerQ35FabricArcCompileOwner* recoveryFabricArcOwner=nullptr;void* recoveryFreshSession=nullptr;
     int Pci() const { return 0; }
     template<class Scope> bool RunQ35FabricRecovery(pioneer_driver_recovery_guard_v2_info*,uint64,
         const tt_arc_scratch_result&,tt_arc_queue_result&,PioneerPostResetAuditResult&,
         PioneerQ35PostResetL2Result&,Scope& scope,unsigned& stage) {
         if (!scope.HostOwnershipValid()) return false;
         ++touches;stage=failAt==3?8:17;
-        recoveryFabricArcOwner=this;return failAt!=3;
+        recoveryFabricArcOwner=new PioneerQ35FabricArcCompileOwner;
+        recoveryMapping->q35CloseComplete=failAt!=3;return failAt!=3;
     }
-    ~PioneerStoreContext() { delete recoveryMapping; }
+    ~PioneerStoreContext() { delete recoveryFabricArcOwner;delete recoveryMapping; }
 };
 struct PioneerQ35FabricHostScope {
     PioneerProbeCookie* inspector;PioneerProbeCookie* owner;PioneerStoreContext* context;
@@ -64,6 +81,10 @@ struct PioneerQ35FabricHostScope {
     bool HostOwnershipValid() const {
         return context && context->recoveryMapping && sRuntimeOwner==owner
             && sQwen35ExclusiveCookie==inspector && guard->validate(ticket)==B_OK;
+    }
+    bool HostOwnershipValidAfterAuditRelease() const {
+        return context && !context->recoveryMapping && !context->recoveryFabricArcOwner
+            && sRuntimeOwner==owner && sQwen35ExclusiveCookie==inspector && guard->validate(ticket)==B_OK;
     }
 };
 template<class IO,class Check> static bool PioneerPreResetDisableMasterGuarded(IO&,Check& check) {
@@ -86,12 +107,13 @@ struct Fixture {
 };
 int main() {
     {
-        Fixture f;assert(f.Run()==B_DEV_NOT_READY && f.result.stage==PIONEER_RECOVERY_STAGE_FABRIC_PCI_IDLE
-            && f.result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_PCI_IDLE && touches==4
+        Fixture f;assert(f.Run()==B_DEV_NOT_READY && f.result.stage==PIONEER_RECOVERY_STAGE_FABRIC_AUDIT_RELEASE
+            && f.result.detail==PIONEER_RECOVERY_DETAIL_FABRIC_AUDIT_RELEASED && touches==5
             && f.context.recoveryAttempted && f.context.recoveryFabricStartTicket==123
-            && f.context.recoveryMapping && f.context.recoveryFabricArcOwner && sColdRecoveryRequired
-            && f.context.recoveryFabricPciIdleAttempted && f.context.recoveryFabricPciIdle);
-        assert(f.Run()==B_NOT_ALLOWED && touches==4);
+            && !f.context.recoveryMapping && !f.context.recoveryFabricArcOwner && sColdRecoveryRequired
+            && f.context.recoveryFabricPciIdleAttempted && f.context.recoveryFabricPciIdle
+            && f.context.io.fabricOldMmioDisposeComplete && f.context.recoveryFabricAuditReleased);
+        assert(f.Run()==B_NOT_ALLOWED && touches==5);
     }
     for (int failure=1;failure<=3;failure++) {
         Fixture f;failAt=failure;assert(f.Run()==B_DEV_NOT_READY && touches==unsigned(failure)
@@ -114,6 +136,23 @@ int main() {
             && !f.context.recoveryFabricPciIdle && f.context.recoveryFabricStartTicket==123
             && f.context.recoveryMapping && f.context.recoveryFabricArcOwner && sColdRecoveryRequired);
         assert(f.Run()==B_NOT_ALLOWED && touches==4);
+    }
+    {
+        Fixture f;failAt=6;
+        assert(f.Run()==B_DEV_NOT_READY && f.result.stage==PIONEER_RECOVERY_STAGE_FABRIC_OLD_MMIO
+            && touches==5 && f.context.recoveryFabricPciIdle && f.context.io.fabricOldMmioDisposeAttempted
+            && !f.context.io.fabricOldMmioDisposeComplete && f.context.recoveryMapping
+            && f.context.recoveryFabricArcOwner && sColdRecoveryRequired);
+        assert(f.Run()==B_NOT_ALLOWED && touches==5);
+    }
+    for (int failure=7;failure<=8;failure++) {
+        Fixture f;failAt=failure;
+        assert(f.Run()==B_DEV_NOT_READY && f.result.stage==PIONEER_RECOVERY_STAGE_FABRIC_AUDIT_RELEASE
+            && f.context.recoveryFabricAuditReleaseAttempted && !f.context.recoveryFabricAuditReleased
+            && !f.context.recoveryFabricArcOwner && (f.context.recoveryMapping!=nullptr)==(failure==7)
+            && !ticketValid && sColdRecoveryRequired);
+        ticketValid=true;assert(f.Run()==B_NOT_ALLOWED);
+        failAt=0;
     }
     for (unsigned denied=0;denied<7;denied++) {
         Fixture f;

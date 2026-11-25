@@ -57,8 +57,8 @@ public:
     PioneerQ35FabricHostScope& operator=(const PioneerQ35FabricHostScope&)=delete;
 
     // Metadata and ticket checks only. They must not touch the shared TLB.
-    bool HostOwnershipValid() const {
-        if (!fInspector || !fOwner || !fContext || !fMapping || !fGuard
+    bool HostOwnershipValidForMapping(bool retired) const {
+        if (!fInspector || !fOwner || !fContext || !fGuard
             || fGuard->version!=2 || !fGuard->validate || !fTicket || !fGeneration
             || fThread<0 || fTeam<0 || find_thread(NULL)!=fThread
             || fInspector->magic!=0x50313030 || fInspector->team!=fTeam
@@ -68,7 +68,8 @@ public:
             || !sColdRecoveryRequired || !sBankStorageOnly || !fContext->bankStorageOnly
             || fContext->bytes!=PioneerResidentBanks::Total || !fContext->dispatchOwnerRetained
             || !fContext->q35PciReservationHeld || fContext->q35PciReleaseAttempted
-            || fContext->recoveryMapping!=fMapping) return false;
+            || (retired?(fContext->recoveryMapping || fContext->recoveryFabricArcOwner)
+                :(!fMapping || fContext->recoveryMapping!=fMapping))) return false;
         if (fInspector==fOwner) {
             if (fOwner->finalFreeRetained) return false;
         } else if (fInspector->context || !fOwner->finalFreeRetained) return false;
@@ -76,6 +77,8 @@ public:
         return get_thread_info(fThread,&info)==B_OK && info.team==fTeam
             && fGuard->validate(fTicket)==B_OK;
     }
+    bool HostOwnershipValid() const { return HostOwnershipValidForMapping(false); }
+    bool HostOwnershipValidAfterAuditRelease() const { return HostOwnershipValidForMapping(true); }
 
     // This is an operational admission for the fixed reset sequence, not a
     // lifetime guarantee about firmware. The caller must have already opened
