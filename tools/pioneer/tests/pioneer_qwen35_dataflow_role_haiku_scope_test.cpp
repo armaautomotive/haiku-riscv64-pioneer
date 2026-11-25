@@ -563,6 +563,7 @@ struct PioneerStoreContext {
     bool recoveryFabricRoleViewsDisposed=false;
     bool recoveryFabricRoleOwnerReleaseAttempted=false,recoveryFabricRoleOwnerReleased=false;
     bool recoveryFabricGraphRetirementAttempted=false,recoveryFabricGraphRetirementRecorded=false;
+    bool recoveryFabricFinishAttempted=false;
     bool q35PciReservationHeld=true,q35PciReleaseAttempted=false;
     uint64 recoveryFabricStartTicket=0;
     MockRecoverySession* recoveryFreshSession=nullptr;

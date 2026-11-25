@@ -51,6 +51,7 @@ struct PioneerStoreContext {
     bool recoveryFabricRoleViewsDisposed=false;
     bool recoveryFabricRoleOwnerReleaseAttempted=false,recoveryFabricRoleOwnerReleased=false;
     bool recoveryFabricGraphRetirementAttempted=false,recoveryFabricGraphRetirementRecorded=false;
+    bool recoveryFabricFinishAttempted=false;
     bool dispatchOwnerRetained=true,q35PciReservationHeld=true,q35PciReleaseAttempted=false;
     bool bankStorageOnly=true;uint64 bytes=PioneerResidentBanks::Total;
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQwen35FabricRecoveryTransaction.inc"
@@ -108,7 +109,7 @@ struct Fixture {
     bool Run() { return context.RunQ35FabricRecovery(&guard,123,firmware,reply,fleet,l2,*scope,stage); }
 };
 int main() {
-    for (unsigned stale=0;stale<4;stale++) {
+    for (unsigned stale=0;stale<5;stale++) {
         FabricQueue queue{0,0,0};PioneerStoreContext context;PioneerProbeCookie cookie;Guard guard{Validate};
         device=&queue;mapCount=deleteCount=0;failMap=failDelete=loseTicketOnDelete=-1;
         changeQueueOnRead=loseTicketOnRead=-1;ticketValid=sColdRecoveryRequired=true;ResetUnit();
@@ -117,6 +118,7 @@ int main() {
         if (stale==1) context.recoveryFabricRoleOwnerReleased=true;
         if (stale==2) context.recoveryFabricGraphRetirementAttempted=true;
         if (stale==3) context.recoveryFabricGraphRetirementRecorded=true;
+        if (stale==4) context.recoveryFabricFinishAttempted=true;
         tt_pioneer_recovery_run result{};
         assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_NOT_ALLOWED
             && !context.recoveryFabricStartAttempted && !context.recoveryMapping && !queue.io);
@@ -137,6 +139,16 @@ int main() {
             && context.recoveryFabricEvidence.ReadyForScratchRestore()
             && context.recoveryFabricPciIdleAttempted && context.recoveryFabricPciIdle && context.io.fabricOldMmioDisposeComplete
             && queue.notifications==7 && sColdRecoveryRequired);
+        PioneerQ35FabricHostScope scope(&cookie,&cookie,&context,&guard,123,10,20);
+        PioneerProbeCookie wrong;
+        assert(scope.MatchesParties(&cookie,&cookie) && !scope.MatchesParties(&wrong,&cookie)
+            && !scope.MatchesParties(&cookie,&wrong));
+        assert(scope.OwnsAfterAuditRelease(context,&guard,123)
+            && !scope.OwnsAfterReservationRelease(context,&guard,123));
+        context.q35PciReservationHeld=false;context.q35PciReleaseAttempted=true;
+        assert(!scope.OwnsAfterAuditRelease(context,&guard,123)
+            && scope.OwnsAfterReservationRelease(context,&guard,123));
+        context.q35PciReservationHeld=true;context.q35PciReleaseAttempted=false;
         const unsigned before=queue.io;
         assert(Qwen35FabricRecoveryStartLocked(&cookie,&cookie,&context,&guard,123,10,20,result)==B_NOT_ALLOWED
             && queue.io==before);

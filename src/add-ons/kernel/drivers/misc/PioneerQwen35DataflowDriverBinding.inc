@@ -2595,14 +2595,15 @@ public:
 	// Graph storage contains the sticky stream-bank claim owner. It must not
 	// be freed independently of the old bank/context, even after its run has
 	// retired and the role owner has gone away.
-	bool FabricContextRetirementReady(uint64_t ticket) const {
+	bool FabricContextRetirementReady(uint64_t ticket,bool reservationReleased=false) const {
 		return ticket && context.qwen35GraphOwner==this && !context.recoveryFreshSession
 			&& !context.qwen35SharedRoleBinding && context.recoveryFabricRoleOwnerReleaseAttempted
 			&& context.recoveryFabricRoleOwnerReleased && !context.recoveryMapping
 			&& context.recoveryFabricStartTicket==ticket && context.recoveryFabricEvidenceRecorded
 			&& context.recoveryFabricEvidence.ReadyToRetireOneOwner()
 			&& context.io.fabricOldMmioDisposeComplete && context.io.fabricHostDisposeComplete
-			&& context.q35PciReservationHeld && !context.q35PciReleaseAttempted
+			&& (reservationReleased?(!context.q35PciReservationHeld && context.q35PciReleaseAttempted)
+				:(context.q35PciReservationHeld && !context.q35PciReleaseAttempted))
 			&& context.qwen35DataflowService && context.qwen35DataflowMemory
 			&& context.qwen35DataflowAuthority && context.qwen35DataflowProgramScratch
 			&& stream.FabricRetainedBankClaimMatches() && FabricGraphRetired(ticket);

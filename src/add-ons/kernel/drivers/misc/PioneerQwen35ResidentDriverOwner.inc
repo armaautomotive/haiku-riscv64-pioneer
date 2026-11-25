@@ -294,7 +294,7 @@ public:
         return ticket && recoveryRetiredKind==2 && recoveryRetiredTicket==ticket
             && !runner.Retained() && !active && !scopeRetained && !reservationRetained
             && context.qwen35DataflowService
-            && context.qwen35DataflowService->ResidentRecoveredForRetirement(&session);
+            && context.qwen35DataflowService->ResidentRecoveredForRetirement(&session) && CanDestroy();
     }
 #endif
 #endif

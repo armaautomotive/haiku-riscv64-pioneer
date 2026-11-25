@@ -57,7 +57,7 @@ public:
     PioneerQ35FabricHostScope& operator=(const PioneerQ35FabricHostScope&)=delete;
 
     // Metadata and ticket checks only. They must not touch the shared TLB.
-    bool HostOwnershipValidForMapping(bool retired) const {
+    bool HostOwnershipValidForMapping(bool retired,bool reservationReleased=false) const {
         if (!fInspector || !fOwner || !fContext || !fGuard
             || fGuard->version!=2 || !fGuard->validate || !fTicket || !fGeneration
             || fThread<0 || fTeam<0 || find_thread(NULL)!=fThread
@@ -67,7 +67,8 @@ public:
             || sOpenCookies!=1 || sReloadGeneration!=fGeneration || sReloadQuiesced
             || !sColdRecoveryRequired || !sBankStorageOnly || !fContext->bankStorageOnly
             || fContext->bytes!=PioneerResidentBanks::Total || !fContext->dispatchOwnerRetained
-            || !fContext->q35PciReservationHeld || fContext->q35PciReleaseAttempted
+            || (reservationReleased?(fContext->q35PciReservationHeld || !fContext->q35PciReleaseAttempted)
+                :(!fContext->q35PciReservationHeld || fContext->q35PciReleaseAttempted))
             || (retired?(fContext->recoveryMapping || fContext->recoveryFabricArcOwner)
                 :(!fMapping || fContext->recoveryMapping!=fMapping))) return false;
         if (fInspector==fOwner) {
@@ -79,9 +80,17 @@ public:
     }
     bool HostOwnershipValid() const { return HostOwnershipValidForMapping(false); }
     bool HostOwnershipValidAfterAuditRelease() const { return HostOwnershipValidForMapping(true); }
+    bool MatchesParties(const PioneerProbeCookie* inspector,const PioneerProbeCookie* owner) const {
+        return inspector==fInspector && owner==fOwner;
+    }
     bool OwnsAfterAuditRelease(const PioneerStoreContext& context,
         const pioneer_driver_recovery_guard_v2_info* guard,uint64 ticket) const {
         return &context==fContext && guard==fGuard && ticket==fTicket && HostOwnershipValidAfterAuditRelease();
+    }
+    bool OwnsAfterReservationRelease(const PioneerStoreContext& context,
+        const pioneer_driver_recovery_guard_v2_info* guard,uint64 ticket) const {
+        return &context==fContext && guard==fGuard && ticket==fTicket
+            && HostOwnershipValidForMapping(true,true);
     }
 
     // This is an operational admission for the fixed reset sequence, not a

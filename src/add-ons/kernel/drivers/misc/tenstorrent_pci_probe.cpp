@@ -4239,6 +4239,7 @@ struct PioneerStoreContext {
 	bool recoveryFabricRoleViewsDisposed=false;
 	bool recoveryFabricRoleOwnerReleaseAttempted=false,recoveryFabricRoleOwnerReleased=false;
 	bool recoveryFabricGraphRetirementAttempted=false,recoveryFabricGraphRetirementRecorded=false;
+	bool recoveryFabricFinishAttempted=false;
 #endif
 	bool q35PciReservationHeld=false,q35PciReleaseAttempted=false;
 #endif
@@ -5314,6 +5315,7 @@ PioneerSessionIO::SharedHostDmaPciSourceStable()
 #if defined(PIONEER_QWEN35_FABRIC_GUARD_WITNESS) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
 #include "PioneerQwen35FabricRoleRecoverySequence.h"
 #include "PioneerQwen35FabricGraphRetirement.h"
+#include "PioneerQwen35FabricFinish.inc"
 // Type-check the complete intermediate sequence with the real owners and
 // synthetic scopes. It grants no physical authority and is not an ioctl.
 static __attribute__((used,noinline)) bool
@@ -5331,6 +5333,19 @@ PioneerQ35FabricGraphRetirementCompileWitness(PioneerStoreContext& context,uint6
 {
 	auto check=[&]() { return allowed; };
 	return PioneerQ35RecordFabricGraphRetirement(context,ticket,check);
+}
+struct PioneerQ35FabricFinishCompileScope {
+	bool allowed;
+	bool FabricFinishAdmission(PioneerProbeCookie&,PioneerProbeCookie&,PioneerStoreContext&,uint64) const { return allowed; }
+	bool FabricFinishAfterUnreserve(PioneerProbeCookie&,PioneerProbeCookie&,PioneerStoreContext&,uint64) const { return allowed; }
+};
+static __attribute__((used,noinline)) status_t
+PioneerQ35FabricFinishCompileWitness(PioneerProbeCookie* inspector,PioneerProbeCookie* owner,
+	PioneerStoreContext* context,PioneerQ35FabricHostScope& host,pioneer_driver_recovery_guard_v2_info* validation,
+	pioneer_driver_fabric_recovery_guard_info* fabric,uint64 ticket,bool allowed,tt_pioneer_recovery_run& result)
+{
+	PioneerQ35FabricFinishCompileScope scope{allowed};
+	return PioneerQ35FabricFinishLocked(inspector,owner,context,host,validation,fabric,ticket,scope,result);
 }
 #endif
 #ifdef PIONEER_QWEN35_FABRIC_HOST_CONTROLLER
