@@ -31,6 +31,10 @@ struct PioneerQ35FreshRecoveryCompileScope {
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
     template<class Receipt> bool FreshRoleMappingsDisposedComplete(PioneerQ35FreshRecoverySession&,
         PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRoleGraphRetirementAdmission(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
+    template<class Receipt> bool FreshRoleGraphRetirementComplete(PioneerQ35FreshRecoverySession&,
+        PioneerStoreContext&,PioneerStoreContext&,const Receipt&) const { return allowed; }
     bool FreshRecoverySetupAccessAllowed(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&,unsigned) const { return allowed; }
 #endif
@@ -102,6 +106,7 @@ PioneerQ35FreshRecoveryCompileWitness(PioneerQ35FreshRecoverySession* session,
     if (action==9) return session->CloseRoleTransport(guard,scope);
     if (action==10) return session->DisposeRoleOldHostBuffers(guard,scope);
     if (action==11) return session->PublishRoleMappingsDisposed(guard,scope);
+    if (action==12) return session->RetireRoleGraph(guard,scope);
 #endif
     return action==4 && PioneerQ35RunModifiedRecoveryTransaction<PioneerQ35FreshRecoverySession>(owner,&old,guard,scope)==B_OK;
 }

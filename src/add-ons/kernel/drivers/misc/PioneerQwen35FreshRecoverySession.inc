@@ -28,7 +28,7 @@ public:
     enum Stage { Unstarted=0,Attached=1,Mapped=2,Baseline=3,Banks=4,Host=5,Lease=6,Ready=7,
         ScratchRestoring=8,ScratchVerified=9,Closing=10,LeaseClosed=11,FleetAudited=12,
         PciClosed=13,TransportClosed=14,Retiring=15,HostReleased=16,OwnerRetired=17,Retained=18,
-        RoleVerified=19,RoleHostDisposed=20,RoleMappingsProved=21 };
+        RoleVerified=19,RoleHostDisposed=20,RoleMappingsProved=21,RoleGraphRetired=22 };
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     struct RoleRestorationReceipt { const void* binding=nullptr;const void* graph=nullptr;uint64 ticket=0; };
 #endif
@@ -42,6 +42,7 @@ private:
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     bool fRole=false;
     bool fRoleMappingsEvidencePublished=false;
+    bool fRoleGraphRetireAttempted=false;
     const void* fRoleBinding=nullptr;
     const void* fGraphOwner=nullptr;
     RoleRestorationReceipt fRoleReceipt{};
@@ -578,6 +579,34 @@ public:
             return Retain(scope,RoleMappingsProved);
         }
         fStage=RoleMappingsProved;return true;
+    }
+
+    // Retire the resident graph's retained run after both role and parent
+    // restoration and disposal of all old mappings. This does not destroy
+    // the graph or role owner: both are still referenced by this session.
+    // A failed or interrupted release is never replayed automatically.
+    template<class Scope>
+    bool RetireRoleGraph(pioneer_driver_recovery_guard_v2_info* guard,Scope& scope) {
+        if (!fRole || !fFabric || fStage!=RoleMappingsProved || fRoleGraphRetireAttempted
+            || !fOld || !fFresh) return false;
+        auto ready=[&]() {
+            return fRoleReceipt.ticket==fTicket && fRoleReceipt.binding==fRoleBinding
+                && fRoleReceipt.graph==fGraphOwner && fOld->qwen35SharedRoleBinding==fRoleBinding
+                && fOld->qwen35GraphOwner==fGraphOwner && fOld->io.fabricOldMmioDisposeComplete
+                && fOld->io.fabricHostDisposeComplete && fFresh->io.fabricOldMmioDisposeComplete
+                && !fFresh->recoveryMapping && fFresh->Pci().restored && !fFresh->transaction.config_attempted
+                && fOld->recoveryFabricEvidence.ReadyToRetireOneOwner();
+        };
+        if (!TicketValid(guard) || !ready()
+            || !scope.FreshRoleGraphRetirementAdmission(*this,*fOld,*fFresh,fRoleReceipt)
+            || !TicketValid(guard) || !ready()) return Retain(scope,RoleGraphRetired);
+        fRoleGraphRetireAttempted=true;
+        if (!PioneerQ35GraphOwnerReleaseAfterFabric(fOld->qwen35GraphOwner,
+                fOld->recoveryFabricEvidence,fTicket,guard)
+            || !TicketValid(guard) || !ready()
+            || !scope.FreshRoleGraphRetirementComplete(*this,*fOld,*fFresh,fRoleReceipt)
+            || !TicketValid(guard) || !ready()) return Retain(scope,RoleGraphRetired);
+        fStage=RoleGraphRetired;return true;
     }
 #endif
 
