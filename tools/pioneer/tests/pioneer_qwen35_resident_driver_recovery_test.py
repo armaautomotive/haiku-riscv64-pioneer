@@ -27,7 +27,7 @@ static int ValidateRecovery(uint64_t ticket) {
 struct pioneer_driver_recovery_guard_v2_info { unsigned version=2;int (*validate)(uint64_t)=ValidateRecovery; };
 struct PioneerStoreContext;''', 1)
 base = base.replace('struct PioneerSessionIO : ResidentRaw, MockDataflowIO {',
-                    'struct PioneerSessionIO : ResidentRaw, MockDataflowIO {\n    bool postResetDisposeComplete=false;', 1)
+                    'struct PioneerSessionIO : ResidentRaw, MockDataflowIO {\n    bool postResetDisposeComplete=false,fabricOldMmioDisposeComplete=false;', 1)
 base = base.replace('struct PioneerStoreContext {', '''struct PioneerStoreContext {
     bool recoveryAttempted=false,dispatchOwnerRetained=false,recoveryFinishPending=false;
     bool recoveryFabricEvidenceRecorded=false;
@@ -67,7 +67,7 @@ static void Scenario(unsigned mode) {
     sColdRecoveryRequired=true;context->recoveryAttempted=context->dispatchOwnerRetained=true;
     context->recoveryFinishPending=context->recoveryFabricEvidenceRecorded=true;
     context->recoveryFinishTicket=context->recoveryFabricStartTicket=9;
-    context->io.postResetDisposeComplete=true;
+    context->io.postResetDisposeComplete=!fabric;context->io.fabricOldMmioDisposeComplete=fabric;
     auto& asic=context->recoveryFinishProof;
     asic.flags=PIONEER_RECOVERY_PROOF_REQUIRED & ~PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;
     asic.core_count=120;asic.retained_owners=1;asic.reset_generation=asic.firmware_generation=9;
@@ -75,14 +75,20 @@ static void Scenario(unsigned mode) {
     fp.flags=PIONEER_FABRIC_PROOF_REQUIRED & ~(PIONEER_FABRIC_PROOF_OWNERS_RELEASED | PIONEER_FABRIC_PROOF_PCI_RESERVATION_RELEASED);
     fp.core_count=120;fp.retained_owners=1;fp.fabric_generation=fp.firmware_generation=9;
     auto retire=[&](uint64_t ticket) {
-        return fabric?owner->ReleaseAfterVerifiedFabric(fp,ticket,&guard)
+        return fabric?PioneerQ35ResidentDriverReleaseAfterFabric(owner,fp,ticket,&guard)
             :PioneerQ35ResidentDriverReleaseAfterReset(owner,asic,ticket,&guard);
     };
     assert(!retire(8) && PioneerQ35ResidentDriverRetained(owner));
     ticketValid=false;assert(!retire(9) && PioneerQ35ResidentDriverRetained(owner));ticketValid=true;
-    context->io.postResetDisposeComplete=false;
+    context->io.postResetDisposeComplete=fabric;context->io.fabricOldMmioDisposeComplete=!fabric;
     assert(!retire(9) && PioneerQ35ResidentDriverRetained(owner));
-    context->io.postResetDisposeComplete=true;context->recoveryMapping=context.get();
+    context->io.postResetDisposeComplete=!fabric;context->io.fabricOldMmioDisposeComplete=fabric;
+    if (fabric) {
+        context->io.postResetDisposeComplete=true;
+        assert(!retire(9) && PioneerQ35ResidentDriverRetained(owner));
+        context->io.postResetDisposeComplete=false;
+    }
+    context->recoveryMapping=context.get();
     assert(!retire(9) && PioneerQ35ResidentDriverRetained(owner));
     context->recoveryMapping=nullptr;sColdRecoveryRequired=false;
     assert(!retire(9) && PioneerQ35ResidentDriverRetained(owner));
@@ -102,7 +108,7 @@ static void Scenario(unsigned mode) {
     }
     assert(retire(9) && !PioneerQ35ResidentDriverRetained(owner)
         && service->ResidentRecoveredForRetirement(stream.reserved) && retire(9));
-    assert(!(fabric?PioneerQ35ResidentDriverReleaseAfterReset(owner,asic,9,&guard):owner->ReleaseAfterVerifiedFabric(fp,9,&guard)));
+    assert(!(fabric?PioneerQ35ResidentDriverReleaseAfterReset(owner,asic,9,&guard):PioneerQ35ResidentDriverReleaseAfterFabric(owner,fp,9,&guard)));
     assert(!retire(8) && PioneerQ35ResidentDriverDestroy(owner) && !owner);
     delete authority;sRuntimeOwner=nullptr;
 }

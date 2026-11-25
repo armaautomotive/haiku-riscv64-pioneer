@@ -207,7 +207,8 @@ class PioneerQ35ResidentDriverOwner {
             && context.recoveryFabricStartTicket==ticket
             && !memcmp(&proof,&context.recoveryFabricEvidence,sizeof(proof))
             && PioneerQ35GraphRecoveryProofMatches(proof,ticket,context.recoveryMapping==NULL,
-                context.io.postResetDisposeComplete) && guard->validate(ticket)==B_OK;
+                context.io.fabricOldMmioDisposeComplete && !context.io.postResetDisposeComplete)
+            && guard->validate(ticket)==B_OK;
     }
 #endif
     template<class Proof> struct RecoveryPolicy {
@@ -356,6 +357,12 @@ static bool PioneerQ35ResidentDriverReleaseAfterReset(PioneerQ35ResidentDriverOw
     const PioneerDriverRecoveryProof& proof,uint64_t ticket,pioneer_driver_recovery_guard_v2_info* guard) {
     return owner && owner->ReleaseAfterVerifiedReset(proof,ticket,guard);
 }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+static bool PioneerQ35ResidentDriverReleaseAfterFabric(PioneerQ35ResidentDriverOwner* owner,
+    const PioneerDriverFabricRecoveryProof& proof,uint64_t ticket,pioneer_driver_recovery_guard_v2_info* guard) {
+    return owner && owner->ReleaseAfterVerifiedFabric(proof,ticket,guard);
+}
+#endif
 #endif
 static PioneerQwen35::DataflowServiceResult PioneerQ35ResidentDriverClose(PioneerQ35ResidentDriverOwner* owner) {
     return owner?owner->Close():PioneerQwen35::DataflowServiceInvalidState;

@@ -2058,6 +2058,9 @@ static bool PioneerQ35ResidentDriverReady(const PioneerQ35ResidentDriverOwner*,u
 static bool PioneerQ35ResidentDriverRetained(const PioneerQ35ResidentDriverOwner*);
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 static bool PioneerQ35ResidentDriverReleaseAfterReset(PioneerQ35ResidentDriverOwner*,const PioneerDriverRecoveryProof&,uint64_t,pioneer_driver_recovery_guard_v2_info*);
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+static bool PioneerQ35ResidentDriverReleaseAfterFabric(PioneerQ35ResidentDriverOwner*,const PioneerDriverFabricRecoveryProof&,uint64_t,pioneer_driver_recovery_guard_v2_info*);
+#endif
 #endif
 static bool PioneerQ35ResidentDriverDestroy(PioneerQ35ResidentDriverOwner*&);
 static PioneerQwen35::DataflowServiceResult PioneerQ35ResidentDriverClose(PioneerQ35ResidentDriverOwner*);
@@ -2554,6 +2557,18 @@ public:
 		return runner.ReleaseRetainedAfterRestoration(context.qwen35DataflowAuthority,backend);
 #endif
 	}
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+	bool ReleaseAfterVerifiedFabric(const PioneerDriverFabricRecoveryProof& proof,uint64_t ticket,
+		pioneer_driver_recovery_guard_v2_info* guard) {
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+		if (!fabricParentRestored || !residentDriver || runner.Retained()
+			|| !PioneerQ35ResidentDriverReleaseAfterFabric(residentDriver,proof,ticket,guard)) return false;
+		retiredAfterFault=true;bound=false;return true;
+#else
+		(void)proof;(void)ticket;(void)guard;return false;
+#endif
+	}
+#endif
 #endif
 };
 
@@ -2634,6 +2649,14 @@ PioneerQ35GraphOwnerReleaseAfterReset(PioneerQ35GraphOwner* owner,
 {
 	return !owner || owner->ReleaseAfterVerifiedReset(proof,ticket,guard);
 }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+static __attribute__((used,noinline)) bool
+PioneerQ35GraphOwnerReleaseAfterFabric(PioneerQ35GraphOwner* owner,
+	const PioneerDriverFabricRecoveryProof& proof,uint64_t ticket,pioneer_driver_recovery_guard_v2_info* guard)
+{
+	return owner && owner->ReleaseAfterVerifiedFabric(proof,ticket,guard);
+}
+#endif
 #endif
 
 // Ownership is installed before recording can issue any DMA. If recording
