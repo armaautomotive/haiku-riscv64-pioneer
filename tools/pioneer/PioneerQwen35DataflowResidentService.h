@@ -55,7 +55,11 @@ public:
         }
         const auto result=lifecycle.Tick();
         if (result==DataflowResidentLifecyclePending) return DataflowResidentServicePending;
-        if (result!=DataflowResidentLifecycleGathered || !io.PublishResidentCandidate(core,command)) return Fail();
+        // A gather write may arrive before its sender observes a failure.
+        // Publish a local marker only after this worker's send returned
+        // success; the host separately audits all 120 markers before ACK.
+        if (result!=DataflowResidentLifecycleGathered || !io.PublishResidentSenderReceipt(core,command)
+            || !io.PublishResidentCandidate(core,command)) return Fail();
         phase=Candidate;return DataflowResidentServiceCandidate;
     }
 };

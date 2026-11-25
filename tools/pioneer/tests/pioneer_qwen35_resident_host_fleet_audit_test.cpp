@@ -17,12 +17,13 @@ struct ComposedScope {
                 raw.selected=core;return fleet.AuditResidentCoreRuntime(core,c);
             }
             bool ReadStableResidentCore(unsigned core,DataflowResidentFleetSample& s) {
-                return raw.selected==core && fleet.ReadStableResidentCore(core,s);
+                raw.selected=core;return fleet.ReadStableResidentCore(core,s);
             }
             bool EndResidentAudit(const DataflowResidentCommand& c) {
                 if (!fleet.EndResidentAudit(c)) return false;
                 raw.selected=0;return true;
             }
+            void PauseResidentAudit() { fleet.PauseResidentAudit(); }
             void RetainResidentAudit() { fleet.RetainResidentAudit(); }
         } adapter{raw,fleet};
         return audit.Audit(command,adapter)==DataflowResidentFleetAuditComplete && audit.AuditedFor(command);

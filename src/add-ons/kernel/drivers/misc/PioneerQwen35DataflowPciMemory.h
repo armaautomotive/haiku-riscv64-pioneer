@@ -11,6 +11,9 @@
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphRunProtocol.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowGraphTrace.h"
 #endif
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowResidentSenderReceipt.h"
+#endif
 
 enum : unsigned {
 	DataflowPciL1ViewBase=0x6e000,
@@ -44,6 +47,10 @@ static inline bool DataflowPciL1Range(unsigned address,unsigned bytes)
 			&& end<=PioneerQwen35::DataflowServiceDispatchLimit)
 		|| (address>=PioneerQwen35::DataflowGraphRunAddress
 			&& end<=PioneerQwen35::DataflowGraphRunAddress+PioneerQwen35::DataflowGraphRunBytes)
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+		|| (address>=PioneerQwen35::DataflowResidentSenderReceiptAddress
+			&& end<=PioneerQwen35::DataflowResidentSenderReceiptAddress+sizeof(PioneerQwen35::DataflowResidentSenderReceipt))
+#endif
 		|| (address==PioneerQwen35::DataflowGraphProgressAddress
 			&& bytes==sizeof(uint32_t))
 		|| (address==PioneerQwen35::DataflowGraphOperationProgressAddress

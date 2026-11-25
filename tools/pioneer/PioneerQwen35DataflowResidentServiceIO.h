@@ -7,6 +7,7 @@
 #include "PioneerQwen35DataflowResidentWorker.h"
 #include "PioneerQwen35DataflowResidentService.h"
 #include "PioneerQwen35DataflowResidentReceipt.h"
+#include "PioneerQwen35DataflowResidentSenderReceipt.h"
 namespace PioneerQwen35 {
 // Concrete device adapter. The containing worker loop owns startup, shutdown,
 // model identity and the saved L1 template. This adapter does not establish a
@@ -40,6 +41,11 @@ public:
         DataflowWorkerPublish(mailbox,trigger,okay?DataflowWorkerComplete:DataflowWorkerFailed,
             okay?0:(failure?failure:DataflowFailureQueue),okay?2:5);
         DataflowFence();return true;
+    }
+    bool PublishResidentSenderReceipt(unsigned core,const DataflowResidentCommand& command) {
+        return core==worker && DataflowResidentSenderReceiptPublish(
+            reinterpret_cast<volatile uint32_t*>(static_cast<uintptr_t>(DataflowResidentSenderReceiptAddress)),
+            core,command.trigger,command.epoch);
     }
     bool PublishResidentCandidate(unsigned core,const DataflowResidentCommand& command) {
         if (core!=worker) return false;

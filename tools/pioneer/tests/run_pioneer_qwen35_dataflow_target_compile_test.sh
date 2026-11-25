@@ -1222,6 +1222,18 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/res
 python3 -B "$directory/pioneer_qwen35_resident_host_fleet_audit_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_fleet_audit_pci_test.py"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	"$directory/pioneer_qwen35_resident_sender_receipt_test.cpp" -o "$temporary/resident-sender-receipt-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-sender-receipt-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+	"$directory/pioneer_qwen35_resident_sender_pci_range_test.cpp" -o "$temporary/resident-sender-range-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-sender-range-test"
+python3 -B "$directory/pioneer_qwen35_resident_sender_fleet_test.py"
+"$cxx" -std=c++17 -Os -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \
+	-fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32 \
+	-I"$sdk/headers" -idirafter "$sdk/headers/posix" -c "$directory/pioneer_qwen35_resident_sender_receipt_target_probe.cpp" \
+	-o "$temporary/resident-sender-receipt-target.o"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE \
 	"$directory/pioneer_qwen35_resident_dispatch_test.cpp" -o "$temporary/resident-dispatch-paired-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-dispatch-paired-test"

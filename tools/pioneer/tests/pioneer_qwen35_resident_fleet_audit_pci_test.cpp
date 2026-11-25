@@ -6,7 +6,7 @@
 
 struct AuditRaw : ResidentRaw {
     FleetIO& fleet;
-    int failSelect=-1;bool torn=false;
+    int failSelect=-1;bool torn=false,deliverDelayed=false;
     explicit AuditRaw(FleetIO& samples):fleet(samples) {}
     bool SelectRuntimeCore(unsigned core) { selected=core;return core<DataflowCoreCount && int(core)!=failSelect; }
     bool MapQ38Panel() { return mapped; }
@@ -16,11 +16,18 @@ struct AuditRaw : ResidentRaw {
         if (address==DataflowWorkerMailboxAddress && bytes==sizeof(sample.worker)) source=&sample.worker;
         if (address==DataflowRoleMailboxAddress && bytes==sizeof(sample.roles)) source=&sample.roles;
         if (address==DataflowQueueStateAddress && bytes==sizeof(sample.queues)) source=&sample.queues;
+        if (address==DataflowResidentSenderReceiptAddress && bytes==sizeof(sample.sender)) source=&sample.sender;
         if (!source) return false;
         memcpy(output,source,bytes);return true;
     }
     void Pause() {
         if (torn && selected==37) { fleet.sample[37].worker.failure=1;torn=false; }
+        if (deliverDelayed && selected==37) {
+            const auto& c=fleet.request;
+            fleet.sample[37].sender={c.trigger,c.epoch,37,
+                DataflowResidentSenderReceiptChecksum(c.trigger,c.epoch,37)};
+            deliverDelayed=false;
+        }
     }
 };
 struct AuditScope {
@@ -55,7 +62,7 @@ int main() {
     assert(DataflowGraphRunBuild(plan->binding[0],plan->lease[0],f->routes,token,
         {6,DataflowGraphPromptSteps+1,DataflowGraphDecodeSteps},2,100,0,root));
     DataflowResidentCommand command{};assert(DataflowResidentCommandBuild(root,command));
-    for (unsigned scenario=0;scenario<6;scenario++) {
+    for (unsigned scenario=0;scenario<9;scenario++) {
         auto fleet=std::make_unique<FleetIO>(command);auto audit=std::make_unique<DataflowResidentFleetAudit>();
         auto raw=std::make_unique<AuditRaw>(*fleet);AuditScope scope{*fleet,*audit};
         PioneerQwen35ResidentHostPci<AuditRaw,AuditScope> host(*raw,scope);
@@ -66,8 +73,11 @@ int main() {
         if (scenario==3) scope.runtime=false;
         if (scenario==4) scope.finish=false;
         if (scenario==5) fleet->sample[37].worker.state=DataflowWorkerFatal;
+        if (scenario==6) { fleet->sample[37].sender.trigger=0;raw->deliverDelayed=true; }
+        if (scenario==7) fleet->sample[37].sender.trigger=0;
+        if (scenario==8) fleet->sample[37].sender.checksum^=1;
         DataflowArgmaxResult output{};
-        if (!scenario) {
+        if (!scenario || scenario==6) {
             assert(host.AuditCandidate() && raw->selected==0 && audit->AuditedFor(command)
                 && host.AcknowledgeCandidate() && host.Output(output) && output.token==42);
         } else {

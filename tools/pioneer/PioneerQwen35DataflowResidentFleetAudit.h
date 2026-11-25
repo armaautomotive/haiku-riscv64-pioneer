@@ -4,6 +4,7 @@
 
 #include "PioneerQwen35DataflowResidentReceipt.h"
 #include "PioneerQwen35DataflowResidentLifecycle.h"
+#include "PioneerQwen35DataflowResidentSenderReceipt.h"
 #include "PioneerQwen35DataflowRoleMailbox.h"
 #include <string.h>
 
@@ -15,13 +16,16 @@ struct DataflowResidentFleetSample {
     DataflowWorkerMailbox worker{};
     DataflowRoleMailbox roles{};
     DataflowQueueControl queues[DataflowCircularBufferCount]{};
+    DataflowResidentSenderReceipt sender{};
 };
 
 // A 120-core stable snapshot is deliberately stored in the retained owner,
 // not on the kernel stack. Sampling cannot rule out late sender failures or
 // external writes by itself. IO must independently prove the exact session,
-// images, NoC routes, sender settlement and exclusion throughout both passes,
-// and restore the root route before authorizing the host acknowledgement.
+// images, NoC routes and exclusion throughout both passes. Each worker's local
+// marker proves it returned from its own final gather send; IO must additionally
+// establish the code identity and physical conditions that make that proof
+// valid, and restore the root route before authorizing the host acknowledgement.
 class DataflowResidentFleetAudit {
     enum Phase { Empty,Reading,Audited,PhaseRetained } phase=Empty;
     DataflowResidentFleetSample first[DataflowCoreCount]{};
@@ -50,7 +54,7 @@ class DataflowResidentFleetAudit {
     }
     static bool SameSample(const DataflowResidentFleetSample& a,const DataflowResidentFleetSample& b) {
         return !memcmp(&a.worker,&b.worker,sizeof(a.worker)) && !memcmp(&a.roles,&b.roles,sizeof(a.roles))
-            && !memcmp(&a.queues,&b.queues,sizeof(a.queues));
+            && !memcmp(&a.queues,&b.queues,sizeof(a.queues)) && !memcmp(&a.sender,&b.sender,sizeof(a.sender));
     }
 public:
     DataflowResidentFleetAudit()=default;
@@ -73,9 +77,20 @@ public:
         if (!io.FenceResidentAudit(command)) return Fail(io);
         for (unsigned pass=0;pass<2;pass++) {
             for (unsigned core=0;core<DataflowCoreCount;core++) {
-                failedCore=core;DataflowResidentFleetSample sample{};
-                if (!io.ResidentAuditAllowed(command) || !io.AuditResidentCoreRuntime(core,command)
-                    || !io.ReadStableResidentCore(core,sample) || !ValidSample(sample,core,command)
+                failedCore=core;DataflowResidentFleetSample sample{};bool settled=false;
+                for (unsigned poll=0;poll<command.pollLimit;poll++) {
+                    if (!io.ResidentAuditAllowed(command) || !io.ReadStableResidentCore(core,sample)
+                        || !ValidSample(sample,core,command)) return Fail(io);
+                    if (DataflowResidentSenderReceiptMatches(sample.sender,core,command)) { settled=true;break; }
+                    // A sender may still be finishing its last NoC write.
+                    // Only an older marker is waitable; a current but invalid
+                    // marker or a future marker indicates corruption/reuse.
+                    if (sample.sender.trigger>=command.trigger) return Fail(io);
+                    io.PauseResidentAudit();
+                }
+                DataflowResidentFleetSample confirmed{};
+                if (!settled || !io.AuditResidentCoreRuntime(core,command)
+                    || !io.ReadStableResidentCore(core,confirmed) || !SameSample(sample,confirmed)
                     || !io.AuditResidentCoreRuntime(core,command) || !io.ResidentAuditAllowed(command)) return Fail(io);
                 if (!pass) memcpy(&first[core],&sample,sizeof(sample));
                 else if (!SameSample(first[core],sample)) return Fail(io);

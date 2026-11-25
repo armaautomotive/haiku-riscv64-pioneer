@@ -9,6 +9,7 @@ struct ResidentFleetAuditProbeIO {
     bool AuditResidentCoreRuntime(unsigned,const DataflowResidentCommand&);
     bool ReadStableResidentCore(unsigned,DataflowResidentFleetSample&);
     bool EndResidentAudit(const DataflowResidentCommand&);
+    void PauseResidentAudit();
     void RetainResidentAudit();
 };
 DataflowResidentFleetAuditResult PioneerQ35ResidentFleetAuditProbe(DataflowResidentFleetAudit& audit,

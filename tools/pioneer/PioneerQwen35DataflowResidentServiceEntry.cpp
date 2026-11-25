@@ -27,6 +27,8 @@ extern "C" [[noreturn]] void qwen35_resident_graph_service_main() {
     auto* queues=reinterpret_cast<DataflowQueueControl*>(static_cast<uintptr_t>(DataflowQueueStateAddress));
     if (!DataflowWorkerMailboxStartupValid(*box)) ResidentParkFault(*box);
     const unsigned core=box->logicalCore;
+    DataflowResidentSenderReceiptClear(reinterpret_cast<volatile uint32_t*>(
+        static_cast<uintptr_t>(DataflowResidentSenderReceiptAddress)));
     auto* cache=reinterpret_cast<DataflowResidentStreamCache*>(static_cast<uintptr_t>(DataflowResidentStreamCacheAddress));
     DataflowResidentStreamCacheReset(*cache);
     const uint32_t raw=*reinterpret_cast<volatile uint32_t*>(static_cast<uintptr_t>(DataflowNoc0Base+DataflowNocLogicalIdOffset));

@@ -31,7 +31,8 @@ template<class Raw,class Scope> class PioneerQwen35ResidentFleetAuditPci {
         using namespace PioneerQwen35;
         return Read(core,DataflowWorkerMailboxAddress,&sample.worker,sizeof(sample.worker))
             && Read(core,DataflowRoleMailboxAddress,&sample.roles,sizeof(sample.roles))
-            && Read(core,DataflowQueueStateAddress,&sample.queues,sizeof(sample.queues));
+            && Read(core,DataflowQueueStateAddress,&sample.queues,sizeof(sample.queues))
+            && Read(core,DataflowResidentSenderReceiptAddress,&sample.sender,sizeof(sample.sender));
     }
 public:
     PioneerQwen35ResidentFleetAuditPci(Raw& raw,Scope& owner):io(raw),scope(owner) {}
@@ -56,13 +57,21 @@ public:
     }
     bool ReadStableResidentCore(unsigned core,Sample& output) {
         if (!active || core>=PioneerQwen35::DataflowCoreCount || !Select(core)) return false;
-        Sample first{},second{};
-        if (!ReadSample(core,first)) return false;
-        io.Pause();
-        if (!ReadSample(core,second) || memcmp(&first.worker,&second.worker,sizeof(first.worker))
-            || memcmp(&first.roles,&second.roles,sizeof(first.roles))
-            || memcmp(&first.queues,&second.queues,sizeof(first.queues))) return false;
-        memcpy(&output,&second,sizeof(output));return true;
+        const unsigned attempts=active->pollLimit<8?active->pollLimit:8;
+        for (unsigned poll=0;poll<attempts;poll++) {
+            Sample first{},second{};
+            if (!ReadSample(core,first)) return false;
+            io.Pause();
+            if (!ReadSample(core,second)) return false;
+            if (!memcmp(&first.worker,&second.worker,sizeof(first.worker))
+                && !memcmp(&first.roles,&second.roles,sizeof(first.roles))
+                && !memcmp(&first.queues,&second.queues,sizeof(first.queues))
+                && !memcmp(&first.sender,&second.sender,sizeof(first.sender))) {
+                memcpy(&output,&second,sizeof(output));return true;
+            }
+            io.Pause();
+        }
+        return false;
     }
     bool EndResidentAudit(const Command& command) {
         if (active!=&command || !ResidentAuditAllowed(command)
@@ -70,6 +79,7 @@ public:
         // FenceResidentAudit leaves the exact root selected for host readback.
         return scope.ResidentAuditRootAllowed(io,command) && ResidentAuditAllowed(command);
     }
+    void PauseResidentAudit() { io.Pause(); }
     void RetainResidentAudit() { scope.RetainResidentAudit(); }
 };
 #endif

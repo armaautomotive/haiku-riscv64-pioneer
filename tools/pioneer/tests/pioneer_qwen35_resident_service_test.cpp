@@ -5,13 +5,15 @@
 #include "pioneer_qwen35_graph_publication_test.cpp"
 #include "../PioneerQwen35DataflowResidentService.h"
 #include "../PioneerQwen35DataflowResidentReceipt.h"
+#include "../PioneerQwen35DataflowResidentSenderReceipt.h"
 #include <array>
 struct ServiceFabric {
     DataflowBarrierPacket payload[DataflowCoreCount]{},marker[DataflowCoreCount]{};
     DataflowBarrierPacket arrival[DataflowCoreCount]{},arrivalMarker[DataflowCoreCount]{};
     bool begun[DataflowCoreCount]{},ready[DataflowCoreCount]{};
+    DataflowResidentSenderReceipt sender[DataflowCoreCount]{};
     unsigned graphCalls=0,candidates=0,started=0;
-    int failGraph=-1;
+    int failGraph=-1,failGatherAfterDelivery=-1;
 };
 struct ServiceIO {
     ServiceFabric& f;unsigned core;
@@ -30,12 +32,14 @@ struct ServiceIO {
     bool SendArrival(unsigned worker,const DataflowBarrierPacket& p,const DataflowBarrierPacket& c) {
         assert(worker==core && worker);
 #ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
-        return DataflowBarrierSendShared(p,c,[&](bool marker,const DataflowBarrierPacket& packet) {
+        const bool delivered=DataflowBarrierSendShared(p,c,[&](bool marker,const DataflowBarrierPacket& packet) {
             if (marker) f.arrivalMarker[worker]=packet;else f.arrival[worker]=packet;return true;
         });
 #else
-        f.arrival[worker]=p;f.arrivalMarker[worker]=c;return true;
+        f.arrival[worker]=p;f.arrivalMarker[worker]=c;const bool delivered=true;
 #endif
+        return delivered && !(int(worker)==f.failGatherAfterDelivery
+            && c.word[2]==(DataflowResidentGatherTag|2U));
     }
     bool SendRelease(unsigned child,const DataflowBarrierPacket& p,const DataflowBarrierPacket& c) {
         assert(DataflowBarrierReleaseEdge(core,child));
@@ -67,6 +71,10 @@ struct ServiceIO {
         assert(worker==core && DataflowGraphRunValid(d,core));++f.graphCalls;return int(core)!=f.failGraph;
     }
     bool RecordResidentGraphResult(unsigned worker,unsigned,bool) { return worker==core; }
+    bool PublishResidentSenderReceipt(unsigned worker,const DataflowResidentCommand& command) {
+        return worker==core && DataflowResidentSenderReceiptPublish(
+            reinterpret_cast<volatile uint32_t*>(&f.sender[core]),core,command.trigger,command.epoch);
+    }
     bool PublishResidentCandidate(unsigned worker,const DataflowResidentCommand&) {
         assert(worker==core && f.ready[core]);if (!core) ++f.candidates;return true;
     }
@@ -146,6 +154,7 @@ int main() {
             && run->fabric->started==DataflowCoreCount && run->fabric->graphCalls==DataflowCoreCount);
         for (unsigned core=0;core<DataflowCoreCount;core++)
             assert(run->state[core]==DataflowResidentServiceCandidate && run->fabric->ready[core]
+                && DataflowResidentSenderReceiptMatches(run->fabric->sender[core],core,run->command)
                 && run->service[core]->CompletedSequence()==2 && run->service[core]->CompletedEpoch()==6
                 && run->service[core]->CompletedLastStep()==DataflowGraphPromptSteps+DataflowGraphDecodeSteps);
         run->Next();
@@ -154,7 +163,16 @@ int main() {
             && run->fabric->started==2*DataflowCoreCount && run->fabric->graphCalls==2*DataflowCoreCount);
         for (unsigned core=0;core<DataflowCoreCount;core++)
             assert(run->state[core]==DataflowResidentServiceCandidate && run->fabric->ready[core]
+                && DataflowResidentSenderReceiptMatches(run->fabric->sender[core],core,run->command)
                 && run->service[core]->CompletedSequence()==3 && run->service[core]->CompletedEpoch()==7);
+    }
+    {
+        // Root can observe a delivered gather even while its sender reports
+        // failure. The failed sender must not publish its local receipt.
+        auto run=std::make_unique<ServiceFixture>();run->fabric->failGatherAfterDelivery=119;run->Submit();
+        for (unsigned round=0;round<300 && run->state[0]!=DataflowResidentServiceCandidate;round++) run->Tick();
+        assert(run->state[0]==DataflowResidentServiceCandidate && run->state[119]==DataflowResidentServiceRetained
+            && !DataflowResidentSenderReceiptMatches(run->fabric->sender[119],119,run->command));
     }
     {
         auto run=std::make_unique<ServiceFixture>(12);run->fabric->failGraph=37;run->Submit();
