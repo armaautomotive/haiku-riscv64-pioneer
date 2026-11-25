@@ -405,6 +405,9 @@ public:
             && fOwner.RestorationRequired() && fViews.FabricFreshOpenComplete()
             && fContext.recoveryFreshSession;
     }
+    bool FabricCoreAlreadyRestored(unsigned core) const {
+        return FabricCoreRecoveryUsable() && fOwner.FabricCoreAlreadyRestored(core);
+    }
     template<class Check> bool DisposeFabricViews(Check& check) {
         if (fContext.qwen35SharedRoleBinding!=this || !sColdRecoveryRequired
             || !fContext.recoveryFabricEvidenceRecorded || !fContext.recoveryFabricPcieAudited

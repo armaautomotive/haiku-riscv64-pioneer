@@ -35,6 +35,7 @@ class DataflowRoleFleetRecoveryOwner {
     bool fCoreResetRestoreAttempted=false;
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     bool fFabricCoreRecoveryAttempted=false,fFabricCoreRecoveryActive=false;
+    bool fFabricAutoRetired[DataflowBarrierWorkers]{};
 #endif
     bool fCoreRestoreStaged[DataflowBarrierWorkers]{};
     bool fCoreRestoreReleaseAttempted[DataflowBarrierWorkers]{};
@@ -84,9 +85,15 @@ class DataflowRoleFleetRecoveryOwner {
             if (!io.RetirementRamSnapshotSources(core,reader,writer,captured)
                 || captured!=fRam.StacklessCopiesCaptured(core)) return false;
             if (captured) {
-                if (!fCoreRestoreHandoff[core].HandoffRestored()
-                    || reader!=fRam.OriginalWords(core,DataflowRoleReader)
+                if (reader!=fRam.OriginalWords(core,DataflowRoleReader)
                     || writer!=fRam.OriginalWords(core,DataflowRoleWriter) || !reader || !writer) return false;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+                if (fFabricCoreRecoveryActive && fFabricAutoRetired[core]) {
+                    if (!fCoreRestoreHandoff[core].Untouched() || !fRam.CoreRestoredByCore(core)
+                        || !io.AutoRestoreRetirementSafe(core,reader,writer,fAutoRestoreCancelled[core])) return false;
+                } else
+#endif
+                if (!fCoreRestoreHandoff[core].HandoffRestored()) return false;
             } else if (reader || writer || !fCoreRestoreHandoff[core].Untouched()) return false;
         }
         return true;
@@ -243,8 +250,11 @@ public:
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     bool FabricCoreRecoveryAttempted() const { return fFabricCoreRecoveryAttempted; }
     bool FabricCoreRecoveryActive() const { return fFabricCoreRecoveryActive; }
+    bool FabricCoreAlreadyRestored(unsigned core) const {
+        return fFabricCoreRecoveryActive && core<DataflowBarrierWorkers && fFabricAutoRetired[core];
+    }
     // After a verified fabric hold, a resident auto-restore run interrupted
-    // before any recorded auto restore/cancel can enter the separate
+    // including already restored/cancelled cores can enter the separate
     // core-local recovery sequence. IO must bind the exact retained ticket,
     // parent handoff, all snapshots, routes, and lifetime writer exclusion;
     // these metadata and sampled checks do not establish those facts.
@@ -255,7 +265,7 @@ public:
             || (fPhase!=ReleaseAttempted && fPhase!=Faulted)
             || !io.FabricRecoveryConversionAllowed()) return false;
         for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
-            if (fAutoRestoreCompleted[core] || fAutoRestoreCancelled[core]
+            if ((fAutoRestoreCancelled[core] && !fAutoRestoreCompleted[core])
                 || fCoreRestoreStaged[core] || fCoreRestoreReleaseAttempted[core]
                 || !fCoreRestoreHandoff[core].Untouched()) return false;
         }
@@ -263,11 +273,20 @@ public:
         if (!io.FabricRecoveryConversionAllowed() || !AllHeldAndRouted(io)
             || !VerifyHeldCopyLedger(io) || !VerifyResetDisable(io,true)
             || !fImages.VerifyStagedAllWithCopies(io)) return false;
-        for (unsigned core=0;core<DataflowBarrierWorkers;core++)
-            if (!fRam.StacklessCopiesCaptured(core) && !io.StacklessUncapturedRamProtected(core)) return false;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
+            if (!fRam.StacklessCopiesCaptured(core)) {
+                if (fAutoRestoreCompleted[core] || !io.StacklessUncapturedRamProtected(core)) return false;
+            } else if (fAutoRestoreCompleted[core]) {
+                const uint32_t* reader=fRam.OriginalWords(core,DataflowRoleReader);
+                const uint32_t* writer=fRam.OriginalWords(core,DataflowRoleWriter);
+                if (!reader || !writer || !fRam.VerifyCoreRestoredByCore(core,io)
+                    || !io.AutoRestoreRetirementSafe(core,reader,writer,fAutoRestoreCancelled[core])) return false;
+            }
+        }
         if (!io.FabricRecoveryConversionAllowed() || !VerifyHeldCopyLedger(io)
             || !VerifyResetDisable(io,true) || !AllHeldAndRouted(io)
             || !io.FabricRecoveryConversionAllowed()) return false;
+        for (unsigned core=0;core<DataflowBarrierWorkers;core++) fFabricAutoRetired[core]=fAutoRestoreCompleted[core];
         fAutoRestoreMode=false;fFabricCoreRecoveryActive=true;return true;
     }
 #endif
@@ -425,6 +444,9 @@ public:
             || (fPhase!=ReleaseAttempted && fPhase!=Faulted)
             || !fRam.StacklessCopiesCaptured(core) || fCoreRestoreStaged[core]
             || fCoreRestoreReleaseAttempted[core]) return false;
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        if (fFabricAutoRetired[core]) return false;
+#endif
         fPhase=Faulted;
         const uint32_t* expectedReader=fRam.OriginalWords(core,DataflowRoleReader);
         const uint32_t* expectedWriter=fRam.OriginalWords(core,DataflowRoleWriter);

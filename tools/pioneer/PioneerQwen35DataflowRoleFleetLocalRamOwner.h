@@ -75,6 +75,18 @@ public:
     bool CoreRestoredByCore(unsigned core) const {
         return core<DataflowBarrierWorkers && fStacklessCaptured[core] && fCore[core].RestoredByCore();
     }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    // A previously recorded auto-restore still needs a fresh, independent
+    // proof after fabric recovery. Failure invalidates that core's receipt.
+    template<class IO> bool VerifyCoreRestoredByCore(unsigned core,IO& io) {
+        if ((fPhase!=StacklessPrepared && fPhase!=StacklessFaulted && fPhase!=StacklessRestored)
+            || core>=DataflowBarrierWorkers || !fStacklessCaptured[core] || !fCore[core].RestoredByCore())
+            return false;
+        fPhase=StacklessFaulted;fStacklessCoreRestored=false;
+        return StacklessHeldAndProtected(io) && fCore[core].VerifyRestoredByCore(io)
+            && StacklessHeldAndProtected(io);
+    }
+#endif
     bool RestorationRequired() const {
         return fPhase==Dirty || fPhase==StacklessPrepared || fPhase==StacklessFaulted;
     }
