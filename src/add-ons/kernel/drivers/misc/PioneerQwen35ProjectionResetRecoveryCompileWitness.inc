@@ -9,6 +9,8 @@ struct PioneerQ35FreshRecoveryCompileScope {
     bool RecoveryTransactionAdmission(PioneerProbeCookie*,PioneerStoreContext&,
         pioneer_driver_recovery_guard_v2_info*) const { return allowed; }
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+    bool FabricCoordinatorAdmission(PioneerProbeCookie&,PioneerProbeCookie&,PioneerStoreContext&,uint64) const { return allowed; }
+    bool FabricCoordinatorAccessAllowed(PioneerProbeCookie&,PioneerProbeCookie&,PioneerStoreContext&,uint64) const { return allowed; }
     bool FabricRoleSequenceAdmission(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&,uint64) const { return allowed; }
     bool FabricRoleSequenceAccessAllowed(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,

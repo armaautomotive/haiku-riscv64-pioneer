@@ -5316,6 +5316,7 @@ PioneerSessionIO::SharedHostDmaPciSourceStable()
 #include "PioneerQwen35FabricRoleRecoverySequence.h"
 #include "PioneerQwen35FabricGraphRetirement.h"
 #include "PioneerQwen35FabricFinish.inc"
+#include "PioneerQwen35FabricRecoveryCoordinator.inc"
 // Type-check the complete intermediate sequence with the real owners and
 // synthetic scopes. It grants no physical authority and is not an ioctl.
 static __attribute__((used,noinline)) bool
@@ -5346,6 +5347,17 @@ PioneerQ35FabricFinishCompileWitness(PioneerProbeCookie* inspector,PioneerProbeC
 {
 	PioneerQ35FabricFinishCompileScope scope{allowed};
 	return PioneerQ35FabricFinishLocked(inspector,owner,context,host,validation,fabric,ticket,scope,result);
+}
+static __attribute__((used,noinline)) status_t
+PioneerQ35FabricCoordinatorCompileWitness(PioneerProbeCookie* inspector,PioneerProbeCookie* owner,
+	PioneerStoreContext* context,PioneerQ35FabricHostScope& host,pioneer_driver_recovery_guard_v2_info* validation,
+	pioneer_driver_fabric_recovery_guard_info* fabric,uint64 ticket,unsigned polls,
+	PioneerQwen35RoleBorrowedScopeWitness& roleScope,bool allowed,tt_pioneer_recovery_run& result)
+{
+	PioneerQ35FreshRecoveryCompileScope scope{allowed};PioneerQ35FabricParentRestoreCompileScope parent{allowed};
+	PioneerQ35FabricFreshViewsCompileGuard bar{allowed};PioneerQ35FabricFinishCompileScope finish{allowed};
+	return PioneerQ35ResumeFabricRoleRecoveryLocked(inspector,owner,context,host,validation,fabric,ticket,polls,
+		scope,roleScope,parent,bar,finish,result);
 }
 #endif
 #ifdef PIONEER_QWEN35_FABRIC_HOST_CONTROLLER
