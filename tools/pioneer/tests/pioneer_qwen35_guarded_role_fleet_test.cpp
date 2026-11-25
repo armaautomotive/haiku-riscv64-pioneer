@@ -17,6 +17,11 @@ struct GuardedFleetIO : PioneerSessionIO {
     void DramTlbWrite(unsigned slot,unsigned word,uint32_t value) { ++accesses;tlbs[slot][word]=value; }
     uint32_t ResidentNocRead(unsigned offset) { ++accesses;return PioneerSessionIO::ResidentNocRead(offset); }
     uint32_t ResetRead() { ++accesses;return PioneerSessionIO::ResetRead(); }
+    uint32_t Q38PanelRead(unsigned address) { ++accesses;return PioneerSessionIO::Q38PanelRead(address); }
+    void Q38PanelWrite(unsigned address,uint32_t value) { ++accesses;PioneerSessionIO::Q38PanelWrite(address,value); }
+    bool ReadCoreMemory(unsigned,unsigned,void*,unsigned) {
+        assert(false && "fresh recovery must not use the absent graph-memory owner");return false;
+    }
 };
 struct FleetCheck {
     GuardedFleetIO& io;unsigned calls=0,failAt=0,accessesAtFailure=0;
@@ -87,8 +92,46 @@ int main() {
             && trialCheck.calls==failure
             && trialDevice.accesses+imagePlatform.reads==trialCheck.accessesAtFailure);
     }
+    // The new recovery context has no qwen35DataflowMemory object. The
+    // retained handoff must be read directly from the selected fresh panel.
+    scope.restoreHeld=true;
+    GuardedFleetIO handoffDevice;handoffDevice.roleHandoffs[7]={11,22,33};
+    FleetCheck handoffCheck{handoffDevice};handoffCheck.imageReads=&imagePlatform.reads;imagePlatform.reads=0;
+    PioneerQwen35RoleFleetPciIO<GuardedFleetIO,FleetPciTestScope,decltype(imageViews),Selector>
+        handoffFleet(handoffDevice,scope,imageViews,handoffCheck);
+    DataflowRoleSnapshotHandoff handoff{};
+    assert(handoffFleet.ReadRestoreHandoff(7,handoff)
+        && handoff.readerReady==11 && handoff.writerReady==22 && handoff.release==33);
+    const unsigned handoffBoundaries=handoffCheck.calls;
+    for (unsigned failure=1;failure<=handoffBoundaries;failure++) {
+        GuardedFleetIO trialDevice;trialDevice.roleHandoffs[7]={11,22,33};
+        FleetCheck trialCheck{trialDevice};trialCheck.failAt=failure;
+        trialCheck.imageReads=&imagePlatform.reads;imagePlatform.reads=0;
+        PioneerQwen35RoleFleetPciIO<GuardedFleetIO,FleetPciTestScope,decltype(imageViews),Selector>
+            trial(trialDevice,scope,imageViews,trialCheck);
+        DataflowRoleSnapshotHandoff observed{77,88,99};
+        assert(!trial.ReadRestoreHandoff(7,observed) && trialCheck.calls==failure
+            && trialDevice.accesses+imagePlatform.reads==trialCheck.accessesAtFailure
+            && observed.readerReady==77 && observed.writerReady==88 && observed.release==99);
+    }
+    GuardedFleetIO writeDevice;writeDevice.roleHandoffs[7]={11,22,33};
+    FleetCheck writeCheck{writeDevice};writeCheck.imageReads=&imagePlatform.reads;imagePlatform.reads=0;
+    PioneerQwen35RoleFleetPciIO<GuardedFleetIO,FleetPciTestScope,decltype(imageViews),Selector>
+        writeFleet(writeDevice,scope,imageViews,writeCheck);
+    assert(writeFleet.WriteRestoreHandoffWord(7,0,55) && writeDevice.roleHandoffs[7].readerReady==55);
+    const unsigned writeBoundaries=writeCheck.calls;
+    for (unsigned failure=1;failure<=writeBoundaries;failure++) {
+        GuardedFleetIO trialDevice;trialDevice.roleHandoffs[7]={11,22,33};
+        FleetCheck trialCheck{trialDevice};trialCheck.failAt=failure;
+        trialCheck.imageReads=&imagePlatform.reads;imagePlatform.reads=0;
+        PioneerQwen35RoleFleetPciIO<GuardedFleetIO,FleetPciTestScope,decltype(imageViews),Selector>
+            trial(trialDevice,scope,imageViews,trialCheck);
+        assert(!trial.WriteRestoreHandoffWord(7,0,55) && trialCheck.calls==failure
+            && trialDevice.accesses+imagePlatform.reads==trialCheck.accessesAtFailure);
+        assert(trialDevice.roleHandoffs[7].readerReady==11 || trialDevice.roleHandoffs[7].readerReady==55);
+    }
     assert(imageViews.Close());
     gLocked=false;
-    std::printf("PASS actual held-fleet and image adapter stop at all %u/%u simulated authority boundaries\n",
-        boundaries,imageBoundaries);
+    std::printf("PASS actual held-fleet, image and handoff reads/writes stop at all %u/%u/%u/%u simulated authority boundaries\n",
+        boundaries,imageBoundaries,handoffBoundaries,writeBoundaries);
 }

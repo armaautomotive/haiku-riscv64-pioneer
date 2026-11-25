@@ -14,6 +14,8 @@ struct SelectIO : StoreMock {
     void DramTlbWrite(unsigned slot,unsigned word,uint32_t value) {
         ++accesses;if (!dropWrite || slot!=0 || word!=0) StoreMock::DramTlbWrite(slot,word,value);
     }
+    bool SharedRolePrestackReleaseReset() { ++accesses;return true; }
+    bool SharedRoleHoldReset() { ++accesses;return true; }
 };
 struct SelectCheck {
     SelectIO& io;
@@ -51,5 +53,11 @@ int main() {
     SelectIO dropped;dropped.dropWrite=true;SelectCheck droppedCheck{dropped};
     PioneerQ35GuardedRoleSelector<SelectIO,SelectCheck> droppedSelector(dropped,droppedCheck);
     assert(!droppedSelector.Select(119) && dropped.runtimeCore==120 && dropped.accesses==6);
+    for (unsigned operation=0;operation<2;operation++) for (unsigned fail=1;fail<=2;fail++) {
+        SelectIO reset;SelectCheck resetCheck{reset};resetCheck.failAt=fail;
+        PioneerQ35GuardedRoleSelector<SelectIO,SelectCheck> resetSelector(reset,resetCheck);
+        const bool okay=operation?resetSelector.SharedRoleHoldReset():resetSelector.SharedRolePrestackReleaseReset();
+        assert(!okay && resetCheck.calls==fail && reset.accesses==fail-1 && !resetSelector.Allowed());
+    }
     puts("PASS guarded role selection: 120 routes and every simulated revocation boundary");
 }

@@ -24,6 +24,17 @@ template<class IO> struct PioneerQ35RoleFleetCoreSelector {
     uint32_t DramTlbRead(unsigned slot,unsigned word) { return fIO.DramTlbRead(slot,word); }
     uint32_t ResidentNocRead(unsigned offset) { return fIO.ResidentNocRead(offset); }
     uint32_t ResetRead() { return fIO.ResetRead(); }
+    bool ReadRestoreHandoff(unsigned core,PioneerQwen35::DataflowRoleSnapshotHandoff& output) {
+        return fIO.ReadCoreMemory(core,PioneerQwen35::DataflowRoleSnapshotHandoffAddress,&output,sizeof(output));
+    }
+    bool WriteRestoreHandoffWord(unsigned,unsigned word,uint32_t value) {
+        fIO.Q38PanelWrite(PioneerQwen35::DataflowRoleSnapshotHandoffAddress+word*4,value);return true;
+    }
+    bool ReadRestoreHandoffWord(unsigned,unsigned word,uint32_t& value) {
+        value=fIO.Q38PanelRead(PioneerQwen35::DataflowRoleSnapshotHandoffAddress+word*4);return true;
+    }
+    bool SharedRolePrestackReleaseReset() { return fIO.SharedRolePrestackReleaseReset(); }
+    bool SharedRoleHoldReset() { return fIO.SharedRoleHoldReset(); }
 private:
     IO& fIO;
 };
@@ -187,6 +198,14 @@ class PioneerQwen35RoleFleetPciIO {
         if (!fIO.ReadCoreMemory(core,PioneerQwen35::DataflowRoleSnapshotHandoffAddress,&second,sizeof(second))
             || memcmp(&first,&second,sizeof(first)) || !fGuard.ProveSelectedRoute(core)) return false;
         output=second; return true;
+    }
+    bool ReadStableRestoreHandoff(unsigned core,PioneerQwen35::DataflowRoleSnapshotHandoff& output) {
+        PioneerQwen35::DataflowRoleSnapshotHandoff first{},second{};
+        if (!fGuard.ProveSelectedRoute(core) || !fSelector.ReadRestoreHandoff(core,first)) return false;
+        fIO.Pause();
+        if (!fGuard.ProveSelectedRoute(core) || !fSelector.ReadRestoreHandoff(core,second)
+            || memcmp(&first,&second,sizeof(first)) || !fGuard.ProveSelectedRoute(core)) return false;
+        output=second;return true;
     }
     bool ReadStableWorkerMailbox(unsigned core,PioneerQwen35::DataflowWorkerMailbox& output) {
         PioneerQwen35::DataflowWorkerMailbox first{},second{};
@@ -846,9 +865,10 @@ public:
         return core<PioneerQwen35::DataflowBarrierWorkers
             && fScope.ProveRoleRestoreCompletionSafe(fIO,core)
             && fScope.ProveExclusiveRewrite(fIO) && fSelector.Select(core)
-            && fIO.MapQ38Panel() && fIO.DataflowPanelMappingStable() && fGuard.ProveSelectedRoute(core)
-            && PioneerQwen35WithSelectedClock(fIO,core,[&]() {
-                return fIO.ResetRead()==0x7000 && fIO.ResetRead()==0x7000;
+            && fSelector.Allowed() && fIO.MapQ38Panel() && fSelector.Allowed()
+            && fClock.DataflowPanelMappingStable() && fGuard.ProveSelectedRoute(core)
+            && PioneerQwen35WithSelectedClock(fClock,core,[&]() {
+                return fSelector.ResetRead()==0x7000 && fSelector.ResetRead()==0x7000;
             }) && fScope.ProveRoleRestoreCompletionSafe(fIO,core) && fGuard.ProveSelectedRoute(core);
     }
     bool RestoreCompletedAndHeld(unsigned core) {
@@ -863,16 +883,17 @@ public:
         const bool held=RestoreHandoffHeldSafe(core);
         if (!held && !RestoreCompletionSafe(core)) return false;
         PioneerQwen35::DataflowRoleSnapshotHandoff observed{};
-        if (!ReadStableStackHandoff(core,observed)
+        if (!ReadStableRestoreHandoff(core,observed)
             || !(held?RestoreHandoffHeldSafe(core):RestoreCompletionSafe(core))) return false;
         result=observed;return true;
     }
     bool WriteRestoreHandoffWord(unsigned core,unsigned word,uint32_t value) {
         using namespace PioneerQwen35;
         if (word>=3 || !RestoreHandoffHeldSafe(core)) return false;
-        const unsigned address=DataflowRoleSnapshotHandoffAddress+word*4;
-        fIO.Q38PanelWrite(address,value); // the owner records the attempt first
-        return fGuard.ProveSelectedRoute(core) && fIO.Q38PanelRead(address)==value
+        if (!fSelector.WriteRestoreHandoffWord(core,word,value)) return false; // attempt already recorded
+        uint32_t observed=0;
+        return fGuard.ProveSelectedRoute(core) && fSelector.ReadRestoreHandoffWord(core,word,observed)
+            && observed==value
             && RestoreHandoffHeldSafe(core);
     }
     bool StacklessCoreRestoreReleaseReady(unsigned core,const uint32_t* reader,const uint32_t* writer) {
@@ -882,7 +903,7 @@ public:
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
             && fScope.ProveRoleRestorePhysicalReleaseSafe(fIO,core)
 #endif
-            && ReadStableStackHandoff(core,handoff)
+            && ReadStableRestoreHandoff(core,handoff)
             && !handoff.readerReady && !handoff.writerReady && !handoff.release
             && fScope.ProveRoleRestoreReleaseReady(fIO,core,reader,writer)
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
@@ -903,13 +924,13 @@ public:
         if (!fViews.Read(core,DataflowRolePhysicalControl,0x224,first,fGuard)
             || !fViews.Read(core,DataflowRolePhysicalControl,0x224,second,fGuard)
             || first!=second || (first&DataflowRolePreserveResetMask)!=DataflowRolePreserveResetMask
-            || !ReadStableStackHandoff(core,handoff) || handoff.readerReady || handoff.writerReady || handoff.release
+            || !ReadStableRestoreHandoff(core,handoff) || handoff.readerReady || handoff.writerReady || handoff.release
             || !fScope.ProveRoleRestorePhysicalReleaseSafe(fIO,core) || !RestoreHandoffHeldSafe(core)) return false;
         attempted=true;
-        if (!fIO.SharedRolePrestackReleaseReset()) return false;
+        if (!fSelector.SharedRolePrestackReleaseReset()) return false;
         fIO.Pause();
         return fScope.ProveExclusiveRewrite(fIO) && fGuard.ProveSelectedRoute(core)
-            && fIO.ResetRead()==0x7000 && fIO.ResetRead()==0x7000;
+            && fSelector.ResetRead()==0x7000 && fSelector.ResetRead()==0x7000;
     }
     // Scope must prove the exact restore images and fresh, parked completion;
     // the two status words and PC samples alone are not ownership proof.
@@ -918,14 +939,14 @@ public:
         if (attempted || core>=DataflowBarrierWorkers || !fScope.ProveRoleRestorePhysicalHoldSafe(fIO,core)
             || !RestoreCompletionSafe(core)) return false;
         DataflowRoleSnapshotHandoff handoff{};
-        if (!ReadStableStackHandoff(core,handoff)
+        if (!ReadStableRestoreHandoff(core,handoff)
             || handoff.readerReady!=PIONEER_Q35_ROLE_RESTORE_READER_DONE
             || handoff.writerReady!=PIONEER_Q35_ROLE_RESTORE_WRITER_DONE || handoff.release
             || !fScope.ProveRoleRestorePhysicalHoldSafe(fIO,core) || !RestoreCompletionSafe(core)) return false;
         attempted=true;
-        if (!fIO.SharedRoleHoldReset()) return false;
+        if (!fSelector.SharedRoleHoldReset()) return false;
         fIO.Pause();
-        return fGuard.ProveSelectedRoute(core) && fIO.ResetRead()==0x47800 && fIO.ResetRead()==0x47800;
+        return fGuard.ProveSelectedRoute(core) && fSelector.ResetRead()==0x47800 && fSelector.ResetRead()==0x47800;
     }
     bool RestoreCoreHoldObserved(unsigned core) {
         return core<PioneerQwen35::DataflowBarrierWorkers

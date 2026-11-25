@@ -3,6 +3,7 @@
 #define PIONEER_QWEN35_GUARDED_ROLE_SELECT_H
 #include "BlackholeDramSamplesProbe.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowBarrierLayout.h"
+#include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleMailbox.h"
 
 // Only the two TLB programming transactions in role selection are guarded
 // here. The caller must separately guard its other register and view accesses
@@ -36,6 +37,45 @@ public:
         if (!Allowed()) return UINT32_MAX;
         const uint32_t value=fIO.ResetRead();
         return Allowed()?value:UINT32_MAX;
+    }
+    // A fresh recovery context has no graph-memory owner. Read this one fixed
+    // handoff directly through its already selected panel, without invoking
+    // the old session's ReadCoreMemory or changing its TLB selection.
+    bool ReadRestoreHandoff(unsigned core,PioneerQwen35::DataflowRoleSnapshotHandoff& output) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || !Allowed() || fIO.runtimeCore!=core
+            || !fIO.DataflowPanelMappingStable() || !Allowed()) return false;
+        uint32_t words[3];
+        for (unsigned i=0;i<3;i++) {
+            if (!Allowed()) return false;
+            const uint32_t value=fIO.Q38PanelRead(DataflowRoleSnapshotHandoffAddress+i*4);
+            if (!Allowed()) return false;
+            words[i]=value;
+        }
+        output={words[0],words[1],words[2]};return true;
+    }
+    bool WriteRestoreHandoffWord(unsigned core,unsigned word,uint32_t value) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || word>=3 || !Allowed() || fIO.runtimeCore!=core
+            || !fIO.DataflowPanelMappingStable() || !Allowed()) return false;
+        fIO.Q38PanelWrite(DataflowRoleSnapshotHandoffAddress+word*4,value);
+        return Allowed();
+    }
+    bool ReadRestoreHandoffWord(unsigned core,unsigned word,uint32_t& output) {
+        using namespace PioneerQwen35;
+        if (core>=DataflowBarrierWorkers || word>=3 || !Allowed() || fIO.runtimeCore!=core
+            || !fIO.DataflowPanelMappingStable() || !Allowed()) return false;
+        const uint32_t value=fIO.Q38PanelRead(DataflowRoleSnapshotHandoffAddress+word*4);
+        if (!Allowed()) return false;
+        output=value;return true;
+    }
+    bool SharedRolePrestackReleaseReset() {
+        if (!Allowed()) return false;
+        const bool okay=fIO.SharedRolePrestackReleaseReset();return Allowed() && okay;
+    }
+    bool SharedRoleHoldReset() {
+        if (!Allowed()) return false;
+        const bool okay=fIO.SharedRoleHoldReset();return Allowed() && okay;
     }
     bool Select(unsigned core) {
         const unsigned route=PioneerQwen35::DataflowBarrierWorkerRoute(core);
