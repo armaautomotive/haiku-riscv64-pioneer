@@ -342,6 +342,8 @@ static void ExerciseFabricViewRetirement(PioneerSessionIO& io)
         && !binding->FabricViewsDisposed() && !binding->CanDestroy());
     assert(!binding->BeginFabricCoreRecovery(io,*io.qwen35BorrowedRoleScope,permit)
         && !binding->BeginFabricCoreRecovery(freshContext.io,*io.qwen35BorrowedRoleScope,permit)
+        && !binding->RestoreFabricCoreFleet(io,*io.qwen35BorrowedRoleScope,permit,1)
+        && !binding->RestoreFabricCoreFleet(freshContext.io,*io.qwen35BorrowedRoleScope,permit,1)
         && !binding->FabricCoreRecoveryUsable() && !binding->FabricCoreAlreadyRestored(0));
     assert(binding->CloseFabricRecoveryViews(permit,noAlias) && binding->FabricRecoveryViewsClosed()
         && !binding->CanDestroy() && PioneerQ35SharedRoleBindingTestAccess::CodeSnapshot(*binding)==code

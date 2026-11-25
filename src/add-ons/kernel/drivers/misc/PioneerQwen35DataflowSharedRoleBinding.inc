@@ -9,6 +9,7 @@
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowRoleStartOrder.h"
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
 #include "PioneerQwen35GuardedRoleSelect.h"
+#include "../../../../../tools/pioneer/PioneerQwen35FabricCoreRecoverySequence.h"
 #endif
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 #include "PioneerQwen35LocalRestoreImages.h"
@@ -39,14 +40,17 @@ class PioneerQwen35SharedRoleBinding {
     bool fReleaseAuthorized=false;
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
     bool fFabricConversionAuthorityLost=false;
+    PioneerQwen35::DataflowFabricCoreRecoverySequence fFabricCoreSequence;
     template<class Scope,class Check> struct FabricRecoveryAdapter
         : PioneerQwen35RoleFleetPciIO<PioneerSessionIO,Scope,Views,
             PioneerQ35GuardedRoleSelector<PioneerSessionIO,Check>> {
         using Base=PioneerQwen35RoleFleetPciIO<PioneerSessionIO,Scope,Views,
             PioneerQ35GuardedRoleSelector<PioneerSessionIO,Check>>;
+        PioneerSessionIO& io;
         FabricRecoveryAdapter(PioneerSessionIO& io,Scope& scope,Views& views,Check& authority)
-            :Base(io,scope,views,authority) {}
+            :Base(io,scope,views,authority),io(io) {}
         bool FabricRecoveryConversionAllowed() { return Base::RoleSelectionAuthorityValid(); }
+        void Pause() { io.Pause(); }
     };
 #endif
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
@@ -480,6 +484,27 @@ public:
         const bool converted=fOwner.BeginFabricCoreRecovery(io);
         if (!io.FabricRecoveryConversionAllowed()) { fFabricConversionAuthorityLost=true;return false; }
         return converted && FabricCoreRecoveryUsable();
+    }
+    // The actual owner lifecycle now has a fresh-session path. Scope must
+    // guard its own device accesses and prove physical writer exclusion; the
+    // existing Haiku scope still denies that authority. An interrupted run is
+    // retained and cannot replay potentially issued restores or resets.
+    template<class Scope,class Check>
+    bool RestoreFabricCoreFleet(PioneerSessionIO& freshIO,Scope& scope,Check& check,unsigned polls) {
+        auto* session=fContext.recoveryFreshSession;
+        if (!FabricCoreRecoveryUsable() || !session || !session->Fresh()
+            || &session->Fresh()->io!=&freshIO || &freshIO==&fContext.io
+            || !fContext.q35PciReservationHeld || fContext.q35PciReleaseAttempted) return false;
+        FabricRecoveryAdapter<Scope,Check> io(freshIO,scope,fViews,check);
+        using namespace PioneerQwen35;
+        const bool restored=fFabricCoreSequence.Run(fOwner,io,DataflowLocalRestoreReaderShimWords,
+            sizeof(DataflowLocalRestoreReaderShimWords)/sizeof(uint32_t),DataflowLocalRestoreWriterShimWords,
+            sizeof(DataflowLocalRestoreWriterShimWords)/sizeof(uint32_t),fCoreRestoreReleaseWrites,
+            fCoreRestoreHoldWrites,polls);
+        if (!io.FabricRecoveryConversionAllowed()) { fFabricConversionAuthorityLost=true;return false; }
+        return restored && fOwner.CoveredStateRestored() && session==fContext.recoveryFreshSession
+            && session->RoleReady() && session->Fresh() && &session->Fresh()->io==&freshIO
+            && fContext.q35PciReservationHeld && !fContext.q35PciReleaseAttempted;
     }
 #endif
     // A verified ASIC reset invalidates the old tile images and RAM. Retire
@@ -1136,6 +1161,14 @@ PioneerQ35FabricCoreRecoveryCompileWitness(PioneerQwen35SharedRoleBinding* bindi
     if (!binding) return false;
     auto check=[&]() { return allowed; };
     return binding->BeginFabricCoreRecovery(fresh,scope,check);
+}
+static __attribute__((used,noinline)) bool
+PioneerQ35FabricCoreFleetRestoreCompileWitness(PioneerQwen35SharedRoleBinding* binding,PioneerSessionIO& fresh,
+    PioneerQwen35RoleBorrowedScopeWitness& scope,bool allowed,unsigned polls)
+{
+    if (!binding) return false;
+    auto check=[&]() { return allowed; };
+    return binding->RestoreFabricCoreFleet(fresh,scope,check,polls);
 }
 #endif
 
