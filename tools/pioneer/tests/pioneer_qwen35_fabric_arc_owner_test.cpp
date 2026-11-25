@@ -138,7 +138,7 @@ struct PioneerQ35PostResetL2Result { uint32 reset=UINT32_MAX;bool sampled=false,
 struct PioneerPostResetMapping {
     Profile profile;bool ready=true,firmwareReady=true,topologyReady=true,savedValid=true;
     bool queueAttempted=false,queueUnsafe=false,dmaModified=false;
-    bool fleetAudited=false,dmaAudited=false,q35CloseComplete=false,q35FirmwareRevalidated=false;
+    bool fleetAudited=false,dmaAudited=false,q35CloseComplete=false,q35FirmwareRevalidated=false,q35RootAerAudited=false;
     unsigned selected=120;
     area_id areas[7]={20,21,22,23,24,25,26};
     area_id queueArea=-1,queueMsiArea=-1;
@@ -150,7 +150,7 @@ struct PioneerPostResetMapping {
     uint32 queueBase=0,queueRequest=0;
     uint32 saved[3]={1,2,3};
     tt_arc_telemetry_result firmwareTelemetry=FabricQueue::Health();
-    bool pciReady=true,corruptAuditResult=false,corruptL2Result=false,corruptFirmwareResult=false;unsigned sourceReads=0;
+    bool pciReady=true,corruptAuditResult=false,corruptL2Result=false,corruptFirmwareResult=false,corruptAerResult=false;unsigned sourceReads=0;
     PioneerPostResetMapping()=default;
     explicit PioneerPostResetMapping(const Profile& p):profile(p) {}
     template<class Check> bool OpenQ35Guarded(Check& check) { return check() && ready && savedValid && check(); }
@@ -187,6 +187,9 @@ struct PioneerPostResetMapping {
     }
     template<class Check> bool RevalidateQ35FabricFirmware(const tt_arc_scratch_result&,Check& check) {
         return q35FirmwareRevalidated=check() && !corruptFirmwareResult && check();
+    }
+    template<class Check> bool AuditQ35RootAerGuarded(Check& check) {
+        return q35RootAerAudited=check() && !corruptAerResult && check();
     }
     template<class Check> bool CloseQ35Guarded(Check& check) {
         if (!check()) return false;

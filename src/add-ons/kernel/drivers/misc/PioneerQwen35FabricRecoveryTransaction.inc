@@ -65,7 +65,8 @@ bool RunQ35FabricRecovery(pioneer_driver_recovery_guard_v2_info* guard,uint64 ti
         || !step(12,[&]() { return mapping->AuditQ35Fabric(fleet,valid); })
         || !step(13,[&]() { return mapping->AuditQ35L2CpuHeldGuarded(l2,valid); })
         || !step(14,[&]() { return mapping->AuditQ35HostDmaGuarded(valid)
-            && mapping->RevalidateQ35FabricFirmware(firmware,valid); })
+            && mapping->RevalidateQ35FabricFirmware(firmware,valid)
+            && mapping->AuditQ35RootAerGuarded(valid); })
         || !step(15,[&]() { return owner->Retire(guard,scope); })
         || !step(16,[&]() { return mapping->CloseQ35Guarded(valid); })) return false;
     stage=17;
@@ -77,7 +78,8 @@ bool RunQ35FabricRecovery(pioneer_driver_recovery_guard_v2_info* guard,uint64 ti
     if (!owner->ClockRestored() || owner->ResetWrites()!=0xffU
         || owner->TileWrites(0)!=UINT32_MAX || owner->TileWrites(1)!=UINT32_MAX
         || owner->TileWrites(2)!=UINT32_MAX || owner->TileWrites(3)!=0x00ffffffU
-        || !mapping->fleetAudited || !mapping->dmaAudited || !mapping->q35FirmwareRevalidated || mapping->queueUnsafe
+        || !mapping->fleetAudited || !mapping->dmaAudited || !mapping->q35FirmwareRevalidated
+        || !mapping->q35RootAerAudited || mapping->queueUnsafe
         || fleet.failure!=PioneerPostResetAuditNone || fleet.pass!=2
         || fleet.audited!=2*PIONEER_POST_RESET_CORES || fleet.core!=PIONEER_POST_RESET_CORES
         || fleet.noc!=PIONEER_POST_RESET_NOCS || fleet.index

@@ -84,6 +84,33 @@ int main()
             && result.audited==240 && !accessesAfterRevoke);
         total=permit.calls;assert(total>1000 && deviceAccesses>1000);
     }
+    unsigned aerChecks=0;
+    {
+        PioneerPostResetMapping mapping(profile);PrepareClose(mapping);Permit firmware;
+        assert(mapping.RevalidateQ35FabricFirmware(baselineFirmware,firmware));
+        Permit permit;deviceAccesses=accessesAfterRevoke=0;
+        assert(mapping.AuditQ35RootAerGuarded(permit) && mapping.q35RootAerAudited
+            && fakeRootAerReads==3 && !accessesAfterRevoke);
+        aerChecks=permit.calls;assert(aerChecks>50);
+        Permit renewed;assert(mapping.RevalidateQ35FabricFirmware(baselineFirmware,renewed)
+            && !mapping.q35RootAerAudited);
+    }
+    for (unsigned mode=0;mode<2;mode++) for (unsigned failure=1;failure<=aerChecks;failure++) {
+        PioneerPostResetMapping mapping(profile);PrepareClose(mapping);Permit firmware;
+        assert(mapping.RevalidateQ35FabricFirmware(baselineFirmware,firmware));
+        Permit permit;permit.failAt=failure;permit.transient=mode!=0;
+        deviceAccesses=accessesAfterRevoke=0;
+        assert(!mapping.AuditQ35RootAerGuarded(permit) && permitRevoked
+            && !mapping.q35RootAerAudited && !accessesAfterRevoke);
+    }
+    for (unsigned fault=0;fault<3;fault++) {
+        PioneerPostResetMapping mapping(profile);PrepareClose(mapping);Permit firmware;
+        assert(mapping.RevalidateQ35FabricFirmware(baselineFirmware,firmware));
+        if (fault==0) fakeRootAerErrors=1;
+        if (fault==1) fakeRootAerHeader=0x10010003; // loop back to itself
+        if (fault==2) fakeRootAerErrorAfter=3;
+        Permit permit;assert(!mapping.AuditQ35RootAerGuarded(permit) && !mapping.q35RootAerAudited);
+    }
     const unsigned failures[]={1,2,3,17,50,100,total/4,total/2,total*3/4,total-1,total};
     for (unsigned mode=0;mode<2;mode++) for (unsigned failure:failures) {
         PioneerPostResetMapping mapping(profile);Prepare(mapping);Permit permit;

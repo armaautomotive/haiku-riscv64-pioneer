@@ -160,6 +160,13 @@ int main() {
             && sColdRecoveryRequired);
         const unsigned before=f.queue.io;assert(!f.Run() && f.queue.io==before);
     }
+    {
+        Fixture f;f.mapping.corruptAerResult=true;
+        assert(!f.Run() && f.stage==14 && f.context.recoveryFabricArcOwner
+            && f.mapping.q35FirmwareRevalidated && !f.mapping.q35RootAerAudited
+            && !f.context.recoveryFabricEvidenceRecorded && sColdRecoveryRequired);
+        const unsigned before=f.queue.io;assert(!f.Run() && f.queue.io==before);
+    }
     for (unsigned fault=0;fault<2;fault++) {
         Fixture f;f.mapping.corruptAuditResult=fault==0;f.mapping.corruptL2Result=fault==1;
         assert(!f.Run() && f.stage==17 && f.context.recoveryFabricArcOwner

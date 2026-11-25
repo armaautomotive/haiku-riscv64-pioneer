@@ -34,6 +34,7 @@ struct PioneerPostResetMapping {
     bool AuditHostDma() { return Step(14); }
     template<class Check> bool AuditQ35HostDmaGuarded(Check&) { return AuditHostDma(); }
     template<class Check> bool RevalidateQ35FabricFirmware(const tt_arc_scratch_result&,Check& check) { return check(); }
+    template<class Check> bool AuditQ35RootAerGuarded(Check& check) { return check(); }
     template<class Check> bool CloseQ35Guarded(Check&) { return q35CloseComplete=Step(16); }
 };
 template<class Guard> class PioneerQ35FabricArcOwner {

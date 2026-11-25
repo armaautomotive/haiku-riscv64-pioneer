@@ -62,3 +62,6 @@ telemetry after its fleet and DMA audits. It restores the selected route on a
 successful audit and stops on an unconfirmed route write or lost guard; the
 owner and mappings remain retained on failure. This is simulated evidence,
 not a binary identity for the installed firmware or a completed recovery.
+The non-loadable transaction also requires three read-only, clear root-port
+uncorrectable AER samples. It does not clear AER, establish continued PCIe
+health or establish that other device writers are excluded.

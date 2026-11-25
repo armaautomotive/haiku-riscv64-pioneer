@@ -47,6 +47,8 @@ static bool permitRevoked=false;
 static unsigned deviceAccesses=0,accessesAfterRevoke=0;
 static int dropQ35TlbWrite=-1;
 static unsigned q35TlbWrites=0;
+static uint32 fakeRootAerHeader=0x00010001,fakeRootAerErrors=0;
+static unsigned fakeRootAerReads=0,fakeRootAerErrorAfter=0;
 static void TrackAccess() { ++deviceAccesses;if (permitRevoked) ++accessesAfterRevoke; }
 #else
 static void TrackAccess() {}
@@ -57,6 +59,9 @@ struct Pci {
 #ifdef TEST_Q35_FABRIC_AUDIT
 		if(offset==0x34)return 0x40;if(offset==0x40)return 0x10;if(offset==0x42)return 2;
 		if(offset==0x4a)return fakePciPendingPeer==1?0x20:0;
+		if(offset==0x100)return fakeRootAerHeader;
+		if(offset==0x104) { ++fakeRootAerReads;return fakeRootAerErrorAfter && fakeRootAerReads>=fakeRootAerErrorAfter?1:fakeRootAerErrors; }
+		if(offset==0x134)return 0;
 #endif
 		if(offset==0)return 0x20421e30;if(offset==8)return 0x06040000;if(offset==4)return rootCommand;
 		if(offset==0x18)return 0x003f0100;if(offset==0x20)return 0x0000fff0;
@@ -146,6 +151,7 @@ static void ResetFake() {
 	mapCalls=unmapCalls=0;failMap=failUnmap=-1;mapFailureStatus=B_NO_MEMORY;wrongNode=false;
 #ifdef TEST_Q35_FABRIC_AUDIT
 	dropQ35TlbWrite=-1;q35TlbWrites=0;
+	fakeRootAerHeader=0x00010001;fakeRootAerErrors=fakeRootAerReads=fakeRootAerErrorAfter=0;
 #endif
 	fakePciPendingPeer=-1;spins=mutateAfter=0;sleeps=firmwareReadyAfter=0;sleepFails=false;blockTlbRestore=false;
 	fakeQueueTimeout=fakeQueueBadReply=false;

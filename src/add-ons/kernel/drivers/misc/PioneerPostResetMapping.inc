@@ -3,6 +3,7 @@
 #include "PioneerQ38ArcQueue.h"
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
 #include "PioneerQwen35PostResetL2Audit.h"
+#include "PioneerPcieRootAerSnapshot.h"
 #endif
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 #include "PioneerRecoveryDbi.h"
@@ -35,7 +36,7 @@ struct PioneerPostResetMapping : ConfigIO {
 	bool queueAttempted=false,queueReady=false,queueUnsafe=false;
 	bool fleetAudited=false,dmaAudited=false;
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
-	bool q35CloseAttempted=false,q35CloseComplete=false,q35FirmwareRevalidated=false;
+	bool q35CloseAttempted=false,q35CloseComplete=false,q35FirmwareRevalidated=false,q35RootAerAudited=false;
 #endif
 #ifdef PIONEER_QWEN35_RECOVERY_RUN_ENABLE
 	area_id dbiArea=-1;
@@ -446,7 +447,7 @@ struct PioneerPostResetMapping : ConfigIO {
 	// sequence. The guarded adapter never performs another device access once
 	// permission is lost, including during the underlying route restoration.
 	template<class Check> bool RevalidateQ35FabricFirmware(const tt_arc_scratch_result& baseline,Check& check) {
-		q35FirmwareRevalidated=false;
+		q35FirmwareRevalidated=false;q35RootAerAudited=false;
 		if (!ready || !firmwareReady || !topologyReady || !fleetAudited || !dmaAudited
 			|| !savedValid || !scratch || !csm || baseline.version!=1
 			|| baseline.state!=TT_ARC_SCRATCH_READY || !baseline.tlb_restored
@@ -475,7 +476,7 @@ struct PioneerPostResetMapping : ConfigIO {
 		q35FirmwareRevalidated=true;return true;
 	}
 	template<class Check> bool AuditQ35Fabric(PioneerPostResetAuditResult& result,Check& check) {
-		result={};fleetAudited=false;dmaAudited=false;
+		result={};fleetAudited=false;dmaAudited=false;q35FirmwareRevalidated=false;q35RootAerAudited=false;
 		struct Adapter {
 			PioneerPostResetMapping& m;Check& check;bool lost=false;
 			bool Allowed() { if (lost || !check()) { lost=true;return false; } return true; }
@@ -560,7 +561,7 @@ struct PioneerPostResetMapping : ConfigIO {
 		return PioneerQ35PostResetL2Audit(adapter,result) && adapter.Allowed();
 	}
 	template<class Check> bool AuditQ35HostDmaGuarded(Check& check) {
-		dmaAudited=false;dmaDiagnostic=0x10000;
+		dmaAudited=false;q35FirmwareRevalidated=false;q35RootAerAudited=false;dmaDiagnostic=0x10000;
 		bool lost=false;
 		auto allowed=[&]() { if (lost || !check()) { lost=true;return false; } return true; };
 		if (!fleetAudited || !savedValid || !SourceStableQ35(allowed) || !allowed()) return false;
@@ -611,6 +612,29 @@ struct PioneerPostResetMapping : ConfigIO {
 		if (!allowed() || !ReadPostResetState(resetState) || !allowed()
 			|| resetState!=PIONEER_POST_RESET_HELD || !SourceStableQ35(allowed) || !allowed()) return false;
 		dmaAudited=true;dmaDiagnostic=0;return true;
+	}
+	// Root Device Status does not cover the root port's AER uncorrectable
+	// register. The SG2042 has previously reported an error there during a
+	// reset attempt, so require three clear read-only samples before retiring
+	// the audit mapping. This does not clear AER or prove future link health.
+	template<class Check> bool AuditQ35RootAerGuarded(Check& check) {
+		q35RootAerAudited=false;bool lost=false;
+		auto allowed=[&]() { if (lost || !check()) { lost=true;return false; } return true; };
+		if (!fleetAudited || !dmaAudited || !q35FirmwareRevalidated || !PciReadyQ35(allowed)) return false;
+		struct GuardedRoot {
+			PioneerPostResetMapping& m;decltype(allowed)& permit;
+			uint32 RootRead(uint16 offset,uint8 size) {
+				if (!permit()) return UINT32_MAX;
+				const uint32 value=m.RootRead(offset,size);return permit()?value:uint32(UINT32_MAX);
+			}
+		} root{*this,allowed};
+		for (unsigned sample=0;sample<3;sample++) {
+			uint32 errors=UINT32_MAX,source=UINT32_MAX;
+			if (!PioneerPcieRootAerSnapshot(root,errors,source) || errors || !allowed()) return false;
+			if (sample<2) { PostResetAuditPause();if (!allowed()) return false; }
+		}
+		if (!PciReadyQ35(allowed) || !allowed()) return false;
+		q35RootAerAudited=true;return true;
 	}
 #endif
 	uint32 HostPciRead(unsigned peer,uint16 offset,uint8 size) {
