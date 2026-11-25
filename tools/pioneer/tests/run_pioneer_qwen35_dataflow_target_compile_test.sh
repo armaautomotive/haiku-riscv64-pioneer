@@ -880,6 +880,14 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
     -DTEST_RESIDENT_CLOSE_SCOPE -DTEST_SNAPSHOT_SCRATCH_HOLD -I"$temporary" \
     "$directory/pioneer_qwen35_projection_service_unsafe_guard_test.cpp" -o "$temporary/resident-service-unsafe"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-service-unsafe"
+for resident_capture in 0 1; do
+    resident_flag=
+    [ "$resident_capture" = 0 ] || resident_flag=-DTEST_RESIDENT_CLOSE_SCOPE
+    ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+        -DTEST_SNAPSHOT_SCRATCH_HOLD -DTEST_QUALIFICATION_CAPTURE $resident_flag -I"$temporary" \
+        "$directory/pioneer_qwen35_projection_service_unsafe_guard_test.cpp" -o "$temporary/capture-service-unsafe-$resident_capture"
+    ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/capture-service-unsafe-$resident_capture"
+done
 awk '/PIONEER_Q35_PROJECTION_OWNER_RESET_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_OWNER_RESET_GUARD_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_owner_reset_guard.inc"
 awk '/PIONEER_Q35_PROJECTION_INTERNAL_SCOPE_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_INTERNAL_SCOPE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
@@ -1008,6 +1016,10 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pro
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     -I"$temporary" "$directory/pioneer_qwen35_projection_haiku_scope_test.cpp" -o "$temporary/projection-haiku-scope-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-haiku-scope-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -I"$temporary" "$directory/pioneer_qwen35_qualification_install_observation_test.cpp" \
+    -o "$temporary/qualification-install-observation-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/qualification-install-observation-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     -I"$directory/role_haiku_stubs" -I"$temporary/shared-role-images" -I"$temporary/shared-graph-service" -I"$temporary" \
     "$directory/pioneer_qwen35_role_stage_control_test.cpp" -o "$temporary/role-stage-control-test"

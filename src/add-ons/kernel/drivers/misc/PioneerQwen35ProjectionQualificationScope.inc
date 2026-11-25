@@ -28,10 +28,10 @@ PioneerQ35QualificationHeldOwnerAllowed(PioneerStoreContext& c,PioneerSessionIO&
         || c.qwen35DataflowAuthority || c.qwen35DataflowProgramScratch || c.qwen35GraphOwner
         || !c.banks.Matches(c.baseline.baseline.baseline.baseline.dram)
         || !c.lease.ready || c.lease.pending || c.lease.recovery_required
-        || c.host.state!=TT_HOST_PAGE_READY || c.host.released || c.Unsafe()) return false;
+        || c.host.state!=TT_HOST_PAGE_READY || c.host.released || c.UnsafeForQ35HeldObservation()) return false;
     if (!c.qwen35DataflowService)
         return !c.qwen35SharedRoleBinding && !c.qwen35DataflowMemory;
-    if (c.qwen35DataflowService->ScratchHeld())
+    if (c.qwen35DataflowService->ScratchHeld() || c.qwen35DataflowService->SharedRoleCapturePending())
         return c.qwen35SharedRoleBinding && c.qwen35DataflowMemory;
     return c.qwen35DataflowService->Closed() && !c.qwen35SharedRoleBinding && !c.qwen35DataflowMemory;
 }

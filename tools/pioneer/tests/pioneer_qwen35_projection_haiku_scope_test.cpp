@@ -86,10 +86,14 @@ struct PioneerStoreContext {
         initialized=initializedStorage.data();io.qwen35DataflowContext=this;
         assert(banks.Bind(dram) && Prepared(io,host,lease));
     }
-    bool Unsafe(bool controlledGraph=false) const {
-        return otherUnsafe || (qwen35QualificationOwner.Active() && !qwen35QualificationInternalActive)
-            || (qwen35DataflowService && qwen35DataflowService->Started()
-                && !qwen35DataflowService->Closed() && !controlledGraph);
+    bool Unsafe(bool controlledQ35Graph=false,bool controlledQ35Fault=false,
+        const PioneerQwen35::DataflowServiceOwner* controlledQ35HeldObservation=nullptr) const {
+        if (qwen35QualificationOwner.Active() && !qwen35QualificationInternalActive) return true;
+#include "pioneer_q35_projection_service_unsafe_guard.inc"
+        return otherUnsafe;
+    }
+    bool UnsafeForQ35HeldObservation() const {
+        return Unsafe(false,false,qwen35DataflowService);
     }
 #include "pioneer_q35_projection_internal_scope.inc"
 #include "pioneer_q35_projection_scratch_operation.inc"

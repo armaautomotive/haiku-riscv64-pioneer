@@ -4553,6 +4553,11 @@ struct PioneerStoreContext {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
   ,bool controlledToken=false
 #endif
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH) \
+	&& defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) \
+	&& defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+		,const PioneerQwen35::DataflowServiceOwner* controlledQ35HeldObservation=nullptr
+#endif
 		) {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 // PIONEER_Q35_PROJECTION_OWNER_UNSAFE_GUARD_BEGIN
@@ -4583,6 +4588,18 @@ struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 			&& !(qwen35QualificationInternalActive && qwen35QualificationOwner.Active()
 				&& !qwen35QualificationOwner.Retained() && qwen35DataflowService->ScratchHeld())
+#endif
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH) \
+	&& defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) \
+	&& defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+			// Only the held-tile observation caller supplies this exact owner.
+			// The service callback is still independently gated against writes
+			// and release; this exception does not establish a physical proof.
+			&& !(controlledQ35HeldObservation==qwen35DataflowService
+				&& qwen35QualificationInternalActive && qwen35QualificationOwner.Active()
+				&& !qwen35QualificationOwner.Retained() && qwen35QualificationOwner.Scratch()
+				&& qwen35SharedRoleBinding && qwen35DataflowMemory
+				&& qwen35DataflowService->SharedRoleCapturePending())
 #endif
 			) return true;
 // PIONEER_Q35_PROJECTION_SERVICE_UNSAFE_GUARD_END
@@ -4716,6 +4733,29 @@ struct PioneerStoreContext {
 			|| Pci().state==TT_PIONEER_MMIO_RESTORE_FAILED;
 #endif
 	}
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH) \
+	&& defined(PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) \
+	&& defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) && !defined(PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS)
+	bool UnsafeForQ35HeldObservation() {
+		return Unsafe(false,false
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+			,nullptr
+#endif
+#ifdef PIONEER_Q38_FFN_NATIVE_GRAPH
+			,false
+#endif
+#ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
+			,false
+#endif
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+			,false
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+			,false
+#endif
+			,qwen35DataflowService);
+	}
+#endif
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 private:
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
