@@ -2054,6 +2054,7 @@ static bool PioneerQ35ResidentDriverBind(PioneerQ35ResidentDriverOwner*);
 static bool PioneerQ35ResidentDriverReady(const PioneerQ35ResidentDriverOwner*,unsigned);
 static bool PioneerQ35ResidentDriverRetained(const PioneerQ35ResidentDriverOwner*);
 static bool PioneerQ35ResidentDriverDestroy(PioneerQ35ResidentDriverOwner*&);
+static PioneerQwen35::DataflowServiceResult PioneerQ35ResidentDriverClose(PioneerQ35ResidentDriverOwner*);
 static PioneerQwen35::DataflowGraphSessionResult PioneerQ35ResidentDriverRun(PioneerQ35ResidentDriverOwner*,
 	unsigned,unsigned,bool,unsigned,PioneerQwen35::DataflowArgmaxResult&,unsigned&);
 #endif
@@ -2434,6 +2435,10 @@ public:
 	}
 #ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
 	bool DestroyResident() { return PioneerQ35ResidentDriverDestroy(residentDriver); }
+	PioneerQwen35::DataflowServiceResult CloseResident() {
+		return residentDriver?PioneerQ35ResidentDriverClose(residentDriver)
+			:context.qwen35DataflowService->Close(context.io);
+	}
 #endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 	bool OwnsRetainedFault(const void* run) const {
@@ -2512,6 +2517,14 @@ PioneerQ35GraphOwnerDestroy(PioneerQ35GraphOwner* owner)
 #endif
 	PioneerQ35DeleteAligned(owner);
 }
+
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+static PioneerQwen35::DataflowServiceResult
+PioneerQ35GraphOwnerCloseResident(PioneerQ35GraphOwner* owner)
+{
+	return owner?owner->CloseResident():PioneerQwen35::DataflowServiceInvalidState;
+}
+#endif
 
 static bool
 PioneerQ35GraphOwnerRetained(const PioneerQ35GraphOwner* owner)

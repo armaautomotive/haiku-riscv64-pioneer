@@ -4146,6 +4146,7 @@ class PioneerQ35GraphOwner;
 static void PioneerQ35GraphOwnerDestroy(PioneerQ35GraphOwner* owner);
 static bool PioneerQ35GraphOwnerRetained(const PioneerQ35GraphOwner* owner);
 #ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+static PioneerQwen35::DataflowServiceResult PioneerQ35GraphOwnerCloseResident(PioneerQ35GraphOwner* owner);
 static PioneerQwen35::DataflowServiceResult PioneerQ35GraphOwnerInstallResident(
 	PioneerStoreContext& context,const PioneerQwen35::DataflowServiceImageView& image);
 #endif
@@ -4528,6 +4529,9 @@ struct PioneerStoreContext {
 	bool Unsafe(
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 		bool controlledQ35Graph=false,bool controlledQ35Fault=false
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+		,const void* controlledQ35ResidentSession=nullptr
+#endif
 #elif defined(PIONEER_Q38_GDN_MUTABLE_STATE)
 		bool controlledZero=false
 #endif
@@ -4565,6 +4569,10 @@ struct PioneerStoreContext {
 			&& !(controlledQ35Graph && (qwen35DataflowService->Ready()
 				|| qwen35DataflowService->GraphRunning()))
 			&& !(controlledQ35Fault && qwen35DataflowService->Faulted())
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+			&& !(controlledQ35ResidentSession
+				&& qwen35DataflowService->ResidentSessionIdle(controlledQ35ResidentSession))
+#endif
 #endif
 #ifdef PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS
 			&& !(qwen35QualificationInternalActive && qwen35QualificationOwner.Active()
@@ -5054,7 +5062,11 @@ public:
 	PioneerQwen35::DataflowServiceResult CloseDataflowRewrite() {
 		if (!qwen35DataflowService) return PioneerQwen35::DataflowServiceInvalidState;
 		const auto result=qwen35DataflowService->Closed()?PioneerQwen35::DataflowServiceClosed
+#ifdef PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS
+			:qwen35GraphOwner?PioneerQ35GraphOwnerCloseResident(qwen35GraphOwner):qwen35DataflowService->Close(io);
+#else
 			:qwen35DataflowService->Close(io);
+#endif
 		if (qwen35DataflowService->Closed()) {
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 			if (!PioneerQ35DestroySharedRoleBinding(qwen35SharedRoleBinding)) {

@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Exercise the actual extracted context close with simulated binding state.
 #define PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS 1
+#ifdef TEST_RESIDENT_DRIVER_CLOSE
+#define PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS 1
+#endif
 #include <cassert>
 #include <cstdio>
 
@@ -25,12 +28,23 @@ struct Service {
         closed=true;return PioneerQwen35::DataflowServiceClosed;
     }
 };
+#ifdef TEST_RESIDENT_DRIVER_CLOSE
+struct GraphOwner { Service* service=nullptr;bool allowed=false;unsigned calls=0; };
+static PioneerQwen35::DataflowServiceResult PioneerQ35GraphOwnerCloseResident(GraphOwner* owner) {
+    ++owner->calls;
+    if (!owner->allowed) return PioneerQwen35::DataflowServiceInvalidState;
+    owner->service->closed=true;return PioneerQwen35::DataflowServiceClosed;
+}
+#endif
 struct Context {
     Service* qwen35DataflowService=nullptr;
     Binding* qwen35SharedRoleBinding=nullptr;
     Memory* qwen35DataflowMemory=nullptr;
     PioneerQwen35::DataflowServiceResult qwen35DataflowLastResult=PioneerQwen35::DataflowServiceInvalidState;
     IO io;
+#ifdef TEST_RESIDENT_DRIVER_CLOSE
+    GraphOwner* qwen35GraphOwner=nullptr;
+#endif
 #include "pioneer_q35_dataflow_close.inc"
 };
 int main() {
@@ -63,5 +77,16 @@ int main() {
             && service.calls==1 && c.qwen35SharedRoleBinding && c.qwen35DataflowMemory);
         delete c.qwen35SharedRoleBinding;delete c.qwen35DataflowMemory;
     }
+#ifdef TEST_RESIDENT_DRIVER_CLOSE
+    {
+        Service service;GraphOwner owner{&service};Context c;c.qwen35DataflowService=&service;
+        c.qwen35GraphOwner=&owner;c.qwen35SharedRoleBinding=new Binding;c.qwen35DataflowMemory=new Memory;
+        assert(c.CloseDataflowRewrite()==PioneerQwen35::DataflowServiceInvalidState && owner.calls==1
+            && !service.calls && c.qwen35SharedRoleBinding && c.qwen35DataflowMemory);
+        owner.allowed=true;
+        assert(c.CloseDataflowRewrite()==PioneerQwen35::DataflowServiceClosed && owner.calls==2
+            && !service.calls && !c.qwen35SharedRoleBinding && !c.qwen35DataflowMemory);
+    }
+#endif
     std::puts("PASS closed service still retires binding and retains failed cleanup; SIMULATED ONLY");
 }

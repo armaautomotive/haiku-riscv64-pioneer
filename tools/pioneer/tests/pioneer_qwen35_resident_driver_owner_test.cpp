@@ -11,10 +11,11 @@ struct TestRoleScope {
     template<class IO> bool ProveExclusiveRewrite(IO&) const { return true; }
     template<class IO> bool ProveRoleRuntimeSafe(IO&,unsigned) const { return false; }
 };
-struct PioneerSessionIO : ResidentRaw {
+struct PioneerSessionIO : ResidentRaw, MockDataflowIO {
     PioneerStoreContext* qwen35DataflowContext=nullptr;
     TestRoleScope* qwen35BorrowedRoleScope=nullptr;
     unsigned runtimeCore=0;
+    void Pause() { ResidentRaw::Pause(); }
     bool SelectRuntimeCore(unsigned core) { selected=runtimeCore=core;return core<DataflowCoreCount; }
     bool MapQ38Panel() const { return mapped; }
     bool ReadCoreMemory(unsigned,unsigned,void*,unsigned) { return false; }
@@ -30,7 +31,15 @@ struct PioneerStoreContext {
     bool qwen35DataflowRoutesAudited=true,q35PciReservationHeld=true,q35PciReleaseAttempted=false;
     bool bankStorageOnly=true,initialized=true;
     size_t bytes=1;
-    bool Unsafe(bool) const { return false; }
+    mutable const void* checkedResident=nullptr;
+    bool Unsafe(bool graph,bool fault=false,const void* resident=nullptr) const {
+        if (resident) checkedResident=resident;
+        auto* service=qwen35DataflowService;
+        return service && service->Started() && !service->Closed()
+            && !(graph && (service->Ready() || service->GraphRunning()))
+            && !(fault && service->Faulted())
+            && !(resident && service->ResidentSessionIdle(resident));
+    }
 };
 namespace PioneerResidentBanks { constexpr size_t Total=1; }
 struct TestRuntimeOwner { unsigned magic=0x50313030;PioneerStoreContext* context=nullptr; };
@@ -89,7 +98,14 @@ int main() {
     stream.sealed=true;runtime.magic=0;
     assert(PioneerQ35ResidentDriverRun(owner,0,42,true,3,output,stage)==DataflowGraphSessionInvalid
         && !context->io.writes && !service->NextSequence());
+    assert(PioneerQ35ResidentDriverClose(owner)==DataflowServiceInvalidState
+        && service->ResidentSessionIdle(stream.reserved) && !context->io.writes && !context->io.roleStops);
     runtime.magic=0x50313030;
+    const unsigned writes=context->io.writes;
+    assert(PioneerQ35ResidentDriverClose(owner)==DataflowServiceInvalidState
+        && service->ResidentSessionIdle(stream.reserved) && !PioneerQ35ResidentDriverRetained(owner)
+        && context->io.writes==writes && !context->io.roleStops && !context->io.resumeCount
+        && context->checkedResident==stream.reserved);
     assert(!PioneerQ35ResidentDriverDestroy(owner)); // bound service requires a qualified stop
     PioneerQ35DeleteAligned(owner);sRuntimeOwner=nullptr; // test teardown; simulated resources only
     puts("PASS actual resident driver owner binds sealed plan and denies unqualified publication; SIMULATED ONLY");

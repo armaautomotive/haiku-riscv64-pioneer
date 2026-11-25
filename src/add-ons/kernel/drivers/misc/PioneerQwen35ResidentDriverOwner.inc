@@ -77,6 +77,19 @@ class PioneerQ35ResidentDriverOwner {
     // Samples and the non-loadable build do not establish those facts.
     bool PhysicalRuntimeProof(PioneerSessionIO&,const Command&) const { return false; }
 
+    // Admission stays closed until the exact resident images, root ACK,
+    // both NoCs, firmware exclusion and stop/recovery are proven on device.
+    bool PhysicalCloseProof(PioneerSessionIO&) const { return false; }
+    struct CloseScope {
+        PioneerQ35ResidentDriverOwner& owner;
+        bool ResidentCloseAllowed(const void* requested,const PioneerQwen35::DataflowServiceOwner& service,
+            PioneerSessionIO& io) const {
+            return requested==&owner.session && &service==owner.context.qwen35DataflowService
+                && &io==&owner.context.io && owner.Ready(owner.stream.SealedSlot()) && owner.BaseSafe()
+                && !owner.active && !owner.context.Unsafe(true,false,&owner.session)
+                && owner.PhysicalCloseProof(io);
+        }
+    };
     struct Policy {
         PioneerQ35ResidentDriverOwner& owner;
         bool ResidentBindAllowed(const Session& requested,const PioneerQwen35::DataflowStreamPlan& plan,unsigned slot) {
@@ -141,6 +154,14 @@ public:
             && context.qwen35DataflowService->ResidentSessionIdle(&session) && stream.OwnsResidentSession(&session,*plan,slot);
     }
     bool Retained() const { return runner.Retained() || scopeRetained || reservationRetained; }
+    PioneerQwen35::DataflowServiceResult Close() {
+        using namespace PioneerQwen35;
+        if (!bound || Retained() || !context.qwen35DataflowService) return DataflowServiceInvalidState;
+        CloseScope scope{*this};
+        const auto result=context.qwen35DataflowService->CloseResident(context.io,&session,scope);
+        if (result!=DataflowServiceInvalidState && result!=DataflowServiceClosed) scopeRetained=true;
+        return result;
+    }
     bool CanDestroy() const {
         return !Retained() && !active && (!bound
             || (context.qwen35DataflowService && context.qwen35DataflowService->Closed()));
@@ -200,6 +221,9 @@ static bool PioneerQ35ResidentDriverReady(const PioneerQ35ResidentDriverOwner* o
 }
 static bool PioneerQ35ResidentDriverRetained(const PioneerQ35ResidentDriverOwner* owner) {
     return owner && owner->Retained();
+}
+static PioneerQwen35::DataflowServiceResult PioneerQ35ResidentDriverClose(PioneerQ35ResidentDriverOwner* owner) {
+    return owner?owner->Close():PioneerQwen35::DataflowServiceInvalidState;
 }
 static bool PioneerQ35ResidentDriverDestroy(PioneerQ35ResidentDriverOwner*& owner) {
     if (!owner) return true;

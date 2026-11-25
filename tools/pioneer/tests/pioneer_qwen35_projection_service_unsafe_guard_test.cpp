@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Exercise the exact extracted service-unsafe guard with simulated state.
 #define PIONEER_QWEN35_DEVICE_DISPATCH 1
+#ifdef TEST_RESIDENT_CLOSE_SCOPE
+#define PIONEER_QWEN35_RESIDENT_SERVICE_WITNESS 1
+#endif
 #ifdef TEST_SNAPSHOT_SCRATCH_HOLD
 #define PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS 1
 #endif
@@ -14,6 +17,10 @@ struct Owner {
 };
 struct Service {
     bool started=true,closed=false,ready=false,graph=false,fault=false,held=false;
+#ifdef TEST_RESIDENT_CLOSE_SCOPE
+    const void* resident=nullptr;
+    bool ResidentSessionIdle(const void* session) const { return session && session==resident; }
+#endif
     bool Started() const { return started; }
     bool Closed() const { return closed; }
     bool Ready() const { return ready; }
@@ -22,7 +29,11 @@ struct Service {
     bool ScratchHeld() const { return held; }
 };
 static bool Unsafe(Service* qwen35DataflowService,const Owner& qwen35QualificationOwner,
-    bool qwen35QualificationInternalActive,bool controlledQ35Graph=false,bool controlledQ35Fault=false) {
+    bool qwen35QualificationInternalActive,bool controlledQ35Graph=false,bool controlledQ35Fault=false
+#ifdef TEST_RESIDENT_CLOSE_SCOPE
+    ,const void* controlledQ35ResidentSession=nullptr
+#endif
+    ) {
 #ifndef TEST_SNAPSHOT_SCRATCH_HOLD
     (void)qwen35QualificationOwner;(void)qwen35QualificationInternalActive;
 #endif
@@ -43,6 +54,12 @@ int main() {
     service.held=false;assert(Unsafe(&service,owner,true));service.held=true;
 #else
     assert(Unsafe(&service,owner,true));
+#endif
+#ifdef TEST_RESIDENT_CLOSE_SCOPE
+    service.held=false;int session=0,wrong=0;service.resident=&session;
+    assert(Unsafe(&service,owner,false) && !Unsafe(&service,owner,false,false,false,&session)
+        && Unsafe(&service,owner,false,false,false,&wrong));
+    service.resident=nullptr;assert(Unsafe(&service,owner,false,false,false,&session));
 #endif
     service.closed=true;assert(!Unsafe(&service,owner,false));
     std::puts("PASS held scratch exception is limited to the active internal owner; SIMULATED ONLY");

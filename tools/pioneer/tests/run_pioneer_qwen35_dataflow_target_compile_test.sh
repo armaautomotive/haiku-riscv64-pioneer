@@ -852,6 +852,10 @@ awk '/PIONEER_Q35_DATAFLOW_CLOSE_BEGIN/ {copying=1;next} /PIONEER_Q35_DATAFLOW_C
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
     -I"$temporary" "$directory/pioneer_qwen35_closed_service_cleanup_test.cpp" -o "$temporary/closed-service-cleanup-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/closed-service-cleanup-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -DTEST_RESIDENT_DRIVER_CLOSE -I"$temporary" "$directory/pioneer_qwen35_closed_service_cleanup_test.cpp" \
+    -o "$temporary/resident-closed-service-cleanup-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-closed-service-cleanup-test"
 awk '/PIONEER_Q35_PROJECTION_OWNER_END_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_OWNER_END_GUARD_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_owner_end_guard.inc"
 awk '/PIONEER_Q35_PROJECTION_OWNER_UNSAFE_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_OWNER_UNSAFE_GUARD_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
@@ -866,6 +870,10 @@ for snapshot_hold in 0 1; do
         -o "$temporary/projection-service-unsafe-$snapshot_hold"
     ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/projection-service-unsafe-$snapshot_hold"
 done
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    -DTEST_RESIDENT_CLOSE_SCOPE -DTEST_SNAPSHOT_SCRATCH_HOLD -I"$temporary" \
+    "$directory/pioneer_qwen35_projection_service_unsafe_guard_test.cpp" -o "$temporary/resident-service-unsafe"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-service-unsafe"
 awk '/PIONEER_Q35_PROJECTION_OWNER_RESET_GUARD_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_OWNER_RESET_GUARD_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
     "$root/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" > "$temporary/pioneer_q35_projection_owner_reset_guard.inc"
 awk '/PIONEER_Q35_PROJECTION_INTERNAL_SCOPE_BEGIN/ {copying=1;next} /PIONEER_Q35_PROJECTION_INTERNAL_SCOPE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
@@ -1214,6 +1222,7 @@ python3 -B "$directory/pioneer_qwen35_resident_service_ownership_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_close_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_owned_runner_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_driver_owner_test.py"
+python3 -B "$directory/pioneer_qwen35_resident_driver_close_fault_test.py"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	"$directory/pioneer_qwen35_resident_fleet_audit_test.cpp" -o "$temporary/resident-fleet-audit-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-fleet-audit-test"
