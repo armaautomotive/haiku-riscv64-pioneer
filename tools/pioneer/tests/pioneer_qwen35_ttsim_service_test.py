@@ -79,6 +79,38 @@ def projection_reference(fixture, quant, input_offset, tile, rows=1920, weight_o
     return values, norms
 
 
+def quantized_activation_reference(values, quant):
+    """Independent Q8_K/Q8_0 activation values for an offline dot reference."""
+    def f32(value):
+        return struct.unpack('<f', struct.pack('<f', value))[0]
+
+    result = []
+    width = 32 if quant == 'q8' else 256
+    for first in range(0, len(values), width):
+        block = values[first:first + width]
+        selected = max(block, key=abs)
+        if not selected:
+            result.extend([0.0] * width)
+            continue
+        if quant == 'q8':
+            scale = f32(abs(selected) / 127.0)
+            inverse = f32(1.0 / scale)
+            stored_scale = struct.unpack('<e', struct.pack('<e', scale))[0]
+            for value in block:
+                scaled = f32(value * inverse)
+                rounded = int(math.copysign(math.floor(abs(scaled) + 0.5), scaled))
+                result.append(f32(rounded * stored_scale))
+        else:
+            inverse = f32(127.0 / abs(selected))
+            stored_scale = f32(1.0 / inverse)
+            if selected > 0:
+                inverse, stored_scale = -inverse, -stored_scale
+            for value in block:
+                rounded = round(f32(value * inverse))
+                result.append(f32(rounded * stored_scale))
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('library', type=Path)
@@ -95,6 +127,8 @@ def main():
                        help='execute full QKV, Alpha and Beta model projections on 120 workers')
     group.add_argument('--resident-templates', type=Path,
                        help='start the resident graph image using synthetic per-core templates')
+    group.add_argument('--resident-sequence-fixture', type=Path,
+                       help='run embedding, residual, RMS and fused projection steps from model weights')
     group.add_argument('--silu-fixture', type=Path,
                        help='also execute the separately generated 120-core SiLU operation')
     group.add_argument('--rms-fixture', type=Path,
@@ -109,7 +143,9 @@ def main():
         parser.error('--resident-corrupt-core requires resident templates and a core in 0..119')
     if args.resident_fault_command and (not args.resident_templates or args.resident_corrupt_core is not None):
         parser.error('--resident-fault-command requires resident templates and no corrupt core')
-    resident_templates = args.resident_templates.read_bytes() if args.resident_templates else None
+    template_path = (args.resident_sequence_fixture / 'templates.bin'
+                     if args.resident_sequence_fixture else args.resident_templates)
+    resident_templates = template_path.read_bytes() if template_path else None
     if resident_templates is not None and len(resident_templates) != 120 * 512:
         raise ValueError('unexpected resident-template fixture size')
     image = args.image
@@ -310,6 +346,138 @@ def main():
                 raise RuntimeError(f'core {core}: resident initialization did not run')
             if invocations is not None:
                 write(bar + 0xaa000, invocations[core * invocation_size:(core + 1) * invocation_size])
+
+        if args.resident_sequence_fixture:
+            directory = args.resident_sequence_fixture
+            command = (directory / 'command.bin').read_bytes()
+            records = (directory / 'records.bin').read_bytes()
+            weights = (directory / 'weights.bin').read_bytes()
+            norm = (directory / 'norm.bin').read_bytes()
+            projection = (directory / 'projection.bin').read_bytes()
+            if (len(command) != 128 or len(records) != 120 * 5 * 2048 or len(weights) != 33920
+                    or hashlib.sha256(weights).hexdigest()
+                    != 'd784c0b7fe8df8aab8d4797a8ea5a2c25b5db49a84c60a3ad93819086355871d'
+                    or len(norm) != 10240 or hashlib.sha256(norm).hexdigest()
+                    != 'fd26aeb9265ba4588eca258e4c7fb27d2b82198eef72bbca4d8d46136b90c104'
+                    or len(projection) != 14604288):
+                raise ValueError('unexpected authenticated resident sequence fixture')
+            tensors = ((0, 14417920, 'e45da19dfd2000f2c4b40f456a5663dc6677f7990a1626c897e7219387d9ca91'),
+                       (14417920, 92160, 'c66aaea468bd19d584e6259ab39ef7770ed29a93d59ebe0dcdb9dd04d1f1d16d'),
+                       (14512128, 92160, 'd04988bc4158cb6936a5ae77eb6b21299d2c81bf8e5536ee0e2d41e635996ffc'))
+            for offset, size, digest in tensors:
+                if hashlib.sha256(projection[offset:offset + size]).hexdigest() != digest:
+                    raise ValueError('sequence projection weights do not match the pinned 4B tensors')
+            # Independently decode token 42 (lane 10) from the byte-major
+            # Q6_K blocks. This is an offline simulator reference only.
+            expected = []
+            for block in range(10):
+                tile = weights[block * 3392:(block + 1) * 3392]
+                data = tile[10:210 * 16:16]
+                scale = struct.unpack_from('<e', data, 208)[0]
+                for pos in range(256):
+                    half, rem = divmod(pos, 128)
+                    group, lane = divmod(rem, 32)
+                    lowbyte = data[half * 64 + (group % 2) * 32 + lane]
+                    low = (lowbyte & 15) if group < 2 else (lowbyte >> 4)
+                    high = (data[128 + half * 32 + lane] >> (group * 2)) & 3
+                    q = (low | (high << 4)) - 32
+                    s = struct.unpack_from('<b', data, 192 + pos // 16)[0]
+                    expected.append(scale * s * q)
+            address = 0x10010900
+            select(2, address, 18, 12)
+            write(bar + 0x400000 + (address & 0x1fffff), weights)
+            address = 0x20030000
+            select(2, address, 18, 12)
+            write(bar + 0x400000 + (address & 0x1fffff), norm)
+            offset = 0
+            while offset < len(projection):
+                address = 0x28000000 + offset
+                select(2, address, 18, 12)
+                count = min(0x10000, len(projection) - offset, 0x200000 - (address & 0x1fffff))
+                write(bar + 0x400000 + (address & 0x1fffff), projection[offset:offset + count])
+                offset += count
+            for address in (0x20000000, 0x20010000, 0x20020000):
+                select(2, address, 18, 12)
+                write(bar + 0x400000 + (address & 0x1fffff),
+                      struct.pack('<2560I', *([0x7fc00000] * 2560)))
+            for address, rows in ((0x21000000, 8192), (0x21010000, 32), (0x21020000, 32)):
+                select(2, address, 18, 12)
+                write(bar + 0x400000 + (address & 0x1fffff),
+                      struct.pack(f'<{rows}I', *([0x7fc00000] * rows)))
+            for core in range(120):
+                address = 0x04000000 + core * 0x100000
+                select(2, address, 18, 12)
+                write(bar + 0x400000 + (address & 0x1fffff), records[core * 10240:(core + 1) * 10240])
+            select_worker(0)
+            write(bar + 0xab080, command[:64])
+            write(bar + 0xab0c0, command[64:])
+            for attempt in range(200):
+                lib.libttsim_clock(100000)
+                snapshots = []
+                for core in range(120):
+                    select_worker(core)
+                    snapshots.append(struct.unpack('<16I', read(mailbox_address, 64)))
+                if all(words[5] == 4 for words in snapshots):
+                    break
+                if any(words[5] not in (1, 2, 4) for words in snapshots):
+                    raise RuntimeError('unexpected resident state during sequence')
+            else:
+                raise RuntimeError('resident sequence did not reach its intentional terminal fault')
+            for core, words in enumerate(snapshots):
+                if (words[2:8] != (1, 0, 1, 4, 4, 5)
+                        or words[9:15] != (0x31464735, 1, 4, 120, 0x80000004, 0)
+                        or words[15] != core):
+                    raise RuntimeError(f'core {core}: sequence failed before all four barriers: {words}')
+            for name, address in (('embedding', 0x20000000), ('residual save', 0x20010000)):
+                select(2, address, 18, 12)
+                actual = struct.unpack('<2560f', read(bar + 0x400000 + (address & 0x1fffff), 2560 * 4))
+                maximum = 0.0
+                for row, (got, want) in enumerate(zip(actual, expected)):
+                    if not math.isfinite(got) or abs(got - want) > 1e-6 * max(1.0, abs(want)):
+                        raise RuntimeError(f'{name} row {row}: {got} differs from {want}')
+                    maximum = max(maximum, abs(got - want))
+                print(f'{name}: 2,560 values match independent Q6_K reference; '
+                      f'maximum absolute error {maximum:.9g}', flush=True)
+            norm_weights = struct.unpack('<2560f', norm)
+            rms_scale = 1.0 / math.sqrt(sum(value * value for value in expected) / 2560 + 1e-6)
+            address = 0x20020000
+            select(2, address, 18, 12)
+            actual = struct.unpack('<2560f', read(bar + 0x400000 + (address & 0x1fffff), 2560 * 4))
+            maximum = 0.0
+            for row, (got, value, weight) in enumerate(zip(actual, expected, norm_weights)):
+                want = value * rms_scale * weight
+                if not math.isfinite(got) or abs(got - want) > 2e-5 * max(1.0, abs(want)):
+                    raise RuntimeError(f'RMS row {row}: {got} differs from {want}')
+                maximum = max(maximum, abs(got - want))
+            print(f'RMS: 2,560 values match independent reference; maximum absolute error {maximum:.9g}', flush=True)
+            # The RMS output has already been independently checked above.
+            # Projections quantize it to Q8_K or Q8_0 before the dot product.
+            reference_fixtures = {quant: projection + struct.pack('<2560f',
+                *quantized_activation_reference(actual, quant)) for quant in ('q5', 'q8')}
+            specs = (('QKV', 8192, 0x21000000, 'q5', 2816, 0),
+                     ('Alpha', 32, 0x21010000, 'q8', 576, 14417920),
+                     ('Beta', 32, 0x21020000, 'q8', 576, 14512128))
+            for name, rows, address, quant, tile, weight_offset in specs:
+                values, norms = projection_reference(reference_fixtures[quant], quant, len(projection),
+                                                     tile, rows, weight_offset)
+                select(2, address, 18, 12)
+                actual = struct.unpack(f'<{rows}f', read(bar + 0x400000 + (address & 0x1fffff), rows * 4))
+                maximum = worst = 0.0
+                for row, (got, want, norm_value) in enumerate(zip(actual, values, norms)):
+                    error = abs(got - want)
+                    ratio = error / max(1.0, norm_value)
+                    maximum = max(maximum, error)
+                    worst = max(worst, ratio)
+                    if not math.isfinite(got) or ratio > 2e-6:
+                        raise RuntimeError(f'{name} row {row}: {got} differs from {want}; normalized error {ratio}')
+                print(f'{name}: {rows} values match independent reference; maximum absolute error '
+                      f'{maximum:.9g}; maximum normalized error {worst:.9g}', flush=True)
+            select_worker(0)
+            if struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
+                raise RuntimeError('intentionally faulted sequence published a candidate')
+            print('PASS resident graph completed embedding, residual, RMS and fused projection barriers '
+                  'on 120 simulated workers; fifth record intentionally faults; NO HARDWARE')
+            return
 
         if args.resident_fault_command:
             command = args.resident_fault_command.read_bytes()

@@ -49,6 +49,36 @@ completion candidate. Upstream `ttsim` stops at the unsupported upper-length
 register in this path. The test proves neither successful graph execution nor
 physical fault recovery, and it does not exercise model weights or performance.
 
+An authenticated model fixture exercises four dependent first-layer graph
+steps: embedding, residual save, attention RMS, and fused QKV/Alpha/Beta.
+Use a new empty directory and the corrected resident image built after the
+SrcA handoff fix described below:
+
+```sh
+c++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  tools/pioneer/tests/pioneer_qwen35_ttsim_resident_sequence_fixture.cpp \
+  tools/pioneer/PioneerModelWeightCache.cpp -o /tmp/q35-resident-sequence
+/tmp/q35-resident-sequence /path/to/Qwen3.5-4B-Q4_K_M.gguf /path/to/empty-directory
+python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py \
+  /path/to/experimental-libttsim.so /path/to/build/qwen35-resident-service-image \
+  /path/to/build/qwen35-shared-role-images --resident-sequence-fixture /path/to/empty-directory
+```
+
+The fixture authenticates the full model and stages token 42's Q6_K embedding,
+the first layer's F32 attention norm and its full Q5_K/Q8_0 projections. It
+uses the production program binders, triple binder, sharing planner and stream
+encoder on a synthetic one-bank layout. The compiled resident graph fetches
+the four records, executes them on all 120 workers, and completes a device
+barrier after each. A deliberately invalid fifth record terminates the run;
+all workers must report exactly four completed steps, and no token completion
+candidate may appear. Independent references check all embedding, residual,
+RMS, QKV, Alpha and Beta outputs, including Q8_K and Q8_0 activation
+quantization. The output of the verified simulated RMS operation is used as
+the projection reference input. This is not the full graph recorder, a full
+model result, physical recovery, or a speed measurement. Matrix execution
+requires both experimental simulator patches below; their instruction models
+are not independently qualified.
+
 For the fixed projection, create the fixture in an existing empty directory:
 
 ```sh
