@@ -246,14 +246,41 @@ public:
         if (!fFresh->recoveryMapping) return Retain(scope,FleetAudited);
         auto& audit=*fFresh->recoveryMapping;
         tt_arc_scratch_result firmware{};PioneerPostResetAuditResult fleet{};PioneerQ35PostResetL2Result l2{};
-        if (!audit.Open() || !TicketValid(guard) || !audit.ProbeFirmware(100,firmware)
-            || !TicketValid(guard)) return Retain(scope,FleetAudited);
         const auto& dram=fFresh->baseline.baseline.baseline.baseline.dram;
-        for (unsigned word=0;word<TT_DRAM_SOURCE_WORDS;word++)
-            if (audit.topology.source[word]!=dram.source[word]) return Retain(scope,FleetAudited);
-        if (!audit.Audit(fleet) || !TicketValid(guard) || !audit.AuditQ35L2CpuHeld(l2)
-            || !TicketValid(guard) || !audit.AuditHostDma()
-            || !TicketValid(guard) || !audit.Close()) return Retain(scope,FleetAudited);
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        if (fFabric) {
+            // This callback is metadata-only: it must not touch PCI or the
+            // shared apertures. Once revoked, the audit never accesses them
+            // again, even if an authority check would later succeed.
+            bool lost=false;
+            auto allowed=[&]() {
+                if (lost || !TicketValid(guard) || !verified()
+                    || !scope.FreshRecoveryAuditAccessAllowed(*this,*fOld,*fFresh,fRestore)
+                    || !TicketValid(guard) || !verified()) { lost=true;return false; }
+                return true;
+            };
+            if (!audit.OpenQ35Guarded(allowed)
+                || !audit.ProbeQ35FabricFirmwareGuarded(100,firmware,allowed))
+                return Retain(scope,FleetAudited);
+            for (unsigned word=0;word<TT_DRAM_SOURCE_WORDS;word++)
+                if (!allowed() || audit.topology.source[word]!=dram.source[word])
+                    return Retain(scope,FleetAudited);
+            if (!audit.AuditQ35Fabric(fleet,allowed) || !audit.AuditQ35L2CpuHeldGuarded(l2,allowed)
+                || !audit.AuditQ35HostDmaGuarded(allowed)
+                || !audit.RevalidateQ35FabricFirmware(firmware,allowed)
+                || !audit.AuditQ35RootAerGuarded(allowed) || !audit.CloseQ35Guarded(allowed))
+                return Retain(scope,FleetAudited);
+        } else
+#endif
+        {
+            if (!audit.Open() || !TicketValid(guard) || !audit.ProbeFirmware(100,firmware)
+                || !TicketValid(guard)) return Retain(scope,FleetAudited);
+            for (unsigned word=0;word<TT_DRAM_SOURCE_WORDS;word++)
+                if (audit.topology.source[word]!=dram.source[word]) return Retain(scope,FleetAudited);
+            if (!audit.Audit(fleet) || !TicketValid(guard) || !audit.AuditQ35L2CpuHeld(l2)
+                || !TicketValid(guard) || !audit.AuditHostDma()
+                || !TicketValid(guard) || !audit.Close()) return Retain(scope,FleetAudited);
+        }
         delete fFresh->recoveryMapping;fFresh->recoveryMapping=nullptr;
         if (!TicketValid(guard) || !verified()
             || !scope.FreshRecoveryPostTransferAudit(*this,*fOld,*fFresh,fRestore)
