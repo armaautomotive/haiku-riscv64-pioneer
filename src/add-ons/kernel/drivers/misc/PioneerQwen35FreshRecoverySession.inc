@@ -198,7 +198,6 @@ private:
             return Retain(scope,Mapped);
         fStage=Mapped;
         if (!allowed(Mapped)) return Retain(scope,Mapped);
-        if (!fresh->io.PioneerHostDmaAuditIO::AfterNodeId(fresh->Pci().node_id[0])) return Retain(scope,Baseline);
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
         if (fabric) {
             bool lost=false;
@@ -207,12 +206,18 @@ private:
                     || !TicketValid(guard)) { lost=true;return false; }
                 return true;
             };
+            if (!fresh->io.GuardedRecoveryHostAudits(fresh->Pci().node_id[0],check))
+                return Retain(scope,Baseline);
             if (!PioneerQ35GuardedSessionIdle(fresh->io,fresh->baseline.baseline.baseline.noc,fresh->idle,check))
                 return Retain(scope,Baseline);
-        } else
+        } else {
 #endif
+        if (!fresh->io.PioneerHostDmaAuditIO::AfterNodeId(fresh->Pci().node_id[0])) return Retain(scope,Baseline);
         if (!PioneerResidentSessionIdle(fresh->io,fresh->baseline.baseline.baseline.noc,fresh->idle))
             return Retain(scope,Baseline);
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        }
+#endif
         fStage=Baseline;
         if (!allowed(Baseline)) return Retain(scope,Baseline);
         auto& oldDram=old.baseline.baseline.baseline.baseline.dram;

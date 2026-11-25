@@ -2775,6 +2775,9 @@ struct PioneerHostPathIO : PioneerComputeNocIO {
 	}
 };
 
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+#include "PioneerQwen35GuardedHostAudits.h"
+#endif
 struct PioneerHostDmaAuditIO : PioneerHostPathIO {
 	tt_host_dma_audit_result& audit;
 	area_id hdmaArea=-1;
@@ -2798,6 +2801,15 @@ struct PioneerHostDmaAuditIO : PioneerHostPathIO {
 		return peer==0?CardRead(offset,size):peer==1?RootRead(offset,size):UINT32_MAX;
 	}
 	uint32 HostHdmaRead(unsigned w) { return w<4?PioneerRead32(hdma+BlackholeHostHdmaOffset(w)/4):UINT32_MAX; }
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+	template<class Check> bool GuardedRecoveryHostAudits(uint32 id,Check& check) {
+		// Earlier ARC, Tensix, DRAM and NoC setup is still unguarded; do not
+		// treat this partial adapter as admission to a physical recovery.
+		if (!PioneerComputeNocIO::AfterNodeId(id) || !check()) return false;
+		return PioneerQ35GuardedHostAudits(*this,PioneerDramSamplesIO::dram,noc,id,
+			path,audit,pathAttempted,auditAttempted,check);
+	}
+#endif
 	bool AfterNodeId(uint32 id) {
 		if (!PioneerHostPathIO::AfterNodeId(id)) return false;
 		auditAttempted=true;

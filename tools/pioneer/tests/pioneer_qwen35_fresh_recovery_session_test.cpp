@@ -122,6 +122,9 @@ struct PioneerPostResetMapping {
 struct PioneerHostDmaAuditIO { bool AfterNodeId(unsigned) { return Step(2); } };
 struct MockIO : PioneerHostDmaAuditIO {
     bool postResetDisposeComplete=false,fabricOldMmioDisposeComplete=false,quarantined=false;
+    template<class Check> bool GuardedRecoveryHostAudits(unsigned node,Check& check) {
+        return check() && AfterNodeId(node) && check();
+    }
     void QuarantineHostPage() { quarantined=true; }
     int ReleaseHostPage() { return Step(17)?B_OK:-1; }
 };
@@ -348,7 +351,7 @@ int main() {
             && session->Fresh()->io.quarantined && scope.retained && !old.qwen35QualificationOwner.retained);
         PioneerQ35FreshRecoverySession::DisposeSimulated(session);
     }
-    for (unsigned failure=1;failure<=4;failure++) {
+    for (unsigned failure=1;failure<=6;failure++) {
         Reset();PioneerStoreContext old(PioneerResidentBanks::Total);PioneerProbeCookie owner{&old};sRuntimeOwner=&owner;
         int role=1,graph=2;old.qwen35SharedRoleBinding=&role;old.qwen35GraphOwner=&graph;
         old.qwen35QualificationOwner.active=false;old.qwen35QualificationOwner.retained=false;
@@ -359,7 +362,7 @@ int main() {
         auto* session=PioneerQ35FreshRecoverySession::Allocate();assert(session);
         assert(!session->PrepareFabricRole(&owner,old,&guard,scope) && scope.setupChecks==failure
             && session->CurrentStage()==PioneerQ35FreshRecoverySession::Retained
-            && session->FailureStage()==(failure<=2?PioneerQ35FreshRecoverySession::Baseline:PioneerQ35FreshRecoverySession::Lease)
+            && session->FailureStage()==(failure<=4?PioneerQ35FreshRecoverySession::Baseline:PioneerQ35FreshRecoverySession::Lease)
             && old.recoveryFreshSession==session && old.qwen35SharedRoleBinding==&role && old.qwen35GraphOwner==&graph
             && old.banks.quarantined && session->Fresh()->io.quarantined && scope.retained
             && !old.qwen35QualificationOwner.retained);
