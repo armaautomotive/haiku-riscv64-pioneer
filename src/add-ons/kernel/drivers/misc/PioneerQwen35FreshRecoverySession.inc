@@ -198,8 +198,20 @@ private:
             return Retain(scope,Mapped);
         fStage=Mapped;
         if (!allowed(Mapped)) return Retain(scope,Mapped);
-        if (!fresh->io.PioneerHostDmaAuditIO::AfterNodeId(fresh->Pci().node_id[0])
-            || !PioneerResidentSessionIdle(fresh->io,fresh->baseline.baseline.baseline.noc,fresh->idle))
+        if (!fresh->io.PioneerHostDmaAuditIO::AfterNodeId(fresh->Pci().node_id[0])) return Retain(scope,Baseline);
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        if (fabric) {
+            bool lost=false;
+            auto check=[&]() {
+                if (lost || !TicketValid(guard) || !scope.FreshRecoverySetupAccessAllowed(*this,old,*fresh,Baseline)
+                    || !TicketValid(guard)) { lost=true;return false; }
+                return true;
+            };
+            if (!PioneerQ35GuardedSessionIdle(fresh->io,fresh->baseline.baseline.baseline.noc,fresh->idle,check))
+                return Retain(scope,Baseline);
+        } else
+#endif
+        if (!PioneerResidentSessionIdle(fresh->io,fresh->baseline.baseline.baseline.noc,fresh->idle))
             return Retain(scope,Baseline);
         fStage=Baseline;
         if (!allowed(Baseline)) return Retain(scope,Baseline);
@@ -212,6 +224,18 @@ private:
         if (!PioneerPrepareHostPage(fresh->io,fresh->host)) return Retain(scope,Host);
         fStage=Host;
         if (!allowed(Host)) return Retain(scope,Host);
+#ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
+        if (fabric) {
+            bool lost=false;
+            auto check=[&]() {
+                if (lost || !TicketValid(guard) || !scope.FreshRecoverySetupAccessAllowed(*this,old,*fresh,Lease)
+                    || !TicketValid(guard)) { lost=true;return false; }
+                return true;
+            };
+            if (!PioneerQ35GuardedLeaseBegin(fresh->io,fresh->baseline.baseline.baseline.noc,fresh->lease,check))
+                return Retain(scope,Lease);
+        } else
+#endif
         if (!PioneerResidentLeaseBegin(fresh->io,fresh->baseline.baseline.baseline.noc,fresh->lease))
             return Retain(scope,Lease);
         fStage=Lease;

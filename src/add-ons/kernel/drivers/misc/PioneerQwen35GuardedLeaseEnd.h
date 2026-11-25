@@ -8,6 +8,10 @@
 template<class IO,class Check> struct PioneerQ35GuardedLeaseIO {
     IO& io;Check& check;bool lost=false;
     bool Allowed() { if (lost || !check()) { lost=true;return false; } return true; }
+    uint32_t* HostReadBackup(unsigned words) {
+        if (!Allowed()) return nullptr;
+        uint32_t* value=io.HostReadBackup(words);return Allowed()?value:nullptr;
+    }
     uint32_t ResidentNocRead(uint32_t offset) {
         if (!Allowed()) return UINT32_MAX;
         uint32_t value=io.ResidentNocRead(offset);return Allowed()?value:UINT32_MAX;
@@ -41,6 +45,34 @@ template<class IO,class Check> struct PioneerQ35GuardedLeaseIO {
         uint32_t value=io.HostPciRead(peer,offset,size);return Allowed()?value:UINT32_MAX;
     }
 };
+
+template<class IO,class Check>
+bool PioneerQ35GuardedSessionIdle(IO& io,const tt_compute_noc_result& noc,
+    tt_resident_session_idle_result& result,Check& check)
+{
+    PioneerQ35GuardedLeaseIO<IO,Check> guarded{io,check};
+    if (!guarded.Allowed()) { result={};result.recovery_required=1;return false; }
+    const bool ready=PioneerResidentSessionIdle(guarded,noc,result);
+    if (!guarded.Allowed()) {
+        result.ready=0;result.tlb_restored=0;result.recovery_required=1;return false;
+    }
+    return ready;
+}
+
+template<class IO,class Check>
+bool PioneerQ35GuardedLeaseBegin(IO& io,const tt_compute_noc_result& noc,
+    PioneerResidentLease& lease,Check& check)
+{
+    PioneerQ35GuardedLeaseIO<IO,Check> guarded{io,check};
+    if (!guarded.Allowed()) { lease.recovery_required=true;return false; }
+    const bool ready=PioneerResidentLeaseBegin(guarded,noc,lease);
+    if (!guarded.Allowed()) {
+        lease.ready=false;lease.recovery_required=true;
+        lease.l1_restored=lease.niu_restored=lease.tlb_restored=false;
+        return false;
+    }
+    return ready;
+}
 
 template<class IO,class Check>
 bool PioneerQ35GuardedLeaseEnd(IO& io,const tt_compute_noc_result& noc,

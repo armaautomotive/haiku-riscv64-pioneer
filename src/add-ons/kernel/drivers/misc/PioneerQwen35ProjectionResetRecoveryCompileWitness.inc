@@ -15,6 +15,8 @@ struct PioneerQ35FreshRecoveryCompileScope {
         PioneerStoreContext&,uint64) const { return allowed; }
     bool FreshRoleRecoveryRestored(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
         PioneerStoreContext&) const { return allowed; }
+    bool FreshRecoverySetupAccessAllowed(PioneerQ35FreshRecoverySession&,PioneerStoreContext&,
+        PioneerStoreContext&,unsigned) const { return allowed; }
 #endif
     bool FreshRecoveryAdmission(PioneerQ35FreshRecoverySession&,PioneerProbeCookie*,
         PioneerStoreContext&,uint64) const { return allowed; }
