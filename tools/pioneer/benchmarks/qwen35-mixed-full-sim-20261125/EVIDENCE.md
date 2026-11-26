@@ -294,6 +294,35 @@ launch. Logs are `/private/tmp/q35-baseline-layer{6,7}-slice-sim-20261126.log`
 and `/private/tmp/q35-baseline-layer6-chained-sim-20261126.log`. The layer-7
 replay using the chained layer-6 output is running as session `53132`.
 
+The chained layer-7 replay subsequently passed against the independently
+continued CPU oracle, with maximum absolute error `8.94069672e-07`; all 120
+workers completed 17 records before the deliberate record-18 fault. Its
+complete output was byte-identical to the prior sequential eight-layer
+simulator output. The log is
+`/private/tmp/q35-baseline-layer7-chained-sim-20261126.log`, and actual output
+is `/private/tmp/q35-baseline-layer7-chained-actual-20261126.bin`. Together
+with the Q8_K counterfactual below, this confirms the observed layer-7
+difference for this position-zero input as numerical sensitivity, rather
+than a discrepancy between this isolated layer and its same-input oracle.
+It does not validate the remaining layers, later positions or physical card.
+
+The intermediate capture now supports one full position-zero decode: its
+120-worker records were checked for all 31 intermediate boundaries in the
+baseline, hybrid and paired fixtures. A baseline full capture is active as
+session `75817` (`/private/tmp/q35-baseline-full-layer-snapshots-20261126.log`).
+For each completed capture, the new standalone batch oracle reinjects each
+simulated boundary into the authenticated CPU-only reference and compares the
+next simulated layer with that same-input continuation. It verifies fixture
+command token 42 and position zero, validates all worker boundary records,
+records hashes, refuses incomplete or changing snapshots, and requires a
+separately audited candidate token for a full decode. The four-layer control
+passed all four checks, maximum errors `8.94069672e-08`, `2.38418579e-07`,
+`9.53674316e-07` and `8.58306885e-06`; see
+`/private/tmp/q35-four-layer-same-input-audit-v3-20261126.log`. A mock-oracle
+test also confirmed that a bad layer yields a nonzero exit and that an
+incomplete capture is rejected. This is diagnostic evidence only; it does not
+test Work inference, other tokens or positions, hardware recovery or speed.
+
 Replacing the standalone CPU oracle's layer-6 boundary with the actual
 chained layer-6 output produced a layer-7 output within `8.94069672e-07`
 maximum absolute error of the previously retained sequential eight-layer

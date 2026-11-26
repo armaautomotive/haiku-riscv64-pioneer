@@ -65,7 +65,7 @@ def recorded_prefix_snapshot_points(records, record_count, executed, layers):
     a disjoint residual. The emulator is frozen while the host reads DRAM.
     This is an observation aid, not hardware completion or ownership proof.
     """
-    if (not 2 <= layers <= 31 or not 1 <= executed < record_count
+    if (not 2 <= layers <= 32 or not 1 <= executed < record_count
             or len(records) != 120 * record_count * 2048):
         raise ValueError('invalid snapshot fixture')
 
@@ -443,7 +443,7 @@ def main():
     parser.add_argument('--recorded-export-actual', type=Path,
                         help='save a single simulated layer output before its reference comparison')
     parser.add_argument('--recorded-prefix-snapshots', type=Path,
-                        help='save simulator-only intermediate prefix boundaries to a new directory')
+                        help='save simulator-only model layer boundaries to a new directory')
     parser.add_argument('--recorded-layer-input', type=Path,
                         help='inject the independent input for a marked, isolated layer replay')
     parser.add_argument('--recorded-warm-layer-reference', type=Path,
@@ -477,9 +477,9 @@ def main():
                                         or args.recorded_export_actual.is_symlink()):
         parser.error('recorded output export requires one fixture run and a new output path')
     if args.recorded_prefix_snapshots and (not args.recorded_layer_fixture or layer_slice
-            or args.recorded_token_reference or args.recorded_warm_layer_reference
+            or args.recorded_warm_layer_reference
             or args.recorded_prefix_snapshots.exists() or args.recorded_prefix_snapshots.is_symlink()):
-        parser.error('prefix snapshots require one partial prefix and a new directory')
+        parser.error('layer snapshots require one recorded run and a new directory')
     if (bool(args.recorded_warm_layer_reference) != bool(args.recorded_warm_token_reference)
             or (args.recorded_warm_layer_reference and not args.recorded_token_reference)):
         parser.error('warm recorded decode requires both warm references and a full decode fixture')
@@ -841,6 +841,10 @@ def main():
                     or (full_prompt and executed != prompt_steps) or len(command) != 128
                     or len(records) != 120 * record_count * 2048):
                 raise ValueError('unexpected recorded layer fixture size')
+            if args.recorded_prefix_snapshots and full_prompt and not decode:
+                raise ValueError('full-model layer snapshots require a complete decode')
+            if args.recorded_prefix_snapshots and struct.unpack_from('<2I', command, 32) != (42, 0):
+                raise ValueError('layer snapshots require token 42 at position zero')
             snapshot_points = (recorded_prefix_snapshot_points(records, record_count, executed, layers)
                                if args.recorded_prefix_snapshots else [])
             if args.recorded_prefix_snapshots:

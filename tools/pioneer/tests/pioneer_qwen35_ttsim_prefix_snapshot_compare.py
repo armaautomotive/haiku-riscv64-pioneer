@@ -11,8 +11,8 @@ try:
     layers = int(sys.argv[3])
 except ValueError:
     raise SystemExit('layer count must be an integer')
-if not 2 <= layers <= 31 or not (snapshots / 'execution-complete.marker').is_file():
-    raise SystemExit('a completed partial prefix is required')
+if not 2 <= layers <= 32 or not (snapshots / 'execution-complete.marker').is_file():
+    raise SystemExit('a completed recorded run is required')
 path = Path(__file__).with_name('pioneer_qwen35_ttsim_service_test.py')
 spec = importlib.util.spec_from_file_location('q35_service', path)
 service = importlib.util.module_from_spec(spec)
