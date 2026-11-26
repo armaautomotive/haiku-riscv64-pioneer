@@ -18,6 +18,12 @@ completed output yet. A separate baseline run has an unresolved layer-9
 same-input numerical discrepancy documented in the mixed full-simulator
 evidence. No card was accessed.
 
+While both full-model simulations are still active, their provisional
+position-zero snapshots for layers 0 through 4 match byte for byte between
+the fused paired graph and the earlier unpaired baseline. These snapshots have
+not yet passed their respective full-fleet completion audits, so they are
+not evidence of a completed full-model or hardware run.
+
 The resident rewrite currently emits a separate all-worker residual-save step
 and RMS-normalization step twice per layer. `PioneerQwen35DataflowRmsSave.h`
 implements a proposed fused worker: it validates both per-core invocations,
