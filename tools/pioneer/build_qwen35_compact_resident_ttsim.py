@@ -23,9 +23,13 @@ def main():
                         help='compile normal cycle-counter profiling; do not execute in ttsim')
     parser.add_argument('--qualification', action='store_true',
                         help='build the matching standalone qualification service, compile-only')
+    parser.add_argument('--ttsim-qualification', action='store_true',
+                        help='build a separately marked unprofiled standalone service for ttsim only')
     args = parser.parse_args()
-    if args.qualification and not args.profiled_compile_only:
-        parser.error('qualification is restricted to the normal-counter compile-only image')
+    if args.ttsim_qualification and (not args.qualification or args.profiled_compile_only):
+        parser.error('ttsim qualification requires an unprofiled qualification build')
+    if args.qualification and not (args.profiled_compile_only or args.ttsim_qualification):
+        parser.error('qualification is restricted to the normal-counter compile-only image unless explicitly simulator-only')
     if not args.output.is_absolute() or args.output.exists() or args.output.is_symlink():
         parser.error('output must be a new absolute directory')
     root = Path(__file__).resolve().parent
@@ -44,6 +48,8 @@ def main():
         (args.output / 'compact-mixed-optimization.marker').touch(exist_ok=False)
     if args.qualification:
         (args.output / 'compact-qualification.marker').touch(exist_ok=False)
+    if args.ttsim_qualification:
+        (args.output / 'ttsim-qualification.marker').touch(exist_ok=False)
 
     flags = ('-std=c++17 -Oz -Wall -Wextra -Werror -ffreestanding -fno-exceptions '
              '-fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin '

@@ -1,0 +1,44 @@
+{
+  "exploratory_simulator_sha256": "1dbc4a6b269aa743870dcb7be5d89e9c6db142f27140296ea68bc00e41ec6d67",
+  "roles": {
+    "reader-code.bin": "58adee1e53441f5a0adf275fb8ee5776d534279bd23e7188da4ad1e3d1fe15d7",
+    "reader-shim.bin": "94457371ed8a2e2985db8fdd664741597f2f740b85aede7ce72933ab9486f0d1",
+    "writer-code.bin": "6fbbd6435aa4b55e97312b4e5740d9f73bd2fa264c46cf2605cd5a698f30678d",
+    "writer-shim.bin": "066ef535345f43e98794b1d64a9f20f2d6a5f753491b5db95c40c3070c15fbb6"
+  },
+  "runs": [
+    {
+      "commands": 2,
+      "fixture_sha256": "80201bc085daacd5a6cf25fe9746d35fdf1005b318f8d5fe111d72e85879769c",
+      "format": "Q4_K",
+      "invocations_sha256": "c9e47115b4b347aa359c3d1ee3dbbc78f9e80621476a73c654c9ee4a6b6c8e40",
+      "max_absolute_error": 0.046875,
+      "max_error_over_sum_abs_products": 1.57298922e-07,
+      "values_per_command": 1920
+    },
+    {
+      "commands": 2,
+      "fixture_sha256": "2f98a097a105d11f2627120066d3f25479aa1f7099589dd497a4c2305ab0d458",
+      "format": "Q5_K",
+      "invocations_sha256": "55582bff3ef7c8f60efba24463c2b033ecd3ec92f16ba4ce8a48034988074943",
+      "max_absolute_error": 0.0546875,
+      "max_error_over_sum_abs_products": 1.21575004e-07,
+      "values_per_command": 1920
+    },
+    {
+      "commands": 2,
+      "fixture_sha256": "7c85fd13d25ab86a0fe5efb4a65fca8659e2290a089c4c360fb19d2aa8361cfa",
+      "format": "Q6_K",
+      "invocations_sha256": "5dc7e71e2d18a5aebb1499cf48f2d7eebbcb540e9e2491eb56dd23641feec0e5",
+      "max_absolute_error": 0.0390625,
+      "max_error_over_sum_abs_products": 8.09506194e-08,
+      "values_per_command": 1920
+    }
+  ],
+  "scope": "Separate unprofiled simulator-only standalone service and exploratory modified ttsim; not the normal-counter driver image, hardware, recovery, or performance",
+  "unprofiled_qualification_image": {
+    "boot.bin": "e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b",
+    "dispatch.bin": "dd857824bfdc6d2ebdf1c2a2f169f273b347fd18a095d3334a1e919697b0927b",
+    "text.bin": "f8d133855dc4ed34591985e4e6b65fe0fb48c99143b9b662e1f126999cd8a775"
+  }
+}

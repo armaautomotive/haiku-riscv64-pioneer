@@ -1,5 +1,14 @@
 # Latest offline checks, 2026-11-26
 
+The separately marked unprofiled compact qualification service completed
+two Q4_K, Q5_K and Q6_K projections using 4B model weights on 120 simulated
+workers; each command checked 1,920 values, and all simulated roles stopped.
+An older role image failed on an unsupported NoC read and a second failed
+startup; the successful role bytes match a fresh current-source build. This
+uses a modified exploratory simulator and a different image from the
+normal-counter driver build, not physical inference or throughput. See
+`benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
 The fused Haiku driver now compiles and links with both the actual compact
 resident service and a newly built matching compact standalone qualification
 service, replacing the older placeholder in this compile check. Shared graph

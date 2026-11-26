@@ -11,7 +11,8 @@ def generate(directory: Path, qualification: bool = False) -> str:
                 'ffn-pair.marker', 'fused-rms-save.marker')
     if any(not (directory / marker).is_file() for marker in required):
         raise ValueError('missing compact compile-only image marker')
-    if any((directory / name).exists() for name in ('ttsim-unprofiled.marker', 'dense-shard.marker', 'flash.bin')):
+    if any((directory / name).exists() for name in ('ttsim-unprofiled.marker', 'ttsim-qualification.marker',
+                                                     'dense-shard.marker', 'flash.bin')):
         raise ValueError('simulator or extra-region image is not a compact driver compile input')
     marker = directory / 'compact-qualification.marker'
     if (marker.is_symlink() or (qualification and not marker.is_file())

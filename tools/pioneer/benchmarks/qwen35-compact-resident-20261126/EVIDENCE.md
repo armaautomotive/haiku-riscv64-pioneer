@@ -1,5 +1,31 @@
 # Compact resident simulator image, 2026-11-26
 
+## Standalone qualification projection in simulation, 2026-11-26
+
+A separately marked, unprofiled simulator-only build of the standalone
+compact qualification service completed two model-weight projections each
+for Q4_K, Q5_K and Q6_K. Each run checked all 1,920 outputs independently,
+and all 120 simulated compute workers and reader/writer roles started and
+stopped. Maximum error relative to each row's sum of absolute products was
+`1.57298922e-07`, `1.21575004e-07` and `8.09506194e-08`, respectively.
+Model weight blocks were checked against the pinned 4B tensor hashes. The
+two commands used different signed input data. Image, role, fixture and
+exploratory simulator hashes and measured errors are in
+`standalone-qualification-sim-20261126.json`; output logs are in
+`standalone-qualification-sim-20261126/`. Their generic runner label says
+"resident" because the service stayed up for both commands; the entry point
+used here is the standalone qualification service, not the resident graph.
+
+The first attempt used an older role image and exited on an unsupported NoC
+register read. A second role build failed its startup mailbox check. The
+successful runs used the same role bytes as the running full-model simulator;
+a fresh build of the current role sources reproduced all four files exactly.
+The unprofiled service is a separate image from the normal-counter service in
+the driver compile check. It is restricted to a separately marked simulator
+mode, and compile-header tests reject it. The exploratory simulator contains
+matrix patches. These checks do not establish behavior of the normal-counter
+image, physical inference, recovery, or throughput.
+
 ## Matching compact qualification image, 2026-11-26
 
 The compact image builder can now build a standalone qualification service

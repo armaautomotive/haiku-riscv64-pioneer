@@ -502,6 +502,18 @@ def validate_snapshot_destinations(first, warm, has_fixture, layer_slice, has_wa
         raise ValueError('first and warm snapshots require separate directories')
 
 
+def validate_compact_qualification(image, enabled, unprofiled, flash, compact, projection, resident):
+    """Admit only explicitly marked standalone projection simulator images."""
+    paths = (image / 'compact-qualification.marker', image / 'ttsim-qualification.marker')
+    if any(path.is_symlink() or (path.exists() and not path.is_file()) for path in paths):
+        raise ValueError('invalid qualification simulator marker')
+    markers = tuple(path.is_file() for path in paths)
+    if markers != (enabled, enabled):
+        raise ValueError('qualification simulator flag and image markers do not match')
+    if enabled and (not unprofiled or not flash or not compact or not projection or resident):
+        raise ValueError('qualification simulator requires a standalone compact projection fixture')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('library', type=Path)
@@ -586,6 +598,8 @@ def main():
                         help='explicitly allow the simulator-only hybrid attention image and fixture')
     parser.add_argument('--compact-two-region', action='store_true',
                         help='allow a marked simulator-only hybrid image without the extra code region')
+    parser.add_argument('--compact-qualification', action='store_true',
+                        help='run the marked standalone qualification projection in ttsim only')
     args = parser.parse_args()
     if ((args.resident_export_state or args.resident_import_state or args.resident_position_one_command)
             and not args.resident_sequence_fixture):
@@ -665,13 +679,17 @@ def main():
         raise ValueError('flash hybrid simulator flag and image marker do not match')
     if args.compact_two_region != (image / 'compact-two-region.marker').is_file():
         raise ValueError('compact two-region simulator flag and image marker do not match')
+    validate_compact_qualification(image, args.compact_qualification, args.ttsim_unprofiled,
+                                   args.flash_hybrid, args.compact_two_region,
+                                   bool(args.projection_fixture or args.model_projection_fixture or args.fused_model_fixture),
+                                   resident_templates is not None)
     ffn_paired = (image / 'ffn-pair.marker').is_file()
-    if ffn_paired and (not args.flash_hybrid or not args.recorded_layer_fixture):
+    if ffn_paired and (not args.flash_hybrid or not (args.recorded_layer_fixture or args.compact_qualification)):
         raise ValueError('paired FFN image requires the matching hybrid recorded fixture')
     if args.recorded_layer_fixture and ffn_paired != (args.recorded_layer_fixture / 'ffn-pair.marker').is_file():
         raise ValueError('paired FFN fixture and image markers do not match')
     rms_save_fused = (image / 'fused-rms-save.marker').is_file()
-    if rms_save_fused and (not ffn_paired or not args.recorded_layer_fixture):
+    if rms_save_fused and (not ffn_paired or not (args.recorded_layer_fixture or args.compact_qualification)):
         raise ValueError('fused RMS/save image requires the paired recorded fixture')
     if args.recorded_layer_fixture and rms_save_fused != (args.recorded_layer_fixture / 'fused-rms-save.marker').is_file():
         raise ValueError('fused RMS/save fixture and image markers do not match')
@@ -682,7 +700,7 @@ def main():
         raise ValueError('expected sharing-enabled standalone service image')
     resident_shards = (args.resident_sequence_fixture is not None
                        and (args.resident_sequence_fixture / 'delta-params.bin').is_file())
-    if bool(args.delta_shards_fixture or args.dense_attention_fixture or args.recorded_layer_fixture or resident_shards or args.resident_delta_sharded) != (image / 'delta-shard.marker').is_file():
+    if bool(args.delta_shards_fixture or args.dense_attention_fixture or args.recorded_layer_fixture or resident_shards or args.resident_delta_sharded or args.compact_qualification) != (image / 'delta-shard.marker').is_file():
         raise ValueError('delta shard fixture and service image do not match')
     dense_sharded = False
     dense_hybrid = False
@@ -699,7 +717,7 @@ def main():
         raise ValueError('dense shard fixture and service image do not match')
     recorded_hybrid = bool(args.recorded_layer_fixture
                            and (args.recorded_layer_fixture / 'flash-hybrid.marker').is_file())
-    if (dense_hybrid or recorded_hybrid) != args.flash_hybrid:
+    if (dense_hybrid or recorded_hybrid or args.compact_qualification) != args.flash_hybrid:
         raise ValueError('hybrid dense fixture and service image do not match')
     boot = (image / 'boot.bin').read_bytes()
     text = (image / 'text.bin').read_bytes()
@@ -2021,13 +2039,14 @@ def main():
         else:
             print('PASS compiled Q35 service and reader/writer roles start and stop on 120 Blackhole simulator cores; NO HARDWARE')
         if invocations is not None:
+            service = 'standalone qualification' if args.compact_qualification else 'resident'
             if args.fused_model_fixture:
-                print('PASS two resident 116+2+2 QKV/Alpha/Beta projections match '
+                print(f'PASS two {service} 116+2+2 QKV/Alpha/Beta projections match '
                       '8,256 independently checked values each; SIMULATED ONLY')
             elif args.projection_fixture:
-                print('PASS two resident 120-core Q4_K projections match 1,920 independently checked values each; SIMULATED ONLY')
+                print(f'PASS two {service} 120-core Q4_K projections match 1,920 independently checked values each; SIMULATED ONLY')
             elif args.model_projection_fixture:
-                print(f'PASS two resident 120-core model-weight {quant.upper()}_K projections match '
+                print(f'PASS two {service} 120-core model-weight {quant.upper()}_K projections match '
                       '1,920 independently checked values each; SIMULATED ONLY')
             elif args.silu_fixture:
                 print('PASS two resident 120-core SiLU runs match 9,216 values each; SIMULATED ONLY')

@@ -1,0 +1,5 @@
+model projection run 1: maximum absolute error 0.0390625; maximum error / sum of absolute products 8.09506194e-08
+model projection run 2: maximum absolute error 0.0390625; maximum error / sum of absolute products 8.09506194e-08
+PASS compiled Q35 service and reader/writer roles start and stop on 120 Blackhole simulator cores; NO HARDWARE
+PASS two resident 120-core model-weight Q6_K projections match 1,920 independently checked values each; SIMULATED ONLY
+[3790000] 29.8 seconds (127.3 KHz)

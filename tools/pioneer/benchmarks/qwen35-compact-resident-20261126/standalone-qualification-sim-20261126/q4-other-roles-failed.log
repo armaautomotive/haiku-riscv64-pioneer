@@ -1,0 +1,7 @@
+[70000] 1.6 seconds (45.1 KHz)
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py", line 2059, in <module>
+    main()
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py", line 903, in main
+    raise RuntimeError(f'core {core}: reader/writer not started: {words}')
+RuntimeError: core 0: reader/writer not started: (0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
