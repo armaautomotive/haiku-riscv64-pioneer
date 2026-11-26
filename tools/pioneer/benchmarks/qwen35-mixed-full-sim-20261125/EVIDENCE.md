@@ -27,6 +27,23 @@ above. A completed replay will help distinguish capture inconsistency from
 a reproducible within-layer difference; it will not by itself qualify the
 simulator or hardware. No card was accessed.
 
+To localize the layer-9 discrepancy, a second fixture executes only its first
+nine records through the attention residual. The independent slice audit also
+passed for all 120 workers. A same-input CPU trace produced an
+`attn_residual` reference and retained a layer-9 output byte-identical to its
+untraced counterpart. The attention-only simulator replay is running as
+session `29535`, with log
+`/private/tmp/q35-baseline-layer9-attention-sim-20261126.log`; neither replay
+has a result yet.
+
+The paired FFN hybrid full-decode simulation completed its first decode and
+selected the independently expected token `261`, but exited with failure on
+the final hidden-state comparison: its first reported row was
+`-2.2534914016723633` versus `-2.3027868270874023`. It therefore did not run
+the second decode. Its log is
+`/private/tmp/q35-ffn-pair-two-decodes-sim-20261126.log`. Matching the token
+does not make the failed full-model hidden-state check a pass.
+
 The production recorder and packed plan generated a four-layer prefix from the
 SHA-256 authenticated Qwen3.5-4B Q4_K_M GGUF
 `00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4`.
