@@ -14,13 +14,19 @@
 #include <vector>
 #include <sys/stat.h>
 #include <unistd.h>
-static constexpr std::array<const char*,13> traceNames={"attn_norm-25","linear_attn_qkv_mixed-25",
-    "z-25","beta-25","alpha-25","gate-25","conv_output_raw-25","conv_output_silu-25",
-    "final_output-25","linear_attn_out-25","attn_residual-25","attn_post_norm-25","ffn_out-25"};
+static constexpr std::array<const char*,13> traceNames={"attn_norm","linear_attn_qkv_mixed",
+    "z","beta","alpha","gate","conv_output_raw","conv_output_silu",
+    "final_output","linear_attn_out","attn_residual","attn_post_norm","ffn_out"};
+static constexpr std::array<const char*,13> denseTraceNames={"attn_norm","Qcur_full",
+    "gate_reshaped","attn_pregate","gate_sigmoid","attn_gated","attn_output",
+    "attn_residual","attn_post_norm","ffn_out",nullptr,nullptr,nullptr};
+static const char* TraceName(unsigned layer,size_t index) {
+    return layer%4==3?denseTraceNames[index]:traceNames[index];
+}
 struct Capture {std::array<std::array<float,2560>,32> layers{};std::array<bool,32> gotLayer{};
-    std::array<float,2560> replacement{};unsigned replaceLayer=32;
+    std::array<float,2560> replacement{};unsigned replaceLayer=32,traceLayer=32;
     std::array<std::vector<float>,traceNames.size()> trace{};std::array<bool,traceNames.size()> gotTrace{};
-    std::vector<float> logits;bool gotLogits=false,replaced=false,trace25=false;};
+    std::vector<float> logits;bool gotLogits=false,replaced=false;};
 static bool SameFile(const struct stat& a,const struct stat& b) {
     if (a.st_dev!=b.st_dev || a.st_ino!=b.st_ino || a.st_size!=b.st_size
         || a.st_mtime!=b.st_mtime || a.st_ctime!=b.st_ctime) return false;
@@ -36,8 +42,11 @@ static bool Callback(ggml_tensor* tensor,bool ask,void* opaque) {
     const bool isLayer=std::sscanf(tensor->name,"l_out-%u%c",&layer,&trailing)==1 && layer<32;
     const bool logits=std::strcmp(tensor->name,"result_output")==0;
     size_t traceIndex=traceNames.size();
-    if (capture.trace25) for (size_t i=0;i<traceNames.size();i++)
-        if (!std::strcmp(tensor->name,traceNames[i])) {traceIndex=i;break;}
+    if (capture.traceLayer<32) for (size_t i=0;i<traceNames.size();i++) {
+        const char* prefix=TraceName(capture.traceLayer,i);if (!prefix) continue;
+        char name[64];std::snprintf(name,sizeof(name),"%s-%u",prefix,capture.traceLayer);
+        if (!std::strcmp(tensor->name,name)) {traceIndex=i;break;}
+    }
     if (ask) return isLayer || logits || traceIndex<traceNames.size();
     if (tensor->type!=GGML_TYPE_F32 || !ggml_is_contiguous(tensor)) return false;
     if (traceIndex<traceNames.size()) {
@@ -76,7 +85,8 @@ static bool BestToken(const Capture& capture,unsigned& best) {
     if (!capture.gotLogits || capture.logits.size()!=248320
         || (capture.replaceLayer<32 && !capture.replaced)) return false;
     for (bool got:capture.gotLayer) if (!got) return false;
-    if (capture.trace25) for (bool got:capture.gotTrace) if (!got) return false;
+    if (capture.traceLayer<32) for (size_t i=0;i<traceNames.size();i++)
+        if (TraceName(capture.traceLayer,i) && !capture.gotTrace[i]) return false;
     best=0;
     for (unsigned i=0;i<capture.logits.size();i++) {
         if (!std::isfinite(capture.logits[i])) return false;
@@ -87,8 +97,9 @@ static bool BestToken(const Capture& capture,unsigned& best) {
 static bool Save(const std::string& dir,const std::string& prefix,const Capture& capture,unsigned best) {
     for (unsigned layer=0;layer<capture.layers.size();layer++)
         if (!WriteNew(dir+"/"+prefix+"layer"+std::to_string(layer)+".bin",capture.layers[layer])) return false;
-    if (capture.trace25) for (size_t i=0;i<traceNames.size();i++)
-        if (!WriteNew(dir+"/trace-"+traceNames[i]+".bin",capture.trace[i])) return false;
+    if (capture.traceLayer<32) for (size_t i=0;i<traceNames.size();i++)
+        if (TraceName(capture.traceLayer,i)
+            && !WriteNew(dir+"/trace-"+TraceName(capture.traceLayer,i)+"-"+std::to_string(capture.traceLayer)+".bin",capture.trace[i])) return false;
     FILE* logitsFile=std::fopen((dir+"/"+prefix+"logits.bin").c_str(),"wbx");if (!logitsFile) return false;
     const bool wrote=std::fwrite(capture.logits.data(),sizeof(float),capture.logits.size(),logitsFile)==capture.logits.size();
     if (std::fclose(logitsFile) || !wrote) return false;
@@ -97,15 +108,21 @@ static bool Save(const std::string& dir,const std::string& prefix,const Capture&
     return std::fclose(tokenFile)==0 && tokenWrote;
 }
 int main(int argc,char** argv) {
-    if (argc!=3 && argc!=4 && argc!=6 && argc!=7) {
-        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two | --replace-layer N tensor.bin [--trace-layer25]]\n",argv[0]);return 2;
+    if (argc!=3 && argc!=4 && argc!=6 && argc!=7 && argc!=8) {
+        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two | --replace-layer N tensor.bin [--trace-layer N | --trace-layer25]]\n",argv[0]);return 2;
     }
     const bool two=argc==4 && !std::strcmp(argv[3],"two");if (argc==4 && !two) return 2;
     Capture capture{};
-    if (argc==6 || argc==7) {
+    if (argc>=6) {
         if (std::strcmp(argv[3],"--replace-layer")) return 2;
         if (argc==7 && std::strcmp(argv[6],"--trace-layer25")) return 2;
-        capture.trace25=argc==7;
+        if (argc==7) capture.traceLayer=25;
+        if (argc==8) {
+            if (std::strcmp(argv[6],"--trace-layer")) return 2;
+            char* traceEnd=nullptr;const unsigned long trace=std::strtoul(argv[7],&traceEnd,10);
+            if (!argv[7][0] || *traceEnd || trace>=32) return 2;
+            capture.traceLayer=unsigned(trace);
+        }
         char* end=nullptr;const unsigned long layer=std::strtoul(argv[4],&end,10);
         if (!argv[4][0] || *end || layer>=32) return 2;
         const int replacementFd=open(argv[5],O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if (replacementFd<0) return 1;

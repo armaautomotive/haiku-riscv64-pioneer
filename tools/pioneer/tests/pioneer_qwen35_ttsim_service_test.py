@@ -14,6 +14,10 @@ from pathlib import Path
 import struct
 
 
+class RecordedNumericalMismatch(RuntimeError):
+    """A finite output failed its independent reference comparison."""
+
+
 def compare_recorded_layer(actual, reference):
     """Check every simulated hidden value, including aggregate error on failure."""
     if len(actual) != 2560 * 4 or len(reference) != 2560 * 4:
@@ -35,10 +39,20 @@ def compare_recorded_layer(actual, reference):
         if scaled > 2e-5:
             failures += 1
     if failures:
-        raise RuntimeError(f'{failures}/2560 recorded final rows differ; max abs error {maximum:.9g}, '
-                           f'max scaled error {worst_scaled:.9g} at row {worst[0]}: '
-                           f'{worst[1]} versus {worst[2]}')
+        raise RecordedNumericalMismatch(f'{failures}/2560 recorded final rows differ; max abs error {maximum:.9g}, '
+                                        f'max scaled error {worst_scaled:.9g} at row {worst[0]}: '
+                                        f'{worst[1]} versus {worst[2]}')
     return maximum
+
+
+def compare_recorded_layer_diagnostic(actual, reference, allow_mismatch):
+    """Return a finite mismatch only for an explicitly diagnostic run."""
+    try:
+        return compare_recorded_layer(actual, reference), None
+    except RecordedNumericalMismatch as mismatch:
+        if not allow_mismatch:
+            raise
+        return None, str(mismatch)
 
 
 def recorded_prefix_snapshot_points(records, record_count, executed, layers):
@@ -436,6 +450,10 @@ def main():
                         help='compare a second resident decode layer output with an offline reference')
     parser.add_argument('--recorded-warm-token-reference', type=Path,
                         help='compare the second resident decode token with an offline reference')
+    parser.add_argument('--recorded-diagnostic-continue', action='store_true',
+                        help='collect a second simulator decode after a finite first-layer mismatch; still fail')
+    parser.add_argument('--recorded-diagnostic-output-dir', type=Path,
+                        help='save both diagnostic hidden outputs and tokens to a new directory')
     parser.add_argument('--ttsim-unprofiled', action='store_true',
                         help='explicitly allow the non-packageable simulator image without cycle profiling')
     parser.add_argument('--flash-hybrid', action='store_true',
@@ -465,6 +483,11 @@ def main():
     if (bool(args.recorded_warm_layer_reference) != bool(args.recorded_warm_token_reference)
             or (args.recorded_warm_layer_reference and not args.recorded_token_reference)):
         parser.error('warm recorded decode requires both warm references and a full decode fixture')
+    if args.recorded_diagnostic_continue and not args.recorded_warm_layer_reference:
+        parser.error('diagnostic continuation requires two recorded decodes')
+    if args.recorded_diagnostic_output_dir and (not args.recorded_diagnostic_continue
+            or args.recorded_diagnostic_output_dir.exists() or args.recorded_diagnostic_output_dir.is_symlink()):
+        parser.error('diagnostic output requires continuation and a new directory')
     if args.resident_export_layer_output and (not args.resident_sequence_fixture
             or args.resident_export_layer_output.exists() or args.resident_export_layer_output.is_symlink()):
         parser.error('layer output export requires a resident sequence and a new path')
@@ -822,6 +845,8 @@ def main():
                                if args.recorded_prefix_snapshots else [])
             if args.recorded_prefix_snapshots:
                 args.recorded_prefix_snapshots.mkdir()
+            if args.recorded_diagnostic_output_dir:
+                args.recorded_diagnostic_output_dir.mkdir()
             weights = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'W' and len(row) == 5]
             streams = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'S' and len(row) == 4]
             outputs = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'O' and len(row) == 5]
@@ -908,6 +933,7 @@ def main():
                     raise ValueError('recorded stream core order mismatch')
                 write_bank(bank, address, records[core * record_count * 2048:(core + 1) * record_count * 2048])
             runs = 2 if args.recorded_warm_layer_reference else 1
+            diagnostic_failed = False
             for run_number in range(runs):
                 trigger, epoch = struct.unpack_from('<II', command, 8)
                 layer_reference = (args.recorded_warm_layer_reference if run_number
@@ -1007,23 +1033,36 @@ def main():
                 if args.recorded_export_actual:
                     with args.recorded_export_actual.open('xb') as output_file:
                         output_file.write(result)
-                maximum = compare_recorded_layer(result, reference)
+                if args.recorded_diagnostic_output_dir:
+                    with (args.recorded_diagnostic_output_dir / f'position{run_number}-layer31.bin').open('xb') as output_file:
+                        output_file.write(result)
+                    with (args.recorded_diagnostic_output_dir / f'position{run_number}-token.txt').open('x') as token_file:
+                        token_file.write(f'{token}\n')
+                maximum, mismatch = compare_recorded_layer_diagnostic(
+                    result, reference, args.recorded_diagnostic_continue)
+                if mismatch is not None:
+                    diagnostic_failed = True
+                    print(f'DIAGNOSTIC ONLY position {run_number}: {mismatch}', flush=True)
                 select_worker(0)
                 if not full_prompt and struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
                     raise RuntimeError('intentionally faulted recorded layer published a candidate')
                 terminal = 'candidate audited' if full_prompt else f'record {record_count} intentionally faults'
-                print(f'PASS actual recorded {layers}-layer prefix: 2560 values match verified reference; '
-                      f'maximum absolute error {maximum:.9g}; {terminal}; NO HARDWARE', flush=True)
+                if maximum is not None:
+                    print(f'PASS actual recorded {layers}-layer prefix: 2560 values match verified reference; '
+                          f'maximum absolute error {maximum:.9g}; {terminal}; NO HARDWARE', flush=True)
                 if run_number == 0 and runs == 2:
-                    # The result and all sender receipts have been audited above.
-                    # Acknowledge only after comparing the layer and token, then
-                    # publish a fresh ticket using the actual selected token.
+                    # All sender receipts and the token were audited. A finite
+                    # layer mismatch may proceed only under the explicit
+                    # simulator-only diagnostic option, which still fails.
                     command = resident_next_decode_command(command, token)
                     select_worker(0)
                     write(bar + 0xab330, struct.pack('<4I', trigger, (~trigger) & 0xffffffff,
                                                     epoch, (~epoch) & 0xffffffff))
-                    print('acknowledged first decode; retaining model, fleet and state for position one', flush=True)
+                    label = 'diagnostic acknowledgment after mismatch' if diagnostic_failed else 'acknowledged first decode'
+                    print(f'{label}; retaining model, fleet and state for position one', flush=True)
             if runs == 2:
+                if diagnostic_failed:
+                    raise RuntimeError('diagnostic decodes completed with numerical mismatches; NOT A PASS')
                 print('PASS two consecutive recorded full decodes on one simulated resident fleet; NO HARDWARE', flush=True)
             return
 

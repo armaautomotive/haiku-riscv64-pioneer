@@ -273,6 +273,57 @@ zeroed position-zero state also started in session `80579`, after the
 available yet. It will complement the passing isolated layer-5 replay and
 the still-running sequential six-layer comparison.
 
+### Six- and sixteen-layer outcomes and layer-7 sensitivity (2026-11-26)
+
+The sequential six-layer baseline completed 98 records on 120 workers and
+then intentionally faulted on record 99; all 2,560 values passed the reference
+comparison, maximum absolute error `5.00679016e-06`. Its actual output is
+`/private/tmp/q35-baseline-6-layer-observed-20261126.bin`. The sequential
+16-layer run reached its terminal comparison but failed row 0:
+`0.6294565200805664` versus `0.6175908446311951`
+(`/private/tmp/q35-baseline-16-layer-sim-20261126.log`); that older runner
+reported only the first mismatch and did not export the tensor.
+
+The isolated layer-6 and layer-7 replays each passed with independent
+reference inputs and zeroed state where applicable: maximum absolute errors
+`1.78813934e-06` and `1.07288361e-06`, respectively. Replaying layer 6 with
+the actual six-layer simulator output as input also passed against the CPU
+oracle continued from that same input, maximum absolute error `9.53674316e-06`.
+The audit verified the 120 worker records and their protected ranges before
+launch. Logs are `/private/tmp/q35-baseline-layer{6,7}-slice-sim-20261126.log`
+and `/private/tmp/q35-baseline-layer6-chained-sim-20261126.log`. The layer-7
+replay using the chained layer-6 output is running as session `53132`.
+
+Replacing the standalone CPU oracle's layer-6 boundary with the actual
+chained layer-6 output produced a layer-7 output within `8.94069672e-07`
+maximum absolute error of the previously retained sequential eight-layer
+simulator output. A same-input CPU control was byte-identical to the
+original CPU reference. In the two CPU runs, the traced layer-7 normalized
+input differed by at most `1.52587891e-05` and its Q projection by
+`0.000762939453`; traced runs were byte-identical to their untraced
+equivalents. Using the CPU GGML Q8_K quantizer and real layer-7 Q4_K Q weights,
+the inputs differed in one quantized integer and one block sum (and ten
+scales). Actual dot products differed by at most `0.000762701035`, whereas
+keeping the original integers/sums while changing the scales differed by at
+most `2.86102295e-06`. This supports a quantization threshold as the cause of
+the observed layer-7 jump in these specific continuations. The evidence does
+not by itself prove all later layers, tokens, physical execution or hardware
+performance. Artifacts are `/private/tmp/q35-oracle-layer7-trace-*-20261126*`.
+
+The four-layer intermediate-snapshot control completed and all captured
+layers matched the independent reference, with maximum absolute differences
+`8.94069672e-08`, `2.38418579e-07`, `7.15255737e-07`, and
+`5.00679016e-06`. The instrumented eight-layer run is still active. The
+hybrid full-decode simulation selected reference token `261` and reported the
+same row-0 mismatch as the baseline (`-2.2534914016723633` versus
+`-2.3027868270874023`); it exited 1 before the second decode. The simulator
+runner now offers an explicitly diagnostic continuation only for finite
+hidden-state mismatches and only when both reference tokens are provided. It
+still refuses a wrong token or non-finite value and exits failure if any
+hidden-state comparison fails. A two-decode diagnostic started in session
+`73034`; no result exists yet. This option never qualifies a model or runs
+in Work mode. All these experiments are off-card.
+
 The isolated layer-4 replay subsequently completed 16 records on 120 workers,
 then intentionally faulted at record 17. All 2,560 outputs matched the
 independent reference with maximum absolute error `4.76837158e-07`

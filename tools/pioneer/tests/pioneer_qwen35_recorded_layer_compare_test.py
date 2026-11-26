@@ -2,7 +2,8 @@
 """Check full-layer error accounting used by the offline simulator runner."""
 import math
 import struct
-from pioneer_qwen35_ttsim_service_test import compare_recorded_layer, validate_isolated_zero_ranges
+from pioneer_qwen35_ttsim_service_test import (RecordedNumericalMismatch, compare_recorded_layer,
+                                               compare_recorded_layer_diagnostic, validate_isolated_zero_ranges)
 
 reference = [1.0] * 2560
 actual = reference.copy(); actual[8] += 1e-6
@@ -12,14 +13,28 @@ actual[7] = 3.0; actual[9] = -4.0
 try:
     compare_recorded_layer(pack(actual), pack(reference))
     raise AssertionError('multiple bad rows accepted')
-except RuntimeError as error:
+except RecordedNumericalMismatch as error:
     assert '2/2560' in str(error) and 'row 9' in str(error)
+maximum, mismatch = compare_recorded_layer_diagnostic(pack(actual), pack(reference), True)
+assert maximum is None and '2/2560' in mismatch
+try:
+    compare_recorded_layer_diagnostic(pack(actual), pack(reference), False)
+    raise AssertionError('normal run continued after mismatch')
+except RecordedNumericalMismatch:
+    pass
 actual[8] = math.nan
 try:
     compare_recorded_layer(pack(actual), pack(reference))
     raise AssertionError('NaN accepted')
 except RuntimeError as error:
-    assert 'non-finite' in str(error)
+    assert 'non-finite' in str(error) and not isinstance(error, RecordedNumericalMismatch)
+try:
+    compare_recorded_layer_diagnostic(pack(actual), pack(reference), True)
+    raise AssertionError('diagnostic run continued after non-finite output')
+except RecordedNumericalMismatch:
+    raise AssertionError('non-finite output was classified as a finite mismatch')
+except RuntimeError:
+    pass
 try:
     compare_recorded_layer(b'', pack(reference))
     raise AssertionError('truncated data accepted')
