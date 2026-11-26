@@ -7,13 +7,13 @@ matches the saved model identity. Using it, I generated the combined 32-layer
 fixture for the paired K/V, paired FFN, fused RMS/save image: 425 prompt steps
 or 428 decode steps, with 2,740,473,856 staged weight bytes. The simulator
 runner's length guard recognizes this stream and its focused marker/count
-test passes. The full decode simulation is active at poll 8,001. Boundaries
-for layers 0–24 match the earlier simulator capture byte for byte, including
+test passes. The full decode simulation is active at poll 8,550. Boundaries
+for layers 0–25 match the earlier simulator capture byte for byte, including
 dense-attention layers 3, 7, 11, and 15. The latest hashes are layer 17
 `6e41a05fcf7bd29c7117faeb5aaef85d3fddbf0478aaa8a99d1cb1bdfc5d8f1e`,
-18 `64521480ee03eff062410c1a70d2c9aaf1052596c64eaa2ea02d494d4fad2d42`,
-23 `2ccfff5ec31038bc2f001a479cedaec46323a2946656210742f15b137b3866d2`, and
-24 `49a0dd31fe76e2e947271bfe159ddedf30e531f03d0a73836db9c3e677db48a8`.
+23 `2ccfff5ec31038bc2f001a479cedaec46323a2946656210742f15b137b3866d2`,
+24 `49a0dd31fe76e2e947271bfe159ddedf30e531f03d0a73836db9c3e677db48a8`, and
+25 `d3896c2fe54a5515abf652835349bfc49c3f021147edc7dd2fae5089548229b1`.
 
 A provisional same-input CPU audit used the pinned model and authenticated
 oracle. Initial layer 0 and 14 of 15 transitions through layer 15 passed; the
@@ -21,10 +21,13 @@ layer 8→9 transition repeated the existing 36/2,560-value mismatch (maximum
 absolute error `2.74516642e-05`). All 15 CPU continuation runs selected token
 261. A targeted same-input replay from layer 17 reproduced the existing layer
 17→18 failure: 2,469/2,560 values differ, maximum absolute error
-`0.00355863571`; CPU token remains 261. Both mismatches remain numerical audit
-failures, not full-model passes. Reports are
+`0.00355863571`; CPU token remains 261. A targeted layer 24→25 CPU replay
+passed with maximum absolute error `1.90734863e-06`, also selecting token
+261. The layer 9 and 18 mismatches remain numerical audit failures, not
+full-model passes. Reports are
 `benchmarks/qwen35-compact-resident-20261126/provisional-same-input-audit-20261126.json`
-and `benchmarks/qwen35-compact-resident-20261126/provisional-layer18-audit-20261126.json`.
+`benchmarks/qwen35-compact-resident-20261126/provisional-layer18-audit-20261126.json`,
+and `benchmarks/qwen35-compact-resident-20261126/provisional-layer25-audit-20261126.json`.
 See the benchmark evidence for the existing quantization-threshold
 investigation.
 

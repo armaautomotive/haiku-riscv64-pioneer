@@ -503,13 +503,13 @@ The guard now computes the supported step count from the graph markers, and
 the focused rejection/count test passes.
 
 The first full numerical simulation of this combined graph is active in
-session 31294. At poll 8,001 it had captured layers 0–24. Each 2,560-element
-F32 boundary through layer 24 is byte-identical to the earlier full simulator
+session 31294. At poll 8,550 it had captured layers 0–25. Each 2,560-element
+F32 boundary through layer 25 is byte-identical to the earlier full simulator
 capture. Latest layer hashes:
 
-- Layer 22: `b87f1a46cdd6a95b96d195bd61f67d56d0b302588e3e4fa58ef5c4172f91d34a`
 - Layer 23: `2ccfff5ec31038bc2f001a479cedaec46323a2946656210742f15b137b3866d2`
 - Layer 24: `49a0dd31fe76e2e947271bfe159ddedf30e531f03d0a73836db9c3e677db48a8`
+- Layer 25: `d3896c2fe54a5515abf652835349bfc49c3f021147edc7dd2fae5089548229b1`
 
 A provisional same-input CPU audit used the pinned model SHA-256
 `00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4` and
@@ -533,6 +533,12 @@ isolated layer-18 investigation, which localized sensitivity to a one-value
 Q8_K quantization threshold in the recurrent-attention output projection;
 the strict numerical discrepancy remains. See
 `provisional-layer18-audit-20261126.json`.
+
+A targeted replay of transition layer 24→25 passed the existing CPU tolerance
+with maximum absolute error `1.90734863e-06` and selected token 261. The
+captured simulator layer 24 and 25 tensors each match the previous full-run
+snapshots byte for byte. Machine-readable result:
+`provisional-layer25-audit-20261126.json`.
 
 No second position or full-model final output has been verified. This remains
 simulator evidence, not physical P100A execution. No model load time, prompt

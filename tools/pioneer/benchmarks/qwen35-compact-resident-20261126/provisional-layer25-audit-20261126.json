@@ -1,0 +1,20 @@
+{
+  "scope": "targeted same-input CPU replay of provisional active simulator capture; not a full-model or hardware result",
+  "simulator_session": 31294,
+  "input_layer": 24,
+  "candidate_input_sha256": "49a0dd31fe76e2e947271bfe159ddedf30e531f03d0a73836db9c3e677db48a8",
+  "candidate_output_layer25_sha256": "d3896c2fe54a5515abf652835349bfc49c3f021147edc7dd2fae5089548229b1",
+  "cpu_oracle_output_layer25_sha256": "ded5792159b21373c971e305ddc18bebc05be1a2f21f186fef3e25b90950a0e7",
+  "model_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+  "oracle_sha256": "12083a72ac852e0fc445d2e0d173d40409c564d04e05a78e46d57f8d9f6d86b7",
+  "passed": true,
+  "max_absolute_error": 1.9073486328125e-06,
+  "cpu_token": 261,
+  "simulator_capture_provisional": true,
+  "simulator_capture_through_layer": 25,
+  "simulator_capture_dir": "/private/tmp/q35-dense-kv-pair-combined-full-snapshots-ae776b0d90",
+  "oracle_log": "/private/tmp/q35-dense-kv-pair-layer25-targeted-20261126/oracle.log",
+  "audit_summary": "/private/tmp/q35-dense-kv-pair-layer25-targeted-20261126/summary.json",
+  "capture_layer24_matches_baseline": true,
+  "capture_layer25_matches_baseline": true
+}
