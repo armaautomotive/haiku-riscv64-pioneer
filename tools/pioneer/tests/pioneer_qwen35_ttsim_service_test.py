@@ -18,9 +18,9 @@ class RecordedNumericalMismatch(RuntimeError):
     """A finite output failed its independent reference comparison."""
 
 
-def compare_recorded_layer(actual, reference):
+def compare_recorded_layer(actual, reference, rows=2560):
     """Check every simulated hidden value, including aggregate error on failure."""
-    if len(actual) != 2560 * 4 or len(reference) != 2560 * 4:
+    if rows not in (2560, 9216) or len(actual) != rows * 4 or len(reference) != rows * 4:
         raise ValueError('unexpected recorded layer output size')
     maximum = 0.0
     worst_scaled = 0.0
@@ -39,16 +39,16 @@ def compare_recorded_layer(actual, reference):
         if scaled > 2e-5:
             failures += 1
     if failures:
-        raise RecordedNumericalMismatch(f'{failures}/2560 recorded final rows differ; max abs error {maximum:.9g}, '
+        raise RecordedNumericalMismatch(f'{failures}/{rows} recorded final rows differ; max abs error {maximum:.9g}, '
                                         f'max scaled error {worst_scaled:.9g} at row {worst[0]}: '
                                         f'{worst[1]} versus {worst[2]}')
     return maximum
 
 
-def compare_recorded_layer_diagnostic(actual, reference, allow_mismatch):
+def compare_recorded_layer_diagnostic(actual, reference, allow_mismatch, rows=2560):
     """Return a finite mismatch only for an explicitly diagnostic run."""
     try:
-        return compare_recorded_layer(actual, reference), None
+        return compare_recorded_layer(actual, reference, rows), None
     except RecordedNumericalMismatch as mismatch:
         if not allow_mismatch:
             raise
@@ -460,6 +460,8 @@ def main():
                         help='compare a full recorded decode token with an offline reference')
     parser.add_argument('--recorded-export-actual', type=Path,
                         help='save a single simulated layer output before its reference comparison')
+    parser.add_argument('--recorded-wide-output', action='store_true',
+                        help='compare 9216 output rows for an isolated simulator-only layer slice')
     parser.add_argument('--recorded-prefix-snapshots', type=Path,
                         help='save simulator-only model layer boundaries to a new directory')
     parser.add_argument('--recorded-layer-input', type=Path,
@@ -490,6 +492,8 @@ def main():
         parser.error('isolated layer replay requires a marked fixture and its input')
     if layer_slice and (args.recorded_token_reference or args.recorded_warm_layer_reference):
         parser.error('isolated layer replay does not generate tokens')
+    if args.recorded_wide_output and not layer_slice:
+        parser.error('wide output requires an isolated simulator-only layer slice')
     if args.recorded_export_actual and (not args.recorded_layer_fixture or args.recorded_warm_layer_reference
                                         or args.recorded_export_actual.exists()
                                         or args.recorded_export_actual.is_symlink()):
@@ -1039,12 +1043,13 @@ def main():
                                 or words[9:15] != (0x31464735, 1, executed, 120, 0x80000004, 0)
                                 or words[15] != core):
                             raise RuntimeError(f'core {core}: recorded layer failed before {executed} barriers: {words}')
-                result = bytearray(2560 * 4)
+                output_rows = 9216 if args.recorded_wide_output else 2560
+                result = bytearray(output_rows * 4)
                 next_row = 0
                 for bank, address, first, rows in outputs:
                     if first != next_row or not rows:
                         raise ValueError('recorded output fragments not contiguous')
-                    count = min(rows, max(0, 2560 - first))
+                    count = min(rows, max(0, output_rows - first))
                     if count:
                         result[first * 4:(first + count) * 4] = read_bank(bank, address, count * 4)
                     next_row += rows
@@ -1066,7 +1071,7 @@ def main():
                     with (args.recorded_diagnostic_output_dir / f'position{run_number}-token.txt').open('x') as token_file:
                         token_file.write(f'{token}\n')
                 maximum, mismatch = compare_recorded_layer_diagnostic(
-                    result, reference, args.recorded_diagnostic_continue)
+                    result, reference, args.recorded_diagnostic_continue, output_rows)
                 if mismatch is not None:
                     diagnostic_failed = True
                     print(f'DIAGNOSTIC ONLY position {run_number}: {mismatch}', flush=True)
@@ -1075,7 +1080,7 @@ def main():
                     raise RuntimeError('intentionally faulted recorded layer published a candidate')
                 terminal = 'candidate audited' if full_prompt else f'record {record_count} intentionally faults'
                 if maximum is not None:
-                    print(f'PASS actual recorded {layers}-layer prefix: 2560 values match verified reference; '
+                    print(f'PASS actual recorded {layers}-layer prefix: {output_rows} values match verified reference; '
                           f'maximum absolute error {maximum:.9g}; {terminal}; NO HARDWARE', flush=True)
                 if run_number == 0 and runs == 2:
                     # All sender receipts and the token were audited. A finite

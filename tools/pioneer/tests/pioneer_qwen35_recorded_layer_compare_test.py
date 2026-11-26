@@ -40,6 +40,20 @@ try:
     raise AssertionError('truncated data accepted')
 except ValueError:
     pass
+wide = struct.pack('<9216f', *([1.0] * 9216))
+assert compare_recorded_layer(wide, wide, 9216) == 0
+bad_wide = bytearray(wide)
+struct.pack_into('<f', bad_wide, 9215 * 4, 2.0)
+try:
+    compare_recorded_layer(bad_wide, wide, 9216)
+    raise AssertionError('last wide-output row mismatch accepted')
+except RecordedNumericalMismatch as error:
+    assert '1/9216' in str(error) and 'row 9215' in str(error)
+try:
+    compare_recorded_layer(wide, wide)
+    raise AssertionError('wide output accepted without explicit width')
+except ValueError:
+    pass
 weights = [(0, 0x04000000, 4096, 0)]
 streams = [(0, 0, 0x04100000)]
 inputs = [(0, 0x04400000, 0, 16)]

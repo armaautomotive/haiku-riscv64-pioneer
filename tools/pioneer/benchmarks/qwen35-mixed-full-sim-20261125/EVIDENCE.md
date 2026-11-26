@@ -49,7 +49,38 @@ An 11-record replay through post-attention normalization was also derived;
 an independent audit checked its bytes against the original full graph and
 the per-worker normalization output layout. This replay is active as session
 `84984`, log `/private/tmp/q35-baseline-layer9-postnorm-sim-20261126.log`,
-against the same-input oracle's `attn_post_norm` trace. Its result is pending.
+against the same-input oracle's `attn_post_norm` trace. Its result follows.
+
+The 11-record post-attention normalization replay subsequently completed on
+all 120 workers and passed all 2,560 values at the existing tolerance, with
+maximum absolute error `3.81469727e-06`; record 12 intentionally faulted. A
+Q8_K diagnostic comparing this simulated tensor with the original
+same-layer-input CPU normalization found two differing block scales but no
+differing quantized integers or block sums; for the actual layer-9 Q4_K gate
+and up weights, the CPU dot products differed by at most `3.57627869e-07`
+and `2.38418579e-07`, respectively. This check alone does not establish the
+cause of the final layer mismatch.
+
+The standalone offline oracle now optionally replaces an attention-residual
+tensor, reads it back and rejects a missing or repeated replacement. A
+self-injection control matched all 32 layers, logits, token and 13 existing
+trace tensors byte for byte. Supplying the exact isolated simulator attention
+residual at layer 9 still left the simulated final layer outside tolerance:
+36 rows differ, maximum absolute error `2.74404883e-05`. Expanded CPU traces
+for FFN gate, up and SwiGLU retained all earlier control artifacts byte for
+byte; a separate dense-layer trace also matched all 32 original layers,
+logits and token byte for byte. These checks are offline only and never
+provide inference or fallback to Work mode.
+
+The simulator runner now allows a 9,216-value output only for a marked
+isolated layer slice, comparing every value at the same tolerance. Tests
+rejected a mismatch in the last row and rejected a wide output without the
+explicit mode; the command-line guard also rejected wide mode without a
+slice. An independently audited 14-step layer-9 SwiGLU replay uses the same
+simulated layer-8 input and the CPU continuation from its exact attention
+residual. It is running as session `82534`; log
+`/private/tmp/q35-baseline-layer9-swiglu-sim-20261126.log`. The result is not
+yet available and no physical card was accessed.
 
 The paired FFN hybrid full-decode simulation completed its first decode and
 selected the independently expected token `261`, but exited with failure on
