@@ -14,11 +14,12 @@
 #include <vector>
 #include <sys/stat.h>
 #include <unistd.h>
-static constexpr std::array<const char*,5> traceNames={"attn_norm-25","linear_attn_out-25",
-    "attn_residual-25","attn_post_norm-25","ffn_out-25"};
+static constexpr std::array<const char*,13> traceNames={"attn_norm-25","linear_attn_qkv_mixed-25",
+    "z-25","beta-25","alpha-25","gate-25","conv_output_raw-25","conv_output_silu-25",
+    "final_output-25","linear_attn_out-25","attn_residual-25","attn_post_norm-25","ffn_out-25"};
 struct Capture {std::array<std::array<float,2560>,32> layers{};std::array<bool,32> gotLayer{};
     std::array<float,2560> replacement{};unsigned replaceLayer=32;
-    std::array<std::array<float,2560>,5> trace{};std::array<bool,5> gotTrace{};
+    std::array<std::vector<float>,traceNames.size()> trace{};std::array<bool,traceNames.size()> gotTrace{};
     std::vector<float> logits;bool gotLogits=false,replaced=false,trace25=false;};
 static bool SameFile(const struct stat& a,const struct stat& b) {
     if (a.st_dev!=b.st_dev || a.st_ino!=b.st_ino || a.st_size!=b.st_size
@@ -40,8 +41,10 @@ static bool Callback(ggml_tensor* tensor,bool ask,void* opaque) {
     if (ask) return isLayer || logits || traceIndex<traceNames.size();
     if (tensor->type!=GGML_TYPE_F32 || !ggml_is_contiguous(tensor)) return false;
     if (traceIndex<traceNames.size()) {
-        if (ggml_nelements(tensor)!=2560 || ggml_nbytes(tensor)!=2560*sizeof(float)) return false;
-        ggml_backend_tensor_get(tensor,capture.trace[traceIndex].data(),0,2560*sizeof(float));
+        const int64_t count=ggml_nelements(tensor);
+        if (count<=0 || count>32768 || ggml_nbytes(tensor)!=size_t(count)*sizeof(float)) return false;
+        auto& target=capture.trace[traceIndex];target.resize(size_t(count));
+        ggml_backend_tensor_get(tensor,target.data(),0,target.size()*sizeof(float));
         capture.gotTrace[traceIndex]=true;return true;
     }
     if (logits) {
@@ -63,7 +66,7 @@ static bool Callback(ggml_tensor* tensor,bool ask,void* opaque) {
     capture.gotLayer[layer]=true;
     return true;
 }
-static bool WriteNew(const std::string& path,const std::array<float,2560>& values) {
+template<typename Values> static bool WriteNew(const std::string& path,const Values& values) {
     FILE* file=std::fopen(path.c_str(),"wbx");if (!file) return false;
     bool okay=std::fwrite(values.data(),sizeof(float),values.size(),file)==values.size();
     if (std::fclose(file)) okay=false;

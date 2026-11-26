@@ -183,3 +183,29 @@ justify relaxed tolerances, or demonstrate throughput or recovery. The oracle
 logs and outputs are in `/private/tmp/q35-oracle-layer15-*-verified-20261126*`
 and `/private/tmp/q35-oracle-layer25-trace-*-20261126*`. Continue the running
 prefix and hybrid comparisons and investigate the numerical cause.
+
+An expanded trace of the same two runs first observes the jump at the input
+projections: the layer-25 normalized input differs by at most `2.39908695e-06`,
+while `linear_attn_qkv_mixed` differs by `0.00162911415` and its `z` gate
+projection by `0.00113296509`. Later trace points include convolution and
+the recurrent output. The `alpha`, `beta` and gate vectors were identical
+in this comparison. The expanded traced control and injected runs each match
+their untraced outputs byte-for-byte. This points to the offline projection
+computation as the first observed amplification, but its precise cause is not
+proven and cannot be assumed to explain the separate full simulator failure.
+Logs and outputs are under `/private/tmp/q35-oracle-layer25-detail-*-20261126*`.
+
+An offline projection audit then inspected the pinned model's layer-25 Q4_K
+gate and Q5_K QKV weights, using the same CPU GGML Q8_K input quantizer and
+dot-product functions. Across the 2,560 normalized input values, the two
+quantized inputs differed in one Q8_K integer and its block sum, plus six
+block scales. Applying both quantized rows to the actual projection weights
+reproduced maximum output differences of `0.00113320351` for the gate and
+`0.00162863731` for QKV, close to the traced outputs. Retaining the original
+integers and sums while changing only scales reduced those maxima to
+`9.53674316e-07` and `1.90734863e-06`. This supports a quantization threshold
+as the source of the observed amplification in this single CPU experiment.
+The audit source is `tools/pioneer/tests/pioneer_qwen35_q8k_projection_sensitivity.cpp`;
+the input files and model must come from the separately authenticated oracle
+run. It does not establish the cause of the full simulator mismatch, which
+still needs investigation with the sequential prefix results.
