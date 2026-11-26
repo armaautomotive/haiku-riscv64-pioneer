@@ -211,6 +211,8 @@ def main():
                        help='run the experimental two-stage recurrent update on 120 workers')
     group.add_argument('--dense-attention-fixture', type=Path,
                        help='run synthetic dense attention through the resident workers')
+    group.add_argument('--recorded-layer-fixture', type=Path,
+                       help='run the first recorded model layer using the production bank layout')
     group.add_argument('--silu-fixture', type=Path,
                        help='also execute the separately generated 120-core SiLU operation')
     group.add_argument('--rms-fixture', type=Path,
@@ -225,10 +227,19 @@ def main():
                         help='use exported simulator state with position-zero templates')
     parser.add_argument('--resident-position-one-command', type=Path,
                         help='position-one command for a second simulator run with the same templates')
+    parser.add_argument('--resident-export-layer-output', type=Path,
+                        help='save the independently checked position-zero layer output to a new file')
+    parser.add_argument('--recorded-layer-reference', type=Path,
+                        help='compare the recorded model layer with a previously verified output')
     args = parser.parse_args()
     if ((args.resident_export_state or args.resident_import_state or args.resident_position_one_command)
             and not args.resident_sequence_fixture):
         parser.error('resident state options require --resident-sequence-fixture')
+    if bool(args.recorded_layer_fixture) != bool(args.recorded_layer_reference):
+        parser.error('recorded layer requires both fixture and reference')
+    if args.resident_export_layer_output and (not args.resident_sequence_fixture
+            or args.resident_export_layer_output.exists() or args.resident_export_layer_output.is_symlink()):
+        parser.error('layer output export requires a resident sequence and a new path')
     if bool(args.resident_import_state) != bool(args.resident_position_one_command):
         parser.error('resident state import requires a position-one command, and vice versa')
     if args.resident_export_state and args.resident_import_state:
@@ -241,7 +252,8 @@ def main():
         parser.error('--resident-corrupt-core requires resident templates and a core in 0..119')
     if args.resident_fault_command and (not args.resident_templates or args.resident_corrupt_core is not None):
         parser.error('--resident-fault-command requires resident templates and no corrupt core')
-    template_directory = args.resident_sequence_fixture or args.delta_shards_fixture or args.dense_attention_fixture
+    template_directory = (args.resident_sequence_fixture or args.delta_shards_fixture
+                          or args.dense_attention_fixture or args.recorded_layer_fixture)
     template_path = template_directory / 'templates.bin' if template_directory else args.resident_templates
     resident_templates = template_path.read_bytes() if template_path else None
     if resident_templates is not None and len(resident_templates) != 120 * 512:
@@ -251,7 +263,7 @@ def main():
         raise ValueError('expected sharing-enabled standalone service image')
     resident_shards = (args.resident_sequence_fixture is not None
                        and (args.resident_sequence_fixture / 'delta-params.bin').is_file())
-    if bool(args.delta_shards_fixture or args.dense_attention_fixture or resident_shards) != (image / 'delta-shard.marker').is_file():
+    if bool(args.delta_shards_fixture or args.dense_attention_fixture or args.recorded_layer_fixture or resident_shards) != (image / 'delta-shard.marker').is_file():
         raise ValueError('delta shard fixture and service image do not match')
     dense_sharded = False
     if args.dense_attention_fixture:
@@ -534,6 +546,111 @@ def main():
                   'third record intentionally faults; NO HARDWARE')
             return
 
+        if args.recorded_layer_fixture:
+            directory = args.recorded_layer_fixture
+            command = (directory / 'command.bin').read_bytes()
+            records = (directory / 'records.bin').read_bytes()
+            if len(command) != 128 or len(records) != 120 * 18 * 2048:
+                raise ValueError('unexpected recorded layer fixture size')
+            entries = [line.split() for line in (directory / 'layout.txt').read_text().splitlines()]
+            weights = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'W' and len(row) == 5]
+            streams = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'S' and len(row) == 4]
+            outputs = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'O' and len(row) == 5]
+            if len(weights) + len(streams) + len(outputs) != len(entries) or len(streams) != 120 or not outputs:
+                raise ValueError('invalid recorded layer layout')
+            routes = (786, 978, 1170, 785, 977, 1169, 1361)
+
+            def select_bank(bank, address):
+                if not 0 <= bank < len(routes) or not 0x04000000 <= address < 0xc4000000:
+                    raise ValueError('invalid recorded bank address')
+                route = routes[bank]
+                select(2, address, route & 63, route >> 6)
+
+            def write_bank(bank, address, payload):
+                offset = 0
+                while offset < len(payload):
+                    current = address + offset
+                    count = min(0x10000, len(payload) - offset, 0x200000 - (current & 0x1fffff))
+                    select_bank(bank, current)
+                    write(bar + 0x400000 + (current & 0x1fffff), payload[offset:offset + count])
+                    offset += count
+
+            def read_bank(bank, address, size):
+                result = bytearray()
+                while len(result) < size:
+                    current = address + len(result)
+                    count = min(0x10000, size - len(result), 0x200000 - (current & 0x1fffff))
+                    select_bank(bank, current)
+                    result.extend(read(bar + 0x400000 + (current & 0x1fffff), count))
+                return result
+
+            with (directory / 'weights.bin').open('rb') as weight_file:
+                weight_size = weight_file.seek(0, 2)
+                for bank, address, size, offset in weights:
+                    if not size or offset + size > weight_size or address + size > 0xc4000000:
+                        raise ValueError('invalid recorded weight range')
+                    weight_file.seek(offset)
+                    at = 0
+                    while at < size:
+                        current = address + at
+                        count = min(0x10000, size - at, 0x200000 - (current & 0x1fffff))
+                        payload = weight_file.read(count)
+                        if len(payload) != count:
+                            raise ValueError('truncated recorded weights')
+                        select_bank(bank, current)
+                        write(bar + 0x400000 + (current & 0x1fffff), payload)
+                        at += count
+            for expected_core, (core, bank, address) in enumerate(streams):
+                if core != expected_core:
+                    raise ValueError('recorded stream core order mismatch')
+                write_bank(bank, address, records[core * 18 * 2048:(core + 1) * 18 * 2048])
+            select_worker(0)
+            write(bar + 0xab080, command[:64])
+            write(bar + 0xab0c0, command[64:])
+            for attempt in range(2000):
+                lib.libttsim_clock(100000)
+                snapshots = []
+                for core in range(120):
+                    select_worker(core)
+                    snapshots.append(struct.unpack('<16I', read(mailbox_address, 64)))
+                if all(words[5] == 4 for words in snapshots):
+                    break
+                if any(words[5] not in (1, 2, 4) for words in snapshots):
+                    raise RuntimeError('unexpected worker state during recorded layer')
+            else:
+                raise RuntimeError('recorded layer did not reach its intentional terminal fault')
+            for core, words in enumerate(snapshots):
+                if (words[2:8] != (1, 0, 1, 4, 4, 5)
+                        or words[9:15] != (0x31464735, 1, 17, 120, 0x80000004, 0)
+                        or words[15] != core):
+                    raise RuntimeError(f'core {core}: recorded layer failed before 17 barriers: {words}')
+            result = bytearray(2560 * 4)
+            next_row = 0
+            for bank, address, first, rows in outputs:
+                if first != next_row or not rows:
+                    raise ValueError('recorded output fragments not contiguous')
+                count = min(rows, max(0, 2560 - first))
+                if count:
+                    result[first * 4:(first + count) * 4] = read_bank(bank, address, count * 4)
+                next_row += rows
+            if next_row != 9216:
+                raise ValueError('incomplete recorded output layout')
+            reference = args.recorded_layer_reference.read_bytes()
+            if len(reference) != 2560 * 4:
+                raise ValueError('unexpected verified layer reference size')
+            maximum = 0.0
+            for row, ((got,), (want,)) in enumerate(zip(struct.iter_unpack('<f', result), struct.iter_unpack('<f', reference))):
+                error = abs(got - want)
+                if not math.isfinite(got) or not math.isfinite(want) or error > 2e-5 * max(1.0, abs(want)):
+                    raise RuntimeError(f'recorded final row {row}: {got} differs from verified reference {want}')
+                maximum = max(maximum, error)
+            select_worker(0)
+            if struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
+                raise RuntimeError('intentionally faulted recorded layer published a candidate')
+            print(f'PASS actual recorded model layer: 2560 values match verified reference; '
+                  f'maximum absolute error {maximum:.9g}; 18th record intentionally faults; NO HARDWARE', flush=True)
+            return
+
         if args.dense_attention_fixture:
             directory = args.dense_attention_fixture
             command = (directory / 'command.bin').read_bytes()
@@ -629,6 +746,9 @@ def main():
             if delta_params_path.exists() != delta_state_path.exists():
                 raise ValueError('incomplete sharded recurrence fixture')
             sharded = delta_params_path.exists()
+            if args.resident_export_layer_output and (not sharded or len(records) != 120 * 22 * 2048
+                    or position_bytes != bytes(4)):
+                raise ValueError('layer export requires the position-zero 22-record fixture')
             if (args.resident_import_state or args.resident_export_state) and not sharded:
                 raise ValueError('state handoff requires the complete sharded layer fixture')
             full_prompt = (directory / 'full-prompt.marker').is_file()
@@ -1028,6 +1148,11 @@ def main():
                             raise RuntimeError(f'FFN down/residual row {row}: {got} differs from {want}')
                     print(f'FFN down and final residual: 2560 values match independent Q6_K reference; '
                           f'maximum absolute error {maximum:.9g}, normalized error {worst:.9g}', flush=True)
+                    if args.resident_export_layer_output:
+                        payload = struct.pack('<2560f', *final)
+                        with args.resident_export_layer_output.open('xb') as stream:
+                            stream.write(payload)
+                        print('exported independently checked layer output: sha256=' + hashlib.sha256(payload).hexdigest(), flush=True)
                 select_worker(0)
                 if not full_prompt and struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
                     raise RuntimeError('intentionally faulted sequence published a candidate')

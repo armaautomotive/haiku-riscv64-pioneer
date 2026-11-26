@@ -1,0 +1,2 @@
+PASS actual recorded model layer: 2560 values match verified reference; maximum absolute error 0; 18th record intentionally faults; NO HARDWARE
+[34300000] 250.3 seconds (137.1 KHz)

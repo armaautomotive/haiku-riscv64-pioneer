@@ -217,6 +217,28 @@ KV reads for every output shard, increasing logical KV reads by 7.5 times; the
 key and value pack steps still use 4 workers. The simulator checks correctness,
 not hardware performance. See `benchmarks/qwen35-dense-attention-shards-sim-20261125/EVIDENCE.md`.
 
+The authenticated full-graph recorder can also be tested with the actual
+packed model layout across seven simulated DRAM banks. First export the
+verified position-zero final layer output from the 22-record authenticated
+fixture using `--resident-export-layer-output NEW_FILE`. Then build and run:
+
+```sh
+c++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  tools/pioneer/tests/pioneer_qwen35_ttsim_recorded_layer_fixture.cpp \
+  tools/pioneer/PioneerModelWeightCache.cpp -o /tmp/q35-recorded-layer-fixture
+mkdir /tmp/q35-recorded-layer-input
+/tmp/q35-recorded-layer-fixture PINNED_GGUF /tmp/q35-recorded-layer-input
+python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_bank_routes_test.py MATRIX_EXPLORATORY_LIBTTSIM
+python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py \
+  MATRIX_EXPLORATORY_LIBTTSIM SHARDED_RESIDENT_IMAGE ROLE_IMAGES \
+  --recorded-layer-fixture /tmp/q35-recorded-layer-input \
+  --recorded-layer-reference VERIFIED_LAYER_OUTPUT
+```
+
+Only the first 17 steps (one layer plus embedding) run; the next record is
+intentionally invalid. This is not whole-model inference or a speed test.
+See `benchmarks/qwen35-recorded-first-layer-sim-20261125/EVIDENCE.md`.
+
 A separate fixture tests two **consecutive prompt commands on one resident
 simulator fleet**. It reuses the validated position-zero layer fixture,
 adds 500 diagnostic residual copies to reach the actual 521-step prompt
