@@ -40,6 +40,56 @@ def resident_position_one_command(initial, candidate):
     return candidate
 
 
+def validate_resident_prompt_commands(first, second):
+    """Validate the two full-count synthetic prompt requests and commits."""
+    if len(first) != 128 or len(second) != 128:
+        raise ValueError('invalid full-prompt command size')
+    commands = [struct.unpack('<32I', raw) for raw in (first, second)]
+    for index, words in enumerate(commands):
+        if (words[0:2] != (0x31444335, 1) or words[5] != 521
+                or words[8] != 42 or words[9] != index or any(words[11:16])):
+            raise ValueError('invalid full-prompt command payload')
+        checksum = 2166136261
+        for word in words[:10]:
+            checksum = ((checksum ^ word) * 16777619) & 0xffffffff
+        marker = 0x40000000 | words[2]
+        if (checksum != words[10] or words[16:] !=
+                (words[3], (~words[3]) & 0xffffffff, marker, (~marker) & 0xffffffff) * 4):
+            raise ValueError('invalid full-prompt command commit')
+    one, two = commands
+    if (two[2] != one[2] + 1 or two[3] != one[3] + 1
+            or two[4] != one[4] + one[5] or two[5:9] != one[5:9]):
+        raise ValueError('full-prompt commands do not have fresh disjoint tickets')
+
+
+def audit_resident_candidate(receipt, command, snapshots, select_worker, read, bar):
+    """Audit the simulated root candidate and each local sender receipt."""
+    words = struct.unpack('<32I', command)
+    trigger, epoch, first, count = words[2:6]
+    expected = [0x31435235, 2, trigger, epoch, first, count]
+    checksum = 2166136261
+    for word in expected:
+        checksum = ((checksum ^ word) * 16777619) & 0xffffffff
+    expected += [checksum, trigger]
+    select_worker(0)
+    if tuple(expected) != receipt or struct.unpack('<8I', read(bar + 0xab310, 32)) != receipt:
+        raise RuntimeError('resident candidate is invalid or unstable')
+    if len(snapshots) != 120:
+        raise RuntimeError('incomplete simulated fleet snapshot')
+    for core, snapshot in enumerate(snapshots):
+        select_worker(core)
+        again = struct.unpack('<16I', read(bar + 0xab000, 64))
+        if (snapshot != again or snapshot[2:8] != (trigger, trigger, trigger, 1, 0, 0)
+                or any(snapshot[9:15]) or snapshot[15] != core):
+            raise RuntimeError(f'core {core}: resident mailbox did not settle')
+        sender = struct.unpack('<4I', read(bar + 0xab550, 16))
+        sender_again = struct.unpack('<4I', read(bar + 0xab550, 16))
+        sender_checksum = (0x31535335 ^ trigger ^ ((epoch << 7) & 0xffffffff)
+                           ^ (epoch >> 25) ^ ((core * 0x9e3779b9) & 0xffffffff))
+        if sender != sender_again or sender != (trigger, epoch, core, sender_checksum):
+            raise RuntimeError(f'core {core}: resident sender receipt did not settle')
+
+
 def projection_reference(fixture, quant, input_offset, tile, rows=1920, weight_offset=0, input_rows=2560):
     """Independently decode byte-major Q4_K, Q5_K, Q6_K or Q8_0 on the host.
 
@@ -488,7 +538,10 @@ def main():
             sharded = delta_params_path.exists()
             if (args.resident_import_state or args.resident_export_state) and not sharded:
                 raise ValueError('state handoff requires the complete sharded layer fixture')
-            record_count = 22 if sharded else 7
+            full_prompt = (directory / 'full-prompt.marker').is_file()
+            if full_prompt and (not sharded or args.resident_import_state or args.resident_export_state):
+                raise ValueError('full-prompt fixture requires the standalone sharded path')
+            record_count = 521 if full_prompt else 22 if sharded else 7
             if (len(command) != 128 or len(records) != 120 * record_count * 2048 or len(weights) != 33920
                     or hashlib.sha256(weights).hexdigest()
                     != 'd784c0b7fe8df8aab8d4797a8ea5a2c25b5db49a84c60a3ad93819086355871d'
@@ -622,260 +675,297 @@ def main():
                 write(bar + 0x400000 + (address & 0x1fffff),
                       struct.pack(f'<{rows}I', *([0x7fc00000] * rows)))
             for core in range(120):
-                address = 0x04000000 + core * 0x100000
+                address = (0x40000000 + core * 0x200000) if full_prompt else (0x04000000 + core * 0x100000)
                 select(2, address, 18, 12)
                 write(bar + 0x400000 + (address & 0x1fffff), records[core * record_count * 2048:(core + 1) * record_count * 2048])
-            select_worker(0)
-            write(bar + 0xab080, command[:64])
-            write(bar + 0xab0c0, command[64:])
-            for attempt in range(1000 if sharded else 200):
-                lib.libttsim_clock(100000)
-                snapshots = []
-                for core in range(120):
-                    select_worker(core)
-                    snapshots.append(struct.unpack('<16I', read(mailbox_address, 64)))
-                if all(words[5] == 4 for words in snapshots):
-                    break
-                if any(words[5] not in (1, 2, 4) for words in snapshots):
-                    raise RuntimeError('unexpected resident state during sequence')
-            else:
-                raise RuntimeError('resident sequence did not reach its intentional terminal fault')
-            for core, words in enumerate(snapshots):
-                if (words[2:8] != (1, 0, 1, 4, 4, 5)
-                        or words[9:15] != (0x31464735, 1, record_count - 1, 120, 0x80000004, 0)
-                        or words[15] != core):
-                    raise RuntimeError(f'core {core}: sequence failed before all {record_count - 1} barriers: {words}')
-            for name, address in ((('embedding checkpoint', 0x21080000),) if sharded else
-                                  (('embedding', 0x20000000), ('residual save', 0x20010000))):
+            commands = [command]
+            if full_prompt:
+                commands.append((directory / 'command-next.bin').read_bytes())
+                validate_resident_prompt_commands(*commands)
+            for run_number, command in enumerate(commands):
+                trigger, epoch = struct.unpack_from('<II', command, 8)
+                print(f'starting simulated prompt command {trigger}, epoch {epoch}', flush=True)
+                select_worker(0)
+                write(bar + 0xab080, command[:64])
+                write(bar + 0xab0c0, command[64:])
+                for attempt in range(10000 if full_prompt else 1000 if sharded else 200):
+                    lib.libttsim_clock(100000)
+                    snapshots = []
+                    for core in range(120):
+                        select_worker(core)
+                        snapshots.append(struct.unpack('<16I', read(mailbox_address, 64)))
+                    if full_prompt:
+                        if any(words[5] in (4, 5) for words in snapshots):
+                            raise RuntimeError('resident prompt retained a worker fault')
+                        select_worker(0)
+                        receipt = struct.unpack('<8I', read(bar + 0xab310, 32))
+                        if receipt[7] == trigger:
+                            audit_resident_candidate(receipt, command, snapshots, select_worker, read, bar)
+                            break
+                        if attempt and attempt % 50 == 0:
+                            progress = struct.unpack('<I', read(bar + 0xab300, 4))[0]
+                            print(f'prompt {trigger}: simulator polling attempt {attempt}, progress=0x{progress:08x}', flush=True)
+                    else:
+                        if all(words[5] == 4 for words in snapshots):
+                            break
+                        if any(words[5] not in (1, 2, 4) for words in snapshots):
+                            raise RuntimeError('unexpected resident state during sequence')
+                else:
+                    raise RuntimeError('resident sequence did not reach its expected terminal state')
+                if not full_prompt:
+                    for core, words in enumerate(snapshots):
+                        if (words[2:8] != (1, 0, 1, 4, 4, 5)
+                                or words[9:15] != (0x31464735, 1, record_count - 1, 120, 0x80000004, 0)
+                                or words[15] != core):
+                            raise RuntimeError(f'core {core}: sequence failed before all {record_count - 1} barriers: {words}')
+                for name, address in ((('embedding checkpoint', 0x21080000),) if sharded else
+                                      (('embedding', 0x20000000), ('residual save', 0x20010000))):
+                    select(2, address, 18, 12)
+                    actual = struct.unpack('<2560f', read(bar + 0x400000 + (address & 0x1fffff), 2560 * 4))
+                    maximum = 0.0
+                    for row, (got, want) in enumerate(zip(actual, expected)):
+                        if not math.isfinite(got) or abs(got - want) > 1e-6 * max(1.0, abs(want)):
+                            raise RuntimeError(f'{name} row {row}: {got} differs from {want}')
+                        maximum = max(maximum, abs(got - want))
+                    print(f'{name}: 2,560 values match independent Q6_K reference; '
+                          f'maximum absolute error {maximum:.9g}', flush=True)
+                norm_weights = struct.unpack('<2560f', norm)
+                rms_scale = 1.0 / math.sqrt(sum(value * value for value in expected) / 2560 + 1e-6)
+                # The sharded graph copies RMS aside before the recurrent output
+                # projection reuses the normalized activation buffer.
+                address = 0x21040000 if sharded else 0x20020000
                 select(2, address, 18, 12)
                 actual = struct.unpack('<2560f', read(bar + 0x400000 + (address & 0x1fffff), 2560 * 4))
                 maximum = 0.0
-                for row, (got, want) in enumerate(zip(actual, expected)):
-                    if not math.isfinite(got) or abs(got - want) > 1e-6 * max(1.0, abs(want)):
-                        raise RuntimeError(f'{name} row {row}: {got} differs from {want}')
+                for row, (got, value, weight) in enumerate(zip(actual, expected, norm_weights)):
+                    want = value * rms_scale * weight
+                    if not math.isfinite(got) or abs(got - want) > 2e-5 * max(1.0, abs(want)):
+                        raise RuntimeError(f'RMS row {row}: {got} differs from {want}')
                     maximum = max(maximum, abs(got - want))
-                print(f'{name}: 2,560 values match independent Q6_K reference; '
-                      f'maximum absolute error {maximum:.9g}', flush=True)
-            norm_weights = struct.unpack('<2560f', norm)
-            rms_scale = 1.0 / math.sqrt(sum(value * value for value in expected) / 2560 + 1e-6)
-            # The sharded graph copies RMS aside before the recurrent output
-            # projection reuses the normalized activation buffer.
-            address = 0x21040000 if sharded else 0x20020000
-            select(2, address, 18, 12)
-            actual = struct.unpack('<2560f', read(bar + 0x400000 + (address & 0x1fffff), 2560 * 4))
-            maximum = 0.0
-            for row, (got, value, weight) in enumerate(zip(actual, expected, norm_weights)):
-                want = value * rms_scale * weight
-                if not math.isfinite(got) or abs(got - want) > 2e-5 * max(1.0, abs(want)):
-                    raise RuntimeError(f'RMS row {row}: {got} differs from {want}')
-                maximum = max(maximum, abs(got - want))
-            print(f'RMS: 2,560 values match independent reference; maximum absolute error {maximum:.9g}', flush=True)
-            # The RMS output has already been independently checked above.
-            # Projections quantize it to Q8_K or Q8_0 before the dot product.
-            actual_rms = actual
-            reference_fixtures = {quant: projection + struct.pack('<2560f',
-                *quantized_activation_reference(actual, quant)) for quant in ('q5', 'q8')}
-            # Each convolution history row ends with the original QKV input;
-            # QKV itself is overwritten by the convolution output.
-            select(2, history_write, 18, 12)
-            history_bytes = read(bar + 0x400000 + (history_write & 0x1fffff), 24576 * 4)
-            history = struct.unpack('<24576f', history_bytes)
-            for i in range(8192):
-                old1 = history_prior[3 * i + 1] if position else 0.0
-                old2 = history_prior[3 * i + 2] if position else 0.0
-                if history[3 * i] != old1 or history[3 * i + 1] != old2:
-                    raise RuntimeError(f'convolution history shift mismatch at row {i}')
-            qkv_original = history[2::3]
-            specs = (('QKV', 8192, 0x21000000, 'q5', 2816, 0),
-                     ('Alpha', 32, 0x21010000, 'q8', 576, 14417920),
-                     ('Beta', 32, 0x21020000, 'q8', 576, 14512128))
-            for name, rows, address, quant, tile, weight_offset in specs:
-                values, norms = projection_reference(reference_fixtures[quant], quant, len(projection),
-                                                     tile, rows, weight_offset)
+                print(f'RMS: 2,560 values match independent reference; maximum absolute error {maximum:.9g}', flush=True)
+                # The RMS output has already been independently checked above.
+                # Projections quantize it to Q8_K or Q8_0 before the dot product.
+                actual_rms = actual
+                reference_fixtures = {quant: projection + struct.pack('<2560f',
+                    *quantized_activation_reference(actual, quant)) for quant in ('q5', 'q8')}
+                # Each convolution history row ends with the original QKV input;
+                # QKV itself is overwritten by the convolution output.
+                select(2, history_write, 18, 12)
+                history_bytes = read(bar + 0x400000 + (history_write & 0x1fffff), 24576 * 4)
+                history = struct.unpack('<24576f', history_bytes)
+                for i in range(8192):
+                    old1 = history_prior[3 * i + 1] if position else 0.0
+                    old2 = history_prior[3 * i + 2] if position else 0.0
+                    if history[3 * i] != old1 or history[3 * i + 1] != old2:
+                        raise RuntimeError(f'convolution history shift mismatch at row {i}')
+                qkv_original = history[2::3]
+                specs = (('QKV', 8192, 0x21000000, 'q5', 2816, 0),
+                         ('Alpha', 32, 0x21010000, 'q8', 576, 14417920),
+                         ('Beta', 32, 0x21020000, 'q8', 576, 14512128))
+                for name, rows, address, quant, tile, weight_offset in specs:
+                    values, norms = projection_reference(reference_fixtures[quant], quant, len(projection),
+                                                         tile, rows, weight_offset)
+                    select(2, address, 18, 12)
+                    actual = (qkv_original if name == 'QKV' else
+                              struct.unpack(f'<{rows}f', read(bar + 0x400000 + (address & 0x1fffff), rows * 4)))
+                    maximum = worst = 0.0
+                    for row, (got, want, norm_value) in enumerate(zip(actual, values, norms)):
+                        error = abs(got - want)
+                        ratio = error / max(1.0, norm_value)
+                        maximum = max(maximum, error)
+                        worst = max(worst, ratio)
+                        if not math.isfinite(got) or ratio > 2e-6:
+                            raise RuntimeError(f'{name} row {row}: {got} differs from {want}; normalized error {ratio}')
+                    print(f'{name}: {rows} values match independent reference; maximum absolute error '
+                          f'{maximum:.9g}; maximum normalized error {worst:.9g}', flush=True)
+                gate_input = struct.pack('<2560f', *quantized_activation_reference(actual_rms, 'q4'))
+                values, norms = projection_reference(gate + gate_input, 'q4', len(gate), 2304, 4096)
+                address = 0x21030000
                 select(2, address, 18, 12)
-                actual = (qkv_original if name == 'QKV' else
-                          struct.unpack(f'<{rows}f', read(bar + 0x400000 + (address & 0x1fffff), rows * 4)))
+                gate_actual = struct.unpack('<4096f', read(bar + 0x400000 + (address & 0x1fffff), 4096 * 4))
                 maximum = worst = 0.0
-                for row, (got, want, norm_value) in enumerate(zip(actual, values, norms)):
+                for row, (got, want, norm_value) in enumerate(zip(gate_actual, values, norms)):
                     error = abs(got - want)
                     ratio = error / max(1.0, norm_value)
-                    maximum = max(maximum, error)
-                    worst = max(worst, ratio)
-                    if not math.isfinite(got) or ratio > 2e-6:
-                        raise RuntimeError(f'{name} row {row}: {got} differs from {want}; normalized error {ratio}')
-                print(f'{name}: {rows} values match independent reference; maximum absolute error '
-                      f'{maximum:.9g}; maximum normalized error {worst:.9g}', flush=True)
-            gate_input = struct.pack('<2560f', *quantized_activation_reference(actual_rms, 'q4'))
-            values, norms = projection_reference(gate + gate_input, 'q4', len(gate), 2304, 4096)
-            address = 0x21030000
-            select(2, address, 18, 12)
-            gate_actual = struct.unpack('<4096f', read(bar + 0x400000 + (address & 0x1fffff), 4096 * 4))
-            maximum = worst = 0.0
-            for row, (got, want, norm_value) in enumerate(zip(gate_actual, values, norms)):
-                error = abs(got - want)
-                ratio = error / max(1.0, norm_value)
-                maximum, worst = max(maximum, error), max(worst, ratio)
-                if not math.isfinite(got) or ratio > 2e-6:
-                    raise RuntimeError(f'gate row {row}: {got} differs from {want}; normalized error {ratio}')
-            print(f'gate: 4096 values match independent reference; maximum absolute error '
-                  f'{maximum:.9g}; maximum normalized error {worst:.9g}', flush=True)
-            select(2, 0x21000000, 18, 12)
-            conv_actual = struct.unpack('<8192f', read(bar + 0x400000 + (0x21000000 & 0x1fffff), 8192 * 4))
-            conv_weights = struct.unpack('<32768f', conv)
-            maximum = 0.0
-            conv_reference = []
-            for row, (got, current) in enumerate(zip(conv_actual, qkv_original)):
-                terms = [history_prior[3 * row + i] * conv_weights[4 * row + i] if position else 0.0
-                         for i in range(3)]
-                value = sum(terms) + current * conv_weights[4 * row + 3]
-                want = value / (1.0 + math.exp(-value))
-                conv_reference.append(want)
-                # Sharded recurrence overwrites the V portion after convolution.
-                if not sharded or row < 4096:
-                    error = abs(got - want)
-                    maximum = max(maximum, error)
-                    if not math.isfinite(got) or error > 2e-6 * max(1.0, abs(want)):
-                        raise RuntimeError(f'convolution row {row}: {got} differs from {want}; error {error}')
-            checked = 4096 if sharded else 8192
-            print(f'convolution: {checked} retained values and 24576 history entries match independent '
-                  f'position-{position} reference; maximum absolute error {maximum:.9g}', flush=True)
-            if sharded:
-                negative_a = struct.unpack('<32f', delta_params[:128])
-                bias = struct.unpack('<32f', delta_params[128:256])
-                norm = struct.unpack('<128f', delta_params[256:])
-                select(2, 0x21010000, 18, 12)
-                alpha = struct.unpack('<32f', read(bar + 0x400000 + (0x21010000 & 0x1fffff), 128))
-                select(2, 0x21020000, 18, 12)
-                beta_logit = struct.unpack('<32f', read(bar + 0x400000 + (0x21020000 & 0x1fffff), 128))
-                state_bytes = bytearray()
-                for offset in range(0, len(delta_state), 0x10000):
-                    current = state_write + offset
-                    select(2, current, 18, 12)
-                    state_bytes.extend(read(bar + 0x400000 + (current & 0x1fffff),
-                                            min(0x10000, len(delta_state) - offset)))
-                state_actual = struct.unpack('<524288f', state_bytes)
-                state_max = output_max = 0.0
-                for head in range(32):
-                    key_head = head % 16
-                    query = conv_reference[key_head * 128:(key_head + 1) * 128]
-                    key = conv_reference[2048 + key_head * 128:2048 + (key_head + 1) * 128]
-                    query_scale = 1.0 / max(math.sqrt(sum(x * x for x in query)), 1e-6) / math.sqrt(128)
-                    key_scale = 1.0 / max(math.sqrt(sum(x * x for x in key)), 1e-6)
-                    query = [x * query_scale for x in query]
-                    key = [x * key_scale for x in key]
-                    shifted = alpha[head] + bias[head]
-                    softplus = max(shifted, 0.0) + math.log1p(math.exp(-abs(shifted)))
-                    decay = math.exp(negative_a[head] * softplus)
-                    beta = 1.0 / (1.0 + math.exp(-beta_logit[head]))
-                    raw_output = []
-                    for lane in range(128):
-                        base = (head * 128 + lane) * 128
-                        prior = old_state[base:base + 128] if position else [0.0] * 128
-                        prediction = sum(prior[k] * decay * key[k] for k in range(128))
-                        correction = (conv_reference[4096 + head * 128 + lane] - prediction) * beta
-                        expected_state = [prior[k] * decay + key[k] * correction for k in range(128)]
-                        raw_output.append(sum(expected_state[k] * query[k] for k in range(128)))
-                        for k, want in enumerate(expected_state):
-                            got = state_actual[base + k]
-                            error = abs(got - want)
-                            state_max = max(state_max, error)
-                            if not math.isfinite(got) or error > 2e-5 * max(1.0, abs(want)):
-                                raise RuntimeError(f'recurrent state {head}:{lane}:{k}: {got} differs from {want}')
-                    rms_scale = 1.0 / math.sqrt(sum(x * x for x in raw_output) / 128 + 1e-6)
-                    for lane, raw in enumerate(raw_output):
-                        gate_value = gate_actual[head * 128 + lane]
-                        want = raw * rms_scale * norm[lane] * gate_value / (1.0 + math.exp(-gate_value))
-                        got = conv_actual[4096 + head * 128 + lane]
-                        error = abs(got - want)
-                        output_max = max(output_max, error)
-                        if not math.isfinite(got) or error > 2e-4 * max(1.0, abs(want)):
-                            raise RuntimeError(f'recurrent output {head}:{lane}: {got} differs from {want}')
-                print(f'sharded recurrence: 524288 state values and 4096 outputs match independent '
-                      f'position-{position} reference; max absolute errors {state_max:.9g}, {output_max:.9g}', flush=True)
-                recurrent_input = struct.pack('<4096f',
-                    *quantized_activation_reference(conv_actual[4096:], 'q5'))
-                reference, norms = projection_reference(output_weight + recurrent_input, 'q5',
-                    len(output_weight), 2816, 2560, input_rows=4096)
-                select(2, 0x21060000, 18, 12)
-                output = struct.unpack('<2560f', read(bar + 0x400000 + (0x21060000 & 0x1fffff), 2560 * 4))
-                maximum = worst = 0.0
-                for row, (got, want, magnitude) in enumerate(zip(output, reference, norms)):
-                    error = abs(got - want)
-                    ratio = error / max(1.0, magnitude)
                     maximum, worst = max(maximum, error), max(worst, ratio)
                     if not math.isfinite(got) or ratio > 2e-6:
-                        raise RuntimeError(f'recurrent projection row {row}: {got} differs from {want}')
-                print(f'recurrent output projection: 2560 values match independent Q5_K reference; '
-                      f'maximum absolute error {maximum:.9g}, normalized error {worst:.9g}', flush=True)
-                select(2, 0x20010000, 18, 12)
-                residual_saved = struct.unpack('<2560f', read(bar + 0x400000 + (0x20010000 & 0x1fffff), 10240))
-                for row, (got, embedding_value, projected) in enumerate(zip(residual_saved, expected, output)):
-                    want = embedding_value + projected
-                    if not math.isfinite(got) or abs(got - want) > 2e-6 * max(1.0, abs(want)):
-                        raise RuntimeError(f'attention residual row {row}: {got} differs from {want}')
-                print('attention residual: 2560 values match independent sum', flush=True)
-                select(2, 0x21070000, 18, 12)
-                ffn_rms = struct.unpack('<2560f', read(bar + 0x400000 + (0x21070000 & 0x1fffff), 10240))
-                post_weights = struct.unpack('<2560f', ffn_norm)
-                rms_scale = 1.0 / math.sqrt(sum(value * value for value in residual_saved) / 2560 + 1e-6)
+                        raise RuntimeError(f'gate row {row}: {got} differs from {want}; normalized error {ratio}')
+                print(f'gate: 4096 values match independent reference; maximum absolute error '
+                      f'{maximum:.9g}; maximum normalized error {worst:.9g}', flush=True)
+                select(2, 0x21000000, 18, 12)
+                conv_actual = struct.unpack('<8192f', read(bar + 0x400000 + (0x21000000 & 0x1fffff), 8192 * 4))
+                conv_weights = struct.unpack('<32768f', conv)
                 maximum = 0.0
-                for row, (got, value, weight) in enumerate(zip(ffn_rms, residual_saved, post_weights)):
-                    want = value * rms_scale * weight
-                    maximum = max(maximum, abs(got - want))
-                    if not math.isfinite(got) or abs(got - want) > 2e-5 * max(1.0, abs(want)):
-                        raise RuntimeError(f'post-attention RMS row {row}: {got} differs from {want}')
-                print(f'post-attention RMS: 2560 values match independent reference; maximum error {maximum:.9g}', flush=True)
-                ffn_input = struct.pack('<2560f', *quantized_activation_reference(ffn_rms, 'q4'))
-                ffn_fixture = ffn_weights + ffn_input
-                gate_ref, gate_norms = projection_reference(ffn_fixture, 'q4', len(ffn_weights), 2304, 9216, 0)
-                up_ref, up_norms = projection_reference(ffn_fixture, 'q4', len(ffn_weights), 2304, 9216, 13271040)
-                select(2, 0x21050000, 18, 12)
-                up_actual = struct.unpack('<9216f', read(bar + 0x400000 + (0x21050000 & 0x1fffff), 9216 * 4))
-                select(2, 0x20020000, 18, 12)
-                silu_actual = struct.unpack('<9216f', read(bar + 0x400000 + (0x20020000 & 0x1fffff), 9216 * 4))
-                up_worst = silu_worst = 0.0
-                for row, (up, want_up, up_magnitude, gate, gate_magnitude, result) in enumerate(
-                        zip(up_actual, up_ref, up_norms, gate_ref, gate_norms, silu_actual)):
-                    ratio = abs(up - want_up) / max(1.0, up_magnitude)
-                    up_worst = max(up_worst, ratio)
-                    want = gate / (1.0 + math.exp(-gate)) * up
-                    scale = max(1.0, abs(want), gate_magnitude * abs(up))
-                    error = abs(result - want) / scale
-                    silu_worst = max(silu_worst, error)
-                    if not math.isfinite(up) or ratio > 2e-6 or not math.isfinite(result) or error > 2e-5:
-                        raise RuntimeError(f'FFN gate/up/SiLU row {row}: output {result}, expected {want}; '
-                                           f'up normalized error {ratio}, activation normalized error {error}')
-                print(f'FFN up and gated SiLU: 9216 values match independent references; '
-                      f'maximum normalized errors {up_worst:.9g}, {silu_worst:.9g}', flush=True)
-                down_input = struct.pack('<9216f', *quantized_activation_reference(silu_actual, 'q6'))
-                down_ref, down_norms = projection_reference(ffn_weights + down_input, 'q6',
-                    len(ffn_weights), 3392, 2560, 26542080, input_rows=9216)
-                select(2, 0x20000000, 18, 12)
-                final = struct.unpack('<2560f', read(bar + 0x400000 + (0x20000000 & 0x1fffff), 10240))
-                worst = maximum = 0.0
-                for row, (got, down, magnitude, skip) in enumerate(zip(final, down_ref, down_norms, residual_saved)):
-                    want = down + skip
-                    error = abs(got - want)
-                    ratio = error / max(1.0, magnitude, abs(want))
-                    worst, maximum = max(worst, ratio), max(maximum, error)
-                    if not math.isfinite(got) or ratio > 2e-6:
-                        raise RuntimeError(f'FFN down/residual row {row}: {got} differs from {want}')
-                print(f'FFN down and final residual: 2560 values match independent Q6_K reference; '
-                      f'maximum absolute error {maximum:.9g}, normalized error {worst:.9g}', flush=True)
-            select_worker(0)
-            if struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
-                raise RuntimeError('intentionally faulted sequence published a candidate')
-            if warm:
-                if history_bytes == history_input or bytes(state_bytes) == delta_state:
-                    raise RuntimeError('second position did not change the imported state')
-                print('position-one graph reused the same templates and updated the imported simulator state', flush=True)
-            if args.resident_export_state:
-                payload = history_bytes + bytes(state_bytes)
-                with args.resident_export_state.open('xb') as stream:
-                    stream.write(b'Q35SIMW1' + hashlib.sha256(payload).digest() + payload)
-                print(f'exported verified position-zero simulator state: sha256={hashlib.sha256(payload).hexdigest()}', flush=True)
-            print(f'PASS resident graph completed {record_count - 1} barriers on 120 simulated workers; '
-                  f'record {record_count} intentionally faults; NO HARDWARE')
+                conv_reference = []
+                for row, (got, current) in enumerate(zip(conv_actual, qkv_original)):
+                    terms = [history_prior[3 * row + i] * conv_weights[4 * row + i] if position else 0.0
+                             for i in range(3)]
+                    value = sum(terms) + current * conv_weights[4 * row + 3]
+                    want = value / (1.0 + math.exp(-value))
+                    conv_reference.append(want)
+                    # Sharded recurrence overwrites the V portion after convolution.
+                    if not sharded or row < 4096:
+                        error = abs(got - want)
+                        maximum = max(maximum, error)
+                        if not math.isfinite(got) or error > 2e-6 * max(1.0, abs(want)):
+                            raise RuntimeError(f'convolution row {row}: {got} differs from {want}; error {error}')
+                checked = 4096 if sharded else 8192
+                print(f'convolution: {checked} retained values and 24576 history entries match independent '
+                      f'position-{position} reference; maximum absolute error {maximum:.9g}', flush=True)
+                if sharded:
+                    negative_a = struct.unpack('<32f', delta_params[:128])
+                    bias = struct.unpack('<32f', delta_params[128:256])
+                    delta_norm = struct.unpack('<128f', delta_params[256:])
+                    select(2, 0x21010000, 18, 12)
+                    alpha = struct.unpack('<32f', read(bar + 0x400000 + (0x21010000 & 0x1fffff), 128))
+                    select(2, 0x21020000, 18, 12)
+                    beta_logit = struct.unpack('<32f', read(bar + 0x400000 + (0x21020000 & 0x1fffff), 128))
+                    state_bytes = bytearray()
+                    for offset in range(0, len(delta_state), 0x10000):
+                        current = state_write + offset
+                        select(2, current, 18, 12)
+                        state_bytes.extend(read(bar + 0x400000 + (current & 0x1fffff),
+                                                min(0x10000, len(delta_state) - offset)))
+                    state_actual = struct.unpack('<524288f', state_bytes)
+                    state_max = output_max = 0.0
+                    for head in range(32):
+                        key_head = head % 16
+                        query = conv_reference[key_head * 128:(key_head + 1) * 128]
+                        key = conv_reference[2048 + key_head * 128:2048 + (key_head + 1) * 128]
+                        query_scale = 1.0 / max(math.sqrt(sum(x * x for x in query)), 1e-6) / math.sqrt(128)
+                        key_scale = 1.0 / max(math.sqrt(sum(x * x for x in key)), 1e-6)
+                        query = [x * query_scale for x in query]
+                        key = [x * key_scale for x in key]
+                        shifted = alpha[head] + bias[head]
+                        softplus = max(shifted, 0.0) + math.log1p(math.exp(-abs(shifted)))
+                        decay = math.exp(negative_a[head] * softplus)
+                        beta = 1.0 / (1.0 + math.exp(-beta_logit[head]))
+                        raw_output = []
+                        for lane in range(128):
+                            base = (head * 128 + lane) * 128
+                            prior = old_state[base:base + 128] if position else [0.0] * 128
+                            prediction = sum(prior[k] * decay * key[k] for k in range(128))
+                            correction = (conv_reference[4096 + head * 128 + lane] - prediction) * beta
+                            expected_state = [prior[k] * decay + key[k] * correction for k in range(128)]
+                            raw_output.append(sum(expected_state[k] * query[k] for k in range(128)))
+                            for k, want in enumerate(expected_state):
+                                got = state_actual[base + k]
+                                error = abs(got - want)
+                                state_max = max(state_max, error)
+                                if not math.isfinite(got) or error > 2e-5 * max(1.0, abs(want)):
+                                    raise RuntimeError(f'recurrent state {head}:{lane}:{k}: {got} differs from {want}')
+                        rms_scale = 1.0 / math.sqrt(sum(x * x for x in raw_output) / 128 + 1e-6)
+                        for lane, raw in enumerate(raw_output):
+                            gate_value = gate_actual[head * 128 + lane]
+                            want = raw * rms_scale * delta_norm[lane] * gate_value / (1.0 + math.exp(-gate_value))
+                            got = conv_actual[4096 + head * 128 + lane]
+                            error = abs(got - want)
+                            output_max = max(output_max, error)
+                            if not math.isfinite(got) or error > 2e-4 * max(1.0, abs(want)):
+                                raise RuntimeError(f'recurrent output {head}:{lane}: {got} differs from {want}')
+                    print(f'sharded recurrence: 524288 state values and 4096 outputs match independent '
+                          f'position-{position} reference; max absolute errors {state_max:.9g}, {output_max:.9g}', flush=True)
+                    recurrent_input = struct.pack('<4096f',
+                        *quantized_activation_reference(conv_actual[4096:], 'q5'))
+                    reference, norms = projection_reference(output_weight + recurrent_input, 'q5',
+                        len(output_weight), 2816, 2560, input_rows=4096)
+                    select(2, 0x21060000, 18, 12)
+                    output = struct.unpack('<2560f', read(bar + 0x400000 + (0x21060000 & 0x1fffff), 2560 * 4))
+                    maximum = worst = 0.0
+                    for row, (got, want, magnitude) in enumerate(zip(output, reference, norms)):
+                        error = abs(got - want)
+                        ratio = error / max(1.0, magnitude)
+                        maximum, worst = max(maximum, error), max(worst, ratio)
+                        if not math.isfinite(got) or ratio > 2e-6:
+                            raise RuntimeError(f'recurrent projection row {row}: {got} differs from {want}')
+                    print(f'recurrent output projection: 2560 values match independent Q5_K reference; '
+                          f'maximum absolute error {maximum:.9g}, normalized error {worst:.9g}', flush=True)
+                    select(2, 0x20010000, 18, 12)
+                    residual_saved = struct.unpack('<2560f', read(bar + 0x400000 + (0x20010000 & 0x1fffff), 10240))
+                    for row, (got, embedding_value, projected) in enumerate(zip(residual_saved, expected, output)):
+                        want = embedding_value + projected
+                        if not math.isfinite(got) or abs(got - want) > 2e-6 * max(1.0, abs(want)):
+                            raise RuntimeError(f'attention residual row {row}: {got} differs from {want}')
+                    print('attention residual: 2560 values match independent sum', flush=True)
+                    select(2, 0x21070000, 18, 12)
+                    ffn_rms = struct.unpack('<2560f', read(bar + 0x400000 + (0x21070000 & 0x1fffff), 10240))
+                    post_weights = struct.unpack('<2560f', ffn_norm)
+                    rms_scale = 1.0 / math.sqrt(sum(value * value for value in residual_saved) / 2560 + 1e-6)
+                    maximum = 0.0
+                    for row, (got, value, weight) in enumerate(zip(ffn_rms, residual_saved, post_weights)):
+                        want = value * rms_scale * weight
+                        maximum = max(maximum, abs(got - want))
+                        if not math.isfinite(got) or abs(got - want) > 2e-5 * max(1.0, abs(want)):
+                            raise RuntimeError(f'post-attention RMS row {row}: {got} differs from {want}')
+                    print(f'post-attention RMS: 2560 values match independent reference; maximum error {maximum:.9g}', flush=True)
+                    ffn_input = struct.pack('<2560f', *quantized_activation_reference(ffn_rms, 'q4'))
+                    ffn_fixture = ffn_weights + ffn_input
+                    gate_ref, gate_norms = projection_reference(ffn_fixture, 'q4', len(ffn_weights), 2304, 9216, 0)
+                    up_ref, up_norms = projection_reference(ffn_fixture, 'q4', len(ffn_weights), 2304, 9216, 13271040)
+                    select(2, 0x21050000, 18, 12)
+                    up_actual = struct.unpack('<9216f', read(bar + 0x400000 + (0x21050000 & 0x1fffff), 9216 * 4))
+                    select(2, 0x20020000, 18, 12)
+                    silu_actual = struct.unpack('<9216f', read(bar + 0x400000 + (0x20020000 & 0x1fffff), 9216 * 4))
+                    up_worst = silu_worst = 0.0
+                    for row, (up, want_up, up_magnitude, ffn_gate, gate_magnitude, result) in enumerate(
+                            zip(up_actual, up_ref, up_norms, gate_ref, gate_norms, silu_actual)):
+                        ratio = abs(up - want_up) / max(1.0, up_magnitude)
+                        up_worst = max(up_worst, ratio)
+                        want = ffn_gate / (1.0 + math.exp(-ffn_gate)) * up
+                        scale = max(1.0, abs(want), gate_magnitude * abs(up))
+                        error = abs(result - want) / scale
+                        silu_worst = max(silu_worst, error)
+                        if not math.isfinite(up) or ratio > 2e-6 or not math.isfinite(result) or error > 2e-5:
+                            raise RuntimeError(f'FFN gate/up/SiLU row {row}: output {result}, expected {want}; '
+                                               f'up normalized error {ratio}, activation normalized error {error}')
+                    print(f'FFN up and gated SiLU: 9216 values match independent references; '
+                          f'maximum normalized errors {up_worst:.9g}, {silu_worst:.9g}', flush=True)
+                    down_input = struct.pack('<9216f', *quantized_activation_reference(silu_actual, 'q6'))
+                    down_ref, down_norms = projection_reference(ffn_weights + down_input, 'q6',
+                        len(ffn_weights), 3392, 2560, 26542080, input_rows=9216)
+                    select(2, 0x20000000, 18, 12)
+                    final = struct.unpack('<2560f', read(bar + 0x400000 + (0x20000000 & 0x1fffff), 10240))
+                    worst = maximum = 0.0
+                    for row, (got, down, magnitude, skip) in enumerate(zip(final, down_ref, down_norms, residual_saved)):
+                        want = down + skip
+                        error = abs(got - want)
+                        ratio = error / max(1.0, magnitude, abs(want))
+                        worst, maximum = max(worst, ratio), max(maximum, error)
+                        if not math.isfinite(got) or ratio > 2e-6:
+                            raise RuntimeError(f'FFN down/residual row {row}: {got} differs from {want}')
+                    print(f'FFN down and final residual: 2560 values match independent Q6_K reference; '
+                          f'maximum absolute error {maximum:.9g}, normalized error {worst:.9g}', flush=True)
+                select_worker(0)
+                if not full_prompt and struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
+                    raise RuntimeError('intentionally faulted sequence published a candidate')
+                if warm:
+                    if history_bytes == history_input or bytes(state_bytes) == delta_state:
+                        raise RuntimeError('second position did not change the imported state')
+                    source = 'resident' if full_prompt else 'imported'
+                    print(f'position-one graph reused the same templates and updated the {source} simulator state', flush=True)
+                if args.resident_export_state:
+                    payload = history_bytes + bytes(state_bytes)
+                    with args.resident_export_state.open('xb') as stream:
+                        stream.write(b'Q35SIMW1' + hashlib.sha256(payload).digest() + payload)
+                    print(f'exported verified position-zero simulator state: sha256={hashlib.sha256(payload).hexdigest()}', flush=True)
+                if full_prompt:
+                    print(f'PASS prompt {trigger}: checked 120 worker mailboxes and sender receipts plus layer outputs; NO HARDWARE', flush=True)
+                    if run_number == 0:
+                        history_input, delta_state = history_bytes, bytes(state_bytes)
+                        history_prior = struct.unpack('<24576f', history_input)
+                        old_state = struct.unpack('<524288f', delta_state)
+                        history_read, history_write = history_write, history_read
+                        state_read, state_write = state_write, state_read
+                        position, warm = 1, True
+                        select_worker(0)
+                        write(bar + 0xab330, struct.pack('<4I', trigger, (~trigger)&0xffffffff,
+                                                        epoch, (~epoch)&0xffffffff))
+                    continue
+                print(f'PASS resident graph completed {record_count - 1} barriers on 120 simulated workers; '
+                      f'record {record_count} intentionally faults; NO HARDWARE')
+            if full_prompt:
+                print('PASS two consecutive prompt commands on one simulated resident fleet; '
+                      '500 diagnostic-copy steps per command, NOT A FULL MODEL', flush=True)
             return
 
         if args.resident_fault_command:

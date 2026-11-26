@@ -182,6 +182,36 @@ this is a state-handoff and template-patching check, not proof that a service
 remains resident across tokens, a complete model, a hardware warm run or a
 throughput measurement.
 
+A separate fixture tests two **consecutive prompt commands on one resident
+simulator fleet**. It reuses the validated position-zero layer fixture,
+adds 500 diagnostic residual copies to reach the actual 521-step prompt
+length, and makes two fresh non-overlapping command tickets. The test checks
+the root candidate and all 120 worker mailboxes and sender receipts before
+acknowledging the first command, then verifies the second command's state and
+layer output. This is not the full physical fleet audit or a complete model.
+The simulator is terminated after the second candidate without an explicit
+worker-shutdown test.
+
+Use absolute fixture paths and a new empty output directory:
+
+```sh
+c++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  tools/pioneer/tests/pioneer_qwen35_ttsim_resident_complete_fixture.cpp -o /tmp/q35-complete-fixture
+mkdir /tmp/q35-complete-input
+/tmp/q35-complete-fixture /absolute/POSITION0_DIR /tmp/q35-complete-input
+for name in weights.bin norm.bin projection.bin gate.bin conv.bin history.bin position.bin \
+  delta-params.bin delta-state.bin recurrent-output-weight.bin ffn-norm.bin ffn-weights.bin; do
+  ln -s "/absolute/POSITION0_DIR/$name" "/tmp/q35-complete-input/$name"
+done
+python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py LIBTTSIM RESIDENT_IMAGE ROLE_IMAGES \
+  --resident-sequence-fixture /tmp/q35-complete-input
+```
+
+Both commands passed on the same simulated fleet on 2026-11-25; the second
+state matched the independent reference for all 524,288 values. This is not
+a full-model output, physical recovery, a hardware warm run or a throughput
+measurement. See `benchmarks/qwen35-two-resident-prompts-sim-20261125/EVIDENCE.md`.
+
 The separate sharded-delta witness tests a proposed two-stage recurrent
 update. The helper builds the fused, sharing-enabled service and its
 non-loadable driver with `--compile-delta-shard-prototype`, alongside the

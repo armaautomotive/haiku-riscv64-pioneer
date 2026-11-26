@@ -3,7 +3,8 @@
 import hashlib
 import struct
 
-from pioneer_qwen35_ttsim_service_test import resident_handoff_payload, resident_position_one_command
+from pioneer_qwen35_ttsim_service_test import (audit_resident_candidate, resident_handoff_payload,
+    resident_position_one_command, validate_resident_prompt_commands)
 
 
 def command(position):
@@ -25,6 +26,18 @@ def rejected(function, *args):
     raise AssertionError('invalid simulator handoff accepted')
 
 
+def prompt_command(trigger, epoch, first, position):
+    words = list(struct.unpack('<32I', command(position)))
+    words[2:5] = [trigger, epoch, first]
+    checksum = 2166136261
+    for word in words[:10]:
+        checksum = ((checksum ^ word) * 16777619) & 0xffffffff
+    words[10] = checksum
+    marker = 0x40000000 | trigger
+    words[16:] = [epoch, (~epoch) & 0xffffffff, marker, (~marker) & 0xffffffff] * 4
+    return struct.pack('<32I', *words)
+
+
 def main():
     zero, one = command(0), command(1)
     assert resident_position_one_command(zero, one) == one
@@ -35,6 +48,11 @@ def main():
     rejected(resident_position_one_command, zero, changed)
     changed = bytearray(one); changed[40] ^= 1
     rejected(resident_position_one_command, zero, changed)
+    first, second = prompt_command(1, 22, 1, 0), prompt_command(2, 23, 522, 1)
+    validate_resident_prompt_commands(first, second)
+    rejected(validate_resident_prompt_commands, first, prompt_command(2, 23, 521, 1))
+    changed = bytearray(second); changed[-1] ^= 1
+    rejected(validate_resident_prompt_commands, first, changed)
     payload = bytes(range(256)) * ((24576 * 4 + 524288 * 4) // 256)
     raw = b'Q35SIMW1' + hashlib.sha256(payload).digest() + payload
     history, state = resident_handoff_payload(raw)
@@ -43,7 +61,39 @@ def main():
     changed = bytearray(raw); changed[-1] ^= 1
     rejected(resident_handoff_payload, changed)
     rejected(resident_handoff_payload, b'BADMAGIC' + raw[8:])
-    print('PASS simulator state framing, corruption rejection and position-only command; NO HARDWARE')
+    receipt = [0x31435235, 2, 1, 22, 1, 521]
+    checksum = 2166136261
+    for word in receipt:
+        checksum = ((checksum ^ word) * 16777619) & 0xffffffff
+    receipt += [checksum, 1]
+    snapshots = []
+    senders = []
+    for core in range(120):
+        mailbox = [0] * 16
+        mailbox[2:8] = [1, 1, 1, 1, 0, 0]
+        mailbox[15] = core
+        snapshots.append(tuple(mailbox))
+        checksum = 0x31535335 ^ 1 ^ (22 << 7) ^ ((core * 0x9e3779b9) & 0xffffffff)
+        senders.append((1, 22, core, checksum))
+    selected = [0]
+    def select(core):
+        selected[0] = core
+    def read(address, size):
+        if address == 0xab310 and size == 32:
+            return struct.pack('<8I', *receipt)
+        if address == 0xab000 and size == 64:
+            return struct.pack('<16I', *snapshots[selected[0]])
+        if address == 0xab550 and size == 16:
+            return struct.pack('<4I', *senders[selected[0]])
+        raise AssertionError('unexpected simulated read')
+    audit_resident_candidate(tuple(receipt), first, snapshots, select, read, 0)
+    senders[47] = (1, 22, 47, 0)
+    try:
+        audit_resident_candidate(tuple(receipt), first, snapshots, select, read, 0)
+        raise AssertionError('bad sender receipt accepted')
+    except RuntimeError:
+        pass
+    print('PASS simulator handoff, command freshness and 120-worker receipt audit; NO HARDWARE')
 
 
 if __name__ == '__main__':
