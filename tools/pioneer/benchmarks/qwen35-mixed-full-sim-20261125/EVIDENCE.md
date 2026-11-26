@@ -147,3 +147,15 @@ and `/private/tmp/q35-baseline-layer30-slice-sim-20261126.log`. No result is
 available for these recurrent probes. The 8-/16-layer prefixes and both
 hybrid full simulations also remain active. None of this is hardware
 performance, live inference, physical recovery or a full-model pass.
+
+Both adjacent recurrent replays subsequently passed. Layer 14 completed 16
+records on 120 simulated workers, then intentionally faulted at record 17;
+all 2,560 output values matched its independent reference, with maximum
+absolute error `4.76837158e-07` and maximum scaled error `3.48618451e-07`.
+Layer 30 likewise passed with maximum absolute error `3.81469727e-06` and
+maximum scaled error `1.55971315e-06`. Logs and retained actual outputs are
+`/private/tmp/q35-baseline-layer14-slice-sim-20261126.log`,
+`/private/tmp/q35-baseline-layer30-slice-sim-20261126.log`, and the
+corresponding `*-actual-20261126.bin` files. These are isolated layers with
+independent inputs, not a successful sequential full-model run. The 8-/16-
+layer prefix and hybrid full-model simulations are still active.
