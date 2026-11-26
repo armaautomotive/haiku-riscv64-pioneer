@@ -1,5 +1,30 @@
 # Offline Pioneer pin-service kernel candidate
 
+## Retained lifetime service (2026-11-26)
+
+An opt-in built-in device-manager module retains initialized nodes and their
+ancestors across calls. Monotonic IDs, owner/session identity and a running
+flag reject stale handles and concurrent release. A node observed removed is
+sticky-invalidated; references remain held until an authorized release.
+`run_pioneer_retained_pin_service_tests.sh` tests the actual implementation
+and actual `InitDriver`/`UninitDriver` logic against simulated nodes under
+ASan/UBSan, including removal during the callback and cross-thread use.
+The prior retained controller-scope simulation also passed.
+
+`build_qwen35_pin_kernel.py --retained-pin-service` reproduced both saved
+ordinary and spin-idle controls byte-for-byte, then linked an offline Haiku
+RISC-V kernel and checked its built-in module registration. Its candidate
+SHA-256 is `37ab8e6543d849a1b9d5ee37d3533d0202b4a0507db91ea715296ae17110e64f`;
+the corresponding manifest is at `/private/tmp/q35-retained-pin-kernel-20261126/manifest.json`.
+The builder also linked its existing non-retained configuration and checked
+the retained module was absent. Neither candidate was installed or booted.
+
+The service is a software lifetime reference, not physical-device ownership
+or removal exclusion. It has no recovery gateway consumer yet and does not
+establish DMA, MMIO or firmware exclusion, safe PCI reset, no-reboot recovery,
+model correctness or throughput. Repeat the 27B/idle preflight immediately
+before any accelerator access.
+
 ## Spin-idle profile correction (2026-11-25)
 
 The earlier `0aca1f85...` candidate below uses the ordinary kernel and is not

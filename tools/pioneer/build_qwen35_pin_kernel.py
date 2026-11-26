@@ -19,7 +19,7 @@ SPIN_SHA256 = '92310628bed8e5a030789b7886a347571cd26c992423d13c085c4ea197362c21'
 DM = 'src/system/kernel/device_manager/device_manager.cpp'
 MODULE = 'src/system/kernel/module.cpp'
 CPU = 'src/system/kernel/cpu.cpp'
-PIN_BLOCK_SHA256 = 'c8c4e5cc7dc708e1d5603e8f5073a41fd9d44ec2bb6d95a662cf7d3562c641e4'
+PIN_BLOCK_SHA256 = '86957331c27e77b34647492625d486afc6a2a4616d0994880a2ce84f9c9e5b5a'
 
 
 def digest(path):
@@ -39,6 +39,8 @@ def checked_sources(mirror):
     mod = (REPO / MODULE).read_text()
     mod = mod.replace('#ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS\nextern module_info gPioneerDeviceManagerPinModule;\n#endif\n', '')
     mod = mod.replace('#ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS\n\t&gPioneerDeviceManagerPinModule,\n#endif\n', '')
+    mod = mod.replace('#ifdef PIONEER_DEVICE_MANAGER_RETAINED_PIN_SERVICE\nextern module_info gPioneerDeviceManagerRetainedPinModule;\n#endif\n', '')
+    mod = mod.replace('#ifdef PIONEER_DEVICE_MANAGER_RETAINED_PIN_SERVICE\n\t&gPioneerDeviceManagerRetainedPinModule,\n#endif\n', '')
     if (dm != (mirror / DM).read_text() or mod != (mirror / MODULE).read_text()
             or (REPO / CPU).read_bytes() != (mirror / CPU).read_bytes()):
         raise RuntimeError('kernel source differs from the saved build beyond the pin-service changes')
@@ -52,6 +54,8 @@ def main():
     parser.add_argument('--spin-reference', type=Path,
                         default=REPO / 'generated.pioneer/vm-top-page-20261022/kernel-spin-idle-fixed',
                         help='saved, previously qualified spin-idle kernel')
+    parser.add_argument('--retained-pin-service', action='store_true',
+                        help='include the experimental retained lifetime module (offline only)')
     args = parser.parse_args()
     build = args.build.resolve(strict=True)
     jam = args.jam.resolve(strict=True)
@@ -137,6 +141,8 @@ def main():
         built[name] = output / (name + '.o')
         set_output(command, built[name])
         command.append('-DPIONEER_DEVICE_MANAGER_PIN_WITNESS')
+        if args.retained_pin_service:
+            command.append('-DPIONEER_DEVICE_MANAGER_RETAINED_PIN_SERVICE')
         run(command, 'compile-' + name)
     merges = (
         ('core', ' -r objects/haiku/riscv64/release/system/kernel/boot_item.o ',
@@ -180,6 +186,11 @@ def main():
     if (not has_relocation(table_address, 'gDeviceManagerModule')
             or not has_relocation(table_address + 8, 'gPioneerDeviceManagerPinModule')):
         raise RuntimeError('pin service is not registered in the built-in module table')
+    if args.retained_pin_service and not has_relocation(
+            table_address + 16, 'gPioneerDeviceManagerRetainedPinModule'):
+        raise RuntimeError('retained pin service is not registered in the built-in module table')
+    if not args.retained_pin_service and 'gPioneerDeviceManagerRetainedPinModule' in symbols:
+        raise RuntimeError('ordinary candidate unexpectedly contains retained pin service')
     objdump = build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-objdump'
     idle = subprocess.check_output([str(objdump), '-d', '--disassemble=cpu_idle', str(candidate)], text=True)
     if ('<smp_get_num_cpus@plt>' not in idle or not re.search(r'\bli\s+\w+,64\b', idle)
@@ -200,7 +211,11 @@ def main():
         'spin_cpu_object_sha256': digest(spin_cpu),
         'pin_header_sha256': digest(REPO / 'src/system/kernel/device_manager/PioneerDeviceManagerPinModule.h'),
         'jam_actions_sha256': digest(actions), 'installed_or_booted': False,
+        'retained_pin_service': args.retained_pin_service,
     }
+    if args.retained_pin_service:
+        manifest['retained_pin_header_sha256'] = digest(
+            REPO / 'src/system/kernel/device_manager/PioneerDeviceManagerRetainedPinModule.h')
     (output / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     print(json.dumps(manifest, indent=2))
     print('EXPERIMENTAL KERNEL: not installed, not booted, no hardware qualification')

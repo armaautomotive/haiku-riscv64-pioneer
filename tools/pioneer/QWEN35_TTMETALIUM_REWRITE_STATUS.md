@@ -1,5 +1,21 @@
 # Latest offline checks, 2026-11-26
 
+An opt-in Haiku device-manager module now retains initialized card or root
+nodes across recovery calls using monotonic IDs and owner/session checks.
+Its actual implementation passed simulated concurrent, reentrant, stale-ID,
+removal and reference-count tests; both the retained-service and ordinary
+pin-service Haiku/RISC-V kernels linked after reproducing the saved control
+kernels. Neither candidate was installed or booted. This only retains
+software lifetimes: the recovery gateway does not use it yet, and physical
+removal, DMA/MMIO and firmware exclusion and reset safety are not established.
+See `benchmarks/qwen35-pin-kernel-20261125/EVIDENCE.md`.
+
+The fused 32-layer simulator reached its audited token 261, matching the
+reference, but failed the existing strict hidden-state comparison on 2558 of
+2560 values (maximum absolute difference 0.370739102). A same-input boundary
+audit is in progress. This is not a valid warm hardware run or a throughput
+measurement.
+
 The fused tree Haiku driver now also links with the actual compact resident
 image and no unresolved symbols. The temporary linked artifact retained the
 exact compact bytes and the no-I/O `B_NOT_ALLOWED` initialization guard; its

@@ -216,8 +216,15 @@ static const char* sGenericContextPath;
 	&& (!defined(PIONEER_DEVICE_MANAGER_PIN_WITNESS) || !defined(PIONEER_DEVICE_MANAGER_RETAINED_PIN_COMPILE_ONLY))
 #error Retained device pin is restricted to an unexported compile witness
 #endif
+#if defined(PIONEER_DEVICE_MANAGER_RETAINED_PIN_SERVICE) \
+	&& (!defined(PIONEER_DEVICE_MANAGER_PIN_WITNESS) || defined(PIONEER_DEVICE_MANAGER_RETAINED_PIN_WITNESS))
+#error Retained pin service requires the pin module and cannot be combined with the isolated witness
+#endif
 #ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS
 #include "PioneerDeviceManagerPinModule.h"
+#ifdef PIONEER_DEVICE_MANAGER_RETAINED_PIN_SERVICE
+#include "PioneerDeviceManagerRetainedPinModule.h"
+#endif
 
 // PIONEER_DM_DRIVER_PIN_BEGIN
 static status_t
@@ -314,6 +321,111 @@ public:
 	}
 };
 // PIONEER_DM_RETAINED_DRIVER_PIN_END
+#endif
+
+#ifdef PIONEER_DEVICE_MANAGER_RETAINED_PIN_SERVICE
+// PIONEER_DM_RETAINED_PIN_SERVICE_BEGIN
+// IDs are monotonic and looked up while holding sLock. A stale ID therefore
+// cannot dereference freed storage or refer to a later pin at the same address.
+// This service retains software lifetime only, not physical device presence.
+struct PioneerRetainedPinRecord {
+	PioneerRetainedPinRecord* next;
+	device_node* node;
+	const void* owner;
+	uint64 session, id;
+	bool running, invalidated;
+};
+static PioneerRetainedPinRecord* sPioneerRetainedPins=NULL;
+static uint64 sPioneerRetainedPinId=0;
+
+static PioneerRetainedPinRecord*
+pioneer_find_retained_pin(uint64 id,const void* owner,uint64 session)
+{
+	if (!id || !owner || !session) return NULL;
+	for (auto* pin=sPioneerRetainedPins;pin;pin=pin->next)
+		if (pin->id==id && pin->owner==owner && pin->session==session) return pin;
+	return NULL;
+}
+
+static bool
+pioneer_retained_pin_node_usable(const PioneerRetainedPinRecord& pin)
+{
+	return pin.node->IsRegistered() && pin.node->IsInitialized()
+		&& (pin.node->Flags() & NODE_FLAG_DEVICE_REMOVED)==0;
+}
+
+static status_t
+pioneer_acquire_retained_pin(device_node* node,const void* owner,uint64 session,uint64* id)
+{
+	if (id==NULL) return B_BAD_VALUE;
+	*id=0;
+	if (!node || !owner || !session) return B_BAD_VALUE;
+	auto* pin=new(std::nothrow) PioneerRetainedPinRecord{};
+	if (!pin) return B_NO_MEMORY;
+	RecursiveLocker locker(sLock);
+	if (sPioneerRetainedPinId==~uint64(0)) { delete pin;return B_BUSY; }
+	if (!node->IsRegistered() || !node->IsInitialized()
+		|| (node->Flags() & NODE_FLAG_DEVICE_REMOVED)!=0) { delete pin;return B_NOT_ALLOWED; }
+	const status_t status=node->InitDriver();
+	if (status!=B_OK) { delete pin;return status; }
+	pin->node=node;pin->owner=owner;pin->session=session;pin->id=++sPioneerRetainedPinId;
+	pin->next=sPioneerRetainedPins;sPioneerRetainedPins=pin;*id=pin->id;
+	return B_OK;
+}
+
+static status_t
+pioneer_run_retained_pin(uint64 id,const void* owner,uint64 session,
+	pioneer_dm_retained_pin_operation operation,void* argument,status_t* operationStatus)
+{
+	if (!operation || !operationStatus) return B_BAD_VALUE;
+	*operationStatus=B_ERROR;
+	{
+		RecursiveLocker locker(sLock);
+		auto* pin=pioneer_find_retained_pin(id,owner,session);
+		if (!pin) return B_BAD_VALUE;
+		if (pin->running) return B_BUSY;
+		if (pin->invalidated || !pioneer_retained_pin_node_usable(*pin)) {
+			pin->invalidated=true;return B_DEV_NOT_READY;
+		}
+		pin->running=true;
+	}
+	// Do not hold the manager lock across a driver callback. Removal may
+	// still occur; the postcheck invalidates this pin if it is observed.
+	*operationStatus=operation(argument);
+	{
+		RecursiveLocker locker(sLock);
+		auto* pin=pioneer_find_retained_pin(id,owner,session);
+		if (!pin || !pin->running) return B_ERROR;
+		pin->running=false;
+		if (!pioneer_retained_pin_node_usable(*pin)) {
+			pin->invalidated=true;return B_DEV_NOT_READY;
+		}
+	}
+	return B_OK;
+}
+
+static status_t
+pioneer_release_retained_pin(uint64 id,const void* owner,uint64 session,bool releaseAuthorized)
+{
+	RecursiveLocker locker(sLock);
+	auto* pin=pioneer_find_retained_pin(id,owner,session);
+	if (!pin || !releaseAuthorized) return B_BAD_VALUE;
+	if (pin->running) return B_BUSY;
+	PioneerRetainedPinRecord** link=&sPioneerRetainedPins;
+	while (*link && *link!=pin) link=&(*link)->next;
+	if (!*link) return B_ERROR;
+	*link=pin->next;
+	device_node* node=pin->node;
+	delete pin;
+	node->UninitDriver();
+	return B_OK;
+}
+// PIONEER_DM_RETAINED_PIN_SERVICE_END
+
+pioneer_dm_retained_pin_module_info gPioneerDeviceManagerRetainedPinModule = {
+	{ PIONEER_DEVICE_MANAGER_RETAINED_PIN_MODULE, 0, NULL },
+	pioneer_acquire_retained_pin, pioneer_run_retained_pin, pioneer_release_retained_pin
+};
 #endif
 
 // This separate module is absent from ordinary kernels. It is intended only

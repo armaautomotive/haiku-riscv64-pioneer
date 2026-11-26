@@ -54,6 +54,9 @@ extern module_info gDeviceManagerModule;
 #ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS
 extern module_info gPioneerDeviceManagerPinModule;
 #endif
+#ifdef PIONEER_DEVICE_MANAGER_RETAINED_PIN_SERVICE
+extern module_info gPioneerDeviceManagerRetainedPinModule;
+#endif
 extern module_info gDeviceRootModule;
 extern module_info gDeviceGenericModule;
 extern module_info gFrameBufferConsoleModule;
@@ -66,6 +69,9 @@ static module_info* sBuiltInModules[] = {
 	&gDeviceManagerModule,
 #ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS
 	&gPioneerDeviceManagerPinModule,
+#endif
+#ifdef PIONEER_DEVICE_MANAGER_RETAINED_PIN_SERVICE
+	&gPioneerDeviceManagerRetainedPinModule,
 #endif
 	&gDeviceRootModule,
 	&gDeviceGenericModule,
