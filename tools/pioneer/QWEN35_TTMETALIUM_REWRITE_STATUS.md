@@ -1,5 +1,16 @@
 # Latest offline checks, 2026-11-26
 
+The reference captures position-one convolution and delta input state for all
+24 recurrent layers without changing its existing outputs. A saved, separate
+first-layer simulator handoff passed comparison for all 24,576 convolution
+and 524,288 delta values at the existing tolerance. A focused replay of that
+state with the actual next token 261 is running in session `13939`, and a
+four-layer graph state capture is running in session `76253`; neither result
+is available. The full two-position capture remains active in session `45891`.
+The token-261 embedding tile matched authenticated raw GGUF rows and rejected
+corruption. These are simulator and offline-reference checks, not full-model
+or hardware validation. See `benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
 An offline experiment replaced all 32 first-position CPU layer boundaries
 with the audited simulator boundaries before running position one. It still
 selected the reference's second token 89598, rather than simulated 1850; an

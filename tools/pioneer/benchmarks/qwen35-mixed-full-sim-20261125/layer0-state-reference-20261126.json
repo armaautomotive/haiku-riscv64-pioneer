@@ -1,0 +1,25 @@
+{
+  "simulator_handoff_sha256": "3799cdf3cb08a36009a836b841c6b9e20d592b733606e72b53d6d4f301fb3301",
+  "model_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+  "position_zero_token": 42,
+  "layer": 0,
+  "history": {
+    "rows": 24576,
+    "mismatches": 0,
+    "max_absolute_error": 7.62939453125e-06,
+    "max_scaled_error": 1.1920928955078125e-06,
+    "worst_index": 692,
+    "simulator_sha256": "6b1950c1436d58dfc8ad1fa9ced0fec982a15a263de031829d478d679eb716de",
+    "reference_sha256": "a6586bb27eae4a534e990ebcc865de7ac9d91b92c7fe901bd5edb9f262f4e6ef"
+  },
+  "delta": {
+    "rows": 524288,
+    "mismatches": 0,
+    "max_absolute_error": 1.0728836059570312e-06,
+    "max_scaled_error": 8.856831096688253e-07,
+    "worst_index": 373680,
+    "simulator_sha256": "8936b6aa82a4c1afec1e3024f4fa29848ff14aaaf3b8fb0051df67e4f98147c4",
+    "reference_sha256": "032df0d258c365aea9f57a93668f711831b31115597fe4489ad0cae87d0484a3"
+  },
+  "scope": "Separate authenticated first-layer simulator fixture vs offline CPU reference; not the full-model execution or hardware."
+}

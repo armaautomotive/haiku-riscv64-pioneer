@@ -2,6 +2,39 @@
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+The offline oracle now exports the 24 convolution and 24 delta inputs used
+at position one. Its existing 68 layer/logit/token artifacts remain
+byte-identical to the two-position reference, and the 48 captured states have
+the expected sizes and finite values. The already saved, hash-verified
+position-zero layer-0 simulator handoff from the separate first-layer fixture
+was compared against these inputs: all 24,576 history values and all 524,288
+delta values passed the existing `2e-5 * max(1, abs(reference))` tolerance;
+maximum absolute errors were `7.62939453e-06` and `1.07288361e-06`. See
+`layer0-state-reference-20261126.json`. This first-layer fixture used the
+real model and token 42 but is not the failed full-model execution.
+
+To test its next layer input with the actual token 261, a synthetic-layout
+first-layer replay was generated for that token and started with the saved
+simulator state in session `13939` (log
+`/private/tmp/q35-token261-layer0-warm-20261126c.log`). Its output will be
+compared to the independent position-one layer-0 reference after completion.
+The 16-row embedding tile matched the original authenticated GGUF bytes in a
+separate raw-row audit, and a corrupted tile was rejected. Optimized and
+ASan/UBSan fixture builders produced identical 15 files; the token-42 control
+remained identical to the earlier fixture. This replay is in a separate
+simulator process and does not establish full-model correctness or speed.
+
+The state-layout extractor validates every recorded core's stream and state
+destinations; its first four layers match the full graph's ranges, and a
+corrupted record was rejected. The optimized and ASan/UBSan four-layer maps
+match. The Python capture checks range geometry and overlap with staged
+weights, stream records and outputs, and writes state only after the worker
+terminal audit; its map must still be independently tied to the executed
+fixture. A four-layer simulator capture is running in session `76253`, log
+`/private/tmp/q35-first-four-state-20261126c.log`; no state result is
+available. The full two-position capture remains active in session `45891`.
+No card was accessed for any of these diagnostics.
+
 The offline oracle can also replace every position-zero layer boundary with
 the corresponding simulator boundary before advancing to the next layer. All
 32 inputs matched the saved, already audited snapshot SHA-256 manifest and

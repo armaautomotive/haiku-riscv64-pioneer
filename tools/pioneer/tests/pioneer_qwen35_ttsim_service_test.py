@@ -208,6 +208,53 @@ def validate_isolated_zero_ranges(zeros, weights, streams, inputs, outputs, deco
     return accepted
 
 
+def validate_recorded_state_layout(raw, weights, streams, inputs, outputs, stream_steps, layers, context):
+    """Validate simulator state destinations and reject overlap with the recorded fixture."""
+    if not 1 <= layers <= 32 or not 1 <= context <= 32768 or not 1 <= stream_steps <= 1024:
+        raise ValueError('invalid simulator state layout geometry')
+    groups = {}
+    for line in raw.splitlines():
+        words = line.split()
+        if len(words) != 7 or words[0] not in ('H', 'D', 'K'):
+            raise ValueError('invalid simulator state layout record')
+        kind = words[0]
+        try:
+            layer, row_bytes, bank, address, first, rows = map(int, words[1:])
+        except ValueError as error:
+            raise ValueError('invalid simulator state layout value') from error
+        dense = layer % 4 == 3
+        expected_rows, expected_bytes = ((8192, 12) if kind == 'H' else (32, 65536)
+                                         if kind == 'D' else (8, context * 512))
+        if (not 0 <= layer < layers or dense != (kind == 'K') or row_bytes != expected_bytes
+                or not 0 <= bank < 7 or address < 0x04000000 or (address & 4095)
+                or first < 0 or rows <= 0 or first + rows > expected_rows
+                or address + rows * row_bytes > 0xc4000000):
+            raise ValueError('invalid simulator state layout range')
+        groups.setdefault((kind, layer), []).append((bank, address, first, rows, row_bytes))
+    expected = {(kind, layer) for layer in range(layers)
+                for kind in (('K',) if layer % 4 == 3 else ('H', 'D'))}
+    if set(groups) != expected:
+        raise ValueError('incomplete simulator state layout')
+    protected = [(bank, address, size) for bank, address, size, _ in weights]
+    protected += [(bank, address, stream_steps * 2048) for _, bank, address in streams]
+    protected += [(bank, address, rows * 4) for bank, address, _, rows in inputs + outputs]
+    ranges = []
+    for (kind, _), fragments in sorted(groups.items()):
+        next_row = 0
+        expected_rows = 8192 if kind == 'H' else 32 if kind == 'D' else 8
+        for bank, address, first, rows, row_bytes in fragments:
+            if first != next_row:
+                raise ValueError('noncontiguous simulator state rows')
+            size = rows * row_bytes
+            for other_bank, other_address, other_size in protected + ranges:
+                if bank == other_bank and address < other_address + other_size and other_address < address + size:
+                    raise ValueError('simulator state overlaps protected data or another state')
+            ranges.append((bank, address, size));next_row += rows
+        if next_row != expected_rows:
+            raise ValueError('incomplete simulator state rows')
+    return groups
+
+
 def resident_handoff_payload(raw):
     """Decode a simulator-only state snapshot; its hash detects corruption."""
     if (len(raw) != 40 + 24576 * 4 + 524288 * 4 or raw[:8] != b'Q35SIMW1'
@@ -482,6 +529,10 @@ def main():
                         help='save simulator-only model layer boundaries to a new directory')
     parser.add_argument('--recorded-warm-snapshots', type=Path,
                         help='save second-decode simulator layer boundaries to a new directory')
+    parser.add_argument('--recorded-state-layout', type=Path,
+                        help='validated simulator graph state destination map')
+    parser.add_argument('--recorded-first-state-output', type=Path,
+                        help='save first-position simulator state after terminal worker audit')
     parser.add_argument('--recorded-layer-input', type=Path,
                         help='inject the independent input for a marked, isolated layer replay')
     parser.add_argument('--recorded-warm-layer-reference', type=Path,
@@ -532,6 +583,11 @@ def main():
     if args.recorded_warm_snapshots and (not args.recorded_warm_layer_reference or layer_slice
             or args.recorded_warm_snapshots.exists() or args.recorded_warm_snapshots.is_symlink()):
         parser.error('warm snapshots require two recorded decodes and a new directory')
+    if bool(args.recorded_state_layout) != bool(args.recorded_first_state_output):
+        parser.error('simulator state capture requires both layout and output')
+    if args.recorded_first_state_output and (not args.recorded_layer_fixture or layer_slice
+            or args.recorded_first_state_output.exists() or args.recorded_first_state_output.is_symlink()):
+        parser.error('simulator state capture requires a recorded prefix and a new directory')
     if args.recorded_diagnostic_continue and not args.recorded_warm_layer_reference:
         parser.error('diagnostic continuation requires two recorded decodes')
     if args.recorded_diagnostic_output_dir and (not args.recorded_diagnostic_continue
@@ -927,6 +983,9 @@ def main():
             if (len(configs) + len(weights) + len(streams) + len(outputs) + len(inputs) + len(zeros) != len(entries)
                     or len(streams) != 120 or not outputs):
                 raise ValueError('invalid recorded layer layout')
+            state_groups = (validate_recorded_state_layout(args.recorded_state_layout.read_text(),
+                            weights, streams, inputs, outputs, decode_steps, layers, 32)
+                            if args.recorded_state_layout else None)
             routes = (786, 978, 1170, 785, 977, 1169, 1361)
 
             def select_bank(bank, address):
@@ -1086,6 +1145,24 @@ def main():
                                 or words[9:15] != (0x31464735, 1, executed, 120, 0x80000004, 0)
                                 or words[15] != core):
                             raise RuntimeError(f'core {core}: recorded layer failed before {executed} barriers: {words}')
+                if run_number == 0 and state_groups is not None:
+                    state_dir = args.recorded_first_state_output
+                    state_dir.mkdir()
+                    for (kind, layer), fragments in sorted(state_groups.items()):
+                        payload = bytearray()
+                        for bank, address, _, rows, row_bytes in fragments:
+                            if kind == 'K':
+                                for row in range(rows):
+                                    payload.extend(read_bank(bank, address + row * row_bytes, 512))
+                            else:
+                                payload.extend(read_bank(bank, address, rows * row_bytes))
+                        if kind != 'K' and any(not math.isfinite(value) for (value,) in struct.iter_unpack('<f', payload)):
+                            raise RuntimeError(f'non-finite simulator {kind} state at layer {layer}')
+                        with (state_dir / f'{kind}-layer{layer}.bin').open('xb') as state_file:
+                            state_file.write(payload)
+                    (state_dir / 'worker-audit-complete.marker').touch(exist_ok=False)
+                    print(f'captured first-position simulator state for {layers} layers; '
+                          'worker audit only, NO HARDWARE', flush=True)
                 output_rows = (32 if args.recorded_scalar_output else 4096 if args.recorded_z_output
                                else 8192 if args.recorded_qkv_output
                                else 9216 if args.recorded_wide_output else 2560)
@@ -1251,9 +1328,11 @@ def main():
             if full_prompt and (not sharded or args.resident_import_state or args.resident_export_state):
                 raise ValueError('full-prompt fixture requires the standalone sharded path')
             record_count = 521 if full_prompt else 22 if sharded else 7
+            token_id = struct.unpack_from('<I', command, 32)[0] if len(command) == 128 else None
+            embedding_sha = {42: 'd784c0b7fe8df8aab8d4797a8ea5a2c25b5db49a84c60a3ad93819086355871d',
+                             261: 'a91b05fc3b997b42e669d945ec85e01db2e534f6229c511f59ff906dda2c9c08'}
             if (len(command) != 128 or len(records) != 120 * record_count * 2048 or len(weights) != 33920
-                    or hashlib.sha256(weights).hexdigest()
-                    != 'd784c0b7fe8df8aab8d4797a8ea5a2c25b5db49a84c60a3ad93819086355871d'
+                    or token_id not in embedding_sha or hashlib.sha256(weights).hexdigest() != embedding_sha[token_id]
                     or len(norm) != 10240 or hashlib.sha256(norm).hexdigest()
                     != 'fd26aeb9265ba4588eca258e4c7fb27d2b82198eef72bbca4d8d46136b90c104'
                     or len(projection) != 14604288 or len(gate) != 5898240
@@ -1312,12 +1391,13 @@ def main():
             for offset, size, digest in tensors:
                 if hashlib.sha256(projection[offset:offset + size]).hexdigest() != digest:
                     raise ValueError('sequence projection weights do not match the pinned 4B tensors')
-            # Independently decode token 42 (lane 10) from the byte-major
+            # Independently decode the selected token from the byte-major
             # Q6_K blocks. This is an offline simulator reference only.
             expected = []
+            embedding_lane = token_id & 15
             for block in range(10):
                 tile = weights[block * 3392:(block + 1) * 3392]
-                data = tile[10:210 * 16:16]
+                data = tile[embedding_lane:210 * 16:16]
                 scale = struct.unpack_from('<e', data, 208)[0]
                 for pos in range(256):
                     half, rem = divmod(pos, 128)
@@ -1328,7 +1408,7 @@ def main():
                     q = (low | (high << 4)) - 32
                     s = struct.unpack_from('<b', data, 192 + pos // 16)[0]
                     expected.append(scale * s * q)
-            address = 0x10010900
+            address = 0x10000000 + (token_id & ~15) * 2120
             select(2, address, 18, 12)
             write(bar + 0x400000 + (address & 0x1fffff), weights)
             address = 0x20030000

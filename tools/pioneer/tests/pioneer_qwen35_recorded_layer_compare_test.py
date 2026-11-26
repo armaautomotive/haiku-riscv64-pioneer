@@ -8,7 +8,8 @@ import sys
 import tempfile
 from pioneer_qwen35_ttsim_service_test import (RecordedNumericalMismatch, compare_recorded_layer,
                                                compare_recorded_layer_diagnostic, compare_recorded_token,
-                                               validate_isolated_zero_ranges)
+                                               validate_isolated_zero_ranges, validate_recorded_state_layout)
+from pioneer_qwen35_ttsim_state_compare import compare_state
 
 assert compare_recorded_token(261, 261, False) is None
 assert compare_recorded_token(1850, 89598, True) == 'recorded decode token 1850 differs from reference 89598'
@@ -30,6 +31,28 @@ with tempfile.TemporaryDirectory() as directory:
                               '--recorded-warm-token-reference', 'warm-token',
                               '--recorded-warm-snapshots', directory], capture_output=True, text=True)
     assert existing.returncode != 0 and 'warm snapshots require two recorded decodes' in existing.stderr
+
+state_map = 'H 0 12 0 67108864 0 8192\nD 0 65536 0 83886080 0 32\n'
+state_weights = [(0, 100663296, 4096, 0)]
+state_streams = [(0, 0, 117440512)]
+state_outputs = [(0, 134217728, 0, 2560)]
+assert len(validate_recorded_state_layout(state_map, state_weights, state_streams, [], state_outputs, 532, 1, 32)) == 2
+for bad_map in (state_map.splitlines()[0], state_map + state_map.splitlines()[0] + '\n',
+                state_map.replace('83886080', '100663296'), state_map.replace(' 8192\n', ' 8176\n'),
+                state_map.replace('D 0 65536', 'K 0 16384')):
+    try:
+        validate_recorded_state_layout(bad_map, state_weights, state_streams, [], state_outputs, 532, 1, 32)
+        raise AssertionError('invalid or overlapping simulator state map accepted')
+    except ValueError:
+        pass
+assert compare_state(struct.pack('<3f', 0, 1, -2), struct.pack('<3f', 0, 1, -2), 3)['mismatches'] == 0
+assert compare_state(struct.pack('<3f', 0, 1, 3), struct.pack('<3f', 0, 1, -2), 3)['worst_index'] == 2
+for bad in (b'', struct.pack('<3f', 0, math.nan, 2)):
+    try:
+        compare_state(bad, struct.pack('<3f', 0, 1, 2), 3)
+        raise AssertionError('malformed recurrent state accepted')
+    except ValueError:
+        pass
 
 reference = [1.0] * 2560
 actual = reference.copy(); actual[8] += 1e-6

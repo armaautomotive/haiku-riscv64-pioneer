@@ -50,9 +50,11 @@ static bool WriteNew(const std::string& path,const void* data,size_t size)
 }
 int main(int argc,char** argv)
 {
-    if (argc!=3 && argc!=4) { std::fprintf(stderr,"usage: %s pinned-model.gguf empty-directory [0|1]\n",argv[0]);return 2; }
-    if (argc==4 && std::strcmp(argv[3],"0") && std::strcmp(argv[3],"1")) return 2;
-    const unsigned position=argc==4 && !std::strcmp(argv[3],"1") ? 1 : 0;
+    if (argc<3 || argc>5) { std::fprintf(stderr,"usage: %s pinned-model.gguf empty-directory [0|1 [42|261]]\n",argv[0]);return 2; }
+    if (argc>=4 && std::strcmp(argv[3],"0") && std::strcmp(argv[3],"1")) return 2;
+    if (argc==5 && std::strcmp(argv[4],"42") && std::strcmp(argv[4],"261")) return 2;
+    const unsigned position=argc>=4 && !std::strcmp(argv[3],"1") ? 1 : 0;
+    const unsigned tokenId=argc==5 && !std::strcmp(argv[4],"261") ? 261 : 42;
     const int fd=open(argv[1],O_RDONLY|O_NOFOLLOW|O_CLOEXEC);
     if (fd<0) return 1;
     FILE* source=fdopen(fd,"rb");
@@ -72,7 +74,7 @@ int main(int argc,char** argv)
     std::vector<uint8_t> weights(DataflowEmbeddingTileCount*DataflowQ6KEmbeddingTileBytes);
     std::array<uint8_t,4096> page{};
     for (unsigned p=0;p*page.size()<weights.size();p++) {
-        if (!reader.ReadPage(sourceModel,index,32,16,p,page.data(),page.size())) { fclose(source);return 1; }
+        if (!reader.ReadPage(sourceModel,index,tokenId&~15U,16,p,page.data(),page.size())) { fclose(source);return 1; }
         const size_t count=std::min(page.size(),weights.size()-p*page.size());
         std::memcpy(weights.data()+p*page.size(),page.data(),count);
     }
@@ -175,9 +177,10 @@ int main(int argc,char** argv)
     model.layers[0].weights[AttentionNorm].inputs=Hidden;
     model.layers[0].weights[AttentionNorm].place={1,Hidden*4,1,1,{{0,0x20030000,0,1}}};
     DataflowDynamicTokenContext token{};DataflowEmbeddingProgram embedding{};
-    if (!DataflowDynamicTokenContext::Build(model,42,position,token)
-        || !DataflowEmbeddingProgramBuilder::Build(model,42,0,routes,embedding)
-        || embedding.weightBank!=0 || embedding.weightBase!=0x10010900 || embedding.lane!=10) return 1;
+    if (!DataflowDynamicTokenContext::Build(model,tokenId,position,token)
+        || !DataflowEmbeddingProgramBuilder::Build(model,tokenId,0,routes,embedding)
+        || embedding.weightBank!=0 || embedding.weightBase!=0x10000000+(tokenId&~15U)*2120
+        || embedding.lane!=(tokenId&15U)) return 1;
     DataflowResidualProgram residual{};residual.mode=DataflowResidualSave;residual.activationSlot=0;
     std::memcpy(residual.bankRoute,routes,sizeof(routes));residual.activation=model.activation[0];
     residual.residual={Hidden,4,1,16,{{0,0x20010000,0,Hidden}}};
