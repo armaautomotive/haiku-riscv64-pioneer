@@ -2,7 +2,7 @@
 // Exercise the guarded hybrid producers and reducers with in-memory transport.
 #define PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY 1
 #define PIONEER_QWEN35_RECOVERY_COMPILE_ONLY 1
-#include "../PioneerQwen35DataflowDenseAttentionHybrid.h"
+#include "../PioneerQwen35DataflowFlashPartialProtocol.h"
 #include <array>
 #include <cassert>
 #include <cmath>
@@ -80,6 +80,60 @@ struct Scratch {
     DataflowFlashHybridScratch Get() {return {keys.data(),values.data(),queries.data(),sums.data(),
         norm.data(),rope.data(),gate.data(),incoming.data()};}
 };
+// Sequential fake L1/NoC. It uses the actual packet publication, address
+// authorization, stable-header and data-validation code, not a raw row copy.
+struct ProtocolMock {
+    using Packet=std::array<uint32_t,DataflowFlashPartialBytes/4>;
+    Mock& base;std::vector<Packet>& packets;
+    unsigned core=0;bool reducer=false,barrier=false;
+    std::array<uint32_t,16> first{},again{};std::array<float,DenseHeadWidth> data{};
+    bool BindShardProgram(const DataflowDenseAttentionProgram& p) {return base.BindShardProgram(p);}
+    bool ReadNorm(bool q,float* out) {return base.ReadNorm(q,out);}
+    bool ReadRope(float* out) {return base.ReadRope(out);}
+    bool ReadProjectedRows(unsigned firstRow,float* out) {return base.ReadProjectedRows(firstRow,out);}
+    bool ReadKvTile(unsigned head,bool value,unsigned firstPosition,unsigned count,float* out) {
+        return base.ReadKvTile(head,value,firstPosition,count,out);
+    }
+    bool PublishPartial(unsigned producer,unsigned q,unsigned firstLane,unsigned count,const DataflowDenseAttentionRow& row) {
+        if (reducer || !base.program || producer!=core) return false;
+        const DataflowFlashPartialIdentity id{5,31,base.program->layer,base.program->position,producer,q};
+        unsigned expected=0,lanes=0;
+        return DataflowFlashPartialIdentityRange(id,expected,lanes) && expected==firstLane && lanes==count
+            && DataflowFlashPartialPublish(packets[producer*4+q].data(),id,row);
+    }
+    bool ReadPartial(unsigned producer,unsigned q,unsigned firstLane,unsigned count,DataflowDenseAttentionRow& row) {
+        if (!reducer || !barrier || !base.program) return false;
+        const DataflowFlashPartialIdentity id{5,31,base.program->layer,base.program->position,producer,q};
+        unsigned expected=0,lanes=0;
+        return DataflowFlashPartialIdentityRange(id,expected,lanes) && expected==firstLane && lanes==count
+            && DataflowFlashPartialReceive(core,id,*this,row);
+    }
+    bool ContextMatches(unsigned consumer,const DataflowFlashPartialIdentity& id) const {
+        return reducer && barrier && base.program && consumer==core && id.epoch==5 && id.step==31
+            && id.layer==base.program->layer && id.position==base.program->position;
+    }
+    bool Read(unsigned consumer,const DataflowFlashPartialIdentity& id,unsigned remote,unsigned local,unsigned bytes) {
+        if (!ContextMatches(consumer,id)) return false;
+        const bool allowed=consumer==id.producer
+            ?DataflowFlashPartialLocalReadAllowed(consumer,id,remote,local,bytes)
+            :DataflowFlashPartialPeerReadAllowed(consumer,id,DataflowBarrierWorkerRoute(id.producer),remote,local,bytes);
+        if (!allowed) return false;
+        const auto& p=packets[id.producer*4+id.query];
+        if (local==DataflowFlashPartialHeaderScratch) for (unsigned i=0;i<16;i++) first[i]=p[i];
+        else if (local==DataflowFlashPartialHeaderAgain) for (unsigned i=0;i<16;i++) again[i]=p[i];
+        else if (local==DataflowFlashPartialIncoming)
+            for (unsigned i=0;i<DenseHeadWidth;i++) data[i]=PioneerAttentionFloat(p[16+i]);
+        else return false;
+        return true;
+    }
+    uint32_t Word(unsigned address,unsigned i) const {
+        return address==DataflowFlashPartialHeaderScratch?first[i]:again[i];
+    }
+    const float* Values() const {return data.data();}
+    bool WriteContextSlice(unsigned firstRow,unsigned count,const float* values) {
+        return base.WriteContextSlice(firstRow,count,values);
+    }
+};
 static float Sample(unsigned i,unsigned salt) {return float(int((i*17+salt*23)%193)-96)*0.003f;}
 int main() {
     std::vector<float> qg(ConvChannels);for (unsigned i=0;i<qg.size();i++) qg[i]=Sample(i,1);
@@ -142,6 +196,26 @@ int main() {
             // leave its effect intact, and require the caller to retain it.
             assert(!DataflowFlashHybridProduce(program,3,scratch.Get(),uncertain));
             assert(uncertain.published==2 && incomplete[3*4].present && !incomplete[3*4+1].present);
+        }
+        if (position==1 || position==33) {
+            std::vector<ProtocolMock::Packet> packets(DataflowCoreCount*DataflowFlashQueriesPerKv);
+            std::vector<float> protocolOutput(output.size());std::vector<unsigned> protocolCoverage(output.size());
+            std::vector<Partial> unused(DataflowCoreCount*DataflowFlashQueriesPerKv);
+            Mock transport{nullptr,qg,kv,norm,rope,unused,protocolOutput,protocolCoverage};
+            ProtocolMock protocol{transport,packets};
+            for (unsigned core=0;core<DataflowCoreCount;core++) {
+                protocol.core=core;assert(DataflowFlashHybridProduce(program,core,scratch.Get(),protocol));
+            }
+            protocol.reducer=true;protocol.core=0;
+            assert(!DataflowFlashHybridReduce(program,0,scratch.Get(),protocol));
+            protocol.barrier=true;packets[0][12]^=1;
+            assert(!DataflowFlashHybridReduce(program,0,scratch.Get(),protocol));
+            packets[0][12]^=1;
+            for (unsigned core=0;core<DataflowCoreCount;core++) {
+                protocol.core=core;assert(DataflowFlashHybridReduce(program,core,scratch.Get(),protocol));
+            }
+            for (unsigned i=0;i<output.size();i++)
+                assert(protocolCoverage[i]==1 && std::fabs(protocolOutput[i]-output[i])<2e-5f);
         }
     }
     std::printf("PASS hybrid producer/reducer on 120 mocked workers; max error %.9g; NO HARDWARE\n",maximum);

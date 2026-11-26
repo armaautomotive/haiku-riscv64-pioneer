@@ -11,8 +11,20 @@
 #ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
 #include "PioneerQwen35DataflowActivationShareProtocol.h"
 #endif
+#if defined(PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY) && defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS) \
+    && (!defined(PIONEER_QWEN35_DEVICE_DISPATCH) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) \
+        || defined(PIONEER_QWEN35_RECOVERY_QUALIFY) || defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL))
+#error Flash peer reads require the non-loadable graph witness
+#endif
 
 namespace PioneerQwen35 {
+
+#if defined(PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY) && defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS)
+struct DataflowFlashPartialIdentity;
+inline bool DataflowFlashPartialProducerMatches(const DataflowFlashPartialIdentity&,unsigned);
+inline bool DataflowFlashPartialPeerReadAllowed(unsigned,const DataflowFlashPartialIdentity&,
+    unsigned,unsigned,unsigned,unsigned);
+#endif
 
 enum : unsigned {
 	DataflowNoc0Base=0xffb20000,
@@ -131,13 +143,18 @@ class DataflowBlackholeNoc {
 		return true;
 	}
 
-	template<bool BarrierPeer=false,bool ActivationPeer=false>
+	template<bool BarrierPeer=false,bool ActivationPeer=false,bool FlashPeer=false>
 	static bool Transfer(bool write,uint32_t remote,unsigned route,
 		uint8_t* local,unsigned bytes,DataflowNocDiagnostic* detail=nullptr,
-		unsigned source=0,unsigned destination=0,const DataflowCoreInvocation* shareProgram=nullptr)
+		unsigned source=0,unsigned destination=0,const DataflowCoreInvocation* shareProgram=nullptr
+#if defined(PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY) && defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS)
+        ,const DataflowFlashPartialIdentity* flashIdentity=nullptr
+#endif
+        )
 	{
 		(void)shareProgram;
-		static_assert(!(BarrierPeer && ActivationPeer),"peer access modes are exclusive");
+		static_assert(unsigned(BarrierPeer)+unsigned(ActivationPeer)+unsigned(FlashPeer)<=1,
+			"peer access modes are exclusive");
 		if (detail) *detail={};
 		const uint32_t localAddress=uint32_t(reinterpret_cast<uintptr_t>(local));
 		bool rangeOkay=BarrierPeer
@@ -151,6 +168,13 @@ class DataflowBlackholeNoc {
 				*shareProgram,destination,route,remote,localAddress,bytes);
 #else
 		static_assert(!ActivationPeer,"activation peer reads require the sharing witness");
+#endif
+#if defined(PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY) && defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS)
+		if constexpr (FlashPeer) rangeOkay=Noc==1 && !write && flashIdentity
+			&& DataflowFlashPartialProducerMatches(*flashIdentity,destination)
+			&& DataflowFlashPartialPeerReadAllowed(source,*flashIdentity,route,remote,localAddress,bytes);
+#else
+		static_assert(!FlashPeer,"flash peer reads require the guarded graph witness");
 #endif
 		if (!local || !rangeOkay || !bytes || bytes>DataflowNocMaxTransfer
 			|| (bytes&63) || (remote&63) || (write && (localAddress&3)) || route>0xfff) {
@@ -166,7 +190,7 @@ class DataflowBlackholeNoc {
 		const uint32_t rawSelf=*Words(Base+DataflowNocLogicalIdOffset);
 		uint32_t self=0;
 		if (!DataflowNocDecodeLocalRoute(rawSelf,self)
-			|| ((BarrierPeer || ActivationPeer) && !DataflowNocRouteMatchesWorker(self,source))) {
+			|| ((BarrierPeer || ActivationPeer || FlashPeer) && !DataflowNocRouteMatchesWorker(self,source))) {
 			if (detail) *detail={DataflowNocTransferIdentity,0xff,rawSelf,0};
 			return false;
 		}
@@ -338,6 +362,16 @@ public:
 		return Transfer<true>(false,DataflowBarrierSenderReceiptBlock,
 			DataflowBarrierWorkerRoute(destination),local,DataflowBarrierPacketBytes,
 			detail,source,destination);
+	}
+#endif
+
+#if defined(PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY) && defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS)
+	// Restricted read of one identified partial packet; no peer writes.
+	bool ReadFlashPartialPeer(unsigned consumer,unsigned producer,const DataflowFlashPartialIdentity& id,
+		unsigned remote,uint8_t* local,unsigned bytes) const {
+		static_assert(Noc==1,"flash partial peer reads require NoC1");
+		return Transfer<false,false,true>(false,remote,DataflowBarrierWorkerRoute(producer),local,bytes,
+			nullptr,consumer,producer,nullptr,&id);
 	}
 #endif
 

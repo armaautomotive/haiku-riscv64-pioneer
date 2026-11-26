@@ -102,7 +102,7 @@ bool PioneerQwen35DataflowDenseAttentionWorker(
 
 class DataflowBlackholeDenseAttentionOps {
 	const DataflowDenseAttentionInvocation* fInvocation=nullptr;
-#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+#if defined(PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY) || defined(PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY)
 	DataflowDenseAttentionInvocation fShardBinding{};
 #endif
 	DataflowBlackholeNoc<0> fReader;
@@ -181,7 +181,7 @@ public:
 		return true;
 	}
 
-#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+#if defined(PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY) || defined(PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY)
 	bool BindShardProgram(const DataflowDenseAttentionProgram& program)
 	{
 		fInvocation=nullptr;

@@ -10,7 +10,11 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/tes
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_qwen35_dataflow_flash_hybrid_worker_test.cpp" -o "$temporary/worker-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/worker-test"
-for header in PioneerQwen35DataflowDenseAttentionPartial.h PioneerQwen35DataflowDenseAttentionHybrid.h; do
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_qwen35_flash_partial_protocol_test.cpp" -o "$temporary/protocol-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/protocol-test"
+for header in PioneerQwen35DataflowDenseAttentionPartial.h PioneerQwen35DataflowDenseAttentionHybrid.h \
+ PioneerQwen35DataflowFlashPartialProtocol.h PioneerQwen35DataflowBlackholeFlashHybridIO.h; do
  printf '#include "%s"\n' "$directory/../$header" > "$temporary/guard.cpp"
  for flags in '' '-DPIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY' '-DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY' \
   '-DPIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_RECOVERY_QUALIFY'; do
