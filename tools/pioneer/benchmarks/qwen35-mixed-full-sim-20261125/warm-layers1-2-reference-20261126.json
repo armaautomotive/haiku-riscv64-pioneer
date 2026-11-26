@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "layer": 1,
+      "position": 1,
+      "max_absolute_error": 7.152557373046875e-07,
+      "mismatches": 0,
+      "input_sha256": "82b47ba902bc054705f1bdd67e7016a5ccbdf97a2c078beaad0cfa9d2d72844c",
+      "simulator_sha256": "b071f6ca6689da0aa3c720068e42e846d19e73106bac9a98a385cb977e6b4cc4",
+      "reference_sha256": "eb8fd87626dfaf05ea0e20c6d35343a557109ec40866beefcc3110327acbcf4c",
+      "history_sha256": "de60199ab06c7db0df8678c33bb1e344331cacc33e892c8b892f9f9dc8d54fe9",
+      "delta_sha256": "9f5efd167732e19785d1de73e4f9e76224ff9d3b61ef4b747fd5f71e769ca322"
+    },
+    {
+      "layer": 2,
+      "position": 1,
+      "max_absolute_error": 7.152557373046875e-07,
+      "mismatches": 0,
+      "input_sha256": "eb8fd87626dfaf05ea0e20c6d35343a557109ec40866beefcc3110327acbcf4c",
+      "simulator_sha256": "1c3c434dd51f16d5da24786691c7a875a043ed9b2f0658ba7974ecd9c3f7b445",
+      "reference_sha256": "59a9f046c9193fc0beea3b8d5f4584bc638b2eb4cc16024d335a6a8fee57de23",
+      "history_sha256": "9f55b77d64e39fa348c893bd62727309505734d631b59588b45556094ba53e49",
+      "delta_sha256": "d494d0459ce346d0264f08c63b0af77a88e65816929e6d064e34777e20ead15f"
+    }
+  ],
+  "scope": "Separately started 120-worker isolated warm-layer replays with captured simulated state and CPU inputs; not a full-model resident handoff or hardware."
+}

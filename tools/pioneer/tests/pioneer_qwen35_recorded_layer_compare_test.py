@@ -37,6 +37,14 @@ state_weights = [(0, 100663296, 4096, 0)]
 state_streams = [(0, 0, 117440512)]
 state_outputs = [(0, 134217728, 0, 2560)]
 assert len(validate_recorded_state_layout(state_map, state_weights, state_streams, [], state_outputs, 532, 1, 32)) == 2
+warm_state_map = state_map.replace('H 0 ', 'H 1 ').replace('D 0 ', 'D 1 ')
+assert len(validate_recorded_state_layout(warm_state_map, state_weights, state_streams, [],
+                                          state_outputs, 532, 1, 32, 1)) == 2
+try:
+    validate_recorded_state_layout(warm_state_map, state_weights, state_streams, [], state_outputs, 532, 1, 32)
+    raise AssertionError('wrong isolated layer state accepted')
+except ValueError:
+    pass
 for bad_map in (state_map.splitlines()[0], state_map + state_map.splitlines()[0] + '\n',
                 state_map.replace('83886080', '100663296'), state_map.replace(' 8192\n', ' 8176\n'),
                 state_map.replace('D 0 65536', 'K 0 16384')):

@@ -25,12 +25,23 @@ static bool EmitZeroSpace(FILE* output,const RowSpace& space) {
     }
     return true;
 }
+static bool EmitWarmSpace(FILE* output,char kind,unsigned layer,const RowSpace& space) {
+    if (!space.Valid()) return false;
+    for (unsigned i=0;i<space.count;i++) {
+        const auto& p=space.parts[i];
+        if (std::fprintf(output,"%c %u %u %u %u %u %u\n",kind,layer,space.rowBytes,
+                p.bank,p.address,p.firstRow,p.rows)<0) return false;
+    }
+    return true;
+}
 static bool Mark(const std::string& path) {
     FILE* f=std::fopen(path.c_str(),"wbx");return f && std::fclose(f)==0;
 }
 int main(int argc,char** argv) {
     (void)&q35_slice_handoff_fixture_main;
-    if (argc!=4) {std::fprintf(stderr,"usage: %s full-fixture empty-output-directory layer\n",argv[0]);return 2;}
+    if (argc!=4 && argc!=5) {std::fprintf(stderr,"usage: %s full-fixture empty-output-directory layer [--warm-state]\n",argv[0]);return 2;}
+    const bool warm=argc==5 && !std::strcmp(argv[4],"--warm-state");
+    if (argc==5 && !warm) return 2;
     char* end=nullptr;const unsigned long parsed=std::strtoul(argv[3],&end,10);
     if (!argv[3][0] || *end || parsed>=Layers) return 2;
     const unsigned layer=unsigned(parsed);const std::string source=argv[1],output=argv[2];
@@ -55,7 +66,7 @@ int main(int argc,char** argv) {
     if (start>=finish || finish>DataflowGraphDecodeSteps || finish-start>=DataflowGraphDecodeSteps) return 1;
     const unsigned executed=finish-start;
     FILE* records=std::fopen((output+"/records.bin").c_str(),"wbx");if (!records) return 1;
-    RowSpace expectedInput{},expectedOutput{},historyRead{},stateRead{};
+    RowSpace expectedInput{},expectedOutput{},historyRead{},stateRead{},denseKv{};
     for (unsigned core=0;core<DataflowCoreCount;core++) {
         const uint64_t offset=(uint64_t(core)*DataflowGraphDecodeSteps+start)*sizeof(DataflowStreamRecord);
         if (fseeko(input,off_t(offset),SEEK_SET)) return 1;
@@ -74,14 +85,23 @@ int main(int argc,char** argv) {
             if (record.header[5]==DataflowConvMagic) {
                 DataflowConvInvocation invocation{};DataflowDynamicRead(record,invocation);
                 if (!invocation.Valid() || invocation.layer!=layer || invocation.position!=0) return 1;
-                if (!core) historyRead=invocation.historyRead;
-                else if (!DataflowRowSpaceMatches(historyRead,invocation.historyRead)) return 1;
+                const auto& state=warm?invocation.historyWrite:invocation.historyRead;
+                if (!core) historyRead=state;
+                else if (!DataflowRowSpaceMatches(historyRead,state)) return 1;
             }
             if (record.header[5]==DataflowDeltaShardMagic) {
                 DataflowDeltaShardInvocation invocation{};DataflowDynamicRead(record,invocation);
                 if (!invocation.Valid() || invocation.program.layer!=layer || invocation.program.position!=0) return 1;
-                if (!core) stateRead=invocation.program.stateRead;
-                else if (!DataflowRowSpaceMatches(stateRead,invocation.program.stateRead)) return 1;
+                const auto& state=warm?invocation.program.stateWrite:invocation.program.stateRead;
+                if (!core) stateRead=state;
+                else if (!DataflowRowSpaceMatches(stateRead,state)) return 1;
+            }
+            if (warm && record.header[5]==DataflowDenseAttentionMagic) {
+                DataflowDenseAttentionInvocation invocation{};DataflowDynamicRead(record,invocation);
+                if (!invocation.Valid() || invocation.program.layer!=layer || invocation.program.position!=0
+                    || !Dense(layer)) return 1;
+                if (!denseKv.count) denseKv=invocation.program.kv;
+                else if (!DataflowRowSpaceMatches(denseKv,invocation.program.kv)) return 1;
             }
             record.header[3]=step+1;
             if (!DataflowStreamRecordStructureValid(record,descriptors[core].binding.epoch,step+1,core)
@@ -103,9 +123,17 @@ int main(int argc,char** argv) {
     }
     if (std::ferror(oldLayout) || !weights || streams!=DataflowCoreCount
         || !EmitSpace(newLayout,'I',expectedInput) || !EmitSpace(newLayout,'O',expectedOutput)
-        || (Dense(layer) ? (historyRead.count || stateRead.count)
+        || (!warm && (Dense(layer) ? (historyRead.count || stateRead.count)
                          : (!EmitZeroSpace(newLayout,historyRead) || !EmitZeroSpace(newLayout,stateRead)))
+            )
         || std::fclose(oldLayout) || std::fclose(newLayout)) return 1;
+    if (warm) {
+        FILE* state=std::fopen((output+"/warm-state-layout.txt").c_str(),"wx");
+        if (!state || (Dense(layer)?!EmitWarmSpace(state,'K',layer,denseKv)
+                :(!EmitWarmSpace(state,'H',layer,historyRead) || !EmitWarmSpace(state,'D',layer,stateRead)))
+            || std::fclose(state)
+            || !Mark(output+"/warm-layer.marker")) return 1;
+    }
     for (const char* file:{"weights.bin","templates.bin","command.bin"})
         if (link((source+"/"+file).c_str(),(output+"/"+file).c_str())) return 1;
     if (!Mark(output+"/layer-slice.marker")) return 1;

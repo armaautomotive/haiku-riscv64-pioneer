@@ -1,5 +1,13 @@
 # Latest offline checks, 2026-11-26
 
+Isolated warm replays for layers 1 and 2 each completed the 120-worker audit
+and matched all 2,560 CPU output values, maximum absolute error
+`7.15255737e-07`. They used captured position-zero simulator state and fresh
+simulator fleets. The analogous dense layer-3 warm replay is running as
+session `26229`; its captured prior KV had two strict comparison failures.
+The full two-position capture remains session `45891`.
+See `benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
 The four-layer simulator capture passed its worker and final-hidden checks;
 all six position-zero recurrent-state comparisons for layers 0–2 passed.
 Layer 3's dense KV check failed on two of 2,048 half values at the existing

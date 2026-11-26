@@ -2,6 +2,39 @@
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+The isolated position-one replays for recurrent layers 1 and 2 each
+completed their 120-worker, 16-barrier audit and matched all 2,560 CPU
+reference outputs, maximum absolute error `7.15255737e-07` for both. Each
+used its captured position-zero simulator state and exact CPU input for that
+layer on a fresh simulated fleet. Hashes and scope are recorded in
+`warm-layers1-2-reference-20261126.json`; logs are
+`/private/tmp/q35-warm-layer{1,2}-sim-20261126d.log`.
+
+The same isolated replay now supports the dense layer's prior F16 KV state.
+The layer-3 records, ranges and KV map were independently checked against
+the full graph and completed four-layer capture; optimized and ASan/UBSan
+builders produced identical nine fixture files. The warm layer-3 simulator
+is running in session `26229`, log
+`/private/tmp/q35-warm-layer3-sim-20261126d.log`, with no result yet. The
+prior KV comparison still failed two values at the existing strict tolerance.
+None of these isolated tests establishes full-model warm output, physical
+ownership, recovery or speed.
+
+Two isolated warm replays now use the recorded full-model layer 1 and 2
+programs, the independently captured position-zero simulator states, and the
+independent CPU position-one input and output for the respective layers. The
+builder uses each position-zero write buffer as the position-one read buffer;
+an independent verifier compared all 120 reindexed streams and the exact
+state ranges to the original graph. Both state maps matched the audited
+four-layer capture, and the six captured recurrent-state files still match
+their recorded SHA-256 values. The ordinary cold layer-1 slice passed the
+existing independent audit after the builder change. The command framing,
+state geometry, wrong-layer and overlap rejection tests passed; optimized and
+ASan/UBSan layer-1 builders produced identical nine fixture files. The layer-1
+and layer-2 simulations completed as described above.
+They use a fresh simulated fleet and cannot replace a full resident handoff
+or hardware test. No card was accessed.
+
 The four-layer capture completed its 120-worker, 67-barrier audit and passed
 the existing final-hidden check (maximum absolute error `5.00679016e-06`).
 All six recurrent-state comparisons for layers 0–2 passed the existing

@@ -208,9 +208,10 @@ def validate_isolated_zero_ranges(zeros, weights, streams, inputs, outputs, deco
     return accepted
 
 
-def validate_recorded_state_layout(raw, weights, streams, inputs, outputs, stream_steps, layers, context):
+def validate_recorded_state_layout(raw, weights, streams, inputs, outputs, stream_steps, layers, context, first_layer=0):
     """Validate simulator state destinations and reject overlap with the recorded fixture."""
-    if not 1 <= layers <= 32 or not 1 <= context <= 32768 or not 1 <= stream_steps <= 1024:
+    if (not 1 <= layers <= 32 or not 0 <= first_layer <= 32 - layers
+            or not 1 <= context <= 32768 or not 1 <= stream_steps <= 1024):
         raise ValueError('invalid simulator state layout geometry')
     groups = {}
     for line in raw.splitlines():
@@ -225,13 +226,13 @@ def validate_recorded_state_layout(raw, weights, streams, inputs, outputs, strea
         dense = layer % 4 == 3
         expected_rows, expected_bytes = ((8192, 12) if kind == 'H' else (32, 65536)
                                          if kind == 'D' else (8, context * 512))
-        if (not 0 <= layer < layers or dense != (kind == 'K') or row_bytes != expected_bytes
+        if (not first_layer <= layer < first_layer + layers or dense != (kind == 'K') or row_bytes != expected_bytes
                 or not 0 <= bank < 7 or address < 0x04000000 or (address & 4095)
                 or first < 0 or rows <= 0 or first + rows > expected_rows
                 or address + rows * row_bytes > 0xc4000000):
             raise ValueError('invalid simulator state layout range')
         groups.setdefault((kind, layer), []).append((bank, address, first, rows, row_bytes))
-    expected = {(kind, layer) for layer in range(layers)
+    expected = {(kind, layer) for layer in range(first_layer, first_layer + layers)
                 for kind in (('K',) if layer % 4 == 3 else ('H', 'D'))}
     if set(groups) != expected:
         raise ValueError('incomplete simulator state layout')
@@ -279,6 +280,27 @@ def resident_position_one_command(initial, candidate):
         if checksum != words[10]:
             raise ValueError('invalid resident command checksum')
     return candidate
+
+
+def standalone_position_one_command(initial):
+    """Change only position and checksum for a fresh isolated simulator fleet."""
+    if len(initial) != 128:
+        raise ValueError('invalid standalone command')
+    words = list(struct.unpack('<32I', initial))
+    trigger, epoch, first, count = words[2:6]
+    marker = 0x40000000 | trigger
+    if (words[:2] != [0x31444335, 1] or not 0 < trigger <= 0x0fffffff or not epoch
+            or not first or count not in (433, 436, 497, 500, 521, 524, 529, 532)
+            or first + count - 1 > 0x0fffffff or not 0 < words[6] <= 1048576
+            or words[7] >= 2 or words[8] >= 248320 or words[9] != 0 or any(words[11:16])
+            or words[16:] != [epoch, (~epoch) & 0xffffffff, marker, (~marker) & 0xffffffff] * 4):
+        raise ValueError('invalid standalone command framing')
+    words[9] = 1
+    checksum = 2166136261
+    for word in words[:10]:
+        checksum = ((checksum ^ word) * 16777619) & 0xffffffff
+    words[10] = checksum
+    return resident_position_one_command(initial, struct.pack('<32I', *words))
 
 
 def validate_resident_prompt_commands(first, second):
@@ -535,6 +557,8 @@ def main():
                         help='save first-position simulator state after terminal worker audit')
     parser.add_argument('--recorded-layer-input', type=Path,
                         help='inject the independent input for a marked, isolated layer replay')
+    parser.add_argument('--recorded-warm-layer-state', type=Path,
+                        help='use audited first-position state for a marked isolated warm layer')
     parser.add_argument('--recorded-warm-layer-reference', type=Path,
                         help='compare a second resident decode layer output with an offline reference')
     parser.add_argument('--recorded-warm-token-reference', type=Path,
@@ -559,6 +583,9 @@ def main():
         parser.error('recorded token reference requires a recorded layer fixture')
     layer_slice = bool(args.recorded_layer_fixture
                        and (args.recorded_layer_fixture / 'layer-slice.marker').is_file())
+    warm_slice = bool(layer_slice and (args.recorded_layer_fixture / 'warm-layer.marker').is_file())
+    if warm_slice != bool(args.recorded_warm_layer_state):
+        parser.error('warm isolated replay requires its marked fixture and audited state')
     if layer_slice != bool(args.recorded_layer_input):
         parser.error('isolated layer replay requires a marked fixture and its input')
     if layer_slice and (args.recorded_token_reference or args.recorded_warm_layer_reference):
@@ -986,6 +1013,9 @@ def main():
             state_groups = (validate_recorded_state_layout(args.recorded_state_layout.read_text(),
                             weights, streams, inputs, outputs, decode_steps, layers, 32)
                             if args.recorded_state_layout else None)
+            warm_groups = (validate_recorded_state_layout((directory / 'warm-state-layout.txt').read_text(),
+                           weights, streams, inputs, outputs, decode_steps, 1, 32, layers - 1)
+                           if warm_slice else None)
             routes = (786, 978, 1170, 785, 977, 1169, 1361)
 
             def select_bank(bank, address):
@@ -1055,6 +1085,24 @@ def main():
                     next_input += rows
                 if next_input != 9216:
                     raise ValueError('incomplete isolated layer input layout')
+                if warm_slice:
+                    if not (args.recorded_warm_layer_state / 'worker-audit-complete.marker').is_file():
+                        raise ValueError('warm state lacks a completed simulator worker audit')
+                    for (kind, layer), fragments in sorted(warm_groups.items()):
+                        payload = (args.recorded_warm_layer_state / f'{kind}-layer{layer}.bin').read_bytes()
+                        expected_bytes = (8192 * 12) if kind == 'H' else (32 * 65536) if kind == 'D' else 8 * 512
+                        value_type = '<e' if kind == 'K' else '<f'
+                        if len(payload) != expected_bytes or any(not math.isfinite(value)
+                                for (value,) in struct.iter_unpack(value_type, payload)):
+                            raise ValueError(f'invalid imported {kind} warm state')
+                        for bank, address, first, rows, row_bytes in fragments:
+                            if kind == 'K':
+                                for row in range(rows):
+                                    offset = (first + row) * 512
+                                    write_bank(bank, address + row * row_bytes, payload[offset:offset + 512])
+                            else:
+                                write_bank(bank, address, payload[first * row_bytes:(first + rows) * row_bytes])
+                    command = standalone_position_one_command(command)
             for expected_core, (core, bank, address) in enumerate(streams):
                 if core != expected_core:
                     raise ValueError('recorded stream core order mismatch')
@@ -1072,7 +1120,8 @@ def main():
                 write(bar + 0xab080, command[:64])
                 write(bar + 0xab0c0, command[64:])
                 steps = record_count if full_prompt else executed
-                print(f'starting recorded {layers}-layer simulation ({steps} graph steps)', flush=True)
+                label = f'isolated layer {layers - 1}' if layer_slice else f'{layers}-layer prefix'
+                print(f'starting recorded {label} simulation ({steps} graph steps)', flush=True)
                 snapshot_index = 0
                 clock_ticks, elapsed, fine_polls, last_report = 100000, 0, 0, 0
                 while elapsed < 2000000000:
@@ -1203,7 +1252,7 @@ def main():
                     raise RuntimeError('intentionally faulted recorded layer published a candidate')
                 terminal = 'candidate audited' if full_prompt else f'record {record_count} intentionally faults'
                 if maximum is not None:
-                    print(f'PASS actual recorded {layers}-layer prefix: {output_rows} values match verified reference; '
+                    print(f'PASS actual recorded {label}: {output_rows} values match verified reference; '
                           f'maximum absolute error {maximum:.9g}; {terminal}; NO HARDWARE', flush=True)
                 if run_number == 0 and runs == 2:
                     # All sender receipts and the token were audited. A finite

@@ -4,7 +4,8 @@ import hashlib
 import struct
 
 from pioneer_qwen35_ttsim_service_test import (audit_resident_candidate, resident_handoff_payload,
-    resident_next_decode_command, resident_position_one_command, validate_resident_prompt_commands)
+    resident_next_decode_command, resident_position_one_command, standalone_position_one_command,
+    validate_resident_prompt_commands)
 
 
 def command(position):
@@ -49,6 +50,11 @@ def main():
     changed = bytearray(one); changed[40] ^= 1
     rejected(resident_position_one_command, zero, changed)
     first, second = prompt_command(1, 22, 1, 0), prompt_command(2, 23, 522, 1)
+    assert standalone_position_one_command(first) == prompt_command(1, 22, 1, 1)
+    rejected(standalone_position_one_command, zero)
+    rejected(standalone_position_one_command, first[:-1])
+    changed = bytearray(first); changed[-1] ^= 1
+    rejected(standalone_position_one_command, changed)
     validate_resident_prompt_commands(first, second)
     rejected(validate_resident_prompt_commands, first, prompt_command(2, 23, 521, 1))
     changed = bytearray(second); changed[-1] ^= 1

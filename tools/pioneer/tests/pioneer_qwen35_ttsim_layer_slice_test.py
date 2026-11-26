@@ -5,8 +5,9 @@ import os
 import struct
 import sys
 
-if len(sys.argv) != 5:
-    raise SystemExit('usage: test full-fixture slice-fixture layer original-start-step')
+if len(sys.argv) not in (5, 6) or (len(sys.argv) == 6 and sys.argv[5] != '--warm-state'):
+    raise SystemExit('usage: test full-fixture slice-fixture layer original-start-step [--warm-state]')
+warm = len(sys.argv) == 6
 source, sliced = map(Path, sys.argv[1:3])
 layer, start = map(int, sys.argv[3:5])
 assert 0 <= layer < 32 and start >= 1
@@ -21,6 +22,7 @@ assert new_config[0][0] == layer + 1 and new_config[0][3] == 0
 executed, records = new_config[0][1:3]
 assert 1 <= executed < count and records == executed + 1 and start + executed <= count
 assert (sliced / 'layer-slice.marker').is_file()
+assert (sliced / 'warm-layer.marker').is_file() == warm
 for name in ('weights.bin', 'templates.bin', 'command.bin'):
     assert os.path.samefile(source / name, sliced / name)
 for kind in ('W', 'S'):
@@ -53,7 +55,7 @@ def residual_space(record, mode, core):
     assert (rows, row_bytes, unit) == (9216, 4, 16)
     return parts
 
-zero_expected = set()
+zero_expected = set();warm_expected = set()
 with (source / 'records.bin').open('rb') as original, (sliced / 'records.bin').open('rb') as replay:
     for core in range(120):
         original.seek((core * count + start) * 2048)
@@ -68,19 +70,27 @@ with (source / 'records.bin').open('rb') as original, (sliced / 'records.bin').o
             if step + 1 == executed:
                 assert residual_space(after, 2, core) == layouts['O']
             magic = struct.unpack_from('<I', after, 20)[0]
-            if magic in (0x31435635, 0x31534435):
+            if magic in (0x31435635, 0x31534435) or (warm and magic == 0x31414435):
                 if magic == 0x31435635:
                     actual_layer, position = struct.unpack_from('<2I', after, 64 + 3 * 4)
-                    rows, row_bytes, unit, parts = row_space(after, 53)
+                    rows, row_bytes, unit, parts = row_space(after, 85 if warm else 53)
                     assert (rows, row_bytes, unit) == (8192, 12, 1)
-                else:
+                elif magic == 0x31534435:
                     actual_layer, position = struct.unpack_from('<2I', after, 64 + 7 * 4)
-                    rows, row_bytes, unit, parts = row_space(after, 151)
+                    rows, row_bytes, unit, parts = row_space(after, 183 if warm else 151)
                     assert (rows, row_bytes, unit) == (32, 65536, 1)
+                else:
+                    actual_layer, position = struct.unpack_from('<2I', after, 64 + 5 * 4)
+                    rows, row_bytes, unit, parts = row_space(after, 119)
+                    assert (rows, row_bytes, unit) == (8, 32 * 512, 1)
                 assert actual_layer == layer and position == 0
                 ranges = {(bank, address, part_rows * row_bytes) for bank, address, _, part_rows in parts}
                 if core == 0:
                     zero_expected.update(ranges)
+                    if warm:
+                        kind = 'H' if magic == 0x31435635 else 'D' if magic == 0x31534435 else 'K'
+                        warm_expected.update((kind, layer, row_bytes, bank, address, first, part_rows)
+                                             for bank, address, first, part_rows in parts)
                 else:
                     assert ranges <= zero_expected
         assert replay.read(2048) == bytes(2048)
@@ -89,8 +99,12 @@ with (source / 'records.bin').open('rb') as original, (sliced / 'records.bin').o
 weights = [tuple(map(int, x[1:])) for x in new if x[0] == 'W']
 streams = [tuple(map(int, x[1:])) for x in new if x[0] == 'S']
 zeros = [tuple(map(int, x[1:])) for x in new if x[0] == 'Z']
-assert len(zeros) == len(set(zeros)) and set(zeros) == zero_expected
-assert bool(zeros) == ((layer & 3) != 3)
+assert len(zeros) == len(set(zeros)) and (set(zeros) == set() if warm else set(zeros) == zero_expected)
+assert bool(zeros) == ((layer & 3) != 3 and not warm)
+if warm:
+    rows = parse(sliced / 'warm-state-layout.txt')
+    actual = {(x[0], *map(int, x[1:])) for x in rows}
+    assert len(actual) == len(rows) and actual == warm_expected
 assert len(streams) == 120
 for bank, address, _, rows in layouts['I']:
     end = address + rows * 4
