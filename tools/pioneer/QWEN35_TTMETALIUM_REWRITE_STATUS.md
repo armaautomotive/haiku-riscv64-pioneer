@@ -1,5 +1,16 @@
 # Latest offline checks, 2026-11-26
 
+The guarded paired dense K/V variant now compiles and links on the Pioneer
+with its installed Haiku RISC-V GCC/binutils. The output is a non-loadable
+RV32IMF/ILP32 compile-only witness from source commit `e154a69362`; section
+sizes are 4/56,428/37,472 bytes and the existing compiler stack-envelope
+checks pass (maximum reported envelope 7,648/8,192 bytes including allowance).
+The board lacks Python, so the builder's compile/link commands were reproduced
+directly and its unchanged stack checker was run on locally copied compiler
+reports. This does not execute the paired graph or establish valid full-model
+output, hardware recovery, or tokens/sec. See
+`benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
 The guarded dense K/V pairing recorder now builds its own stream version 7
 schedule (428 decode / 425 prompt steps). ASan/UBSan graph tests check all
 eight dense layers pair 60 key and 60 value projection workers, then pack from
@@ -8,8 +19,8 @@ path's 128 half-precision outputs and rejects workspace aliasing in other
 attention modes. Both driver-header packagers and the generic numerical
 simulator runner reject the marked image until a matching numerical fixture
 exists. No paired-image model execution or full-model output is established.
-The target Haiku cross-toolchain is not present in this workspace, so target
-image compilation remains outstanding. See
+The target Haiku cross-toolchain is not present in the workspace; an on-board
+compile/link now passes as recorded above. See
 `benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
 
 An audit of the recorded compact 436-step decode found 153 projection steps

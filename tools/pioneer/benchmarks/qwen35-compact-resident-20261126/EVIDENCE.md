@@ -1,5 +1,33 @@
 # Compact resident simulator image, 2026-11-26
 
+## Haiku native compiler build of paired dense K/V variant (2026-11-26)
+
+The source closure from commit `e154a69362` (archive SHA-256
+`82e89fb8bc91c85fb8868450e7efdffc8f30964f404dcd6ef94f0be9d92fac8`) was
+compiled on the Pioneer with its installed Haiku RISC-V GCC and binutils. The
+RV32IMF/ILP32 compile and link used the rewrite builder's freestanding `-Oz`
+flags and the `PIONEER_QWEN35_DENSE_KV_PAIR_COMPILE_ONLY` guard. Haiku does not
+have Python installed, so the builder's compile/link commands were reproduced
+directly; its stack-envelope checker was extracted unchanged and run locally
+against the generated GCC `.su` reports.
+
+The service linked without unresolved imports, used the expected boot jump,
+contained its required entry/graph/projection symbols and calls, and passed
+the atomic and unsupported-FPU instruction scan. Boot/text/dispatch sizes are
+4/56,428/37,472 bytes; SHA-256 values are `e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b`,
+`829628b0991e9d86702da3645d5bd526b5ceb31009eaddfd7fd569dab6911f11`, and
+`58839e67c2992edbf138654ede2116f061a500bac446ee38aa6f5e43b51b872f`.
+Compiler stack envelopes, including the existing 1,024-byte allowance, are
+7,648/8,192 bytes for the resident graph, 5,728/8,192 for fused RMS/save,
+6,288/8,192 for hybrid flash, 5,120/8,192 for delta shard, 3,232/8,192 for
+settlement, and 2,832/8,192 for compact root. These are compiler estimates,
+not whole-device stack proofs.
+
+This is a non-loadable compile-only witness. No driver, model, accelerator,
+simulator inference, or benchmark was run. The paired stream still lacks its
+matching numeric fixture, so full-model correctness and decode throughput
+remain unverified.
+
 ## Paired dense key/value recorder schedule, 2026-11-26
 
 The compile-only rewrite adds a distinct stream version 7. Its recorded graph
@@ -19,9 +47,10 @@ results.
 This is a schedule/metadata test, not numerical projection or attention
 execution. The generic simulator runner and both service-header packagers
 explicitly reject the `dense-kv-pair.marker` until a numerical fixture for
-this stream version is available. The compact Haiku target toolchain is not
-present in the current workspace, so the variant has not been cross-compiled.
-No hardware was accessed and no decode speed was measured.
+this stream version is available. The target compiler is not installed in the
+workspace; the Haiku-hosted RISC-V compiler has now built and linked the
+compile-only variant, as recorded above. No accelerator was accessed and no
+decode speed was measured.
 
 ## Recorded projection traffic and worker use (2026-11-26)
 
