@@ -9,6 +9,11 @@ the exact CPU activations used by the isolated simulator replays, warm
 layers 1 and 2 each matched all 2,560 simulator outputs, maximum absolute
 error `4.76837158e-07`. This is a same-input, same-recurrent-state comparison
 for those two isolated replays, not the running full graph or hardware.
+The earlier separate warm layer-0 replay also matched all 2,560 outputs to
+the same maximum error when the offline reference received its exact retained
+simulator state and token 261. Its imported state was extracted from the
+previously audited handoff after checking the recorded handoff and component
+hashes; the state directory's marker was created for that verified extract.
 
 Self-injecting the CPU's own state and activation preserved 68 original
 output artifacts byte-for-byte. Changing one warm-history value changed the

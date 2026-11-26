@@ -1,6 +1,18 @@
 {
   "layers": [
     {
+      "delta_sha256": "8936b6aa82a4c1afec1e3024f4fa29848ff14aaaf3b8fb0051df67e4f98147c4",
+      "fixture": "separate first-layer fixture, not four-layer graph",
+      "history_sha256": "6b1950c1436d58dfc8ad1fa9ced0fec982a15a263de031829d478d679eb716de",
+      "input_token": 261,
+      "layer": 0,
+      "max_absolute_error": 4.76837158203125e-07,
+      "oracle_output_sha256": "0fa126193940c52d3d181918fc0d6acb3c08d8e4c375eaa4a5ff4f003f35035c",
+      "simulator_output_sha256": "d845bd7581377231100000193e6785338ea99d3edecbfb9a2d10a2152e02785d",
+      "state_handoff_sha256": "3799cdf3cb08a36009a836b841c6b9e20d592b733606e72b53d6d4f301fb3301",
+      "values": 2560
+    },
+    {
       "delta_sha256": "9f5efd167732e19785d1de73e4f9e76224ff9d3b61ef4b747fd5f71e769ca322",
       "history_sha256": "de60199ab06c7db0df8678c33bb1e344331cacc33e892c8b892f9f9dc8d54fe9",
       "input_sha256": "82b47ba902bc054705f1bdd67e7016a5ccbdf97a2c078beaad0cfa9d2d72844c",
