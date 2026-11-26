@@ -2,6 +2,16 @@
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+The offline boundary auditor now supports position-one snapshots. For each
+boundary it runs both CPU positions, checks the first token against the
+separately audited simulator token, injects the exact warm simulator
+activation and compares the next layer without relaxing tolerance. The CPU
+retains its own position-zero state, so a mismatch can include a state
+difference; this does not establish a same-state comparison or a device
+failure. Synthetic tests passed for all 32 boundary checks, a deliberately
+incorrect warm layer and a mismatched first token. The full two-position
+simulator capture remains in progress; this is preparation, not a warm pass.
+
 All three isolated warm query, key and value projections passed their CPU
 comparisons across 120 simulated workers: maximum absolute errors were
 `9.53674316e-06` for 8,192 query/gate values, `2.86102295e-06` for 1,024 key

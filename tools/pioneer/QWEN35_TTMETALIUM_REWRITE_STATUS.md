@@ -1,5 +1,11 @@
 # Latest offline checks, 2026-11-26
 
+The boundary auditor can now check each warm simulator layer using the exact
+preceding simulator activation. Synthetic tests cover 32 layers, a mismatch
+and an incorrect first token. Its CPU retains CPU position-zero state, so the
+report explicitly does not claim same-state comparisons. The full simulator
+capture is still running; this is not a new model or hardware pass.
+
 The warm query, key and value projection slices passed CPU comparisons. An
 independent float attention calculation using CPU-normalized/rotated injected
 simulator projections and the simulated prior KV matched all 4,096 simulated

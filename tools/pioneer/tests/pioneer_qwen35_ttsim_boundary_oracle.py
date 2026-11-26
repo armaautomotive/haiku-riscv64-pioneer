@@ -34,6 +34,8 @@ def main():
     parser.add_argument('--layers', type=int, required=True)
     parser.add_argument('--actual-token', type=int,
                         help='candidate token from the separately audited full simulator run')
+    parser.add_argument('--warm-first-token-file', type=Path,
+                        help='audit position one; file contains the audited position-zero simulator token')
     args = parser.parse_args()
     if not 2 <= args.layers <= 32:
         parser.error('layer count must be between 2 and 32')
@@ -41,6 +43,16 @@ def main():
         parser.error('an actual token is valid only for a full decode')
     if args.layers == 32 and args.actual_token is None:
         parser.error('a full decode requires the separately audited candidate token')
+    if args.warm_first_token_file and args.layers != 32:
+        parser.error('warm comparison requires a full two-position decode')
+    warm = args.warm_first_token_file is not None
+    prefix = 'position1-' if warm else ''
+    if warm:
+        first_token_bytes = args.warm_first_token_file.read_bytes()
+        reference_token_bytes = (args.reference / 'token.txt').read_bytes()
+        first_token = int(first_token_bytes.strip())
+        if not 0 <= first_token < 248320 or first_token != int(reference_token_bytes.strip()):
+            parser.error('audited first simulator token must match the CPU first token')
     if not (args.snapshots / 'execution-complete.marker').is_file():
         parser.error('simulator execution marker is missing')
     if args.output.exists() or args.output.is_symlink():
@@ -62,7 +74,7 @@ def main():
     recorded_prefix_snapshot_points(records, record_count, executed, layers)
     tensors = [read_finite(args.snapshots / f'layer{i}.bin') for i in range(args.layers)]
     hashes = [hashlib.sha256(data).hexdigest() for data in tensors]
-    first_reference = read_finite(args.reference / 'layer0.bin')
+    first_reference = read_finite(args.reference / f'{prefix}layer0.bin')
     args.output.mkdir()
     report = {'layers': args.layers, 'snapshot_sha256': hashes, 'checks': [],
               'oracle_executable_sha256': hashlib.sha256(args.oracle.read_bytes()).hexdigest(),
@@ -70,7 +82,14 @@ def main():
               'fixture_layout_sha256': hashlib.sha256(layout_bytes).hexdigest(),
               'fixture_records_sha256': hashlib.sha256(records).hexdigest(),
               'candidate_token': args.actual_token, 'token_matches': None,
-              'scope': 'offline simulator comparison only; no hardware or Work inference'}
+              'position': int(warm),
+              'scope': ('offline warm comparison with simulator activations and CPU prior state; '
+                        'prior simulator state is not injected; no hardware or Work inference' if warm else
+                        'offline simulator comparison only; no hardware or Work inference')}
+    if warm:
+        report['first_token'] = first_token
+        report['first_token_sha256'] = hashlib.sha256(first_token_bytes).hexdigest()
+        report['reference_first_token_sha256'] = hashlib.sha256(reference_token_bytes).hexdigest()
 
     def compare(label, actual, expected):
         try:
@@ -84,24 +103,29 @@ def main():
 
     compare('initial layer 0', tensors[0], first_reference)
     # Each next layer receives exactly the preceding simulator activation.
-    # Position zero starts with empty per-layer recurrent and KV state.
+    # Warm comparisons retain CPU position-zero state, not simulator state.
     for boundary in range(args.layers - 1 + int(args.actual_token is not None)):
         directory = args.output / f'boundary-{boundary:02d}'
         directory.mkdir()
         with (args.output / f'boundary-{boundary:02d}.log').open('x') as log:
-            completed = subprocess.run([str(args.oracle), str(args.model), str(directory),
-                                        '--replace-layer', str(boundary),
-                                        str(args.snapshots / f'layer{boundary}.bin')],
+            command_line = [str(args.oracle), str(args.model), str(directory)]
+            if warm:
+                command_line.append('two')
+            command_line.extend(['--replace-layer', str(boundary),
+                                 str(args.snapshots / f'layer{boundary}.bin')])
+            completed = subprocess.run(command_line,
                                        stdout=log, stderr=subprocess.STDOUT, check=False)
         if completed.returncode:
             raise RuntimeError(f'oracle failed for boundary {boundary}: {completed.returncode}')
-        if read_finite(directory / f'layer{boundary}.bin') != tensors[boundary]:
+        if warm and int((directory / 'token.txt').read_text().strip()) != first_token:
+            raise RuntimeError(f'oracle first token changed at boundary {boundary}')
+        if read_finite(directory / f'{prefix}layer{boundary}.bin') != tensors[boundary]:
             raise RuntimeError(f'oracle did not retain the exact boundary {boundary}')
         if boundary + 1 < args.layers:
             compare(f'layer {boundary + 1} from simulator layer {boundary}',
-                    tensors[boundary + 1], read_finite(directory / f'layer{boundary + 1}.bin'))
+                    tensors[boundary + 1], read_finite(directory / f'{prefix}layer{boundary + 1}.bin'))
         else:
-            token = int((directory / 'token.txt').read_text().strip())
+            token = int((directory / f'{prefix}token.txt').read_text().strip())
             report['oracle_token'] = token
             report['token_matches'] = token == args.actual_token
             print(f"same-final-hidden token: {'PASS' if report['token_matches'] else 'FAIL'}; "
@@ -109,6 +133,9 @@ def main():
     if any(hashlib.sha256(read_finite(args.snapshots / f'layer{i}.bin')).hexdigest() != hashes[i]
            for i in range(args.layers)):
         raise RuntimeError('simulator snapshot changed during oracle comparison')
+    if warm and (args.warm_first_token_file.read_bytes() != first_token_bytes
+                 or (args.reference / 'token.txt').read_bytes() != reference_token_bytes):
+        raise RuntimeError('first-token evidence changed during warm comparison')
     report['passed'] = all(check['passed'] for check in report['checks']) and report['token_matches'] is not False
     with (args.output / 'summary.json').open('x') as output:
         json.dump(report, output, indent=2, sort_keys=True)
