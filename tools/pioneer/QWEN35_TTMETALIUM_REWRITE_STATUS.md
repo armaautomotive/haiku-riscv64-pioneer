@@ -1,5 +1,13 @@
 # Latest offline checks, 2026-11-26
 
+The exact normal-counter compact qualification image linked into the
+non-loadable driver completed two 120-worker standalone model-weight
+projections for each of Q4_K, Q5_K and Q6_K in the exploratory simulator.
+All 1,920 values per command passed and the simulated roles stopped. The
+path did not execute cycle-counter profiling, and the simulator is patched;
+this is not physical execution, recovery or throughput. See
+`benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
 The separately marked unprofiled compact qualification service completed
 two Q4_K, Q5_K and Q6_K projections using 4B model weights on 120 simulated
 workers; each command checked 1,920 values, and all simulated roles stopped.

@@ -502,15 +502,19 @@ def validate_snapshot_destinations(first, warm, has_fixture, layer_slice, has_wa
         raise ValueError('first and warm snapshots require separate directories')
 
 
-def validate_compact_qualification(image, enabled, unprofiled, flash, compact, projection, resident):
+def validate_compact_qualification(image, enabled, unprofiled, flash, compact, projection, resident,
+                                   normal_counter_probe=False):
     """Admit only explicitly marked standalone projection simulator images."""
     paths = (image / 'compact-qualification.marker', image / 'ttsim-qualification.marker')
     if any(path.is_symlink() or (path.exists() and not path.is_file()) for path in paths):
         raise ValueError('invalid qualification simulator marker')
     markers = tuple(path.is_file() for path in paths)
-    if markers != (enabled, enabled):
+    if normal_counter_probe and (not enabled or unprofiled):
+        raise ValueError('normal-counter probe requires a profiled standalone qualification image')
+    if markers != (enabled, enabled and not normal_counter_probe):
         raise ValueError('qualification simulator flag and image markers do not match')
-    if enabled and (not unprofiled or not flash or not compact or not projection or resident):
+    if enabled and ((not unprofiled and not normal_counter_probe)
+                    or not flash or not compact or not projection or resident):
         raise ValueError('qualification simulator requires a standalone compact projection fixture')
 
 
@@ -600,6 +604,8 @@ def main():
                         help='allow a marked simulator-only hybrid image without the extra code region')
     parser.add_argument('--compact-qualification', action='store_true',
                         help='run the marked standalone qualification projection in ttsim only')
+    parser.add_argument('--qualification-normal-counter-probe', action='store_true',
+                        help='probe normal-counter standalone projection only; ttsim may reject CSR reads')
     args = parser.parse_args()
     if ((args.resident_export_state or args.resident_import_state or args.resident_position_one_command)
             and not args.resident_sequence_fixture):
@@ -671,8 +677,11 @@ def main():
     if resident_templates is not None and len(resident_templates) != 120 * 512:
         raise ValueError('unexpected resident-template fixture size')
     image = args.image
-    if (image / 'profiled-compile-only.marker').exists():
+    if ((image / 'profiled-compile-only.marker').exists()
+            and not args.qualification_normal_counter_probe):
         raise ValueError('profiled compact image is compile-only and cannot run in ttsim')
+    if args.qualification_normal_counter_probe and not (image / 'profiled-compile-only.marker').is_file():
+        raise ValueError('normal-counter probe requires the profiled compile-only image marker')
     if args.ttsim_unprofiled != (image / 'ttsim-unprofiled.marker').is_file():
         raise ValueError('unprofiled simulator flag and image marker do not match')
     if args.flash_hybrid != (image / 'flash-hybrid.marker').is_file():
@@ -682,7 +691,7 @@ def main():
     validate_compact_qualification(image, args.compact_qualification, args.ttsim_unprofiled,
                                    args.flash_hybrid, args.compact_two_region,
                                    bool(args.projection_fixture or args.model_projection_fixture or args.fused_model_fixture),
-                                   resident_templates is not None)
+                                   resident_templates is not None, args.qualification_normal_counter_probe)
     ffn_paired = (image / 'ffn-pair.marker').is_file()
     if ffn_paired and (not args.flash_hybrid or not (args.recorded_layer_fixture or args.compact_qualification)):
         raise ValueError('paired FFN image requires the matching hybrid recorded fixture')

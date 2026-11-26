@@ -1,5 +1,24 @@
 # Compact resident simulator image, 2026-11-26
 
+## Exact qualification-image projection probe, 2026-11-26
+
+An explicit standalone-only simulator probe ran the exact normal-counter
+qualification text and dispatch previously linked into the non-loadable
+Haiku driver. For each of Q4_K, Q5_K and Q6_K it completed two model-weight
+projection commands, compared all 1,920 values per command, and observed all
+120 simulated workers and reader/writer roles stop. The maximum normalized
+errors matched the unprofiled results recorded below. Image and log hashes
+are in `standalone-qualification-sim-20261126.json`; the three raw logs are in
+`standalone-qualification-sim-20261126/normal-counter-q*.log`.
+
+The explicit probe admits only the marked normal-counter standalone image
+with a projection fixture; ordinary simulator runs continue to reject it.
+Tests reject missing opt-in, wrong markers, resident templates and incompatible
+flags. The projection path did not execute the graph-profiling cycle CSR
+instructions, which this exploratory simulator does not support. The
+simulator itself contains exploratory matrix patches; neither its elapsed time
+nor this result is physical recovery, inference or throughput evidence.
+
 ## Standalone qualification projection in simulation, 2026-11-26
 
 A separately marked, unprofiled simulator-only build of the standalone

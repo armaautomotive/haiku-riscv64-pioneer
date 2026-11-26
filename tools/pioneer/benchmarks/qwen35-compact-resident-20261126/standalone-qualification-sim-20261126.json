@@ -1,5 +1,25 @@
 {
   "exploratory_simulator_sha256": "1dbc4a6b269aa743870dcb7be5d89e9c6db142f27140296ea68bc00e41ec6d67",
+  "normal_counter_probe": {
+    "commands_per_format": 2,
+    "formats": [
+      "Q4_K",
+      "Q5_K",
+      "Q6_K"
+    ],
+    "image_sha256": {
+      "boot.bin": "e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b",
+      "dispatch.bin": "b4cc9f91a675d2465e7f03d99ac7010aff5db7c5265bd95a61654f9a610e15ee",
+      "text.bin": "0f2e107c0c1fb29ecc11678afd9df9f11aec96bf28cb5ec14c1bf74b70791b1c"
+    },
+    "log_sha256": {
+      "q4": "86d52fbbc10581008edbd6f61b74fabb15702f4aa72631a7a989e0509813e35e",
+      "q5": "c088171ccd52f8f3836a17e6511484e6a23223568295bc1484b1b377914ec3c2",
+      "q6": "06ef34c493770856a2ddacd850259a94120c9be83ec880fe4e377331ac4cb80b"
+    },
+    "scope": "exact normal-counter qualification image used by the non-loadable driver link; standalone projection only; cycle-counter graph profiling was not exercised; exploratory patched simulator; no hardware or speed",
+    "values_per_command": 1920
+  },
   "roles": {
     "reader-code.bin": "58adee1e53441f5a0adf275fb8ee5776d534279bd23e7188da4ad1e3d1fe15d7",
     "reader-shim.bin": "94457371ed8a2e2985db8fdd664741597f2f740b85aede7ce72933ab9486f0d1",
