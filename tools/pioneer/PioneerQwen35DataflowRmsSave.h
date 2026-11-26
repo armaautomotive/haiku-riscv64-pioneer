@@ -13,6 +13,7 @@
 // publish a graph record, release a tile, or provide recovery.
 #include "PioneerQwen35DataflowBlackholeRmsWorker.h"
 #include "PioneerQwen35DataflowBlackholeResidualWorker.h"
+#include <stddef.h>
 
 namespace PioneerQwen35 {
 
@@ -41,6 +42,11 @@ struct DataflowRmsSaveInvocation {
         return true;
     }
 };
+static_assert(offsetof(DataflowRmsSaveInvocation,rms)==12
+    && offsetof(DataflowRmsSaveInvocation,residual)==528
+    && offsetof(DataflowRmsInvocation,input)==92 && offsetof(DataflowRmsInvocation,output)==348
+    && offsetof(DataflowResidualInvocation,activation)==80 && offsetof(DataflowResidualInvocation,residual)==208,
+    "simulator boundary auditor relies on the fixed fused-record layout");
 
 inline bool DataflowRmsSaveBind(const DataflowRmsProgram& rms,const DataflowResidualProgram& residual,
     unsigned core,DataflowRmsSaveInvocation& output) {

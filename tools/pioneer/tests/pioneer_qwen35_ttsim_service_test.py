@@ -58,11 +58,11 @@ def compare_recorded_layer_diagnostic(actual, reference, allow_mismatch):
 def recorded_prefix_snapshot_points(records, record_count, executed, layers):
     """Find safe, simulator-only layer boundaries in a complete prefix stream.
 
-    A root progress sample in the *next* residual-save execution means the
+    A root progress sample in the *next* residual-save or fused RMS/save execution means the
     previous barrier passed. The root cannot release the next barrier until
     its save completes, so other workers cannot enter a later operation while
-    that sample remains in phases 1..3. Save reads the activation and writes
-    a disjoint residual. The emulator is frozen while the host reads DRAM.
+    that sample remains in phases 1..3. Both variants read the activation
+    and write disjoint destinations. The emulator is frozen while the host reads DRAM.
     This is an observation aid, not hardware completion or ownership proof.
     """
     if (not 2 <= layers <= 32 or not 1 <= executed < record_count
@@ -107,17 +107,35 @@ def recorded_prefix_snapshot_points(records, record_count, executed, layers):
         reference = space(root, 20)
         for core in range(120):
             before, after = record(core, step), record(core, step + 1)
-            for data, index, expected_mode in ((before, step, 2), (after, step + 1, 1)):
-                header = struct.unpack_from('<6I', data)
-                body = struct.unpack_from('<4I', data, 64)
-                if (header[3:6] != (index + 1, core, 0x31535235)
-                        or body != (0x31535235, 1, core, expected_mode)
-                        or space(data, 20) != reference):
-                    raise ValueError('snapshot boundary differs across recorded workers')
-            residual = space(after, 52)
-            if any(a[0] == b[0] and a[1] < b[1] + b[3] * 4
-                   and b[1] < a[1] + a[3] * 4 for a in reference for b in residual):
-                raise ValueError('snapshot save overlaps its activation')
+            if (struct.unpack_from('<6I', before)[3:6] != (step + 1, core, 0x31535235)
+                    or struct.unpack_from('<4I', before, 64) != (0x31535235, 1, core, 2)
+                    or space(before, 20) != reference):
+                raise ValueError('snapshot boundary differs across recorded workers')
+            header = struct.unpack_from('<6I', after)
+            if header[3:5] != (step + 2, core):
+                raise ValueError('invalid following snapshot record')
+            if header[5] == 0x31535235:
+                if (struct.unpack_from('<4I', after, 64) != (0x31535235, 1, core, 1)
+                        or space(after, 20) != reference):
+                    raise ValueError('invalid snapshot residual save')
+                destinations = [space(after, 52)]
+            elif header[5] == 0x31534635:
+                # Offsets are asserted against the C++ fused-record ABI.
+                if (struct.unpack_from('<3I', after, 64) != (0x31534635, 1, core)
+                        or struct.unpack_from('<2I', after, 64 + 12) != (0x314d5235, 1)
+                        or struct.unpack_from('<I', after, 64 + 12 + 16)[0] != core
+                        or struct.unpack_from('<4I', after, 64 + 528) != (0x31535235, 1, core, 1)
+                        or struct.unpack_from('<I', after, 64 + 12 + 20)[0]
+                           != struct.unpack_from('<I', after, 64 + 528 + 16)[0]
+                        or space(after, 26) != reference or space(after, 152) != reference):
+                    raise ValueError('invalid fused snapshot save')
+                destinations = [space(after, 90), space(after, 184)]
+            else:
+                raise ValueError('unsupported following snapshot record')
+            for destination in destinations:
+                if any(a[0] == b[0] and a[1] < b[1] + b[3] * 4
+                       and b[1] < a[1] + a[3] * 4 for a in reference for b in destination):
+                    raise ValueError('snapshot save overlaps its activation')
         points.append((step + 1, reference))
     if adds != 2 * layers or len(points) != layers - 1:
         raise ValueError('incomplete prefix snapshot boundaries')
@@ -526,8 +544,6 @@ def main():
         raise ValueError('fused RMS/save image requires the paired recorded fixture')
     if args.recorded_layer_fixture and rms_save_fused != (args.recorded_layer_fixture / 'fused-rms-save.marker').is_file():
         raise ValueError('fused RMS/save fixture and image markers do not match')
-    if rms_save_fused and args.recorded_prefix_snapshots:
-        raise ValueError('fused RMS/save layer snapshots are not yet supported')
     if not (image / 'activation-sharing.marker').is_file():
         raise ValueError('expected sharing-enabled standalone service image')
     resident_shards = (args.resident_sequence_fixture is not None

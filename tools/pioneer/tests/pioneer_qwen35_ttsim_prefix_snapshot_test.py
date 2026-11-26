@@ -56,6 +56,30 @@ for core, step, offset, value in ((70, 1, 16, 71), (70, 2, 64 + 12, 2),
     else:
         raise AssertionError('malformed snapshot boundary accepted')
 
+fused_records = bytearray(records)
+for core in range(120):
+    offset = (core * count + 2) * 2048
+    struct.pack_into('<I', fused_records, offset + 20, 0x31534635)
+    struct.pack_into('<3I', fused_records, offset + 64, 0x31534635, 1, core)
+    struct.pack_into('<7I', fused_records, offset + 64 + 12, 0x314d5235, 1, 1, 0, core, 0, 1)
+    struct.pack_into('<5I', fused_records, offset + 64 + 528, 0x31535235, 1, core, 1, 0)
+    for word, rows, address in ((26, 9216, 0x05000000), (90, 9216, 0x07000000),
+                                (152, 9216, 0x05000000), (184, 2560, 0x06000000)):
+        struct.pack_into('<8I', fused_records, offset + 64 + word * 4,
+                         rows, 4, 1, 16, 0, address, 0, rows)
+assert service.recorded_prefix_snapshot_points(fused_records, count, 5, 2) == points
+for offset, value in ((64 + 12 + 16, 71), (64 + 528 + 12, 2),
+                      (64 + 90 * 4 + 20, 0x05000000),
+                      (64 + 184 * 4 + 20, 0x05000000)):
+    changed = bytearray(fused_records)
+    struct.pack_into('<I', changed, (70 * count + 2) * 2048 + offset, value)
+    try:
+        service.recorded_prefix_snapshot_points(changed, count, 5, 2)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('malformed fused snapshot boundary accepted')
+
 compare = path.with_name('pioneer_qwen35_ttsim_prefix_snapshot_compare.py')
 with tempfile.TemporaryDirectory() as temporary:
     root = Path(temporary); actual = root / 'actual'; expected = root / 'reference'

@@ -73,3 +73,13 @@ The actual fused recorder method also cross-compiled for Haiku/RV64; the
 emitted binder frame is 976 bytes and the probe frame 128 bytes, neither a
 complete kernel stack bound. Build and stack records are at
 `/private/tmp/q35-rms-save-recorder-rv64-20261126.{o,su}`.
+
+The simulator boundary observer now also understands the fused RMS/save
+record: it checks all 120 nested core IDs and input spaces, and rejects any
+normalized-output or residual destination overlapping the captured input.
+The record offsets are asserted in the C++ ABI for host and RV32 builds.
+The 120-worker four-layer recorded fixture passed this audit for all three
+intermediate boundaries; synthetic wrong-core, wrong-mode and overlapping
+destination cases were rejected. This only establishes the observation
+layout. The already-running fused simulator did not use intermediate capture,
+and its numerical result remains pending.
