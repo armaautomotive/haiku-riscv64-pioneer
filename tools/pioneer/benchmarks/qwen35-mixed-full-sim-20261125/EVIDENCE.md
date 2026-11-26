@@ -1,5 +1,16 @@
 # Recorded mixed-layer and full-decode simulator work, 2026-11-25
 
+## Two-position diagnostic progress, 2026-11-26
+
+The unpaired hybrid simulator's first decode completed the full worker and
+candidate audits and selected reference token `261`, but its fixed-reference
+final hidden state failed on 2,558/2,560 rows (maximum absolute error
+`0.370739102`). The explicit diagnostic-only option acknowledged the audited
+candidate and began position one with the same model and recurrent state; the
+run will still fail if either hidden comparison fails. This is not a valid
+warm-run pass. Log: `/private/tmp/q35-flash-two-decode-diagnostic-20261126.log`.
+No card was accessed and no throughput measured.
+
 ## Final-layer replay from captured layer 30, 2026-11-26
 
 An isolated layer-31 replay used the exact provisional layer-30 activation

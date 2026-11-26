@@ -14,6 +14,7 @@
 #undef main
 #include "../PioneerQwen35DataflowDynamicToken.h"
 #include "../PioneerQwen35DataflowGraphRunProtocol.h"
+#include "../PioneerQwen35DataflowGraphMetadata.h"
 struct PairSink {
     const Fixture& fixture;unsigned writes=0,gate=0,up=0,pairs=0,fused=0,attention=0,post=0;
     bool sealed=false,aborted=false,failFused=false;
@@ -55,8 +56,31 @@ int main() {
     (void)&q35_ffn_pair_fixture_main;
     static_assert(DataflowGraphDecodeSteps==436 && DataflowGraphPromptSteps==433,"fused save/RMS removes 64 graph steps");
     auto fixture=std::make_unique<Fixture>();
+    {
+        auto live=std::make_unique<DataflowProjectionAuthority>();
+        auto expected=std::make_unique<DataflowProjectionAuthority>();
+        assert(live->BindValidatedModel(fixture->manifest,fixture->workspace,fixture->routes,fixture->rope));
+        DataflowEmbeddingProgram embed{};
+        assert(live->BuildEmbedding(42,0,embed) && live->BeginEmbedding(embed) && live->CompleteEmbedding(embed));
+        assert(live->CloneForGraphPlanning(*expected));
+        DataflowResidualProgram save{};DataflowRmsProgram rms{};
+        assert(live->BuildResidual(DataflowResidualSave,0,save));
+        assert(live->BuildRms(0,AttentionNorm,0,1,rms));
+        DataflowGraphAuthorityState before{},after{};
+        assert(live->CaptureGraphState(before));
+        auto wrong=save;wrong.activationSlot=1;
+        DataflowGraphMetadataService rejected(*live);struct NoIO {} io;
+        assert(rejected.RunRmsSave(rms,wrong,io)!=0 && rejected.Failed() && rejected.Steps()==0);
+        assert(live->CaptureGraphState(after) && std::memcmp(&before,&after,sizeof(before))==0);
+        assert(expected->BeginResidual(save) && expected->CompleteResidual(save)
+            && expected->BeginRms(rms) && expected->CompleteRms(rms));
+        DataflowGraphMetadataService metadata(*live);
+        assert(metadata.RunRmsSave(rms,save,io)==0 && !metadata.Failed() && metadata.Steps()==1);
+        assert(live->CaptureGraphState(after) && expected->GraphStateMatches(after));
+    }
     for (bool decode:{false,true}) {
         auto live=std::make_unique<DataflowProjectionAuthority>();auto candidate=std::make_unique<DataflowProjectionAuthority>();
+        auto predicted=std::make_unique<DataflowProjectionAuthority>();
         auto plan=std::make_unique<DataflowStreamPlan>();auto record=std::make_unique<DataflowStreamRecord>();
         auto projection=std::make_unique<DataflowProjectionProgram>();auto sink=std::make_unique<PairSink>(*fixture);unsigned stage=0;
         assert(live->BindValidatedModel(fixture->manifest,fixture->workspace,fixture->routes,fixture->rope));
@@ -69,6 +93,22 @@ int main() {
         assert(sink->sealed && !sink->aborted && sink->pairs==Layers && sink->fused==2*Layers*DataflowCoreCount
             && sink->attention==Layers*DataflowCoreCount && sink->post==Layers*DataflowCoreCount
             && sink->writes==count*DataflowCoreCount);
+        const bool metadataReady=DataflowGraphMetadata::Prepare(*live,*predicted,0,42,0,decode,*projection,stage);
+        if (!metadataReady) std::fprintf(stderr,"fused metadata failed: decode=%u stage=%u\n",unsigned(decode),stage);
+        assert(metadataReady);
+        DataflowGraphAuthorityState recordedState{},predictedState{};
+        assert(candidate->CaptureGraphState(recordedState) && predicted->CaptureGraphState(predictedState)
+            && std::memcmp(&recordedState,&predictedState,sizeof(recordedState))==0);
+        auto nextRecorded=std::make_unique<DataflowProjectionAuthority>();
+        auto nextPredicted=std::make_unique<DataflowProjectionAuthority>();
+        auto nextSink=std::make_unique<PairSink>(*fixture);
+        assert(DataflowDynamicTokenContext::Build(fixture->manifest,44,2,nextSink->dynamic));
+        assert(DataflowStreamRecording::Build(fixture->packed,*candidate,*nextRecorded,*plan,fixture->routes,
+            1,43,0,decode,*nextSink,*record,*projection,stage));
+        assert(DataflowGraphMetadata::Prepare(*predicted,*nextPredicted,1,43,0,decode,*projection,stage));
+        assert(nextRecorded->CaptureGraphState(recordedState) && nextPredicted->CaptureGraphState(predictedState)
+            && std::memcmp(&recordedState,&predictedState,sizeof(recordedState))==0);
+        assert(nextSink->sealed && !nextSink->aborted && nextSink->writes==count*DataflowCoreCount);
     }
     {
         auto live=std::make_unique<DataflowProjectionAuthority>();auto candidate=std::make_unique<DataflowProjectionAuthority>();

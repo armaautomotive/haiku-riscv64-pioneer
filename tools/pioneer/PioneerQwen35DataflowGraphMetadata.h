@@ -51,6 +51,26 @@ public:
 	template<class IO> int RunRms(const DataflowRmsProgram& p,IO&) {
 		return Done(candidate.BeginRms(p) && candidate.CompleteRms(p));
 	}
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+	// The fused worker saves the input and normalizes it in one graph step.
+	// Apply the same two authority transitions as the recorder, but count one
+	// step. Check the cross-program contract before changing either state.
+	template<class IO> int RunRmsSave(const DataflowRmsProgram& rms,
+		const DataflowResidualProgram& residual,IO&) {
+		if (failed || residual.mode!=DataflowResidualSave || rms.layer>=Layers
+			|| (rms.role!=AttentionNorm && rms.role!=PostAttentionNorm)
+			|| rms.inputSlot!=residual.activationSlot
+			|| !DataflowRowSpaceMatches(rms.input,residual.activation)
+			|| !DataflowRmsSpacesDisjoint(residual.residual,rms.input)
+			|| !DataflowRmsSpacesDisjoint(residual.residual,rms.output)
+			|| !DataflowRmsSpacesDisjoint(residual.residual,rms.weight)) return Done(false);
+		for (unsigned noc=0;noc<2;noc++) for (unsigned bank=0;bank<Banks;bank++)
+			if (rms.bankRoute[noc][bank]!=residual.bankRoute[noc][bank]) return Done(false);
+		return Done(candidate.AuthorizeResidual(residual) && candidate.AuthorizeRms(rms)
+			&& candidate.BeginResidual(residual) && candidate.CompleteResidual(residual)
+			&& candidate.BeginRms(rms) && candidate.CompleteRms(rms));
+	}
+#endif
 	template<class IO> int RunSilu(const DataflowSiluProgram& p,IO&) {
 		return Done(candidate.BeginSilu(p) && candidate.CompleteSilu(p));
 	}
@@ -68,7 +88,12 @@ public:
 		return result;
 	}
 	template<class IO> int RunDenseAttention(const DataflowDenseAttentionProgram& p,IO&) {
-		return Done(candidate.BeginDenseAttention(p) && candidate.CompleteDenseAttention(p));
+		const int result=Done(candidate.BeginDenseAttention(p) && candidate.CompleteDenseAttention(p));
+#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+		// A dense attention run has separate producer and reducer records.
+		if (!result && p.mode==DataflowDenseAttentionRun) ++steps;
+#endif
+		return result;
 	}
 	template<class IO> int RunArgmax(const DataflowArgmaxProgram& p,unsigned& token,IO&) {
 		token=0; // Only a metadata placeholder; never a generated result.

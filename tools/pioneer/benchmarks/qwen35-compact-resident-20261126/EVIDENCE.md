@@ -1,5 +1,22 @@
 # Compact resident simulator image, 2026-11-26
 
+## Resident host metadata integration, 2026-11-26
+
+The resident host metadata previously could not prepare the fused graph: it
+had no fused RMS/save operation and counted flash dense attention's producer
+and reducer as one step. It now validates and applies the fused residual and
+RMS authority transitions as one step, and counts both dense-attention
+records. A malformed fused pair is rejected without mutating the live state.
+
+The actual metadata state matched the independently recorded graph for both
+prompt and decode at positions zero and one, including all 64 fused RMS/save
+operations and 32 paired FFN steps. Resident host transaction and session
+tests passed under ASan/UBSan in ordinary, paired, hybrid and fused modes,
+including prompt/decode promotion and retained-failure scenarios. A fused
+resident-model host probe cross-compiled for Haiku/RISC-V. These are offline
+tests; the compact image remains non-packageable, physical ownership and
+no-reboot recovery remain unqualified, and no throughput was measured.
+
 The mixed-optimization two-region image also completed the four-layer
 simulation: all 120 worker receipts were checked, the next record faulted as
 intended, and all 2,560 output values matched the reference within a maximum

@@ -12,7 +12,13 @@ assert source.count(marker) == 1
 with tempfile.TemporaryDirectory() as temporary:
     tmp = Path(temporary)
     (tmp / 'resident-host-fixture.inc').write_text(source.split(marker, 1)[0] + '\n')
-    for name, flags in (('ordinary', []), ('paired', ['-DPIONEER_QWEN35_PAIRED_RECURRENCE'])):
+    hybrid = ['-DPIONEER_QWEN35_PAIRED_RECURRENCE', '-DPIONEER_QWEN35_FUSED_RECURRENCE',
+              '-DPIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY', '-DPIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY',
+              '-DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS']
+    for name, flags in (('ordinary', []), ('paired', ['-DPIONEER_QWEN35_PAIRED_RECURRENCE']),
+                        ('hybrid', hybrid),
+                        ('fused', hybrid + ['-DPIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY',
+                                            '-DPIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY'])):
         binary = tmp / name
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra',
                         '-Werror', '-fsanitize=address,undefined', '-I' + str(tmp), '-I' + str(test_dir),

@@ -1,5 +1,19 @@
 # Latest offline checks, 2026-11-26
 
+The resident host graph metadata now handles the fused RMS/save operation and
+counts the flash dense-attention producer and reducer separately. Previously
+the optimized graph could execute in simulation but its host transaction
+could not prepare the matching graph. Fused recorded and predicted states
+match for prompt and decode across two positions; real host transaction and
+session simulations passed for ordinary, paired, hybrid and fused modes, and
+the fused host probe cross-compiled for Haiku/RISC-V. The full target suite is
+running. The unpaired two-position diagnostic selected first token `261`, but
+failed the fixed-reference hidden-state check; it has continued only for
+diagnosis. These do not establish a full-model pass, physical ownership,
+no-reboot recovery or throughput. See
+`benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md` and
+`benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
 An isolated final-layer replay from the baseline's captured layer-30 input
 passed the 120-worker audit and all 2,560 reference comparisons (maximum
 absolute difference `1.90734863e-05`). An independent offline CPU reference
