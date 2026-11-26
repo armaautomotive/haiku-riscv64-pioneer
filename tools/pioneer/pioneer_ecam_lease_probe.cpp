@@ -8,9 +8,23 @@
 #include <unistd.h>
 int main(int argc, char** argv) {
 	const bool expectAbsent = argc == 2 && strcmp(argv[1], "--expect-absent") == 0;
-	if (argc != 1 && !expectAbsent) { fprintf(stderr, "usage: ecam_lease_probe_client [--expect-absent]\n"); return 2; }
+	const bool expectContentionAbsent = argc == 2 && strcmp(argv[1], "--expect-contention-absent") == 0;
+	if (argc != 1 && !expectAbsent && !expectContentionAbsent) {
+		fprintf(stderr, "usage: ecam_lease_probe_client [--expect-absent|--expect-contention-absent]\n"); return 2;
+	}
 	int fd = open("/dev/misc/pioneer_ecam_lease_probe", O_RDONLY);
 	if (fd < 0) { perror("open ECAM lease probe"); return 1; }
+	if (expectContentionAbsent) {
+		pioneer_ecam_lease_state state{};
+		int status = ioctl(fd, PIONEER_ECAM_LEASE_STATE, &state, sizeof(state));
+		int closed = close(fd);
+		if (status != 0 || closed != 0) { perror("ECAM contention state ioctl/close"); return 1; }
+		printf("ECAM_CONTENTION_STATE version=%lu status=%ld active=%lu waiter=%ld waiters=%ld\n",
+			(unsigned long)state.version, (long)state.stateStatus, (unsigned long)state.active,
+			(long)state.waiter, (long)state.waiters);
+		return state.version == 1 && state.stateStatus == B_ENTRY_NOT_FOUND
+			&& state.active == 0 && state.waiter == -1 && state.waiters == 0 ? 0 : 1;
+	}
 	pioneer_ecam_lease_probe_result r = {};
 	int status = ioctl(fd, PIONEER_ECAM_LEASE_PROBE, &r, sizeof(r));
 	int closed = close(fd);

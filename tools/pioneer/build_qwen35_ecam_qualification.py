@@ -13,12 +13,12 @@ REPO = Path(__file__).resolve().parents[2]
 REL = Path('src/add-ons/kernel/busses/pci/ecam')
 BASE = '23e65e2a9a3e886fc7d1429901db6534f2cc7a9077f121d3e334f4cf839cf11d'
 SOURCES = {
-    'ECAMPCIController.cpp': 'c08cc6474977980b7da95b0ac24b3031529768b2316e06c3d50d9fa2c08337ba',
-    'ECAMPCIController.h': '3e0d6376a938af2d7ae80e21be497b1cd788d08dc0f3ee3e606846c918a8f203',
+    'ECAMPCIController.cpp': '408bd2a99edd8616b268e0529933c67f4b8efa7b62cfc549cbe1a310448d49d9',
+    'ECAMPCIController.h': 'a25bb4384f59b739bb8b2fc3bde8982b5843349463ea243c75ebfce0aba57c9e',
     'ECAMPCIControllerACPI.cpp': 'c6db08da4a4df641e931fefe550b673a484a425ee2e5681d899dcd45ded59a8f',
     'ECAMPCIControllerFDT.cpp': '6a61955b718d262cf77397379bf24c33148a51411e94656931f5243464c83bcb',
-    'kernel_interface.cpp': '88e85e1cc52d19b7a5bd0b27bc94cebec4d74fe6cfeae2bc4babc91c493135ec',
-    'PioneerSg2042LeaseProbeModule.h': '813b365ff81292648d0d194d6e548c1e81b0eececc63e0e18b1116b7107ce9ac',
+    'kernel_interface.cpp': '2d7a25831f9ce983475e848bf2fc9fe5c31c37fb9cd33390dfdeaec1122f9780',
+    'PioneerSg2042LeaseProbeModule.h': 'ec2a63eff6eb5ec98afbd113b270b7b0ca45014410e454b7aee300c59fcf2d61',
     'PioneerSg2042RecoveryModule.h': '39708d8c2cf420cb9afe027758ccfe2c223c58bd0bc780fe873db3dafcfb3c55',
     'Sg2042RecoveryLease.h': '88b3cd67577a20f19ace93b8c068b36934b169de3ef1e0b21ace65594727f8db',
     'Sg2042RootPolicy.h': 'c79178e8fd666b1ea23a139cd26fb9d0618942d45f092343a411ab93db938d4e',
@@ -99,7 +99,8 @@ def main():
     nm = build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-nm'
     objdump = build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-objdump'
     symbols = subprocess.check_output([str(nm), '-C', str(candidate)], text=True)
-    if 'gPioneerLeaseProbe' not in symbols or 'gPioneerRecovery' not in symbols:
+    if ('gPioneerLeaseProbe' not in symbols or 'gPioneerLeaseContention' not in symbols
+            or 'gPioneerRecovery' not in symbols):
         raise RuntimeError('qualification probe or fail-closed recovery module missing')
     disassembly = subprocess.check_output([str(objdump), '-Cd', str(out / 'kernel_interface.o')], text=True)
     refusal = re.search(r'<gPioneerRecovery.*?_FUN.*?>:(.*?)(?:\n\n|\Z)', disassembly, re.S)

@@ -47,7 +47,10 @@ done
 "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror "$@" -B"$release/system/glue/" \
  -L"$release/system/libroot" "$project/tools/pioneer/pioneer_ecam_lease_probe.cpp" \
  -o "$output/ecam_lease_probe_client"
+"$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror "$@" -B"$release/system/glue/" \
+ -L"$release/system/libroot" "$project/tools/pioneer/pioneer_ecam_lease_contention.cpp" \
+ -o "$output/ecam_lease_contention_client"
 shasum -a 256 "$output/pioneer_device_manager_pin_probe" "$output/pin_probe_client" \
  "$output/pioneer_pci_pin_probe" "$output/pci_pin_probe_client" \
- "$output/pioneer_ecam_lease_probe" "$output/ecam_lease_probe_client"
+ "$output/pioneer_ecam_lease_probe" "$output/ecam_lease_probe_client" "$output/ecam_lease_contention_client"
 echo 'PASS cross-build; not installed, booted, loaded or run'

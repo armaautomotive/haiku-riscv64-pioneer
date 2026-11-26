@@ -68,7 +68,8 @@ fi
 "$nm" -C "$output/witness/ecam" | grep -q 'gPioneerRecovery'
 "$nm" -C "$output/gateway/ecam" | grep -q 'gPioneerRecovery'
 "$nm" -C "$output/qualification/ecam" | grep -q 'gPioneerLeaseProbe'
-if "$nm" -C "$output/control/ecam" "$output/witness/ecam" "$output/gateway/ecam" | grep -q 'gPioneerLeaseProbe'; then
+"$nm" -C "$output/qualification/ecam" | grep -q 'gPioneerLeaseContention'
+if "$nm" -C "$output/control/ecam" "$output/witness/ecam" "$output/gateway/ecam" | grep -Eq 'gPioneerLease(Probe|Contention)'; then
  echo 'unexpected qualification probe in another build' >&2; exit 1
 fi
 "$objdump" -Cd "$output/witness/ECAMPCIController.o" > "$output/witness/disassembly.txt"

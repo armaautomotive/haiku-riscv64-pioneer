@@ -70,4 +70,28 @@ profile=memory128-spin-idle7-top-page-nosd-control
     subprocess.run(['sh', '-c', ecam_script, 'test', str(path)], check=True)
     rejected = subprocess.run(['sh', str(ecam), 'prepare', 'test', '2', profile], capture_output=True)
     assert rejected.returncode != 0 and b'requires 64 CPUs' in rejected.stderr
+    contention = path / 'contention-helper.sh'
+    subprocess.run(['python3', str(builder), str(source), str(contention), '--ecam-contention'], check=True)
+    generated = contention.read_text()
+    profile = 'memory128-spin-idle7-ecam-contention-nosd-qualification'
+    reverted = generated.replace(control + '|' + profile, control, 3)
+    begin = reverted.index(' ' + profile + ')\n')
+    end = reverted.index(' ' + control + ')\n', begin)
+    assert reverted[:begin] + reverted[end:] == source.read_text()
+    start = generated.index('# PIONEER_PRIVATE_PROFILE_FLAGS_BEGIN')
+    end = generated.index('# PIONEER_PRIVATE_PROFILE_FLAGS_END')
+    (path / 'flags').write_text(generated[start:end])
+    start = generated.index('base=/mnt/ssd/pioneer-haiku-kexec-20261013\n')
+    end = generated.index('\nloader=', start)
+    (path / 'artifacts').write_text(generated[start:end] + '\n')
+    contention_script = script.replace('memory128-spin-idle7-pin-nosd-qualification', profile)
+    contention_script = contention_script.replace('q35-pin-service-20261125', 'q35-ecam-contention-20261125')
+    contention_script = contention_script.replace('3bc902182084edd40b8b98032a57e2f86f44b362be144117e08d0373763d30bf',
+                                                  'fdc7539b245e64ce12b5db8f28abc037210ecb2b4f7c539b0f1c8e02fc019dba')
+    subprocess.run(['sh', '-c', contention_script, 'test', str(path)], check=True)
+    rejected = subprocess.run(['sh', str(contention), 'prepare', 'test', '2', profile], capture_output=True)
+    assert rejected.returncode != 0 and b'requires 64 CPUs' in rejected.stderr
+    conflicting = subprocess.run(['python3', str(builder), str(source), str(path / 'conflict'),
+                                  '--ecam-contention', '--ecam-qualification'], capture_output=True)
+    assert conflicting.returncode != 0
 print('PASS separate candidate boot profile, pinned control and refusal checks; no target access')

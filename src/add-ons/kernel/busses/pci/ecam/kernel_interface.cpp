@@ -103,6 +103,18 @@ pioneer_sg2042_lease_probe_module_info gPioneerLeaseProbe = {
 	.info = { .name = PIONEER_SG2042_LEASE_PROBE_MODULE },
 	.probe = pioneer_sg2042_lease_probe
 };
+
+pioneer_sg2042_lease_contention_module_info gPioneerLeaseContention = {
+	.info = { .name = PIONEER_SG2042_LEASE_CONTENTION_MODULE },
+	.hold = [](void* cookie, sem_id ready, sem_id release, status_t* callbackStatus) {
+		if (cookie == NULL) return B_BAD_VALUE;
+		return static_cast<ECAMPCIController*>(cookie)->HoldPioneerQualification(ready, release, callbackStatus);
+	},
+	.state = [](void* cookie, bool* active, thread_id* waiter, int32* waiters) {
+		if (cookie == NULL) return B_BAD_VALUE;
+		return static_cast<ECAMPCIController*>(cookie)->PioneerQualificationState(active, waiter, waiters);
+	}
+};
 #endif
 
 
@@ -119,6 +131,7 @@ _EXPORT module_info *modules[] = {
 	#endif
 	#ifdef PIONEER_SG2042_RECOVERY_QUALIFICATION
 	(module_info *)&gPioneerLeaseProbe,
+	(module_info *)&gPioneerLeaseContention,
 	#endif
 	NULL
 };

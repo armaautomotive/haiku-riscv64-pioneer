@@ -35,4 +35,50 @@ struct PioneerEcamLeaseProbeCall {
 			&& call.result->recoveryCallbacks == 0 ? B_OK : B_ERROR;
 	}
 };
+
+#ifdef PIONEER_ECAM_CONTENTION_QUALIFICATION
+struct PioneerEcamLeaseHoldCall {
+	pioneer_ecam_lease_hold* result;
+	static status_t Run(void* cookie, void* opaque) {
+		PioneerEcamLeaseHoldCall& call = *static_cast<PioneerEcamLeaseHoldCall*>(opaque);
+		if (cookie == NULL) return B_BAD_VALUE;
+		pioneer_sg2042_lease_contention_module_info* probe = NULL;
+		status_t status = get_module(PIONEER_SG2042_LEASE_CONTENTION_MODULE, (module_info**)&probe);
+		if (status != B_OK) return status;
+		if (probe != NULL && probe->hold != NULL)
+			call.result->holdStatus = probe->hold(cookie, call.result->ready, call.result->release,
+				&call.result->callbackStatus);
+		put_module(PIONEER_SG2042_LEASE_CONTENTION_MODULE);
+		return call.result->holdStatus == B_OK && call.result->callbackStatus == B_OK ? B_OK : B_ERROR;
+	}
+};
+
+// This path uses only pinned device-tree metadata; it does not issue config
+// reads, so it can inspect a controller while another thread waits on its lease.
+struct PioneerEcamLeaseStateCall {
+	device_manager_info* dm;
+	pioneer_ecam_lease_state* result;
+	static status_t Run(device_node* card, device_node*, void* opaque) {
+		PioneerEcamLeaseStateCall& call = *static_cast<PioneerEcamLeaseStateCall*>(opaque);
+		PioneerPinnedNodes::Ref root(call.dm, call.dm->get_parent_node(card));
+		if (root.node == NULL) return B_ENTRY_NOT_FOUND;
+		PioneerPinnedNodes::Ref controller(call.dm, call.dm->get_parent_node(root.node));
+		if (controller.node == NULL) return B_ENTRY_NOT_FOUND;
+		driver_module_info* driver = NULL; void* cookie = NULL;
+		if (call.dm->get_driver(controller.node, &driver, &cookie) != B_OK || driver == NULL
+			|| driver->info.name == NULL || strcmp(driver->info.name, "busses/pci/ecam/driver_v1") != 0
+			|| cookie == NULL) return B_UNSUPPORTED;
+		pioneer_sg2042_lease_contention_module_info* probe = NULL;
+		status_t status = get_module(PIONEER_SG2042_LEASE_CONTENTION_MODULE, (module_info**)&probe);
+		if (status != B_OK) return status;
+		bool active = false; thread_id waiter = -1; int32 waiters = 0;
+		if (probe != NULL && probe->state != NULL)
+			call.result->stateStatus = probe->state(cookie, &active, &waiter, &waiters);
+		put_module(PIONEER_SG2042_LEASE_CONTENTION_MODULE);
+		call.result->active = active ? 1 : 0;
+		call.result->waiter = waiter; call.result->waiters = waiters;
+		return call.result->stateStatus;
+	}
+};
+#endif
 #endif

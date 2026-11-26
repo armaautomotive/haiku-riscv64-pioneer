@@ -2,6 +2,7 @@
 #include <atomic>
 #include <cassert>
 #include <condition_variable>
+#include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <mutex>
@@ -9,8 +10,9 @@
 #include "../../../src/add-ons/kernel/busses/pci/ecam/Sg2042RecoveryLease.h"
 using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uint64_t;
 using vuint8=volatile uint8;using vuint16=volatile uint16;using vuint32=volatile uint32;
-using addr_t=uintptr_t;using thread_id=int;using status_t=int;
-enum {B_OK=0,B_BAD_VALUE=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,B_ENTRY_NOT_FOUND=-4,B_ERROR=-5,B_CANCELED=-6};
+using addr_t=uintptr_t;using thread_id=int;using sem_id=int;using int32=int32_t;using status_t=int;
+enum {B_OK=0,B_BAD_VALUE=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,B_ENTRY_NOT_FOUND=-4,B_ERROR=-5,B_CANCELED=-6,B_TIMED_OUT=-7};
+enum {B_RELATIVE_TIMEOUT=1};
 enum {PCI_command=0x04,PCI_header_type=0x0e,PCI_header_type_mask=0x7f,PCI_header_type_PCI_to_PCI_bridge=1};
 static constexpr uint32 kSg2042AtPciAddress0=0,kSg2042AtDescriptor0=8;
 #define ROUNDDOWN(value,alignment) ((value)&~((alignment)-1))
@@ -23,6 +25,15 @@ static void mutex_lock(mutex* m) {m->native.lock();}
 static void mutex_unlock(mutex* m) {m->native.unlock();}
 static thread_local thread_id current=-1;
 static thread_id find_thread(const char*) {return current;}
+struct FakeSemaphore {std::mutex lock;std::condition_variable cv;int count=0;};
+static FakeSemaphore sems[2];static bool forceTimeout=false;
+static status_t release_sem(sem_id s) {assert(s>=0 && s<2);std::lock_guard<std::mutex> guard(sems[s].lock);++sems[s].count;sems[s].cv.notify_one();return B_OK;}
+static status_t acquire_sem_etc(sem_id s,int32,uint32,int64_t) {
+ assert(s>=0 && s<2);if(forceTimeout)return B_TIMED_OUT;
+ std::unique_lock<std::mutex> lock(sems[s].lock);
+ if(!sems[s].cv.wait_for(lock,std::chrono::seconds(3),[&]{return sems[s].count>0;}))return B_TIMED_OUT;
+ --sems[s].count;return B_OK;
+}
 struct FakeCondition {
 	std::condition_variable cv;std::atomic<unsigned> waiting{0};
 	status_t Wait(mutex* m) {
@@ -30,12 +41,14 @@ struct FakeCondition {
 		++waiting;cv.wait(lock);--waiting;lock.release();return B_OK;
 	}
 	void NotifyAll() {cv.notify_all();}
+	int32 EntriesCount() {return waiting.load();}
 };
 class ECAMPCIController {
 public:
 	mutex fLock;bool fIsSg2042=true,fPrivatePioneerRoot=true;
 	uint8 fStartBus=0x80,fEndBus=0xbf;uint64 fRegsPhysical=0x4800000000ULL;
 	Sg2042RecoveryLease fPioneerRecoveryLease;FakeCondition fPioneerRecoveryCondition;
+	thread_id fPioneerQualificationWaiter=-1;
 	alignas(4) uint8 root[4096]={},config[4096]={},translation[16]={};
 	volatile uint8* fControllerRegs=root;volatile uint8* fRegs=config;volatile uint8* fAtRegs=translation;
 	bool fRootConfigReadLogged=true,fDownstreamConfigReadLogged=true;uint8 fSg2042FunctionsLogged=0;
@@ -43,12 +56,15 @@ public:
 	status_t BeginPioneerRecovery(uint64& ticket);
 	status_t EndPioneerRecovery(uint64 ticket);
 	status_t WaitPioneerConfigAccess();
+	status_t HoldPioneerQualification(sem_id,sem_id,status_t*);
+	status_t PioneerQualificationState(bool*,thread_id*,int32*);
 	status_t ReadSg2042Config(uint8,uint8,uint8,uint16,uint8,uint32&);
 	status_t WriteSg2042Config(uint8,uint8,uint8,uint16,uint8,uint32);
 };
 #include "sg2042_recovery_controller.inc"
 #include "sg2042_config_access.inc"
 #include "pioneer_sg2042_lease_probe.inc"
+#include "pioneer_sg2042_lease_contention.inc"
 
 struct CallbackContext {ECAMPCIController* controller; int calls;};
 static status_t FailingOperation(void* arg) {
@@ -143,5 +159,22 @@ int main()
 	assert(callbacks==0 && callbackStatus==B_ERROR);
 	assert(pioneer_sg2042_lease_probe(&controller,&callbacks,&callbackStatus)==B_OK);
 	assert(callbacks==1 && callbackStatus==B_CANCELED && !controller.fPioneerRecoveryLease.Active());
+	bool active=false;thread_id waiter=-1;int32 waiters=0;
+	assert(controller.PioneerQualificationState(nullptr,&waiter,&waiters)==B_BAD_VALUE);
+	assert(other.PioneerQualificationState(&active,&waiter,&waiters)==B_NOT_ALLOWED);
+	assert(controller.HoldPioneerQualification(0,0,&callbackStatus)==B_BAD_VALUE);
+	status_t holdStatus=B_ERROR,holdCallback=B_ERROR;
+	std::thread holder([&] {current=44;holdStatus=controller.HoldPioneerQualification(0,1,&holdCallback);});
+	assert(acquire_sem_etc(0,1,B_RELATIVE_TIMEOUT,2000000)==B_OK);
+	std::atomic<bool> competingDone{false};uint32 competingValue=0;
+	std::thread competing([&] {current=55;assert(controller.ReadSg2042Config(0,0,0,0,4,competingValue)==B_OK);competingDone=true;});
+	while (!controller.fPioneerRecoveryCondition.waiting.load()) std::this_thread::yield();
+	assert(controller.PioneerQualificationState(&active,&waiter,&waiters)==B_OK);
+	assert(active && waiter==55 && waiters==1 && !competingDone.load());
+	assert(release_sem(1)==B_OK);holder.join();competing.join();
+	assert(holdStatus==B_OK && holdCallback==B_OK && competingDone);
+	assert(controller.PioneerQualificationState(&active,&waiter,&waiters)==B_OK && !active && waiters==0);
+	forceTimeout=true;assert(controller.HoldPioneerQualification(0,1,&holdCallback)==B_OK);
+	assert(holdCallback==B_TIMED_OUT && !controller.fPioneerRecoveryLease.Active());forceTimeout=false;
 	std::puts("PASS actual SG2042 controller lease and config methods: private-root admission, owner access, blocked read/write and wake; SIMULATED ONLY");
 }

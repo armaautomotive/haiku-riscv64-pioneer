@@ -220,6 +220,10 @@ ECAMPCIController::BeginPioneerRecovery(uint64& ticket)
 	const bool eligible = fIsSg2042 && fPrivatePioneerRoot && fStartBus == 0x80
 		&& fEndBus == 0xbf && fRegsPhysical == 0x4800000000ULL;
 	const bool acquired = fPioneerRecoveryLease.Begin(eligible, thread, ticket);
+	#ifdef PIONEER_SG2042_RECOVERY_QUALIFICATION
+	if (acquired)
+		fPioneerQualificationWaiter = -1;
+	#endif
 	mutex_unlock(&fLock);
 	return acquired ? B_OK : eligible ? B_BUSY : B_NOT_ALLOWED;
 }
@@ -251,6 +255,9 @@ ECAMPCIController::WaitPioneerConfigAccess()
 	if (thread < B_OK)
 		return B_BAD_VALUE;
 	while (fPioneerRecoveryLease.Active() && !fPioneerRecoveryLease.Allows(thread)) {
+		#ifdef PIONEER_SG2042_RECOVERY_QUALIFICATION
+		fPioneerQualificationWaiter = thread;
+		#endif
 		const status_t status = fPioneerRecoveryCondition.Wait(&fLock);
 		if (status != B_OK)
 			return status;
@@ -258,6 +265,42 @@ ECAMPCIController::WaitPioneerConfigAccess()
 	return B_OK;
 }
 // PIONEER_SG2042_RECOVERY_LEASE_END
+#endif
+
+#ifdef PIONEER_SG2042_RECOVERY_QUALIFICATION
+// PIONEER_SG2042_LEASE_CONTENTION_BEGIN
+status_t
+ECAMPCIController::HoldPioneerQualification(sem_id ready, sem_id release,
+	status_t* callbackStatus)
+{
+	if (ready < B_OK || release < B_OK || ready == release || callbackStatus == NULL)
+		return B_BAD_VALUE;
+	struct Hold { sem_id ready; sem_id release; } hold{ready, release};
+	return RunPioneerRecovery([](void* opaque) -> status_t {
+		Hold& state = *static_cast<Hold*>(opaque);
+		status_t status = release_sem(state.ready);
+		if (status != B_OK) return status;
+		return acquire_sem_etc(state.release, 1, B_RELATIVE_TIMEOUT, 2000000);
+	}, &hold, callbackStatus);
+}
+
+status_t
+ECAMPCIController::PioneerQualificationState(bool* active, thread_id* waiter, int32* waiters)
+{
+	if (active == NULL || waiter == NULL || waiters == NULL) return B_BAD_VALUE;
+	*active = false; *waiter = -1; *waiters = 0;
+	mutex_lock(&fLock);
+	const bool eligible = fIsSg2042 && fPrivatePioneerRoot && fStartBus == 0x80
+		&& fEndBus == 0xbf && fRegsPhysical == 0x4800000000ULL;
+	if (eligible) {
+		*active = fPioneerRecoveryLease.Active();
+		*waiter = fPioneerQualificationWaiter;
+		*waiters = fPioneerRecoveryCondition.EntriesCount();
+	}
+	mutex_unlock(&fLock);
+	return eligible ? B_OK : B_NOT_ALLOWED;
+}
+// PIONEER_SG2042_LEASE_CONTENTION_END
 #endif
 
 

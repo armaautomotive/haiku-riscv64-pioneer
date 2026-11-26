@@ -161,6 +161,10 @@ public:
 	status_t EndPioneerRecovery(uint64 ticket);
 	status_t WaitPioneerConfigAccess(); // fLock held on entry and return
 #endif
+#ifdef PIONEER_SG2042_RECOVERY_QUALIFICATION
+	status_t HoldPioneerQualification(sem_id ready, sem_id release, status_t* callbackStatus);
+	status_t PioneerQualificationState(bool* active, thread_id* waiter, int32* waiters);
+#endif
 
 	virtual status_t Finalize() = 0;
 
@@ -196,6 +200,9 @@ protected:
 	bool fPrivatePioneerRoot{};
 	Sg2042RecoveryLease fPioneerRecoveryLease;
 	ConditionVariable fPioneerRecoveryCondition;
+#endif
+#ifdef PIONEER_SG2042_RECOVERY_QUALIFICATION
+	thread_id fPioneerQualificationWaiter{-1};
 #endif
 	bool fRootConfigReadLogged{};
 	bool fDownstreamConfigReadLogged{};
