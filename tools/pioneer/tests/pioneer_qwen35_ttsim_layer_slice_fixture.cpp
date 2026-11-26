@@ -15,17 +15,17 @@ static bool EmitSpace(FILE* output,char kind,const RowSpace& space) {
     }
     return true;
 }
-static bool EmitContext(FILE* output,const RowSpace& space) {
-    if (!space.Valid() || space.rows!=Ffn || space.rowBytes!=4 || space.unit!=16) return false;
+static bool EmitOutputPrefix(FILE* output,const RowSpace& space,unsigned wanted) {
+    if (!space.Valid() || space.rows<wanted || !wanted || (wanted&15) || space.rowBytes!=4 || space.unit!=16) return false;
     unsigned emitted=0;
-    for (unsigned i=0;i<space.count && emitted<DeltaInner;i++) {
+    for (unsigned i=0;i<space.count && emitted<wanted;i++) {
         const auto& p=space.parts[i];
-        const unsigned rows=p.rows<DeltaInner-emitted?p.rows:DeltaInner-emitted;
+        const unsigned rows=p.rows<wanted-emitted?p.rows:wanted-emitted;
         if (p.firstRow!=emitted || !rows || (rows&15)
             || std::fprintf(output,"O %u %u %u %u\n",p.bank,p.address,p.firstRow,rows)<0) return false;
         emitted+=rows;
     }
-    return emitted==DeltaInner;
+    return emitted==wanted;
 }
 static bool EmitZeroSpace(FILE* output,const RowSpace& space) {
     if (!space.Valid()) return false;
@@ -51,23 +51,26 @@ static bool Mark(const std::string& path) {
 }
 int main(int argc,char** argv) {
     (void)&q35_slice_handoff_fixture_main;
-    if (argc<4 || argc>6) {std::fprintf(stderr,"usage: %s full-fixture empty-output-directory layer [--warm-state] [--attention-only|--attention-context]\n",argv[0]);return 2;}
-    bool warm=false,attentionOnly=false,attentionContext=false;
+    if (argc<4 || argc>6) {std::fprintf(stderr,"usage: %s full-fixture empty-output-directory layer [--warm-state] [--attention-only|--attention-context|--query-projection|--key-projection|--value-projection]\n",argv[0]);return 2;}
+    bool warm=false,attentionOnly=false,attentionContext=false;unsigned projection=0;
     for (int i=4;i<argc;i++) {
         if (!std::strcmp(argv[i],"--warm-state") && !warm) warm=true;
         else if (!std::strcmp(argv[i],"--attention-only") && !attentionOnly) attentionOnly=true;
         else if (!std::strcmp(argv[i],"--attention-context") && !attentionContext) attentionContext=true;
+        else if (!std::strcmp(argv[i],"--query-projection") && !projection) projection=1;
+        else if (!std::strcmp(argv[i],"--key-projection") && !projection) projection=2;
+        else if (!std::strcmp(argv[i],"--value-projection") && !projection) projection=3;
         else return 2;
     }
-    if (attentionOnly && attentionContext) return 2;
+    if (unsigned(attentionOnly)+unsigned(attentionContext)+unsigned(projection!=0)>1) return 2;
     char* end=nullptr;const unsigned long parsed=std::strtoul(argv[3],&end,10);
     if (!argv[3][0] || *end || parsed>=Layers) return 2;
     const unsigned layer=unsigned(parsed);const std::string source=argv[1],output=argv[2];
-    if (attentionContext && !Dense(layer)) return 2;
+    if ((attentionContext || projection) && !Dense(layer)) return 2;
     std::vector<DataflowGraphRunDescriptor> descriptors(DataflowCoreCount);
     if (!ReadExact((source+"/templates.bin").c_str(),descriptors.data(),descriptors.size()*sizeof(descriptors[0]))) return 1;
     FILE* input=std::fopen((source+"/records.bin").c_str(),"rb");if (!input) return 1;
-    unsigned start=layer?DataflowGraphDecodeSteps:1,finish=DataflowGraphDecodeSteps,adds=0;
+    unsigned start=layer?DataflowGraphDecodeSteps:1,finish=DataflowGraphDecodeSteps,adds=0,projections=0;
     for (unsigned step=0;step<DataflowGraphDecodeSteps;step++) {
         DataflowStreamRecord record{};
         if (std::fread(&record,1,sizeof(record),input)!=sizeof(record)
@@ -78,7 +81,7 @@ int main(int argc,char** argv) {
             if (invocation.mode==DataflowResidualAdd) {
                 ++adds;
                 if (layer && adds==2*layer) start=step+1;
-                if (!attentionContext && adds==2*layer+(attentionOnly?1U:2U)) {finish=step+1;break;}
+                if (!attentionContext && !projection && adds==2*layer+(attentionOnly?1U:2U)) {finish=step+1;break;}
             }
         }
 #ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
@@ -88,6 +91,14 @@ int main(int argc,char** argv) {
             if (invocation.phase==DataflowFlashHybridReducer) {finish=step+1;break;}
         }
 #endif
+        if (projection && start<DataflowGraphDecodeSteps && record.header[5]==DataflowProgramMagic) {
+            DataflowCoreInvocation invocation{};DataflowDynamicRead(record,invocation);
+            if (!invocation.Valid()) return 1;
+            if (++projections==projection) {
+                if (invocation.outputRows!=(projection==1?8192U:1024U)) return 1;
+                finish=step+1;break;
+            }
+        }
     }
     if (start>=finish || finish>DataflowGraphDecodeSteps || finish-start>=DataflowGraphDecodeSteps) return 1;
     const unsigned executed=finish-start;
@@ -100,7 +111,7 @@ int main(int argc,char** argv) {
             DataflowStreamRecord record{};
             if (std::fread(&record,1,sizeof(record),input)!=sizeof(record)
                 || !DataflowStreamRecordStructureValid(record,descriptors[core].binding.epoch,start+step+1,core)) return 1;
-            if (!step || (step+1==executed && !attentionContext)) {
+            if (!step || (step+1==executed && !attentionContext && !projection)) {
                 if (record.header[5]!=DataflowResidualMagic) return 1;
                 DataflowResidualInvocation invocation{};DataflowDynamicRead(record,invocation);
                 if (!invocation.Valid() || invocation.mode!=(!step?DataflowResidualSave:DataflowResidualAdd)) return 1;
@@ -117,6 +128,12 @@ int main(int argc,char** argv) {
                 else if (!DataflowRowSpaceMatches(expectedOutput,invocation.program.contextOutput)) return 1;
             }
 #endif
+            if (projection && step+1==executed) {
+                DataflowCoreInvocation invocation{};DataflowDynamicRead(record,invocation);
+                if (!invocation.Valid() || invocation.outputRows!=(projection==1?8192U:1024U)) return 1;
+                if (!core) expectedOutput=invocation.output;
+                else if (!DataflowRowSpaceMatches(expectedOutput,invocation.output)) return 1;
+            }
             if (record.header[5]==DataflowConvMagic) {
                 DataflowConvInvocation invocation{};DataflowDynamicRead(record,invocation);
                 if (!invocation.Valid() || invocation.layer!=layer || invocation.position!=0) return 1;
@@ -158,12 +175,16 @@ int main(int argc,char** argv) {
     }
     if (std::ferror(oldLayout) || !weights || streams!=DataflowCoreCount
         || !EmitSpace(newLayout,'I',expectedInput)
-        || (attentionContext?!EmitContext(newLayout,expectedOutput):!EmitSpace(newLayout,'O',expectedOutput))
+        || (attentionContext?!EmitOutputPrefix(newLayout,expectedOutput,DeltaInner)
+            :projection?!EmitOutputPrefix(newLayout,expectedOutput,projection==1?8192:1024)
+            :!EmitSpace(newLayout,'O',expectedOutput))
         || (!warm && (Dense(layer) ? (historyRead.count || stateRead.count)
                          : (!EmitZeroSpace(newLayout,historyRead) || !EmitZeroSpace(newLayout,stateRead)))
             )
         || std::fclose(oldLayout) || std::fclose(newLayout)) return 1;
-    if (warm) {
+    if (warm && projection) {
+        if (!Mark(output+"/warm-layer.marker") || !Mark(output+"/warm-stateless.marker")) return 1;
+    } else if (warm) {
         FILE* state=std::fopen((output+"/warm-state-layout.txt").c_str(),"wx");
         if (!state || (Dense(layer)?!EmitWarmSpace(state,'K',layer,denseKv)
                 :(!EmitWarmSpace(state,'H',layer,historyRead) || !EmitWarmSpace(state,'D',layer,stateRead)))
@@ -175,6 +196,8 @@ int main(int argc,char** argv) {
     if (!Mark(output+"/layer-slice.marker")) return 1;
     if (attentionOnly && !Mark(output+"/attention-only.marker")) return 1;
     if (attentionContext && !Mark(output+"/attention-context.marker")) return 1;
+    if (projection && !Mark(output+(projection==1?"/query-projection.marker"
+        :projection==2?"/key-projection.marker":"/value-projection.marker"))) return 1;
 #ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
     if (!Mark(output+"/flash-hybrid.marker")) return 1;
 #endif

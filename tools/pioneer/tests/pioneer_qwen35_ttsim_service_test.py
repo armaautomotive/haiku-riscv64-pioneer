@@ -20,7 +20,7 @@ class RecordedNumericalMismatch(RuntimeError):
 
 def compare_recorded_layer(actual, reference, rows=2560):
     """Check every simulated hidden value, including aggregate error on failure."""
-    if rows not in (32, 2560, 4096, 8192, 9216) or len(actual) != rows * 4 or len(reference) != rows * 4:
+    if rows not in (32, 1024, 2560, 4096, 8192, 9216) or len(actual) != rows * 4 or len(reference) != rows * 4:
         raise ValueError('unexpected recorded layer output size')
     maximum = 0.0
     worst_scaled = 0.0
@@ -547,6 +547,8 @@ def main():
                         help='compare 4096 Z output rows for an isolated simulator-only layer slice')
     parser.add_argument('--recorded-scalar-output', action='store_true',
                         help='compare 32 scalar projection rows for an isolated simulator-only layer slice')
+    parser.add_argument('--recorded-kv-projection-output', action='store_true',
+                        help='compare 1024 key/value projection rows for an isolated simulator-only slice')
     parser.add_argument('--recorded-prefix-snapshots', type=Path,
                         help='save simulator-only model layer boundaries to a new directory')
     parser.add_argument('--recorded-warm-snapshots', type=Path,
@@ -584,17 +586,18 @@ def main():
     layer_slice = bool(args.recorded_layer_fixture
                        and (args.recorded_layer_fixture / 'layer-slice.marker').is_file())
     warm_slice = bool(layer_slice and (args.recorded_layer_fixture / 'warm-layer.marker').is_file())
-    if warm_slice != bool(args.recorded_warm_layer_state):
+    warm_stateless = bool(warm_slice and (args.recorded_layer_fixture / 'warm-stateless.marker').is_file())
+    if (warm_slice and not warm_stateless) != bool(args.recorded_warm_layer_state):
         parser.error('warm isolated replay requires its marked fixture and audited state')
     if layer_slice != bool(args.recorded_layer_input):
         parser.error('isolated layer replay requires a marked fixture and its input')
     if layer_slice and (args.recorded_token_reference or args.recorded_warm_layer_reference):
         parser.error('isolated layer replay does not generate tokens')
     if (args.recorded_wide_output or args.recorded_qkv_output or args.recorded_z_output
-            or args.recorded_scalar_output) and not layer_slice:
+            or args.recorded_scalar_output or args.recorded_kv_projection_output) and not layer_slice:
         parser.error('wide output requires an isolated simulator-only layer slice')
     if sum((args.recorded_wide_output, args.recorded_qkv_output, args.recorded_z_output,
-            args.recorded_scalar_output)) > 1:
+            args.recorded_scalar_output, args.recorded_kv_projection_output)) > 1:
         parser.error('only one isolated output width may be selected')
     if args.recorded_export_actual and (not args.recorded_layer_fixture or args.recorded_warm_layer_reference
                                         or args.recorded_export_actual.exists()
@@ -1015,7 +1018,7 @@ def main():
                             if args.recorded_state_layout else None)
             warm_groups = (validate_recorded_state_layout((directory / 'warm-state-layout.txt').read_text(),
                            weights, streams, inputs, outputs, decode_steps, 1, 32, layers - 1)
-                           if warm_slice else None)
+                           if warm_slice and not warm_stateless else None)
             routes = (786, 978, 1170, 785, 977, 1169, 1361)
 
             def select_bank(bank, address):
@@ -1085,7 +1088,7 @@ def main():
                     next_input += rows
                 if next_input != 9216:
                     raise ValueError('incomplete isolated layer input layout')
-                if warm_slice:
+                if warm_slice and not warm_stateless:
                     if not (args.recorded_warm_layer_state / 'worker-audit-complete.marker').is_file():
                         raise ValueError('warm state lacks a completed simulator worker audit')
                     for (kind, layer), fragments in sorted(warm_groups.items()):
@@ -1102,6 +1105,7 @@ def main():
                                     write_bank(bank, address + row * row_bytes, payload[offset:offset + 512])
                             else:
                                 write_bank(bank, address, payload[first * row_bytes:(first + rows) * row_bytes])
+                if warm_slice:
                     command = standalone_position_one_command(command)
             for expected_core, (core, bank, address) in enumerate(streams):
                 if core != expected_core:
@@ -1212,7 +1216,8 @@ def main():
                     (state_dir / 'worker-audit-complete.marker').touch(exist_ok=False)
                     print(f'captured first-position simulator state for {layers} layers; '
                           'worker audit only, NO HARDWARE', flush=True)
-                output_rows = (32 if args.recorded_scalar_output else 4096 if args.recorded_z_output
+                output_rows = (32 if args.recorded_scalar_output else 1024 if args.recorded_kv_projection_output
+                               else 4096 if args.recorded_z_output
                                else 8192 if args.recorded_qkv_output
                                else 9216 if args.recorded_wide_output else 2560)
                 result = bytearray(output_rows * 4)
@@ -1225,7 +1230,7 @@ def main():
                         result[first * 4:(first + count) * 4] = read_bank(bank, address, count * 4)
                     next_row += rows
                 if next_row != (output_rows if args.recorded_z_output or args.recorded_qkv_output
-                                or args.recorded_scalar_output else 9216):
+                                or args.recorded_scalar_output or args.recorded_kv_projection_output else 9216):
                     raise ValueError('incomplete recorded output layout')
                 if snapshot_dir:
                     if snapshot_index != len(snapshot_points):

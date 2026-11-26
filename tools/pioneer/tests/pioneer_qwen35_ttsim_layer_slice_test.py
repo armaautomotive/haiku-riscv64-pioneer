@@ -24,6 +24,12 @@ assert 1 <= executed < count and records == executed + 1 and start + executed <=
 assert (sliced / 'layer-slice.marker').is_file()
 assert (sliced / 'warm-layer.marker').is_file() == warm
 context_only = (sliced / 'attention-context.marker').is_file()
+projection_markers = [name for name in ('query', 'key', 'value')
+                      if (sliced / f'{name}-projection.marker').is_file()]
+assert len(projection_markers) <= 1
+projection = projection_markers[0] if projection_markers else None
+stateless = (sliced / 'warm-stateless.marker').is_file()
+assert stateless == bool(warm and projection)
 for name in ('weights.bin', 'templates.bin', 'command.bin'):
     assert os.path.samefile(source / name, sliced / name)
 for kind in ('W', 'S'):
@@ -36,7 +42,8 @@ for kind in ('I', 'O'):
         assert 0 <= bank < 7 and bank not in banks and first == next_row
         assert address % 4096 == 0 and rows > 0 and rows % 16 == 0
         banks.add(bank); next_row += rows
-    assert next_row == (4096 if context_only and kind == 'O' else 9216)
+    output_rows = 8192 if projection == 'query' else 1024 if projection else 4096 if context_only else 9216
+    assert next_row == (output_rows if kind == 'O' else 9216)
     layouts[kind] = parts
 
 def row_space(record, word_offset):
@@ -69,7 +76,20 @@ with (source / 'records.bin').open('rb') as original, (sliced / 'records.bin').o
             if step == 0:
                 assert residual_space(after, 1, core) == layouts['I']
             if step + 1 == executed:
-                if context_only:
+                if projection:
+                    header = struct.unpack_from('<16I', after)
+                    magic, version, actual_core, _, _, result_rows = struct.unpack_from('<6I', after, 64)
+                    expected_rows = 8192 if projection == 'query' else 1024
+                    assert (header[5], magic, actual_core, result_rows) == (0x31504635, 0x31504635, core, expected_rows)
+                    rows, row_bytes, unit, parts = row_space(after, 110)
+                    assert rows >= expected_rows and (row_bytes, unit) == (4, 16)
+                    cropped = []
+                    for bank, address, first, count_rows in parts:
+                        if first >= expected_rows:
+                            break
+                        cropped.append((bank, address, first, min(count_rows, expected_rows - first)))
+                    assert cropped == layouts['O']
+                elif context_only:
                     header = struct.unpack_from('<16I', after)
                     magic, version, actual_core, phase = struct.unpack_from('<4I', after, 64)
                     assert (header[5], magic, version, actual_core, phase) == (0x31484635, 0x31484635, 1, core, 2)
@@ -115,10 +135,12 @@ streams = [tuple(map(int, x[1:])) for x in new if x[0] == 'S']
 zeros = [tuple(map(int, x[1:])) for x in new if x[0] == 'Z']
 assert len(zeros) == len(set(zeros)) and (set(zeros) == set() if warm else set(zeros) == zero_expected)
 assert bool(zeros) == ((layer & 3) != 3 and not warm)
-if warm:
+if warm and not stateless:
     rows = parse(sliced / 'warm-state-layout.txt')
     actual = {(x[0], *map(int, x[1:])) for x in rows}
     assert len(actual) == len(rows) and actual == warm_expected
+elif stateless:
+    assert not (sliced / 'warm-state-layout.txt').exists()
 assert len(streams) == 120
 for bank, address, _, rows in layouts['I']:
     end = address + rows * 4

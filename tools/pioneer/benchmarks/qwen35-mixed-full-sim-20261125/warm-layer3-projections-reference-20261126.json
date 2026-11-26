@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "projections": [
+    {
+      "name": "query",
+      "rows": 8192,
+      "max_absolute_error": 9.5367431640625e-06,
+      "simulator_sha256": "8d52d40b32e84169f904f8b3143c3e4df012f39d648a8fc42633a7e7e280468c",
+      "reference_sha256": "cddbbedc578ec6d1b9e2e8addf5700c24c6f5b4253b0cbe0a6e90918d97c2105"
+    },
+    {
+      "name": "key",
+      "rows": 1024,
+      "max_absolute_error": 2.86102294921875e-06,
+      "simulator_sha256": "f7fd05f5b577cb8738339cd1005600796f0a1d0a7d84d93b898f8b5645a7e2be",
+      "reference_sha256": "ebc585337730c81393266ee7c5f7d70b8f5e32899c448a04d0eb48709a6ee5eb"
+    },
+    {
+      "name": "value",
+      "rows": 1024,
+      "max_absolute_error": 1.3113021850585938e-06,
+      "simulator_sha256": "b0c164abb941c04e54f446d588acc2f70883d566caa852e01e23d01976d283c6",
+      "reference_sha256": "ecd4183e968745697e51a70c1e2e9aceca41f980f6ac094ac148f601a91b9873"
+    }
+  ],
+  "scope": "Separate position-one projection slices, shared CPU layer input, 120 simulated workers; no hardware."
+}

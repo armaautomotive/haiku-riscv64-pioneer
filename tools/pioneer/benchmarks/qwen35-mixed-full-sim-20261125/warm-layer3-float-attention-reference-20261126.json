@@ -1,0 +1,26 @@
+{
+  "simulator_vs_float": {
+    "mismatches": 0,
+    "max_absolute_error": 5.364418029785156e-07,
+    "max_scaled_error": 5.364418029785156e-07,
+    "worst_index": 1423
+  },
+  "cpu_flash_vs_float": {
+    "mismatches": 170,
+    "max_absolute_error": 0.0005030333995819092,
+    "max_scaled_error": 0.0005030333995819092,
+    "worst_index": 1786
+  },
+  "input_sha256": {
+    "Qcur": "3bb1bf746bd2b271bca0904fc669a71839c31ed6ad7bf1aa9649ade5c1afcecf",
+    "Kcur": "f6a7ad773998a4be99b4f0ecf4c5b09d3742d6a554d24fb63bad2e2236f59974",
+    "Vcur_projected": "b0c164abb941c04e54f446d588acc2f70883d566caa852e01e23d01976d283c6",
+    "gate_sigmoid": "86d65841bea3cf643b70325be43b2a07335be8b8afa9faa63866b8fa49469d37"
+  },
+  "prior_kv_sha256": "c11f952c84848877d4308a99b6660cbaa6acbf32251b1ca973530639ef900263",
+  "simulator_sha256": "2ec8f8a529e2edce82fc0be276281d30f57c25638fed30753e51bf2664f50b59",
+  "cpu_sha256": "9d0348287354e940840ed0ca3d8cd3529348efc1231a7b9624a8b1c364753ffc",
+  "float_reference_sha256": "12a2cadee9f7ca62cce179f5a9ed6dc0076e28cf0269407eae996fa2c1a2a207",
+  "scope": "Offline two-position independent float attention from CPU-normalized/rotated simulator QKV and captured simulated prior KV; no hardware or full-model proof.",
+  "cpu_qkv_self_control_identical_artifacts": 87
+}

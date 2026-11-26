@@ -14,14 +14,15 @@
 #include <vector>
 #include <sys/stat.h>
 #include <unistd.h>
-static constexpr std::array<const char*,20> traceNames={"attn_norm","linear_attn_qkv_mixed",
+static constexpr std::array<const char*,22> traceNames={"attn_norm","linear_attn_qkv_mixed",
     "z","beta","alpha","gate","conv_output_raw","conv_output_silu",
     "final_output","linear_attn_out","attn_residual","attn_post_norm","ffn_out",
-    "ffn_gate","ffn_up","ffn_swiglu",nullptr,nullptr,nullptr,nullptr};
-static constexpr std::array<const char*,20> denseTraceNames={"attn_norm","Qcur_full",
+    "ffn_gate","ffn_up","ffn_swiglu",nullptr,nullptr,nullptr,nullptr,nullptr,nullptr};
+static constexpr std::array<const char*,22> denseTraceNames={"attn_norm","Qcur_full",
     "gate_reshaped","attn_pregate","gate_sigmoid","attn_gated","attn_output",
     "attn_residual","attn_post_norm","ffn_out",nullptr,nullptr,nullptr,
-    "ffn_gate","ffn_up","ffn_swiglu","Qcur_normed","Qcur","Kcur_normed","Kcur"};
+    "ffn_gate","ffn_up","ffn_swiglu","Qcur_normed","Qcur","Kcur_normed","Kcur",
+    "Kcur_projected","Vcur_projected"};
 static const char* TraceName(unsigned layer,size_t index) {
     return layer%4==3?denseTraceNames[index]:traceNames[index];
 }
@@ -35,6 +36,8 @@ struct Capture {std::array<std::array<float,2560>,32> layers{};std::array<bool,3
     std::array<std::vector<float>,32> denseKey{},denseValue{};
     unsigned forceFirstKvLayer=32;std::array<float,2048> forceFirstKv{};
     bool forcedKey=false,forcedValue=false;
+    unsigned forceWarmQkvLayer=32;std::array<std::vector<float>,3> forceWarmQkv{};
+    std::array<bool,3> forcedWarmQkv{};
     std::array<std::vector<float>,traceNames.size()> trace{};std::array<bool,traceNames.size()> gotTrace{};
     std::vector<float> logits;bool gotLogits=false,replaced=false;};
 static bool SameFile(const struct stat& a,const struct stat& b) {
@@ -67,6 +70,14 @@ static bool Callback(ggml_tensor* tensor,bool ask,void* opaque) {
     const bool forceValue=capture.forceFirstKvLayer<32 && tensor->op==GGML_OP_MUL_MAT
         && std::sscanf(tensor->name,"Vcur-%u%c",&forceKvLayer,&forceKvTrailing)==1
         && forceKvLayer==capture.forceFirstKvLayer;
+    int warmProjection=-1;
+    if (capture.forceWarmQkvLayer<32 && tensor->op==GGML_OP_MUL_MAT) {
+        const char* names[]={"Qcur_full","Kcur","Vcur"};
+        for (unsigned i=0;i<3;i++) {
+            char name[64];std::snprintf(name,sizeof(name),"%s-%u",names[i],capture.forceWarmQkvLayer);
+            if (!std::strcmp(tensor->name,name)) {warmProjection=int(i);break;}
+        }
+    }
     unsigned residualLayer=0;char residualTrailing=0;
     const bool isAttentionResidual=std::sscanf(tensor->name,"attn_residual-%u%c",&residualLayer,&residualTrailing)==1
         && residualLayer<32;
@@ -81,13 +92,28 @@ static bool Callback(ggml_tensor* tensor,bool ask,void* opaque) {
     size_t traceIndex=traceNames.size();
     if (capture.traceLayer<32) for (size_t i=0;i<traceNames.size();i++) {
         const char* prefix=TraceName(capture.traceLayer,i);if (!prefix) continue;
-        char name[64];std::snprintf(name,sizeof(name),"%s-%u",prefix,capture.traceLayer);
+        const bool projected=!std::strcmp(prefix,"Kcur_projected") || !std::strcmp(prefix,"Vcur_projected");
+        const char* actualPrefix=!std::strcmp(prefix,"Kcur_projected")?"Kcur"
+            :!std::strcmp(prefix,"Vcur_projected")?"Vcur":prefix;
+        if (projected && tensor->op!=GGML_OP_MUL_MAT) continue;
+        char name[64];std::snprintf(name,sizeof(name),"%s-%u",actualPrefix,capture.traceLayer);
         if (!std::strcmp(prefix,"Kcur") && tensor->op!=GGML_OP_ROPE) continue;
         if (!std::strcmp(tensor->name,name)) {traceIndex=i;break;}
     }
     if (ask) return isLayer || logits || convState || deltaState || denseKey || denseValue || forceKey || forceValue
+        || warmProjection>=0
         || replaceIntermediate || traceIndex<traceNames.size();
     if (tensor->type!=GGML_TYPE_F32 || !ggml_is_contiguous(tensor)) return false;
+    if (warmProjection>=0) {
+        const unsigned index=unsigned(warmProjection);auto& values=capture.forceWarmQkv[index];
+        if (capture.forcedWarmQkv[index] || values.empty() || ggml_nelements(tensor)!=int64_t(values.size())
+            || ggml_nbytes(tensor)!=values.size()*sizeof(float)) return false;
+        ggml_backend_tensor_set(tensor,values.data(),0,values.size()*sizeof(float));
+        std::vector<float> readback(values.size());
+        ggml_backend_tensor_get(tensor,readback.data(),0,readback.size()*sizeof(float));
+        if (std::memcmp(readback.data(),values.data(),values.size()*sizeof(float))) return false;
+        capture.forcedWarmQkv[index]=true;
+    }
     if (forceKey || forceValue) {
         if (ggml_nelements(tensor)!=1024 || ggml_nbytes(tensor)!=1024*sizeof(float)
             || (forceKey?capture.forcedKey:capture.forcedValue)) return false;
@@ -174,6 +200,7 @@ static bool BestToken(const Capture& capture,unsigned& best) {
     for (bool got:capture.gotLayer) if (!got) return false;
     if (!capture.forcedLayers.empty()) for (bool got:capture.forcedSeen) if (!got) return false;
     if (capture.forceFirstKvLayer<32 && (!capture.forcedKey || !capture.forcedValue)) return false;
+    if (capture.forceWarmQkvLayer<32) for (bool got:capture.forcedWarmQkv) if (!got) return false;
     if (capture.traceRecurrentState) for (unsigned layer=0;layer<32;layer++) {
         if (layer%4==3) {
             if (!capture.convState[layer].empty() || !capture.deltaState[layer].empty()) return false;
@@ -250,17 +277,41 @@ static bool LoadForcedKv(const char* path,Capture& capture,unsigned layer) {
     }
     capture.forceFirstKvLayer=layer;return true;
 }
+static bool LoadWarmQkv(const std::string& dir,Capture& capture,unsigned layer) {
+    if (layer>=32 || layer%4!=3) return false;
+    const char* names[]={"q.bin","k.bin","v.bin"};
+    const size_t counts[]={8192,1024,1024};
+    for (unsigned i=0;i<3;i++) {
+        const int fd=open((dir+"/"+names[i]).c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if (fd<0) return false;
+        struct stat before{},after{};auto& values=capture.forceWarmQkv[i];
+        if (fstat(fd,&before) || !S_ISREG(before.st_mode) || before.st_size!=off_t(counts[i]*sizeof(float))) {close(fd);return false;}
+        FILE* input=fdopen(fd,"rb");if (!input) {close(fd);return false;}
+        values.resize(counts[i]);
+        const bool okay=std::fread(values.data(),sizeof(float),values.size(),input)==values.size()
+            && std::fgetc(input)==EOF && !std::ferror(input) && !fstat(fd,&after) && SameFile(before,after);
+        if (std::fclose(input) || !okay) return false;
+        for (float value:values) if (!std::isfinite(value)) return false;
+    }
+    capture.forceWarmQkvLayer=layer;capture.traceLayer=layer;return true;
+}
 int main(int argc,char** argv) {
     if (argc<3) {
-        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two] [(--replace-layer | --replace-attn-residual | --replace-ffn-swiglu) N tensor.bin [--trace-layer N | --trace-layer25 | --export-first-kv] | two --replace-first-layers snapshot-directory | two --replace-first-kv layer packed.bin | two --export-warm-state | two --export-first-kv]\n",argv[0]);return 2;
+        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two] [(--replace-layer | --replace-attn-residual | --replace-ffn-swiglu) N tensor.bin [--trace-layer N | --trace-layer25 | --export-first-kv] | two --replace-first-layers snapshot-directory | two --replace-first-kv layer packed.bin | two --replace-warm-qkv layer directory | two --export-warm-state | two --export-first-kv | two --attention-mode f32|f16]\n",argv[0]);return 2;
     }
     const bool two=argc>3 && !std::strcmp(argv[3],"two");
     const int option=two?4:3;
     const bool forceFirst=two && argc==6 && !std::strcmp(argv[4],"--replace-first-layers");
     const bool forceFirstKv=two && argc==7 && !std::strcmp(argv[4],"--replace-first-kv");
+    const bool forceWarmQkv=two && (argc==7 || argc==9) && !std::strcmp(argv[4],"--replace-warm-qkv");
+    const bool combinedAttention=forceWarmQkv && argc==9 && !std::strcmp(argv[7],"--attention-mode")
+        && (!std::strcmp(argv[8],"f32") || !std::strcmp(argv[8],"f16"));
+    if (forceWarmQkv && argc==9 && !combinedAttention) return 2;
+    const bool standaloneAttention=two && argc==6 && !std::strcmp(argv[4],"--attention-mode")
+        && (!std::strcmp(argv[5],"f32") || !std::strcmp(argv[5],"f16"));
+    const bool alternateAttention=combinedAttention || standaloneAttention;
     const bool traceWarmState=two && argc==5 && !std::strcmp(argv[4],"--export-warm-state");
     const bool traceFirstKv=two && argc==5 && !std::strcmp(argv[4],"--export-first-kv");
-    if (!forceFirst && !forceFirstKv && !traceWarmState && !traceFirstKv && argc!=option && argc!=option+3 && argc!=option+4 && argc!=option+5) return 2;
+    if (!forceFirst && !forceFirstKv && !forceWarmQkv && !alternateAttention && !traceWarmState && !traceFirstKv && argc!=option && argc!=option+3 && argc!=option+4 && argc!=option+5) return 2;
     Capture capture{},replacement{};
     capture.traceFirstDenseKv=traceFirstKv;
     replacement.traceRecurrentState=traceWarmState;
@@ -270,7 +321,12 @@ int main(int argc,char** argv) {
         if (!argv[5][0] || *end || layer>=32) return 2;
         if (!LoadForcedKv(argv[6],capture,unsigned(layer))) return 1;
     }
-    if (!forceFirst && !forceFirstKv && !traceWarmState && !traceFirstKv && argc>option) {
+    if (forceWarmQkv) {
+        char* end=nullptr;const unsigned long layer=std::strtoul(argv[5],&end,10);
+        if (!argv[5][0] || *end || layer>=32) return 2;
+        if (!LoadWarmQkv(argv[6],replacement,unsigned(layer))) return 1;
+    }
+    if (!forceFirst && !forceFirstKv && !forceWarmQkv && !alternateAttention && !traceWarmState && !traceFirstKv && argc>option) {
         if (std::strcmp(argv[option],"--replace-layer") && std::strcmp(argv[option],"--replace-attn-residual")
             && std::strcmp(argv[option],"--replace-ffn-swiglu")) return 2;
         replacement.replaceAttentionResidual=!std::strcmp(argv[option],"--replace-attn-residual");
@@ -318,6 +374,11 @@ int main(int argc,char** argv) {
     llama_model* model=llama_model_load_from_file(fdPath.c_str(),params);if (!model) {close(fd);return 1;}
     auto config=llama_context_default_params();
     config.n_ctx=32;config.n_batch=1;config.n_ubatch=1;config.n_threads=4;config.n_threads_batch=4;
+    if (alternateAttention) {
+        config.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_DISABLED;
+        const char* mode=combinedAttention?argv[8]:argv[5];
+        config.type_k=config.type_v=!std::strcmp(mode,"f32")?GGML_TYPE_F32:GGML_TYPE_F16;
+    }
     config.cb_eval=Callback;config.cb_eval_user_data=&capture;
     llama_context* ctx=llama_init_from_model(model,config);if (!ctx) {llama_model_free(model);close(fd);return 1;}
     llama_token token=42;int result=llama_decode(ctx,llama_batch_get_one(&token,1));
@@ -338,5 +399,5 @@ int main(int argc,char** argv) {
     const std::string dir=argv[2];
     if (!Save(dir,"",first,firstToken) || (two && !Save(dir,"position1-",second,secondToken))) return 1;
     std::printf("wrote standalone CPU reference argmax %u%s%s; NO PIONEER HARDWARE\n",
-        firstToken,two?" and next position":"",(forceFirst || forceFirstKv || (!traceWarmState && !traceFirstKv && argc>option))?" with tensor replacement":"");
+        firstToken,two?" and next position":"",(forceFirst || forceFirstKv || forceWarmQkv || (!alternateAttention && !traceWarmState && !traceFirstKv && argc>option))?" with tensor replacement":"");
 }

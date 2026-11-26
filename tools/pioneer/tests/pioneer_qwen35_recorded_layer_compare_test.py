@@ -132,6 +132,15 @@ try:
     raise AssertionError('last QKV output row mismatch accepted')
 except RecordedNumericalMismatch as error:
     assert '1/8192' in str(error) and 'row 8191' in str(error)
+kv_projection = struct.pack('<1024f', *([1.0] * 1024))
+assert compare_recorded_layer(kv_projection, kv_projection, 1024) == 0
+bad_kv_projection = bytearray(kv_projection)
+struct.pack_into('<f', bad_kv_projection, 1023 * 4, 2.0)
+try:
+    compare_recorded_layer(bad_kv_projection, kv_projection, 1024)
+    raise AssertionError('last key/value projection row mismatch accepted')
+except RecordedNumericalMismatch as error:
+    assert '1/1024' in str(error) and 'row 1023' in str(error)
 z = struct.pack('<4096f', *([1.0] * 4096))
 assert compare_recorded_layer(z, z, 4096) == 0
 bad_z = bytearray(z)

@@ -1,5 +1,16 @@
 # Latest offline checks, 2026-11-26
 
+The warm query, key and value projection slices passed CPU comparisons. An
+independent float attention calculation using CPU-normalized/rotated injected
+simulator projections and the simulated prior KV matched all 4,096 simulated
+context values within `5.36441803e-07`; the CPU F16 flash-attention result
+differed on 170 values. This supports an attention-precision explanation for
+the isolated context difference, not a full-model pass. The offline CPU
+selected `[261, 89598]` with flash/F16 KV and `[261, 1850]` with non-flash/F16
+KV; the failed simulator diagnostic also selected `[261, 1850]`, but its
+strict hidden-state comparison remains failed. The full two-position capture
+remains session `45891`. No hardware access or throughput measurement occurred.
+
 The focused nine-step warm dense-attention replay failed its context check on
 171/4,096 values, maximum absolute error `0.000502943993`, after its
 120-worker terminal audit. The discrepancy is present before the output

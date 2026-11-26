@@ -1,0 +1,37 @@
+{
+  "model_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+  "cpu_modes": [
+    {
+      "mode": "flash-f16",
+      "tokens": [
+        261,
+        89598
+      ],
+      "layer31_sha256": "45111372a502c16cc07a15d76315b12f6b4d0b0258750cf1357a0bb34d79f7b5",
+      "position1_layer31_sha256": "2f4240885e0c96f9f1d4ba6eff4d4413329c20701012032be3c5662c7ab7d340"
+    },
+    {
+      "mode": "nonflash-f16",
+      "tokens": [
+        261,
+        1850
+      ],
+      "layer31_sha256": "45111372a502c16cc07a15d76315b12f6b4d0b0258750cf1357a0bb34d79f7b5",
+      "position1_layer31_sha256": "da6ed3eaabdbfef8e59d2e70e8c9ba6a0916be1b79bddc790f08bd51a3f64a17"
+    },
+    {
+      "mode": "nonflash-f32",
+      "tokens": [
+        261,
+        89598
+      ],
+      "layer31_sha256": "7f9a78db78a688985338681faea8261379b0a86a8ccf4d82f028a346b33782ff",
+      "position1_layer31_sha256": "138d8b68287a3fe726b695926adb572cdda90aa2a31dbf1cc2783a9b8298123c"
+    }
+  ],
+  "simulator_tokens": [
+    261,
+    1850
+  ],
+  "scope": "Offline CPU modes and previously completed diagnostic simulator tokens only; no hardware or full hidden-state pass."
+}

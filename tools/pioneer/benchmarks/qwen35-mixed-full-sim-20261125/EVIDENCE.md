@@ -2,6 +2,45 @@
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+All three isolated warm query, key and value projections passed their CPU
+comparisons across 120 simulated workers: maximum absolute errors were
+`9.53674316e-06` for 8,192 query/gate values, `2.86102295e-06` for 1,024 key
+values and `1.31130219e-06` for 1,024 value values. The saved values and
+hashes are in `warm-layer3-projections-reference-20261126.json`.
+
+An offline CPU counterfactual replaced all three position-one projections
+with the exact simulated tensors and read each replacement back. A
+self-injection reproduced all 87 pre-existing CPU outputs and traces
+byte-for-byte. An independent two-position float-attention calculation used
+the CPU-normalized/rotated injected query and key, the injected value and
+gate, and the captured simulated prior KV. It matched all 4,096 simulator
+context values within `5.36441803e-07`; the CPU flash-attention context
+still differed on 170 values, maximum `0.0005030334`. The pinned llama.cpp
+flash F16 path converts the query to F16 and accumulates values in F16;
+the rewrite uses F32 query and accumulation. This is strong evidence of an
+attention-precision reference difference for this isolated case, not proof of
+full-model correctness or hardware behavior. The calculation's synthetic
+head-mapping, malformed-input and mismatch tests passed. Inputs, hashes and
+results are in `warm-layer3-float-attention-reference-20261126.json`.
+
+The same offline CPU model produced tokens `[261, 89598]` with flash/F16 KV,
+`[261, 1850]` with non-flash/F16 KV, and `[261, 89598]` with non-flash/F32 KV.
+The previously failed simulator diagnostic selected `[261, 1850]`. Injecting
+the simulated warm projections into the non-flash/F16 CPU run changed its
+second selection to `89598`, illustrating input sensitivity. The matching
+token is not a full hidden-state pass, and the original strict failure was
+not relaxed. See `cpu-attention-modes-20261126.json`. No card was accessed.
+
+Separate warm query, key and value projection probes were derived from the
+original dense-layer stream and independently audited against all 120 worker
+records. They execute 3, 4 and 6 steps respectively on fresh simulated
+fleets, using the same position-one CPU layer input; no prior KV is read by
+these slices. The CPU trace's 85 existing outputs and traces remained
+byte-identical after adding key/value projection capture. The simulations
+completed as described above, with logs
+`/private/tmp/q35-warm-{q,k,v}-probe-20261126d.log`. These probes do not
+establish hardware operation or throughput.
+
 The nine-step isolated warm hybrid-attention-context replay reached its
 120-worker terminal audit but failed the independent CPU context comparison
 on 171/4,096 values, maximum absolute error `0.000502943993`; log
