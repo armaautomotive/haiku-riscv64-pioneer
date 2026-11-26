@@ -503,13 +503,13 @@ The guard now computes the supported step count from the graph markers, and
 the focused rejection/count test passes.
 
 The first full numerical simulation of this combined graph is active in
-session 31294. At poll 6,800 it had captured layers 0–20. Each 2,560-element
-F32 boundary through layer 20 is byte-identical to the earlier full simulator
+session 31294. At poll 8,001 it had captured layers 0–24. Each 2,560-element
+F32 boundary through layer 24 is byte-identical to the earlier full simulator
 capture. Latest layer hashes:
 
-- Layer 18: `64521480ee03eff062410c1a70d2c9aaf1052596c64eaa2ea02d494d4fad2d42`
-- Layer 19: `8326c237f037f1dabfad626ed80d8701e66888247821f1c3a50dc9909091e659`
-- Layer 20: `492d50e438c06a3f92281567f4b411917b490077ec33cd0196022dfc63ada1d5`
+- Layer 22: `b87f1a46cdd6a95b96d195bd61f67d56d0b302588e3e4fa58ef5c4172f91d34a`
+- Layer 23: `2ccfff5ec31038bc2f001a479cedaec46323a2946656210742f15b137b3866d2`
+- Layer 24: `49a0dd31fe76e2e947271bfe159ddedf30e531f03d0a73836db9c3e677db48a8`
 
 A provisional same-input CPU audit used the pinned model SHA-256
 `00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4` and
