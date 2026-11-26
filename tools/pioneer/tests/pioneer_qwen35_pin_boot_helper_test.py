@@ -66,7 +66,7 @@ profile=memory128-spin-idle7-top-page-nosd-control
     ecam_script = script.replace('memory128-spin-idle7-pin-nosd-qualification', profile)
     ecam_script = ecam_script.replace('q35-pin-service-20261125', 'q35-ecam-service-20261125')
     ecam_script = ecam_script.replace('3bc902182084edd40b8b98032a57e2f86f44b362be144117e08d0373763d30bf',
-                                      'ed37c2b13f940dad5561553b88c5acdaf3bdda60cb83c87d7e5557fb042cf79f')
+                                      'c4f7223d4f7542068b7c58ecaf4aca9f9a1321ae92ed042898af0d47e96d47f3')
     subprocess.run(['sh', '-c', ecam_script, 'test', str(path)], check=True)
     rejected = subprocess.run(['sh', str(ecam), 'prepare', 'test', '2', profile], capture_output=True)
     assert rejected.returncode != 0 and b'requires 64 CPUs' in rejected.stderr

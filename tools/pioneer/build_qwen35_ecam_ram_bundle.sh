@@ -10,7 +10,7 @@ for input in "$source" "$kernel" "$ecam"; do [ -f "$input" ] && [ ! -L "$input" 
 hash_is() { [ "$(shasum -a 256 "$1" | awk '{print $1}')" = "$2" ]; }
 source_hash=7a830442362ba511bdfc08f6d99e26df5813475861d3583a90cb62cbef1f3cea
 kernel_hash=6b43356be4b4f5974c555b06599b89d8008825fcbc26b40e8eb57b5edfde1372
-ecam_hash=bdaafd15529776acb04dd9f0b3acda39138a1faf093dd64c34f1c1cc92c6b5ab
+ecam_hash=138f97383da9db05288ab451621442c58d7733d6fd8f389c9156eccc658a8757
 hash_is "$source" "$source_hash" && hash_is "$kernel" "$kernel_hash" && hash_is "$ecam" "$ecam_hash"
 package=$build/objects/darwin/arm64/release/tools/package/package
 bfs=$build/objects/darwin/arm64/release/tools/bfs_shell/bfs_shell

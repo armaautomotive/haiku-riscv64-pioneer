@@ -40,3 +40,15 @@ lease works on real hardware. The full reload regression is running separately;
 repeat the 27B/idle preflight immediately before any card access. Device
 removal, firmware/MMIO/DMA exclusion, controller lock ordering, no-reboot
 recovery, full model output and decode throughput remain unverified.
+
+## Idle-path refinement (supersedes the candidate above)
+
+With the controller mutex held, an inactive lease now returns before looking
+up the caller thread. The focused controller test covers the idle path with an
+invalid thread ID as well as active lease and waiter behavior. Two independent
+Jam-action builds reproduced the control and produced ECAM SHA-256
+`138f97383da9db05288ab451621442c58d7733d6fd8f389c9156eccc658a8757`.
+The rebuilt private BFS is `c4f7223d4f7542068b7c58ecaf4aca9f9a1321ae92ed042898af0d47e96d47f3`,
+and its separate helper is `03a95c8d60741677c738c371ff4b37aa6f9064d4e4671ec3d2ab068c2ddabe34`.
+The candidate remains unbooted. The earlier full regression overlapped the
+refinement; the focused test and new witness build cover the final change.

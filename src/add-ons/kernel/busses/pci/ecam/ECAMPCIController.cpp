@@ -243,6 +243,10 @@ ECAMPCIController::EndPioneerRecovery(uint64 ticket)
 status_t
 ECAMPCIController::WaitPioneerConfigAccess()
 {
+	// The caller holds fLock, so an idle lease cannot become active before
+	// the caller proceeds. Avoid a thread lookup on the ordinary boot path.
+	if (!fPioneerRecoveryLease.Active())
+		return B_OK;
 	const thread_id thread = find_thread(NULL);
 	if (thread < B_OK)
 		return B_BAD_VALUE;

@@ -62,6 +62,8 @@ static status_t FailingOperation(void* arg) {
 int main()
 {
 	ECAMPCIController controller,other;current=11;uint64 ticket=0,wrong=0;
+	current=-1;mutex_lock(&controller.fLock);
+	assert(controller.WaitPioneerConfigAccess()==B_OK);mutex_unlock(&controller.fLock);current=11;
 	CallbackContext context{&controller,0};status_t result=B_OK;
 	assert(controller.RunPioneerRecovery(nullptr,&context,&result)==B_BAD_VALUE);
 	assert(controller.RunPioneerRecovery(FailingOperation,&context,nullptr)==B_BAD_VALUE);

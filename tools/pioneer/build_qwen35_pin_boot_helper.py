@@ -14,7 +14,7 @@ OLD = 'memory128-spin-idle7-top-page-nosd-control|memory128-spin-idle7-top-page-
 PROFILE = 'memory128-spin-idle7-pin-nosd-qualification'
 IMAGE = '3bc902182084edd40b8b98032a57e2f86f44b362be144117e08d0373763d30bf'
 ECAM_PROFILE = 'memory128-spin-idle7-ecam-nosd-qualification'
-ECAM_IMAGE = 'ed37c2b13f940dad5561553b88c5acdaf3bdda60cb83c87d7e5557fb042cf79f'
+ECAM_IMAGE = 'c4f7223d4f7542068b7c58ecaf4aca9f9a1321ae92ed042898af0d47e96d47f3'
 
 
 def main():

@@ -1,0 +1,18 @@
+{
+  "recorded_ecam_sha256": "23e65e2a9a3e886fc7d1429901db6534f2cc7a9077f121d3e334f4cf839cf11d",
+  "reproduced_ecam_sha256": "23e65e2a9a3e886fc7d1429901db6534f2cc7a9077f121d3e334f4cf839cf11d",
+  "candidate_ecam_sha256": "138f97383da9db05288ab451621442c58d7733d6fd8f389c9156eccc658a8757",
+  "source_sha256": {
+    "ECAMPCIController.cpp": "c08cc6474977980b7da95b0ac24b3031529768b2316e06c3d50d9fa2c08337ba",
+    "ECAMPCIController.h": "3e0d6376a938af2d7ae80e21be497b1cd788d08dc0f3ee3e606846c918a8f203",
+    "ECAMPCIControllerACPI.cpp": "c6db08da4a4df641e931fefe550b673a484a425ee2e5681d899dcd45ded59a8f",
+    "ECAMPCIControllerFDT.cpp": "6a61955b718d262cf77397379bf24c33148a51411e94656931f5243464c83bcb",
+    "kernel_interface.cpp": "88e85e1cc52d19b7a5bd0b27bc94cebec4d74fe6cfeae2bc4babc91c493135ec",
+    "PioneerSg2042LeaseProbeModule.h": "813b365ff81292648d0d194d6e548c1e81b0eececc63e0e18b1116b7107ce9ac",
+    "PioneerSg2042RecoveryModule.h": "39708d8c2cf420cb9afe027758ccfe2c223c58bd0bc780fe873db3dafcfb3c55",
+    "Sg2042RecoveryLease.h": "88b3cd67577a20f19ace93b8c068b36934b169de3ef1e0b21ace65594727f8db",
+    "Sg2042RootPolicy.h": "c79178e8fd666b1ea23a139cd26fb9d0618942d45f092343a411ab93db938d4e"
+  },
+  "jam_actions_sha256": "a9481a4b70b7cf9a9a817a6f36dfba08aa962a9f2b7f39c68577d96b79dcebbb",
+  "installed_or_booted": false
+}

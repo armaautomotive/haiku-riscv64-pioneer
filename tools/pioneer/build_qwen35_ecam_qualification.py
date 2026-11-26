@@ -13,7 +13,7 @@ REPO = Path(__file__).resolve().parents[2]
 REL = Path('src/add-ons/kernel/busses/pci/ecam')
 BASE = '23e65e2a9a3e886fc7d1429901db6534f2cc7a9077f121d3e334f4cf839cf11d'
 SOURCES = {
-    'ECAMPCIController.cpp': 'd984aa23e2b041cc1d6d9a158cce5f3fb3d1cb4c573c10f1b3070c4ffa5115e9',
+    'ECAMPCIController.cpp': 'c08cc6474977980b7da95b0ac24b3031529768b2316e06c3d50d9fa2c08337ba',
     'ECAMPCIController.h': '3e0d6376a938af2d7ae80e21be497b1cd788d08dc0f3ee3e606846c918a8f203',
     'ECAMPCIControllerACPI.cpp': 'c6db08da4a4df641e931fefe550b673a484a425ee2e5681d899dcd45ded59a8f',
     'ECAMPCIControllerFDT.cpp': '6a61955b718d262cf77397379bf24c33148a51411e94656931f5243464c83bcb',
