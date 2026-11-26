@@ -44,3 +44,21 @@ control all matched the fake originals. The Haiku/RV64 compile probe for this
 composition passed with the IO and guard methods unimplemented. The fake role
 IO is not the physical role PCI adapter, and these checks establish neither
 physical ownership nor safe processor release.
+
+## Actual role PCI adapter composition — 2026-11-26
+
+The optional flash-owner macro made the legacy role-only compile witness
+instantiate a recovery owner without the newly required flash callbacks. That
+legacy witness is now excluded only under the flash-owner macro; it remains
+active in ordinary builds. The new combined test instantiates the actual
+role PCI adapter, flash PCI view, flash role scope and held recovery-owner
+operations together. Fake-MMIO runtime checks route ordinary role L1 and
+flash L1 reads to their separate views and reject a range crossing the flash
+window. This runtime test does not perform the complete held recovery sequence
+with the actual role adapter; the full owner sequence is type-checked only.
+
+The ASan/UBSan flash suite and ordinary 120-route role PCI adapter regression
+passed. The combined fake-platform test also cross-compiled for Haiku/RV64
+with warnings as errors. Neither test supplies real shared-session ownership,
+NoC or firmware/DMA exclusion, release authority or physical recovery proof.
+No card was accessed, and no throughput was measured.

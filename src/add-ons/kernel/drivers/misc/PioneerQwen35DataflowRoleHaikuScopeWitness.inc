@@ -831,6 +831,9 @@ PioneerQwen35RoleHaikuWritableViewsCompileWitness(PioneerQwen35RoleHaikuWritable
 // Type-check the recovery owner against the borrowed session, selected routes
 // and fixed Haiku mappings. Dedicated observed staging is separate from the
 // snapshot proof; the non-loadable witness cannot release a physical role.
+#ifndef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+// The optional flash owner needs a combined role/flash IO scope. This legacy
+// witness constructs only the role adapter and cannot provide that authority.
 __attribute__((used)) static bool
 PioneerQwen35RoleFleetPciCompileWitness(PioneerSessionIO& io,
     PioneerQwen35RoleBorrowedScopeWitness& scope,
@@ -849,4 +852,5 @@ PioneerQwen35RoleFleetPciCompileWitness(PioneerSessionIO& io,
     if (action==4) return owner.RestoreAll(adapter) && owner.VerifyAfterResidentRestore(adapter);
     return false;
 }
+#endif
 #endif
