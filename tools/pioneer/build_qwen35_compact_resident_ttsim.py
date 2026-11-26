@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Build a non-packageable two-region Qwen3.5 resident simulator image.
+"""Build a non-packageable two-region Qwen3.5 resident witness.
 
 The image uses a size-optimized toolchain build and omits the extra 0xd0000
-code window. It does not grant hardware ownership or recovery authority.
+code window. The optional profiled variant is compile-only. Neither variant
+grants hardware ownership or recovery authority.
 """
 import argparse
 import hashlib
@@ -18,6 +19,8 @@ def main():
     parser.add_argument('output', type=Path, help='new absolute output directory')
     parser.add_argument('--mixed-optimization', action='store_true',
                         help='compile the stream and graph dispatch objects with -O2')
+    parser.add_argument('--profiled-compile-only', action='store_true',
+                        help='compile normal cycle-counter profiling; do not execute in ttsim')
     args = parser.parse_args()
     if not args.output.is_absolute() or args.output.exists() or args.output.is_symlink():
         parser.error('output must be a new absolute directory')
@@ -29,8 +32,10 @@ def main():
         parser.error('Haiku development headers not found')
     args.output.mkdir(mode=0o700)
     for marker in ('activation-sharing', 'delta-shard', 'ffn-pair', 'flash-hybrid',
-                   'fused-rms-save', 'ttsim-unprofiled', 'compact-two-region'):
+                   'fused-rms-save', 'compact-two-region'):
         (args.output / (marker + '.marker')).touch(exist_ok=False)
+    (args.output / ('profiled-compile-only.marker' if args.profiled_compile_only
+                    else 'ttsim-unprofiled.marker')).touch(exist_ok=False)
     if args.mixed_optimization:
         (args.output / 'compact-mixed-optimization.marker').touch(exist_ok=False)
 
@@ -43,8 +48,9 @@ def main():
                'PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS PIONEER_QWEN35_PAIRED_RECURRENCE '
                'PIONEER_QWEN35_FUSED_RECURRENCE PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS '
                'PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY '
-               'PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY '
-               'PIONEER_QWEN35_TTSIM_UNPROFILED_COMPILE_ONLY').split()
+               'PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY').split()
+    if not args.profiled_compile_only:
+        defines.append('PIONEER_QWEN35_TTSIM_UNPROFILED_COMPILE_ONLY')
     includes = ['-I' + str(root), '-I' + str(sdk / 'headers'), '-idirafter', str(sdk / 'headers/posix')]
     files = [('service.o', 'PioneerQwen35DataflowServiceImage.cpp'),
              ('device-stream.o', 'tests/pioneer_qwen35_dataflow_device_stream_target_probe.cpp'),
@@ -125,7 +131,7 @@ def main():
     end = source.index('\nPY\n', start)
     subprocess.run([sys.executable, '-B', '-c', source[start:end], str(args.output), str(args.output),
                     '1', '1', '0', '1', '1'], check=True)
-    print('SIMULATOR ONLY; no driver, physical ownership, recovery or throughput qualification', flush=True)
+    print('NON-LOADABLE WITNESS; no driver, physical ownership, recovery or throughput qualification', flush=True)
 
 
 if __name__ == '__main__':

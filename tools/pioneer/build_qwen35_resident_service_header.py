@@ -11,6 +11,8 @@ from struct import iter_unpack, unpack
 
 
 def generate(directory: Path) -> str:
+    if (directory / 'profiled-compile-only.marker').exists():
+        raise ValueError('profiled compact witness is not packageable')
     if (directory / 'compact-two-region.marker').exists():
         raise ValueError('compact two-region simulator image is not packageable')
     if (directory / 'fused-rms-save.marker').exists():

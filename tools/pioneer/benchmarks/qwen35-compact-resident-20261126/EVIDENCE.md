@@ -53,13 +53,33 @@ session `99286`, log
 result yet. Retaining an earlier compiler setting is not evidence of faster
 execution; both compact images remain non-packageable and hardware-unqualified.
 
-An authenticated four-layer simulation using the byte-identical candidate is
-active in session `28725`; its log is
-`/private/tmp/q35-fused-compact-four-layer-sim-20261126.log`. No numerical
-result is available yet. Other full-model simulations continue separately.
-The compact image has not run on a P100A, may have different performance
-from the prior build, and cannot be installed until model correctness,
-physical role ownership and clean no-reboot recovery are established.
+The authenticated four-layer simulation using the byte-identical `-Oz`
+candidate completed 55 barriers on 120 simulated workers, reached its
+intentional record-56 fault, and passed all 2,560 values with maximum absolute
+error `5.00679016e-06`. Its actual output matched the earlier three-region
+fused simulator output byte for byte. Log:
+`/private/tmp/q35-fused-compact-four-layer-sim-20261126.log`. A full 32-layer
+compact simulation with snapshots is active in session `98440`, log
+`/private/tmp/q35-fused-compact-full-layer-snapshots-20261126.log`; it has no
+final result. Other full-model simulations continue separately. The compact
+image has not run on a P100A, may have different performance from the prior
+build, and cannot be installed until model correctness, physical role
+ownership and clean no-reboot recovery are established.
+
+The builder now also has an explicitly non-loadable
+`--profiled-compile-only` mode that compiles the normal graph cycle-counter
+path instead of the simulator's unprofiled switch. Both size-optimized and
+mixed-optimization variants compiled and linked into the two declared code
+ranges. The mixed version has 56,152 bytes of text and 39,236 bytes of
+dispatch; the size-optimized version has 56,152 and 37,784 bytes. Existing
+conservative stack checks passed for both; the mixed graph envelope remains
+7,920/8,192 including the allowance, not a whole-program proof. A 39,236-byte
+synthetic dispatch also passed fake-IO service-owner staging, failure and
+close tests for ordinary and shared roles. A dedicated marker is rejected by
+both driver packagers and the simulator before library load. The unprofiled
+mixed image rebuilt byte for byte unchanged after this builder change.
+These are compile and simulated-IO results, not a measurement or proof that
+hardware profiling, inference, recovery or clean unload works.
 
 Image SHA-256: boot
 `e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b`,

@@ -18,6 +18,11 @@ with tempfile.TemporaryDirectory() as tmp:
     base = [sys.executable, '-B', str(runner), str(root / 'no-library'), str(image), str(roles),
             '--ttsim-unprofiled', '--flash-hybrid', '--recorded-layer-fixture', str(fixture),
             '--recorded-layer-reference', str(root / 'no-reference')]
+    (image / 'profiled-compile-only.marker').touch()
+    result = subprocess.run(base, capture_output=True, text=True)
+    assert result.returncode and 'profiled compact image is compile-only' in result.stderr
+    assert 'no-library' not in result.stderr
+    (image / 'profiled-compile-only.marker').unlink()
     for image_marker, fixture_marker in ((True, False), (False, True)):
         for directory, enabled in ((image, image_marker), (fixture, fixture_marker)):
             path = directory / 'ffn-pair.marker'

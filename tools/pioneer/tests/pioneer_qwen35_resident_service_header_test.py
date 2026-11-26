@@ -31,7 +31,7 @@ with tempfile.TemporaryDirectory() as temporary:
     (image / 'dispatch.bin').write_bytes(dispatch)
     (image / 'symbols.txt').write_text(symbols, encoding='ascii')
     header = module.generate(image)
-    for marker in ('dense-shard.marker', 'ttsim-unprofiled.marker', 'flash-hybrid.marker', 'ffn-pair.marker', 'fused-rms-save.marker', 'compact-two-region.marker'):
+    for marker in ('dense-shard.marker', 'ttsim-unprofiled.marker', 'flash-hybrid.marker', 'ffn-pair.marker', 'fused-rms-save.marker', 'compact-two-region.marker', 'profiled-compile-only.marker'):
         (image / marker).touch()
         try:
             module.generate(image)

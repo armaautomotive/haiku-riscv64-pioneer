@@ -536,6 +536,8 @@ def main():
     if resident_templates is not None and len(resident_templates) != 120 * 512:
         raise ValueError('unexpected resident-template fixture size')
     image = args.image
+    if (image / 'profiled-compile-only.marker').exists():
+        raise ValueError('profiled compact image is compile-only and cannot run in ttsim')
     if args.ttsim_unprofiled != (image / 'ttsim-unprofiled.marker').is_file():
         raise ValueError('unprofiled simulator flag and image marker do not match')
     if args.flash_hybrid != (image / 'flash-hybrid.marker').is_file():
