@@ -353,6 +353,18 @@ hidden-state comparison fails. A two-decode diagnostic started in session
 `73034`; no result exists yet. This option never qualifies a model or runs
 in Work mode. All these experiments are off-card.
 
+The instrumented eight-layer run subsequently completed its expected
+all-worker terminal fault and retained all eight snapshots. Its final tensor
+was byte-identical to the earlier sequential eight-layer output. The ordinary
+comparison passed layers 0 through 6 and failed layer 7, as before. The
+same-input batch oracle then independently passed layer 0 and all seven
+subsequent boundary checks; the largest maximum absolute error was
+`9.53674316e-06`. The result is logged at
+`/private/tmp/q35-eight-layer-same-input-audit-20261126.log`. This verifies the
+eight position-zero layer transitions in the exploratory simulator using
+same-input references; it is not a 32-layer, warm-position, hardware, recovery
+or performance result.
+
 The isolated layer-4 replay subsequently completed 16 records on 120 workers,
 then intentionally faulted at record 17. All 2,560 outputs matched the
 independent reference with maximum absolute error `4.76837158e-07`

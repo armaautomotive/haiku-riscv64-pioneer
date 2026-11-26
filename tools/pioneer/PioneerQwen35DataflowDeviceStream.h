@@ -4,6 +4,13 @@
 
 #include "PioneerQwen35DataflowAuthorization.h"
 #include "PioneerQwen35DataflowBlackholeIO.h"
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+#if !defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) \
+    || !defined(PIONEER_QWEN35_DEVICE_DISPATCH) || defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL)
+#error Fused RMS/save is restricted to the non-loadable resident graph
+#endif
+#include "PioneerQwen35DataflowRmsSave.h"
+#endif
 #ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
 #include "PioneerQwen35DataflowDeltaShardProgram.h"
 #endif
@@ -20,7 +27,9 @@ namespace PioneerQwen35 {
 enum : unsigned {
 	DataflowStreamBindingMagic=0x31425335,
 	DataflowStreamRecordMagic=0x31525335,
-#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+	DataflowStreamVersion=6,
+#elif defined(PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY)
 	DataflowStreamVersion=5,
 #elif defined(PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY)
 	DataflowStreamVersion=4,
@@ -66,6 +75,10 @@ static_assert(sizeof(DataflowCoreInvocation)<=DataflowStreamPayloadWords*4
 	&& sizeof(DataflowDenseAttentionInvocation)<=DataflowStreamPayloadWords*4
 	&& sizeof(DataflowArgmaxInvocation)<=DataflowStreamPayloadWords*4,
 	"every resident invocation fits in one bounded stream record");
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+static_assert(sizeof(DataflowRmsSaveInvocation)<=DataflowStreamPayloadWords*4,
+    "fused RMS/save invocation must fit the stream record");
+#endif
 #ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
 static_assert(sizeof(DataflowDeltaShardInvocation)<=DataflowStreamPayloadWords*4,
     "sharded delta invocation fits a bounded stream record");
@@ -110,6 +123,9 @@ inline unsigned DataflowStreamInvocationBytes(unsigned magic)
 	case DataflowProgramMagic:return sizeof(DataflowCoreInvocation);
 	case DataflowEmbeddingMagic:return sizeof(DataflowEmbeddingInvocation);
 	case DataflowRmsMagic:return sizeof(DataflowRmsInvocation);
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+	case DataflowRmsSaveMagic:return sizeof(DataflowRmsSaveInvocation);
+#endif
 	case DataflowSiluMagic:return sizeof(DataflowSiluInvocation);
 	case DataflowResidualMagic:return sizeof(DataflowResidualInvocation);
 	case DataflowConvMagic:return sizeof(DataflowConvInvocation);
@@ -137,6 +153,9 @@ inline unsigned DataflowStreamInvocationVersion(unsigned magic)
 	case DataflowProgramMagic:return DataflowProgramVersion;
 	case DataflowEmbeddingMagic:return DataflowEmbeddingVersion;
 	case DataflowRmsMagic:return DataflowRmsVersion;
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+	case DataflowRmsSaveMagic:return DataflowRmsSaveVersion;
+#endif
 	case DataflowSiluMagic:return DataflowSiluVersion;
 	case DataflowResidualMagic:return DataflowResidualVersion;
 	case DataflowConvMagic:return DataflowConvVersion;
@@ -164,6 +183,9 @@ inline unsigned DataflowStreamCoreWord(unsigned magic)
 	case DataflowProgramMagic:return offsetof(DataflowCoreInvocation,core)/sizeof(uint32_t);
 	case DataflowEmbeddingMagic:return offsetof(DataflowEmbeddingInvocation,core)/sizeof(uint32_t);
 	case DataflowRmsMagic:return offsetof(DataflowRmsInvocation,core)/sizeof(uint32_t);
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+	case DataflowRmsSaveMagic:return offsetof(DataflowRmsSaveInvocation,core)/sizeof(uint32_t);
+#endif
 	case DataflowSiluMagic:return offsetof(DataflowSiluInvocation,core)/sizeof(uint32_t);
 	case DataflowResidualMagic:return offsetof(DataflowResidualInvocation,core)/sizeof(uint32_t);
 	case DataflowConvMagic:return offsetof(DataflowConvInvocation,core)/sizeof(uint32_t);
