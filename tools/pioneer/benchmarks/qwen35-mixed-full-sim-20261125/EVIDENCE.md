@@ -1,5 +1,32 @@
 # Recorded mixed-layer and full-decode simulator work, 2026-11-25
 
+## Provisional later-boundary check, 2026-11-26
+
+The active baseline 32-layer capture has not completed its full worker audit;
+the following snapshots are provisional. The standalone offline oracle was
+run from the exact retained simulator input at each boundary, checking that
+both the source snapshot and its oracle replacement remained byte-identical.
+Transitions 7→8 and 9→10 passed the existing all-row tolerance, with maximum
+absolute errors `1.19209290e-07` and `1.90734863e-06`, respectively. The
+8→9 transition failed: 36 of 2,560 rows exceeded the existing tolerance,
+with maximum absolute error `2.74516642e-05` at row 1715. The cause is not
+established; a prior layer's quantization sensitivity does not explain this
+new same-input discrepancy by itself. The unmodified tolerance remains in
+force. The checked hashes and results are in
+`/private/tmp/q35-provisional-boundaries-7-9-20261126/provisional.json`.
+
+An isolated layer-9 replay fixture was derived from the authenticated
+baseline decode graph. An independent audit checked all 120 workers' records,
+input/output and recurrent-state zero-initialization ranges, and separation from the weights;
+it passed. The replay with the exact captured layer-8 input is active as
+session `74537`, log
+`/private/tmp/q35-baseline-layer9-chained-sim-20261126b.log`, against the
+same-input oracle's layer-9 result. The first launch used an incorrect image
+path and exited before loading a fixture; the corrected launch is the one
+above. A completed replay will help distinguish capture inconsistency from
+a reproducible within-layer difference; it will not by itself qualify the
+simulator or hardware. No card was accessed.
+
 The production recorder and packed plan generated a four-layer prefix from the
 SHA-256 authenticated Qwen3.5-4B Q4_K_M GGUF
 `00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4`.

@@ -1,5 +1,23 @@
 # Fused residual save and normalization, 2026-11-26
 
+## Latest: fused four-layer result and full run
+
+The four-layer run completed all 55 recorded graph steps with 120 simulated
+workers and reached its intentional record-56 fault. All 2,560 final values
+passed the independent reference at the existing tolerance; maximum absolute
+error was `5.00679016e-06`. The log is
+`/private/tmp/q35-rms-save-four-layer-sim-20261126.log` and the actual tensor is
+`/private/tmp/q35-rms-save-four-layer-actual-20261126.bin`. This supersedes the
+earlier pending-result statements below. It does not establish full-model
+correctness, hardware execution or a decode rate.
+
+The 436-step full decode with all intermediate snapshots has started in
+session `20202`; its log is
+`/private/tmp/q35-rms-save-full-layer-snapshots-20261126.log`. It has no
+completed output yet. A separate baseline run has an unresolved layer-9
+same-input numerical discrepancy documented in the mixed full-simulator
+evidence. No card was accessed.
+
 The resident rewrite currently emits a separate all-worker residual-save step
 and RMS-normalization step twice per layer. `PioneerQwen35DataflowRmsSave.h`
 implements a proposed fused worker: it validates both per-core invocations,
@@ -11,9 +29,8 @@ the caller must retain graph ownership and must not treat it as completed.
 
 The new version-6 stream opcode and worker dispatch are behind
 `PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY`, restricted to the non-loadable
-resident graph witness. The production graph recorder and layer sequences do
-not yet emit this opcode; the candidate has not been linked into a full image
-or run in ttsim or on the P100A. If successfully integrated, the design could
+resident graph witness. At the start of this work the graph recorder did not
+emit this opcode; later integration and simulator results appear here. The design could
 remove 64 separate residual-save barriers per full 32-layer graph and avoid
 one input-panel read per saved panel, but this is a structural opportunity, not
 a measured speedup or a prediction of reaching 100 tokens/sec.
