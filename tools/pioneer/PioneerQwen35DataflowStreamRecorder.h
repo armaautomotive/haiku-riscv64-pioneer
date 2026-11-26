@@ -169,6 +169,12 @@ public:
 #endif
 	}
 	template<class IO> int RunDenseAttention(const DataflowDenseAttentionProgram& p,IO&) {
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+		if (p.mode==DataflowDenseAttentionRun)
+			return candidate.BeginDenseAttention(p)
+				&& Emit<DataflowDenseAttentionShardBuilder,DataflowDenseAttentionShardInvocation>(p)
+				&& candidate.CompleteDenseAttention(p)?0:Fail();
+#endif
 		return candidate.BeginDenseAttention(p) && Emit<DataflowDenseAttentionProgramBuilder,DataflowDenseAttentionInvocation>(p)
 			&& candidate.CompleteDenseAttention(p)?0:Fail();
 	}

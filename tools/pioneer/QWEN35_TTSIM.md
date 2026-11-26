@@ -205,6 +205,18 @@ The simulator test uses the sharded resident image and a zero-upper-length
 patched simulator, not the matrix-exploratory simulator. See
 `benchmarks/qwen35-dense-attention-resident-sim-20261125/EVIDENCE.md`.
 
+For the non-loadable output-shard prototype, build the service and resident
+image with `PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY=1` in addition to the
+existing fused, activation-sharing, sharded-delta and resident witness flags.
+Compile the dense fixture with both `-DPIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY=1`
+and `-DPIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY=1`; its metadata selects the
+matching version-4 image. `sh tools/pioneer/tests/run_pioneer_qwen35_dense_attention_shards_tests.sh`
+checks the host worker and recorded graph. The image is not packageable into a
+driver. The attention operation uses all 120 workers but repeats each head's
+KV reads for every output shard, increasing logical KV reads by 7.5 times; the
+key and value pack steps still use 4 workers. The simulator checks correctness,
+not hardware performance. See `benchmarks/qwen35-dense-attention-shards-sim-20261125/EVIDENCE.md`.
+
 A separate fixture tests two **consecutive prompt commands on one resident
 simulator fleet**. It reuses the validated position-zero layer fixture,
 adds 500 diagnostic residual copies to reach the actual 521-step prompt

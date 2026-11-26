@@ -90,9 +90,11 @@ struct DataflowDenseAttentionRow {
 	float* sums;
 	float maximum=0,denominator=0;
 
-	bool Add(const float* query,const uint32_t* key,const uint32_t* value)
+	bool AddSlice(const float* query,const uint32_t* key,const uint32_t* value,
+		unsigned first,unsigned count)
 	{
-		if (!sums || !query || !key || !value) return false;
+		if (!sums || !query || !key || !value || !count
+			|| first>=DenseHeadWidth || count>DenseHeadWidth-first) return false;
 		float score=0;
 		for (unsigned lane=0;lane<DenseHeadWidth;lane++)
 			score+=query[lane]*DataflowDenseUnpackLane(key,lane);
@@ -108,7 +110,7 @@ struct DataflowDenseAttentionRow {
 			old=1;
 			current=PioneerQ38PrepareNegativeExp(score-maximum);
 		}
-		for (unsigned lane=0;lane<DenseHeadWidth;lane++) {
+		for (unsigned lane=first;lane<first+count;lane++) {
 			const float element=DataflowDenseUnpackLane(value,lane);
 			if (!DataflowDenseFinite(element)) return false;
 			sums[lane]=(denominator==0?0.0f:old*sums[lane])+current*element;
@@ -117,14 +119,20 @@ struct DataflowDenseAttentionRow {
 		return denominator>0 && DataflowDenseFinite(denominator);
 	}
 
-	bool Finish(const float* gate)
+	bool Add(const float* query,const uint32_t* key,const uint32_t* value)
+	{
+		return AddSlice(query,key,value,0,DenseHeadWidth);
+	}
+
+	bool FinishSlice(const float* gate,unsigned first,unsigned count)
 	{
 		if (!sums || !gate || !(denominator>0)
-			|| !DataflowDenseFinite(denominator)) return false;
-		for (unsigned lane=0;lane<DenseHeadWidth;lane++)
+			|| !DataflowDenseFinite(denominator) || !count
+			|| first>=DenseHeadWidth || count>DenseHeadWidth-first) return false;
+		for (unsigned lane=first;lane<first+count;lane++)
 			if (!DataflowDenseFinite(gate[lane])) return false;
 		const float inverse=PioneerGraphDividePositive(1.0f,denominator);
-		for (unsigned lane=0;lane<DenseHeadWidth;lane++) {
+		for (unsigned lane=first;lane<first+count;lane++) {
 			const float magnitude=PioneerAttentionFloat(
 				PioneerAttentionBits(gate[lane])&0x7fffffffU);
 			const float exponential=PioneerQ38PrepareNegativeExp(-magnitude);
@@ -134,6 +142,11 @@ struct DataflowDenseAttentionRow {
 			if (!DataflowDenseFinite(sums[lane])) return false;
 		}
 		return true;
+	}
+
+	bool Finish(const float* gate)
+	{
+		return FinishSlice(gate,0,DenseHeadWidth);
 	}
 };
 

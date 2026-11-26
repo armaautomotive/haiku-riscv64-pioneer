@@ -253,6 +253,17 @@ def main():
                        and (args.resident_sequence_fixture / 'delta-params.bin').is_file())
     if bool(args.delta_shards_fixture or args.dense_attention_fixture or resident_shards) != (image / 'delta-shard.marker').is_file():
         raise ValueError('delta shard fixture and service image do not match')
+    dense_sharded = False
+    if args.dense_attention_fixture:
+        metadata = (args.dense_attention_fixture / 'metadata.bin').read_bytes()
+        if len(metadata) != 12:
+            raise ValueError('unexpected dense attention metadata size')
+        _, _, shard_flag = struct.unpack('<3I', metadata)
+        if shard_flag not in (0, 1):
+            raise ValueError('invalid dense attention shard flag')
+        dense_sharded = bool(shard_flag)
+    if dense_sharded != (image / 'dense-shard.marker').is_file():
+        raise ValueError('dense shard fixture and service image do not match')
     boot = (image / 'boot.bin').read_bytes()
     text = (image / 'text.bin').read_bytes()
     dispatch = (image / 'dispatch.bin').read_bytes()
@@ -531,11 +542,13 @@ def main():
             expected_kv = (directory / 'expected-kv.bin').read_bytes()
             expected_output = (directory / 'expected-output.bin').read_bytes()
             metadata = (directory / 'metadata.bin').read_bytes()
-            if len(metadata) != 8:
+            if len(metadata) != 12:
                 raise ValueError('unexpected dense attention metadata size')
-            position, context = struct.unpack('<2I', metadata)
+            position, context, shard_flag = struct.unpack('<3I', metadata)
             if not 0 <= position < context <= 64:
                 raise ValueError('invalid dense attention position or context')
+            if shard_flag != int(dense_sharded):
+                raise ValueError('dense attention fixture changed during startup')
             layouts = ((0x10000000, 8192 * 4), (0x11000000, 4096 * 4),
                        (0x17000000, 9216 * 4),
                        (0x14000000, 256 * 4), (0x15000000, 256 * 4),
@@ -598,7 +611,7 @@ def main():
                 raise RuntimeError('intentionally faulted dense sequence published a candidate')
             print(f'PASS dense attention position {position}/{context}: all KV values and 9216 outputs checked; '
                   f'maximum absolute error {maximum:.9g}; fifth record intentionally faults; '
-                  'active key/value/query workers 4/4/16; NO HARDWARE', flush=True)
+                  f'active key/value/query workers 4/4/{120 if dense_sharded else 16}; NO HARDWARE', flush=True)
             return
 
         if args.resident_sequence_fixture:

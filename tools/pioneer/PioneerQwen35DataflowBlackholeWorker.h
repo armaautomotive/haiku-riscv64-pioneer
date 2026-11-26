@@ -14,6 +14,9 @@
 #include "PioneerQwen35DataflowDeltaShards.h"
 #endif
 #include "PioneerQwen35DataflowBlackholeDenseAttentionWorker.h"
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+#include "PioneerQwen35DataflowDenseAttentionShards.h"
+#endif
 #include "PioneerQwen35DataflowBlackholeArgmaxWorker.h"
 #ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
 #if !defined(PIONEER_QWEN35_DEVICE_DISPATCH) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY)
@@ -447,10 +450,30 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 		}
 		if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
 #endif
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+	} else if (invocationMagic==DataflowDenseAttentionShardMagic) {
+		const auto* dense=reinterpret_cast<const DataflowDenseAttentionShardInvocation*>(
+			static_cast<uintptr_t>(DataflowProgramAddress));
+		if (DataflowWorkerQueuesClean() && dense->Valid() && dense->core==core) {
+			DataflowBlackholeDenseAttentionOps io;
+			float* const norm=reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowDenseNormAddress));
+			DataflowDenseAttentionShardScratch scratch{
+				reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowDenseKeyTileAddress)),
+				reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowDenseValueTileAddress)),
+				reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowDenseQueryAddress)),
+				reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowDenseGateAddress)),norm,
+				reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowDenseRopeAddress)),norm};
+			okay=PioneerQwen35DataflowDenseAttentionShardWorker(dense->program,core,scratch,io);
+		}
+		if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
+#endif
 	} else if (invocationMagic==DataflowDenseAttentionMagic) {
 		const auto* dense=reinterpret_cast<const DataflowDenseAttentionInvocation*>(
 			static_cast<uintptr_t>(DataflowProgramAddress));
 		if (DataflowWorkerQueuesClean() && dense->Valid()
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+			&& dense->program.mode!=DataflowDenseAttentionRun
+#endif
 			&& dense->core==core) {
 			DataflowBlackholeDenseAttentionOps io;
 			float* const norm=reinterpret_cast<float*>(static_cast<uintptr_t>(

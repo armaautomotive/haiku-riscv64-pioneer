@@ -107,6 +107,15 @@ class DataflowDynamicPatcher {
 			if (!invocation.Valid()) return false;
 			DataflowDynamicWrite(record,invocation);break;
 		}
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+		case DataflowDenseAttentionShardMagic: {
+			DataflowDenseAttentionShardInvocation invocation{};DataflowDynamicRead(record,invocation);
+			if (invocation.program.context!=run.context) return false;
+			invocation.program.position=run.position;
+			if (!invocation.Valid()) return false;
+			DataflowDynamicWrite(record,invocation);break;
+		}
+#endif
 		default:break;
 		}
 		record.header[7]=DataflowStreamChecksum(record.payload,record.header[6]/4);

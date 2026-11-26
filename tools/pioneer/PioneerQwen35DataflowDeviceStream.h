@@ -7,6 +7,9 @@
 #ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
 #include "PioneerQwen35DataflowDeltaShardProgram.h"
 #endif
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+#include "PioneerQwen35DataflowDenseAttentionShardProgram.h"
+#endif
 #include <stddef.h>
 
 namespace PioneerQwen35 {
@@ -14,7 +17,9 @@ namespace PioneerQwen35 {
 enum : unsigned {
 	DataflowStreamBindingMagic=0x31425335,
 	DataflowStreamRecordMagic=0x31525335,
-#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+	DataflowStreamVersion=4,
+#elif defined(PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY)
 	DataflowStreamVersion=3,
 #elif defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS)
 	DataflowStreamVersion=2,
@@ -60,6 +65,10 @@ static_assert(sizeof(DataflowCoreInvocation)<=DataflowStreamPayloadWords*4
 static_assert(sizeof(DataflowDeltaShardInvocation)<=DataflowStreamPayloadWords*4,
     "sharded delta invocation fits a bounded stream record");
 #endif
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+static_assert(sizeof(DataflowDenseAttentionShardInvocation)<=DataflowStreamPayloadWords*4,
+    "sharded dense attention fits a bounded stream record");
+#endif
 
 struct DataflowStreamBinding {
 	uint32_t magic,version,epoch,core,bank,route,base,count;
@@ -102,6 +111,9 @@ inline unsigned DataflowStreamInvocationBytes(unsigned magic)
 	case DataflowDeltaShardMagic:return sizeof(DataflowDeltaShardInvocation);
 #endif
 	case DataflowDenseAttentionMagic:return sizeof(DataflowDenseAttentionInvocation);
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+	case DataflowDenseAttentionShardMagic:return sizeof(DataflowDenseAttentionShardInvocation);
+#endif
 	case DataflowArgmaxMagic:return sizeof(DataflowArgmaxInvocation);
 	default:return 0;
 	}
@@ -123,6 +135,9 @@ inline unsigned DataflowStreamInvocationVersion(unsigned magic)
 	case DataflowDeltaShardMagic:return DataflowDeltaShardVersion;
 #endif
 	case DataflowDenseAttentionMagic:return DataflowDenseAttentionVersion;
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+	case DataflowDenseAttentionShardMagic:return DataflowDenseAttentionShardVersion;
+#endif
 	case DataflowArgmaxMagic:return DataflowArgmaxVersion;
 	default:return 0;
 	}
@@ -144,6 +159,9 @@ inline unsigned DataflowStreamCoreWord(unsigned magic)
 	case DataflowDeltaShardMagic:return offsetof(DataflowDeltaShardInvocation,core)/sizeof(uint32_t);
 #endif
 	case DataflowDenseAttentionMagic:return offsetof(DataflowDenseAttentionInvocation,core)/sizeof(uint32_t);
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+	case DataflowDenseAttentionShardMagic:return offsetof(DataflowDenseAttentionShardInvocation,core)/sizeof(uint32_t);
+#endif
 	case DataflowArgmaxMagic:return offsetof(DataflowArgmaxInvocation,core)/sizeof(uint32_t);
 	default:return DataflowStreamPayloadWords;
 	}

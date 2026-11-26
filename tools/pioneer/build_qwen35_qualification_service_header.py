@@ -11,6 +11,8 @@ from struct import iter_unpack, unpack
 
 
 def generate(directory: Path) -> str:
+    if (directory / 'dense-shard.marker').exists():
+        raise ValueError('dense shard image is an isolated simulator witness and cannot be packaged')
     for marker in ('activation-sharing.marker', 'fused-recurrence.marker'):
         if not (directory / marker).is_file():
             raise ValueError('missing qualification image marker: ' + marker)

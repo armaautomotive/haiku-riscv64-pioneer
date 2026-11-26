@@ -84,8 +84,17 @@ int main(int argc,char** argv) {
         if (!DataflowResidualProgramBuilder::BindCore(copy,core,copyInvocation)
             || !DataflowStreamEncode(copyInvocation,99,2,records[core*5+1])) return 1;
         for (unsigned mode=1;mode<=3;mode++) {
-            program.mode=mode;DataflowDenseAttentionInvocation inv{};
+            program.mode=mode;
             const unsigned step=mode==1?1:mode+1;
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+            if (mode==DataflowDenseAttentionRun) {
+                DataflowDenseAttentionShardInvocation inv{};
+                if (!DataflowDenseAttentionShardBuilder::BindCore(program,core,inv)
+                    || !DataflowStreamEncode(inv,99,step,records[core*5+step-1])) return 1;
+                continue;
+            }
+#endif
+            DataflowDenseAttentionInvocation inv{};
             if (!DataflowDenseAttentionProgramBuilder::BindCore(program,core,inv)
                 || !DataflowStreamEncode(inv,99,step,records[core*5+step-1])) return 1;
         }
@@ -119,7 +128,13 @@ int main(int argc,char** argv) {
     append(qg.data(),qg.size()*4);append(gate.data(),gate.size()*4);append(valueInput.data(),valueInput.size()*4);append(queryNorm.data(),queryNorm.size()*4);
     append(keyNorm.data(),keyNorm.size()*4);append(rope.data(),rope.size()*4);append(initialKv.data(),initialKv.size()*2);
     const std::string dir=argv[1];
-    const std::array<uint32_t,2> metadata={position,context};
+    const std::array<uint32_t,3> metadata={position,context,
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+        1
+#else
+        0
+#endif
+    };
     const std::array<std::string,7> paths={dir+"/templates.bin",dir+"/command.bin",dir+"/records.bin",
         dir+"/initial.bin",dir+"/expected-kv.bin",dir+"/expected-output.bin",dir+"/metadata.bin"};
     const std::array<const void*,7> data={descriptors.data(),command.data(),records.data(),initial.data(),kv.data(),output.data(),metadata.data()};
@@ -129,5 +144,11 @@ int main(int argc,char** argv) {
     for (;written<paths.size();written++) if (!WriteNew(paths[written],data[written],sizes[written])) break;
     if (written!=paths.size()) {for (unsigned i=0;i<written;i++) std::remove(paths[i].c_str());return 1;}
     std::printf("prepared synthetic dense attention position %u/%u; active workers key/value/query: %u/%u/%u; NO HARDWARE\n",
-        position,context,DenseKeyHeads,DenseKeyHeads,DenseHeads);
+        position,context,DenseKeyHeads,DenseKeyHeads,
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+        DataflowCoreCount
+#else
+        DenseHeads
+#endif
+    );
 }

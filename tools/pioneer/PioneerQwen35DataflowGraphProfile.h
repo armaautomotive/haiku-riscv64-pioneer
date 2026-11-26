@@ -31,6 +31,9 @@ inline unsigned DataflowGraphProfileOperation(unsigned magic)
 #endif
 		case DataflowSiluMagic:return DataflowProfileSilu;
 		case DataflowDenseAttentionMagic:return DataflowProfileDense;
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+		case DataflowDenseAttentionShardMagic:return DataflowProfileDense;
+#endif
 		case DataflowArgmaxMagic:return DataflowProfileArgmax;
 		default:return DataflowProfileOther;
 	}

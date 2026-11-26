@@ -11,6 +11,8 @@ from struct import iter_unpack, unpack
 
 
 def generate(directory: Path) -> str:
+    if (directory / 'dense-shard.marker').exists():
+        raise ValueError('dense shard image is an isolated simulator witness and cannot be packaged')
     sharing = (directory / 'activation-sharing.marker').is_file()
     sharded = (directory / 'delta-shard.marker').is_file()
     boot = (directory / 'boot.bin').read_bytes()

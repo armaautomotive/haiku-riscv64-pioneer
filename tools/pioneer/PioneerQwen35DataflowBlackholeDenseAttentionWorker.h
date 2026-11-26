@@ -63,6 +63,10 @@ bool PioneerQwen35DataflowDenseAttentionWorker(
 		}
 		return true;
 	}
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+	// A shard image executes run records only through the dedicated worker.
+	return false;
+#else
 	for (unsigned local=0;local<invocation.headCount;local++) {
 		const unsigned head=invocation.firstHead+local;
 		const unsigned queryBase=2*head*DenseHeadWidth;
@@ -93,10 +97,14 @@ bool PioneerQwen35DataflowDenseAttentionWorker(
 			|| !io.WriteContext(head*DenseHeadWidth,sums)) return false;
 	}
 	return true;
+#endif
 }
 
 class DataflowBlackholeDenseAttentionOps {
 	const DataflowDenseAttentionInvocation* fInvocation=nullptr;
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+	DataflowDenseAttentionInvocation fShardBinding{};
+#endif
 	DataflowBlackholeNoc<0> fReader;
 	DataflowBlackholeNoc<1> fWriter;
 
@@ -173,6 +181,17 @@ public:
 		return true;
 	}
 
+#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+	bool BindShardProgram(const DataflowDenseAttentionProgram& program)
+	{
+		fInvocation=nullptr;
+		if (program.mode!=DataflowDenseAttentionRun
+			|| !DataflowDenseAttentionProgramBuilder::BindCore(program,0,fShardBinding)) return false;
+		fInvocation=&fShardBinding;
+		return true;
+	}
+#endif
+
 	bool ReadProjectedRows(unsigned firstRow,float* output) const
 	{
 		if (!fInvocation) return false;
@@ -218,14 +237,14 @@ public:
 			reinterpret_cast<uint8_t*>(output));
 	}
 
-	bool WriteContext(unsigned firstRow,const float* values) const
+	bool WriteContextSlice(unsigned firstRow,unsigned rows,const float* values) const
 	{
 		if (!fInvocation || !values) return false;
 		const RowSpace& output=fInvocation->program.contextOutput;
-		if (firstRow>=DenseHeads*DenseHeadWidth
-			|| DenseHeadWidth>DenseHeads*DenseHeadWidth-firstRow) return false;
+		if (!rows || ((firstRow|rows)&15) || firstRow>=DenseHeads*DenseHeadWidth
+			|| rows>DenseHeads*DenseHeadWidth-firstRow) return false;
 		unsigned completed=0;
-		while (completed<DenseHeadWidth) {
+		while (completed<rows) {
 			const unsigned row=firstRow+completed;
 			const Fragment* owner=nullptr;
 			for (unsigned index=0;index<output.count;index++) {
@@ -237,7 +256,7 @@ public:
 			}
 			if (!owner) return false;
 			unsigned count=owner->firstRow+owner->rows-row;
-			if (count>DenseHeadWidth-completed) count=DenseHeadWidth-completed;
+			if (count>rows-completed) count=rows-completed;
 			count&=~15U;
 			if (!count || count*sizeof(float)>DataflowNocMaxTransfer) return false;
 			Range range{};
@@ -248,7 +267,12 @@ public:
 				return false;
 			completed+=count;
 		}
-		return completed==DenseHeadWidth;
+		return completed==rows;
+	}
+
+	bool WriteContext(unsigned firstRow,const float* values) const
+	{
+		return WriteContextSlice(firstRow,DenseHeadWidth,values);
 	}
 };
 
