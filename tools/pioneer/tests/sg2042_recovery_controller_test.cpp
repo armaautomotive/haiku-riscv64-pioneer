@@ -11,7 +11,7 @@
 using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uint64_t;
 using vuint8=volatile uint8;using vuint16=volatile uint16;using vuint32=volatile uint32;
 using addr_t=uintptr_t;using thread_id=int;using sem_id=int;using int32=int32_t;using status_t=int;
-enum {B_OK=0,B_BAD_VALUE=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,B_ENTRY_NOT_FOUND=-4,B_ERROR=-5,B_CANCELED=-6,B_TIMED_OUT=-7};
+enum {B_OK=0,B_BAD_VALUE=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,B_ENTRY_NOT_FOUND=-4,B_ERROR=-5,B_CANCELED=-6,B_TIMED_OUT=-7,B_DEV_NOT_READY=-8};
 enum {B_RELATIVE_TIMEOUT=1};
 enum {PCI_command=0x04,PCI_header_type=0x0e,PCI_header_type_mask=0x7f,PCI_header_type_PCI_to_PCI_bridge=1};
 static constexpr uint32 kSg2042AtPciAddress0=0,kSg2042AtDescriptor0=8;
@@ -74,6 +74,11 @@ static status_t FailingOperation(void* arg) {
 	uint32 value=0;
 	assert(context.controller->ReadSg2042Config(0,0,0,0,4,value)==B_OK);
 	return B_ERROR;
+}
+static status_t PendingOperation(void* arg) {
+	CallbackContext& context=*static_cast<CallbackContext*>(arg);
+	++context.calls;
+	return B_DEV_NOT_READY;
 }
 int main()
 {
@@ -176,5 +181,17 @@ int main()
 	assert(controller.PioneerQualificationState(&active,&waiter,&waiters)==B_OK && !active && waiters==0);
 	forceTimeout=true;assert(controller.HoldPioneerQualification(0,1,&holdCallback)==B_OK);
 	assert(holdCallback==B_TIMED_OUT && !controller.fPioneerRecoveryLease.Active());forceTimeout=false;
+	// This is a deliberate negative control, not a recovery success: the
+	// synchronous gateway releases its lease even when its callback reports a
+	// retained/pending reset. A different thread can access config between
+	// calls. The non-loadable gateway must not be used as continuous exclusion.
+	current=11;const int priorCalls=context.calls;status_t pending=B_OK;
+	assert(controller.RunPioneerRecovery(PendingOperation,&context,&pending)==B_OK
+		&& pending==B_DEV_NOT_READY && context.calls==priorCalls+1
+		&& !controller.fPioneerRecoveryLease.Active());
+	current=22;uint32 betweenCalls=0;
+	assert(controller.ReadSg2042Config(0,0,0,0,4,betweenCalls)==B_OK
+		&& betweenCalls==0x20421e30);
 	std::puts("PASS actual SG2042 controller lease and config methods: private-root admission, owner access, blocked read/write and wake; SIMULATED ONLY");
+	std::puts("PASS negative control: pending callback releases the lease and permits another config reader; SIMULATED ONLY");
 }
