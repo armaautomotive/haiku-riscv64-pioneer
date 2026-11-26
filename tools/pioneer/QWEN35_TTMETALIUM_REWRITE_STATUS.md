@@ -7,13 +7,12 @@ matches the saved model identity. Using it, I generated the combined 32-layer
 fixture for the paired K/V, paired FFN, fused RMS/save image: 425 prompt steps
 or 428 decode steps, with 2,740,473,856 staged weight bytes. The simulator
 runner's length guard recognizes this stream and its focused marker/count
-test passes. The full decode simulation is active at poll 8,550. Boundaries
-for layers 0–25 match the earlier simulator capture byte for byte, including
-dense-attention layers 3, 7, 11, and 15. The latest hashes are layer 17
-`6e41a05fcf7bd29c7117faeb5aaef85d3fddbf0478aaa8a99d1cb1bdfc5d8f1e`,
-23 `2ccfff5ec31038bc2f001a479cedaec46323a2946656210742f15b137b3866d2`,
-24 `49a0dd31fe76e2e947271bfe159ddedf30e531f03d0a73836db9c3e677db48a8`, and
-25 `d3896c2fe54a5515abf652835349bfc49c3f021147edc7dd2fae5089548229b1`.
+test passes. The full decode simulation is active at poll 9,300. Boundaries
+for layers 0–28 match the earlier simulator capture byte for byte, including
+dense-attention layers 3, 7, 11, and 15. The latest hashes are layer 26
+`1fc0b0d3c61baa88a805450a08fb19c7500dc739ef8d22c7649dfb01b3d236a7`,
+27 `3518c51e5ab820574f0d652d8df4b657ad6fe9d884286fe976a3bfdf9f120e3e`, and
+28 `86efde314c9f51c338a0d34c60a59baa1deffa82a7d2d6a1e991f666e89508a7`.
 
 A provisional same-input CPU audit used the pinned model and authenticated
 oracle. Initial layer 0 and 14 of 15 transitions through layer 15 passed; the
