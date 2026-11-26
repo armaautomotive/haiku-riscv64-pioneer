@@ -1,0 +1,44 @@
+{
+  "rows": 2048,
+  "mismatches": 2,
+  "max_absolute_error": 6.103515625e-05,
+  "max_scaled_error": 6.103515625e-05,
+  "worst_index": 1862,
+  "simulator_sha256": "c11f952c84848877d4308a99b6660cbaa6acbf32251b1ca973530639ef900263",
+  "reference_sha256": "dd0db602d3aacd1b775987ef51829d3f29d81b46ac33e0a3743093354f1c8545",
+  "half_values_different": 4,
+  "layer": 3,
+  "state": "kv",
+  "input_boundary_sha256": "33c18c995b0cae841c09b0d96baceb152fc8cb043f4628eaf6a1de2186cd1a06",
+  "differences": [
+    {
+      "index": 180,
+      "simulator": 0.055999755859375,
+      "cpu_rounded": 0.05596923828125,
+      "cpu_float": 0.05598435923457146,
+      "distance_from_midpoint": -1.3783574104309082e-07
+    },
+    {
+      "index": 386,
+      "simulator": 0.00223541259765625,
+      "cpu_rounded": 0.0022373199462890625,
+      "cpu_float": 0.0022365024778991938,
+      "distance_from_midpoint": 1.3620592653751373e-07
+    },
+    {
+      "index": 1704,
+      "simulator": -0.00021660327911376953,
+      "cpu_rounded": -0.00021648406982421875,
+      "cpu_float": -0.00021653249859809875,
+      "distance_from_midpoint": 1.1175870895385742e-08
+    },
+    {
+      "index": 1862,
+      "simulator": -0.122802734375,
+      "cpu_rounded": -0.12286376953125,
+      "cpu_float": -0.1228332594037056,
+      "distance_from_midpoint": -7.450580596923828e-09
+    }
+  ],
+  "scope": "Simulator four-layer KV compared to CPU reference injected with separately audited simulator layer-2 boundary; exact four-layer run input not independently captured; no hardware."
+}

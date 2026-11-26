@@ -1,5 +1,14 @@
 # Latest offline checks, 2026-11-26
 
+The four-layer simulator capture passed its worker and final-hidden checks;
+all six position-zero recurrent-state comparisons for layers 0–2 passed.
+Layer 3's dense KV check failed on two of 2,048 half values at the existing
+tolerance. Injecting a separately captured simulator layer-2 boundary into
+the CPU reference left the same two failures; all four remaining differing
+half values are close to rounding midpoints. The exact layer-2 input for this
+capture was not independently observed, so the cause remains unproven.
+See `benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
 The separate token-261 warm layer-0 simulator replay completed its 120-worker
 audit and matched all 2,560 independent CPU reference values, maximum
 absolute error `2.38418579e-07`. It imported the earlier simulated token-42
@@ -12,9 +21,9 @@ The reference captures position-one convolution and delta input state for all
 24 recurrent layers without changing its existing outputs. A saved, separate
 first-layer simulator handoff passed comparison for all 24,576 convolution
 and 524,288 delta values at the existing tolerance. The focused replay of that
-state with actual next token 261 has completed as described above. A four-layer
-graph state capture is running in session `76253`; no result is available.
-The full two-position capture remains active in session `45891`.
+state with actual next token 261 has completed as described above. The
+four-layer graph state capture has also completed, as described above. The
+full two-position capture remains active in session `45891`.
 The token-261 embedding tile matched authenticated raw GGUF rows and rejected
 corruption. These are simulator and offline-reference checks, not full-model
 or hardware validation. See `benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.

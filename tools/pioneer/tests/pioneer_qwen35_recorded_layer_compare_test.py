@@ -9,7 +9,7 @@ import tempfile
 from pioneer_qwen35_ttsim_service_test import (RecordedNumericalMismatch, compare_recorded_layer,
                                                compare_recorded_layer_diagnostic, compare_recorded_token,
                                                validate_isolated_zero_ranges, validate_recorded_state_layout)
-from pioneer_qwen35_ttsim_state_compare import compare_state
+from pioneer_qwen35_ttsim_state_compare import compare_state, compare_position_zero_kv
 
 assert compare_recorded_token(261, 261, False) is None
 assert compare_recorded_token(1850, 89598, True) == 'recorded decode token 1850 differs from reference 89598'
@@ -53,6 +53,18 @@ for bad in (b'', struct.pack('<3f', 0, math.nan, 2)):
         raise AssertionError('malformed recurrent state accepted')
     except ValueError:
         pass
+key = struct.pack('<1024f', *([0.25] * 1024))
+value = struct.pack('<1024f', *([-0.5] * 1024))
+packed_kv = struct.pack('<2048e', *([0.25] * 1024 + [-0.5] * 1024))
+assert compare_position_zero_kv(packed_kv, key, value)['mismatches'] == 0
+bad_kv = bytearray(packed_kv)
+struct.pack_into('<e', bad_kv, 4094, 1.0)
+assert compare_position_zero_kv(bad_kv, key, value)['mismatches'] == 1
+try:
+    compare_position_zero_kv(packed_kv[:-2], key, value)
+    raise AssertionError('short KV capture accepted')
+except ValueError:
+    pass
 
 reference = [1.0] * 2560
 actual = reference.copy(); actual[8] += 1e-6

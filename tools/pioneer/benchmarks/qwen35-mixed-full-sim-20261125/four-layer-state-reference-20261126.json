@@ -1,0 +1,86 @@
+{
+  "passed": false,
+  "checks": [
+    {
+      "rows": 24576,
+      "mismatches": 0,
+      "max_absolute_error": 7.62939453125e-06,
+      "max_scaled_error": 1.1920928955078125e-06,
+      "worst_index": 692,
+      "simulator_sha256": "6b1950c1436d58dfc8ad1fa9ced0fec982a15a263de031829d478d679eb716de",
+      "reference_sha256": "a6586bb27eae4a534e990ebcc865de7ac9d91b92c7fe901bd5edb9f262f4e6ef",
+      "layer": 0,
+      "state": "conv"
+    },
+    {
+      "rows": 524288,
+      "mismatches": 0,
+      "max_absolute_error": 1.0728836059570312e-06,
+      "max_scaled_error": 8.856831096688253e-07,
+      "worst_index": 373680,
+      "simulator_sha256": "8936b6aa82a4c1afec1e3024f4fa29848ff14aaaf3b8fb0051df67e4f98147c4",
+      "reference_sha256": "032df0d258c365aea9f57a93668f711831b31115597fe4489ad0cae87d0484a3",
+      "layer": 0,
+      "state": "delta"
+    },
+    {
+      "rows": 24576,
+      "mismatches": 0,
+      "max_absolute_error": 5.245208740234375e-06,
+      "max_scaled_error": 1.430511474609375e-06,
+      "worst_index": 22295,
+      "simulator_sha256": "de60199ab06c7db0df8678c33bb1e344331cacc33e892c8b892f9f9dc8d54fe9",
+      "reference_sha256": "40676f6c30dd957afc270ea7bccab83c786b05016dc6e8c596e0a96e9c7f5b83",
+      "layer": 1,
+      "state": "conv"
+    },
+    {
+      "rows": 524288,
+      "mismatches": 0,
+      "max_absolute_error": 2.384185791015625e-07,
+      "max_scaled_error": 2.384185791015625e-07,
+      "worst_index": 143458,
+      "simulator_sha256": "9f5efd167732e19785d1de73e4f9e76224ff9d3b61ef4b747fd5f71e769ca322",
+      "reference_sha256": "e566bd951755744f4529f61382179f49d64c095606bc28b8081c47929286195c",
+      "layer": 1,
+      "state": "delta"
+    },
+    {
+      "rows": 24576,
+      "mismatches": 0,
+      "max_absolute_error": 4.291534423828125e-06,
+      "max_scaled_error": 1.4081597328186035e-06,
+      "worst_index": 14450,
+      "simulator_sha256": "9f55b77d64e39fa348c893bd62727309505734d631b59588b45556094ba53e49",
+      "reference_sha256": "aac422165eaa05923c29e433f60bc2e882938bffa0dc8d81a2df40604c3ca57b",
+      "layer": 2,
+      "state": "conv"
+    },
+    {
+      "rows": 524288,
+      "mismatches": 0,
+      "max_absolute_error": 2.384185791015625e-07,
+      "max_scaled_error": 2.384185791015625e-07,
+      "worst_index": 124958,
+      "simulator_sha256": "d494d0459ce346d0264f08c63b0af77a88e65816929e6d064e34777e20ead15f",
+      "reference_sha256": "2d8193f5e86473ab6db4addab6795dbdd4241717c1239e6a2dc5fc767c3e7609",
+      "layer": 2,
+      "state": "delta"
+    },
+    {
+      "rows": 2048,
+      "mismatches": 2,
+      "max_absolute_error": 6.103515625e-05,
+      "max_scaled_error": 6.103515625e-05,
+      "worst_index": 1862,
+      "simulator_sha256": "c11f952c84848877d4308a99b6660cbaa6acbf32251b1ca973530639ef900263",
+      "reference_sha256": "7104a29924755923ec295a7e7a3f1c633a54ffa3821129b4dc2362f2cdcfbc4b",
+      "half_values_different": 12,
+      "layer": 3,
+      "state": "kv"
+    }
+  ],
+  "scope": "Four-layer simulator prefix: six recurrent-state checks plus position-zero layer-3 KV comparison to independent CPU reference; not a full-model run or hardware.",
+  "model_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+  "state_layout_sha256": "6788be5e37d8a7dc998c0175903fc899ad080248852814d9a529a24f1b533cd0"
+}

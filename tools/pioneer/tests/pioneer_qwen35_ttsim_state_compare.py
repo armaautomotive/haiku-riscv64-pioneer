@@ -12,6 +12,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import struct
 import sys
 
 
@@ -41,17 +42,47 @@ def compare_state(actual, reference, count):
             'reference_sha256': hashlib.sha256(reference).hexdigest()}
 
 
+def compare_position_zero_kv(actual, key, value):
+    """Compare packed F16 key/value rows to independent position-zero CPU tensors."""
+    if len(actual) != 4096 or len(key) != 4096 or len(value) != 4096:
+        raise ValueError('unexpected position-zero KV size')
+    original = struct.unpack('<2048f', key + value)
+    if any(not math.isfinite(item) for item in original):
+        raise ValueError('non-finite CPU KV reference')
+    try:
+        expected_half = struct.pack('<2048e', *original)
+    except (OverflowError, struct.error) as error:
+        raise ValueError('CPU KV reference cannot be represented as F16') from error
+    got_values = struct.unpack('<2048e', actual)
+    expected_values = struct.unpack('<2048e', expected_half)
+    result = compare_state(struct.pack('<2048f', *got_values),
+                           struct.pack('<2048f', *expected_values), 2048)
+    result.update(half_values_different=sum(a != b for a, b in zip(got_values, expected_values)),
+                  simulator_sha256=hashlib.sha256(actual).hexdigest(),
+                  reference_sha256=hashlib.sha256(key + value).hexdigest())
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('simulator', type=Path)
     parser.add_argument('reference', type=Path)
     parser.add_argument('layers', type=int)
+    parser.add_argument('--reference-kv', type=Path,
+                        help='position-zero CPU K/V capture, before the identity rotation')
     args = parser.parse_args()
     if not 1 <= args.layers <= 32 or not (args.simulator / 'worker-audit-complete.marker').is_file():
         parser.error('requires a complete simulator worker audit and 1..32 layers')
     checks = []
     for layer in range(args.layers):
         if layer % 4 == 3:
+            if args.reference_kv:
+                actual = (args.simulator / f'K-layer{layer}.bin').read_bytes()
+                key = (args.reference_kv / f'dense-key-{layer}.bin').read_bytes()
+                value = (args.reference_kv / f'dense-value-{layer}.bin').read_bytes()
+                result = compare_position_zero_kv(actual, key, value)
+                result.update(layer=layer, state='kv')
+                checks.append(result)
             continue
         for code, name, count in (('H', 'conv', 24576), ('D', 'delta', 524288)):
             actual = (args.simulator / f'{code}-layer{layer}.bin').read_bytes()

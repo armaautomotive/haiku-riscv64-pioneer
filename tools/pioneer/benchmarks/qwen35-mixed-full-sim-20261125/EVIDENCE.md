@@ -2,6 +2,26 @@
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+The four-layer capture completed its 120-worker, 67-barrier audit and passed
+the existing final-hidden check (maximum absolute error `5.00679016e-06`).
+All six recurrent-state comparisons for layers 0–2 passed the existing
+`2e-5 * max(1, abs(reference))` tolerance. Layer 3's position-zero dense KV
+comparison failed: 12 of 2,048 half values differed and two exceeded that
+tolerance, maximum absolute error `6.103515625e-05`. The independent CPU
+trace left all 68 earlier output artifacts unchanged. The full result and
+hashes are `four-layer-state-reference-20261126.json`.
+
+A second CPU trace injected the separately audited simulated layer-2 boundary
+before layer 3 and read it back exactly. Against the same captured KV, four
+half values differed, including the same two strict failures; each CPU F32
+value was within `1.38e-07` of the midpoint between the two adjacent F16
+values. See `layer3-kv-injected-reference-20261126.json`. This supports a
+rounding-threshold investigation, but the exact layer-2 input in this
+particular four-layer execution was not captured independently, and these
+checks do not prove the cause or excuse the failed tolerance. The first 50
+records of this four-layer fixture matched the full hybrid fixture for all
+120 workers. No hardware inference or performance was measured.
+
 The separate token-261 warm layer-0 replay completed all 21 barriers on 120
 simulated workers and reached its intentional record-22 fault. It imported
 the prior token-42 simulator state, and its full 2,560-value layer output
@@ -41,9 +61,9 @@ corrupted record was rejected. The optimized and ASan/UBSan four-layer maps
 match. The Python capture checks range geometry and overlap with staged
 weights, stream records and outputs, and writes state only after the worker
 terminal audit; its map must still be independently tied to the executed
-fixture. A four-layer simulator capture is running in session `76253`, log
-`/private/tmp/q35-first-four-state-20261126c.log`; no state result is
-available. The full two-position capture remains active in session `45891`.
+fixture. The four-layer result is recorded above (log
+`/private/tmp/q35-first-four-state-20261126c.log`). The full two-position
+capture remains active in session `45891`.
 No card was accessed for any of these diagnostics.
 
 The offline oracle can also replace every position-zero layer boundary with
