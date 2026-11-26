@@ -433,15 +433,27 @@ def main():
             norm = (directory / 'norm.bin').read_bytes()
             projection = (directory / 'projection.bin').read_bytes()
             gate = (directory / 'gate.bin').read_bytes()
-            if (len(command) != 128 or len(records) != 120 * 6 * 2048 or len(weights) != 33920
+            conv = (directory / 'conv.bin').read_bytes()
+            history_input = (directory / 'history.bin').read_bytes()
+            position_bytes = (directory / 'position.bin').read_bytes()
+            if (len(command) != 128 or len(records) != 120 * 7 * 2048 or len(weights) != 33920
                     or hashlib.sha256(weights).hexdigest()
                     != 'd784c0b7fe8df8aab8d4797a8ea5a2c25b5db49a84c60a3ad93819086355871d'
                     or len(norm) != 10240 or hashlib.sha256(norm).hexdigest()
                     != 'fd26aeb9265ba4588eca258e4c7fb27d2b82198eef72bbca4d8d46136b90c104'
                     or len(projection) != 14604288 or len(gate) != 5898240
                     or hashlib.sha256(gate).hexdigest()
-                    != '9e3596cdad68531922f9a5e8775e576d4254ba45f66281c203c3baa64d0cadbb'):
+                    != '9e3596cdad68531922f9a5e8775e576d4254ba45f66281c203c3baa64d0cadbb'
+                    or len(conv) != 131072 or hashlib.sha256(conv).hexdigest()
+                    != 'e0ff35e774d276fa65d1ccde5e6667345ed74da153f906d27b688fda88f155cd'
+                    or position_bytes not in (b'\x00\x00\x00\x00', b'\x01\x00\x00\x00')
+                    or len(history_input) != 24576 * 4):
                 raise ValueError('unexpected authenticated resident sequence fixture')
+            position = position_bytes[0]
+            history_prior = struct.unpack('<24576f', history_input)
+            expected_history = tuple(((i * 7) % 29 - 14) * 0.0625 for i in range(24576))
+            if history_prior != expected_history:
+                raise ValueError('unexpected synthetic convolution history')
             tensors = ((0, 14417920, 'e45da19dfd2000f2c4b40f456a5663dc6677f7990a1626c897e7219387d9ca91'),
                        (14417920, 92160, 'c66aaea468bd19d584e6259ab39ef7770ed29a93d59ebe0dcdb9dd04d1f1d16d'),
                        (14512128, 92160, 'd04988bc4158cb6936a5ae77eb6b21299d2c81bf8e5536ee0e2d41e635996ffc'))
@@ -484,6 +496,11 @@ def main():
                 count = min(0x10000, len(gate) - offset, 0x200000 - (address & 0x1fffff))
                 write(bar + 0x400000 + (address & 0x1fffff), gate[offset:offset + count])
                 offset += count
+            for address, payload in ((0x22000000, conv),
+                                     (0x22040000, history_input),
+                                     (0x22060000, struct.pack('<24576I', *([0x7fc00000] * 24576)))):
+                select(2, address, 18, 12)
+                write(bar + 0x400000 + (address & 0x1fffff), payload)
             for address in (0x20000000, 0x20010000, 0x20020000):
                 select(2, address, 18, 12)
                 write(bar + 0x400000 + (address & 0x1fffff),
@@ -495,7 +512,7 @@ def main():
             for core in range(120):
                 address = 0x04000000 + core * 0x100000
                 select(2, address, 18, 12)
-                write(bar + 0x400000 + (address & 0x1fffff), records[core * 12288:(core + 1) * 12288])
+                write(bar + 0x400000 + (address & 0x1fffff), records[core * 14336:(core + 1) * 14336])
             select_worker(0)
             write(bar + 0xab080, command[:64])
             write(bar + 0xab0c0, command[64:])
@@ -513,9 +530,9 @@ def main():
                 raise RuntimeError('resident sequence did not reach its intentional terminal fault')
             for core, words in enumerate(snapshots):
                 if (words[2:8] != (1, 0, 1, 4, 4, 5)
-                        or words[9:15] != (0x31464735, 1, 5, 120, 0x80000004, 0)
+                        or words[9:15] != (0x31464735, 1, 6, 120, 0x80000004, 0)
                         or words[15] != core):
-                    raise RuntimeError(f'core {core}: sequence failed before all five barriers: {words}')
+                    raise RuntimeError(f'core {core}: sequence failed before all six barriers: {words}')
             for name, address in (('embedding', 0x20000000), ('residual save', 0x20010000)):
                 select(2, address, 18, 12)
                 actual = struct.unpack('<2560f', read(bar + 0x400000 + (address & 0x1fffff), 2560 * 4))
@@ -543,6 +560,16 @@ def main():
             actual_rms = actual
             reference_fixtures = {quant: projection + struct.pack('<2560f',
                 *quantized_activation_reference(actual, quant)) for quant in ('q5', 'q8')}
+            # Each convolution history row ends with the original QKV input;
+            # QKV itself is overwritten by the convolution output.
+            select(2, 0x22060000, 18, 12)
+            history = struct.unpack('<24576f', read(bar + 0x400000 + (0x22060000 & 0x1fffff), 24576 * 4))
+            for i in range(8192):
+                old1 = history_prior[3 * i + 1] if position else 0.0
+                old2 = history_prior[3 * i + 2] if position else 0.0
+                if history[3 * i] != old1 or history[3 * i + 1] != old2:
+                    raise RuntimeError(f'convolution history shift mismatch at row {i}')
+            qkv_original = history[2::3]
             specs = (('QKV', 8192, 0x21000000, 'q5', 2816, 0),
                      ('Alpha', 32, 0x21010000, 'q8', 576, 14417920),
                      ('Beta', 32, 0x21020000, 'q8', 576, 14512128))
@@ -550,7 +577,8 @@ def main():
                 values, norms = projection_reference(reference_fixtures[quant], quant, len(projection),
                                                      tile, rows, weight_offset)
                 select(2, address, 18, 12)
-                actual = struct.unpack(f'<{rows}f', read(bar + 0x400000 + (address & 0x1fffff), rows * 4))
+                actual = (qkv_original if name == 'QKV' else
+                          struct.unpack(f'<{rows}f', read(bar + 0x400000 + (address & 0x1fffff), rows * 4)))
                 maximum = worst = 0.0
                 for row, (got, want, norm_value) in enumerate(zip(actual, values, norms)):
                     error = abs(got - want)
@@ -575,11 +603,26 @@ def main():
                     raise RuntimeError(f'gate row {row}: {got} differs from {want}; normalized error {ratio}')
             print(f'gate: 4096 values match independent reference; maximum absolute error '
                   f'{maximum:.9g}; maximum normalized error {worst:.9g}', flush=True)
+            select(2, 0x21000000, 18, 12)
+            conv_actual = struct.unpack('<8192f', read(bar + 0x400000 + (0x21000000 & 0x1fffff), 8192 * 4))
+            conv_weights = struct.unpack('<32768f', conv)
+            maximum = 0.0
+            for row, (got, current) in enumerate(zip(conv_actual, qkv_original)):
+                terms = [history_prior[3 * row + i] * conv_weights[4 * row + i] if position else 0.0
+                         for i in range(3)]
+                value = sum(terms) + current * conv_weights[4 * row + 3]
+                want = value / (1.0 + math.exp(-value))
+                error = abs(got - want)
+                maximum = max(maximum, error)
+                if not math.isfinite(got) or error > 2e-6 * max(1.0, abs(want)):
+                    raise RuntimeError(f'convolution row {row}: {got} differs from {want}; error {error}')
+            print(f'convolution: 8192 values and 24576 history entries match independent position-{position} '
+                  f'reference; maximum absolute error {maximum:.9g}', flush=True)
             select_worker(0)
             if struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
                 raise RuntimeError('intentionally faulted sequence published a candidate')
-            print('PASS resident graph completed embedding, residual, RMS, fused and gate projection barriers '
-                  'on 120 simulated workers; sixth record intentionally faults; NO HARDWARE')
+            print('PASS resident graph completed embedding, residual, RMS, fused and gate projections and '
+                  'convolution barriers on 120 simulated workers; seventh record intentionally faults; NO HARDWARE')
             return
 
         if args.resident_fault_command:

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-// Build five dependent resident stream records using pinned 4B weights.
+// Build six dependent resident stream records using pinned 4B weights.
 // This synthetic layout is for simulator testing only and grants no authority.
 #define PIONEER_QWEN35_DEVICE_DISPATCH 1
 #define PIONEER_QWEN35_RECOVERY_COMPILE_ONLY 1
@@ -48,7 +48,9 @@ static bool WriteNew(const std::string& path,const void* data,size_t size)
 }
 int main(int argc,char** argv)
 {
-    if (argc!=3) { std::fprintf(stderr,"usage: %s pinned-model.gguf empty-directory\n",argv[0]);return 2; }
+    if (argc!=3 && argc!=4) { std::fprintf(stderr,"usage: %s pinned-model.gguf empty-directory [0|1]\n",argv[0]);return 2; }
+    if (argc==4 && std::strcmp(argv[3],"0") && std::strcmp(argv[3],"1")) return 2;
+    const unsigned position=argc==4 && !std::strcmp(argv[3],"1") ? 1 : 0;
     const int fd=open(argv[1],O_RDONLY|O_NOFOLLOW|O_CLOEXEC);
     if (fd<0) return 1;
     FILE* source=fdopen(fd,"rb");
@@ -106,6 +108,11 @@ int main(int argc,char** argv)
         const size_t count=std::min(page.size(),gate.size()-p*page.size());
         std::memcpy(gate.data()+p*page.size(),page.data(),count);
     }
+    const auto* convTensor=sourceModel.Find("blk.0.ssm_conv1d.weight");
+    std::vector<uint8_t> convWeights(ConvChannels*4*sizeof(float));
+    if (!convTensor || convTensor->type!=0 || convTensor->inputs!=4 || convTensor->outputs!=ConvChannels
+        || !sourceModel.ReadPacked(unsigned(convTensor-sourceModel.Tensors().data()),0,
+            unsigned(convWeights.size()),convWeights.data(),unsigned(convWeights.size()))) { fclose(source);return 1; }
     if (!sourceModel.Stable() || fstat(fd,&after) || !SameFile(before,after)) { fclose(source);return 1; }
     fclose(source);
 
@@ -119,7 +126,7 @@ int main(int argc,char** argv)
     model.layers[0].weights[AttentionNorm].inputs=Hidden;
     model.layers[0].weights[AttentionNorm].place={1,Hidden*4,1,1,{{0,0x20030000,0,1}}};
     DataflowDynamicTokenContext token{};DataflowEmbeddingProgram embedding{};
-    if (!DataflowDynamicTokenContext::Build(model,42,0,token)
+    if (!DataflowDynamicTokenContext::Build(model,42,position,token)
         || !DataflowEmbeddingProgramBuilder::Build(model,42,0,routes,embedding)
         || embedding.weightBank!=0 || embedding.weightBase!=0x10010900 || embedding.lane!=10) return 1;
     DataflowResidualProgram residual{};residual.mode=DataflowResidualSave;residual.activationSlot=0;
@@ -163,8 +170,16 @@ int main(int argc,char** argv)
     if (!gateSharing->Seal() || gateSharing->Groups()!=1) return 1;
     for (unsigned core=0;core<DataflowCoreCount;core++)
         if (!gateSharing->Get(core,gateInvocations[core].sharing) || !gateInvocations[core].Valid()) return 1;
+    DataflowConvProgram conv{};conv.layer=0;conv.position=position;
+    std::memcpy(conv.bankRoute,routes,sizeof(routes));
+    conv.qkv={ConvChannels,4,1,16,{{0,0x21000000,0,ConvChannels}}};
+    conv.weights.type=0;conv.weights.inputs=4;
+    conv.weights.place={ConvChannels,16,1,1,{{0,0x22000000,0,ConvChannels}}};
+    conv.historyRead={ConvChannels,12,1,1,{{0,0x22040000,0,ConvChannels}}};
+    conv.historyWrite={ConvChannels,12,1,1,{{0,0x22060000,0,ConvChannels}}};
+    if (!conv.Valid()) return 1;
     std::vector<DataflowGraphRunDescriptor> descriptors(DataflowCoreCount);
-    std::vector<DataflowStreamRecord> records(DataflowCoreCount*6);
+    std::vector<DataflowStreamRecord> records(DataflowCoreCount*7);
     std::array<DataflowBarrierPacket,2> command{};
     for (unsigned core=0;core<DataflowCoreCount;core++) {
         const unsigned base=0x04000000+core*0x100000;
@@ -172,7 +187,7 @@ int main(int argc,char** argv)
             99,core,0,routes[0][0],base,DataflowGraphDecodeSteps};
         const Range lease={0,base,DataflowGraphDecodeSteps*DataflowStreamRecordBytes};
         auto& descriptor=descriptors[core];
-        if (!DataflowGraphRunBuild(binding,lease,routes,token,{6,1,DataflowGraphPromptSteps},
+        if (!DataflowGraphRunBuild(binding,lease,routes,token,{7,1,DataflowGraphPromptSteps},
                 1,1000000,0,descriptor)) return 1;
         if (!core) {
             DataflowResidentCommand dynamic{};
@@ -180,28 +195,36 @@ int main(int argc,char** argv)
             command={DataflowResidentCommandPayload(dynamic),DataflowResidentCommandCommit(dynamic)};
         }
         DataflowEmbeddingInvocation e{};DataflowResidualInvocation r{};DataflowRmsInvocation n{};
+        DataflowConvInvocation c{};
         if (!DataflowEmbeddingProgramBuilder::BindCore(embedding,core,e)
-            || !DataflowStreamEncode(e,99,1,records[core*6])
+            || !DataflowStreamEncode(e,99,1,records[core*7])
             || !DataflowResidualProgramBuilder::BindCore(residual,core,r)
-            || !DataflowStreamEncode(r,99,2,records[core*6+1])
+            || !DataflowStreamEncode(r,99,2,records[core*7+1])
             || !DataflowRmsProgramBuilder::BindCore(rms,core,n)
-            || !DataflowStreamEncode(n,99,3,records[core*6+2])
-            || !DataflowStreamEncode(projections[core],99,4,records[core*6+3])
-            || !DataflowStreamEncode(gateInvocations[core],99,5,records[core*6+4])) return 1;
-        // The final zero record deliberately terminates after five barriers.
+            || !DataflowStreamEncode(n,99,3,records[core*7+2])
+            || !DataflowStreamEncode(projections[core],99,4,records[core*7+3])
+            || !DataflowStreamEncode(gateInvocations[core],99,5,records[core*7+4])
+            || !DataflowConvProgramBuilder::BindCore(conv,core,c)
+            || !DataflowStreamEncode(c,99,6,records[core*7+5])) return 1;
+        // The final zero record deliberately terminates after six barriers.
     }
+    std::vector<float> history(ConvChannels*3);
+    for (size_t i=0;i<history.size();i++) history[i]=float(int((i*7)%29)-14)*0.0625f;
+    const std::array<uint8_t,4> positionBytes={uint8_t(position),0,0,0};
     const std::string directory=argv[2];
-    const std::array<std::string,7> paths={directory+"/templates.bin",directory+"/command.bin",
-        directory+"/records.bin",directory+"/weights.bin",directory+"/norm.bin",directory+"/projection.bin",directory+"/gate.bin"};
-    const std::array<const void*,7> data={descriptors.data(),command.data(),records.data(),weights.data(),norm.data(),projection.data(),gate.data()};
-    const std::array<size_t,7> size={descriptors.size()*sizeof(descriptors[0]),sizeof(command),
-        records.size()*sizeof(records[0]),weights.size(),norm.size(),projection.size(),gate.size()};
+    const std::array<std::string,10> paths={directory+"/templates.bin",directory+"/command.bin",
+        directory+"/records.bin",directory+"/weights.bin",directory+"/norm.bin",directory+"/projection.bin",directory+"/gate.bin",directory+"/conv.bin",
+        directory+"/history.bin",directory+"/position.bin"};
+    const std::array<const void*,10> data={descriptors.data(),command.data(),records.data(),weights.data(),norm.data(),projection.data(),gate.data(),convWeights.data(),history.data(),positionBytes.data()};
+    const std::array<size_t,10> size={descriptors.size()*sizeof(descriptors[0]),sizeof(command),
+        records.size()*sizeof(records[0]),weights.size(),norm.size(),projection.size(),gate.size(),convWeights.size(),
+        history.size()*sizeof(history[0]),positionBytes.size()};
     unsigned written=0;
     for (;written<paths.size();written++) if (!WriteNew(paths[written],data[written],size[written])) break;
     if (written!=paths.size()) {
         for (unsigned i=0;i<written;i++) std::remove(paths[i].c_str());
         return 1;
     }
-    std::puts("prepared authenticated 4B weights and five synthetic resident graph steps; NO HARDWARE");
+    std::puts("prepared authenticated 4B weights and six synthetic resident graph steps; NO HARDWARE");
     return 0;
 }

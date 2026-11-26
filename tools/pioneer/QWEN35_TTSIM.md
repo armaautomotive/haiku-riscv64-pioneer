@@ -49,9 +49,9 @@ completion candidate. Upstream `ttsim` stops at the unsupported upper-length
 register in this path. The test proves neither successful graph execution nor
 physical fault recovery, and it does not exercise model weights or performance.
 
-An authenticated model fixture exercises five dependent first-layer graph
-steps: embedding, residual save, attention RMS, fused QKV/Alpha/Beta, and
-the recurrent gate projection.
+An authenticated model fixture exercises six dependent first-layer graph
+steps: embedding, residual save, attention RMS, fused QKV/Alpha/Beta, the
+recurrent gate projection and the recurrent convolution.
 Use a new empty directory and the corrected resident image built after the
 SrcA handoff fix described below:
 
@@ -59,29 +59,28 @@ SrcA handoff fix described below:
 c++ -std=c++17 -O2 -Wall -Wextra -Werror \
   tools/pioneer/tests/pioneer_qwen35_ttsim_resident_sequence_fixture.cpp \
   tools/pioneer/PioneerModelWeightCache.cpp -o /tmp/q35-resident-sequence
-/tmp/q35-resident-sequence /path/to/Qwen3.5-4B-Q4_K_M.gguf /path/to/empty-directory
+/tmp/q35-resident-sequence /path/to/Qwen3.5-4B-Q4_K_M.gguf /path/to/empty-directory 0
 python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py \
   /path/to/experimental-libttsim.so /path/to/build/qwen35-resident-service-image \
   /path/to/build/qwen35-shared-role-images --resident-sequence-fixture /path/to/empty-directory
 ```
 
 The fixture authenticates the full model and stages token 42's Q6_K embedding,
-the first layer's F32 attention norm and its full Q5_K/Q8_0 projections and
-Q4_K gate projection. It
-uses the production program binders, triple binder, sharing planner and stream
-encoder on a synthetic one-bank layout. The compiled resident graph fetches
-the five records, executes them on all 120 workers, and completes a device
-barrier after each. A deliberately invalid sixth record terminates the run;
-all workers must report exactly five completed steps, and no token completion
-candidate may appear. Independent references check all embedding, residual,
-RMS, QKV, Alpha, Beta and gate outputs, including Q8_K and Q8_0 activation
-quantization. The output of the verified simulated RMS operation is used as
+the first layer's F32 attention norm and convolution weights, and its full
+Q5_K/Q8_0 and Q4_K gate projections. It uses the production binders, triple
+binder, sharing planner and stream encoder on a synthetic one-bank layout.
+The compiled resident graph fetches the six records, executes them on all 120
+workers, and completes a device barrier after each. A deliberately invalid
+seventh record terminates the run; all workers must report exactly six
+completed steps, and no token completion candidate may appear. Independent
+references check embedding, residual, RMS, QKV, Alpha, Beta, gate and convolution
+outputs, including Q8_K and Q8_0 activation quantization. The output of the verified simulated RMS operation is used as
 the projection reference input. This is not the full graph recorder, a full
 model result, physical recovery, or a speed measurement. Matrix execution
 requires both experimental simulator patches below; their instruction models
 are not independently qualified.
 
-The five-step run used the compatible NoC-response role images (other role
+The five- and six-step runs used compatible NoC-response role images (other role
 builds can fail simulator startup or access an unsupported register),
 `/private/tmp/q35-ten3868-final-resident-image`, and the matrix-exploratory
 `libttsim.so` SHA-256 `1dbc4a6b269aa743870dcb7be5d89e9c6db142f27140296ea68bc00e41ec6d67`.
@@ -92,7 +91,20 @@ SHA-256 `9e3596cdad68531922f9a5e8775e576d4254ba45f66281c203c3baa64d0cadbb`
 was independently reproduced by transposing the raw GGUF rows. The fixture
 generator passed ASan/UBSan and produced identical bytes to the optimized
 build. A deliberately changed gate byte was rejected before sequence
-execution. These are simulations, not warm model runs or performance measurements.
+execution. The six-step test additionally verifies all 8,192 convolution
+outputs and 24,576 history entries. Generate a second fixture in a fresh
+directory with the optional final argument `1` to use nonzero synthetic old
+history instead of the first-token behavior (`0`, the default). Independent
+references matched both cases, with maximum absolute errors `1.806e-7` and
+`1.494e-7` respectively (`/private/tmp/q35-resident-six-position0-final-20261125.log`
+and `/private/tmp/q35-resident-six-position1-final-20261125.log`). The first
+case deliberately supplies nonzero old history and confirms it is ignored;
+the second checks the shift. The position-one generator passed ASan/UBSan and
+matched optimized fixture bytes. A changed synthetic history byte was rejected
+before execution, and an independent raw-GGUF read matched convolution-weight
+SHA-256 `e0ff35e774d276fa65d1ccde5e6667345ed74da153f906d27b688fda88f155cd`.
+These are separate simulations with synthetic history, not sequential warm
+model runs or performance measurements.
 
 The separate sharded-delta witness tests a proposed two-stage recurrent
 update. The helper builds the fused, sharing-enabled service and its
