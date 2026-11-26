@@ -113,20 +113,24 @@ update and normalization. Compile its fixture generator with the additional
 with position `0` or `1`, and pass that directory to the same simulator command
 with the sharded resident image (`delta-shard.marker`) and compatible roles.
 The image and fixture marker check rejects a sharded/non-sharded mismatch.
-The eight valid records contain the six steps above followed by update and
-normalization; the ninth deliberately faults without a token candidate.
-
-For both positions, all 120 simulated workers reached all eight barriers.
-The test reads the authenticated layer-0 `ssm_a`, `ssm_dt.bias` and
+The current fixture runs nine model operations, plus a diagnostic copy of the
+RMS activation before the recurrent output projection reuses its buffer. The
+eleventh record deliberately faults without a token candidate. For both
+positions, all 120 simulated workers reached all ten barriers. The test reads the authenticated layer-0 `ssm_a`, `ssm_dt.bias` and
 `ssm_norm.weight` tensors, and compares all 524,288 recurrent-state values
 and 4,096 gated outputs to an independent double-precision reference. Position
 0 ignores a supplied nonzero synthetic old state; position 1 uses it. Maximum
 absolute state/output errors were `1.260e-7`/`3.536e-7` and
-`2.005e-7`/`1.075e-6`, respectively (`/private/tmp/q35-resident-eight-shards-position0-final-20261125.log`
-and `/private/tmp/q35-resident-eight-shards-position1-final-20261125.log`).
+`2.005e-7`/`1.075e-6`, respectively. The final Q5_K recurrent output projection
+consumes those 4,096 outputs and matches an independent quantized reference
+across 2,560 values; maximum normalized errors were `5.035e-8` and `8.177e-8`
+(`/private/tmp/q35-resident-proj-position0-20261125.log` and
+`/private/tmp/q35-resident-proj-position1-20261125.log`). The pinned tiled
+`ssm_out.weight` SHA-256 `25d73bfd7e111e9a0f06f78ed11e4531cf645c3909aa7fa954d414181404dd13`
+matched an independent raw-GGUF transpose.
 The position-one fixture generator passed ASan/UBSan and reproduced the
-optimized output byte for byte; corrupted recurrent parameters and a sharded
-fixture paired with a non-sharded image were rejected. The F32 parameter
+optimized output byte for byte; corrupted recurrent parameters or projection
+weights and a sharded fixture paired with a non-sharded image were rejected. The F32 parameter
 hashes were independently checked against the raw GGUF. The sharded image
 used here is `/private/tmp/q35-delta-shard-helper-final4/driver/qwen35-resident-service-image`;
 its text and dispatch SHA-256 values are `e32fdf37720ac2abb88d13abeeb581becc756c7687cf2000ef9e42450f00b4f7`

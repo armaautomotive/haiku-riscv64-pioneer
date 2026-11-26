@@ -115,6 +115,18 @@ int main(int argc,char** argv)
         || !sourceModel.ReadPacked(unsigned(convTensor-sourceModel.Tensors().data()),0,
             unsigned(convWeights.size()),convWeights.data(),unsigned(convWeights.size()))) { fclose(source);return 1; }
 #ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+    const auto* outputTensor=sourceModel.Find("blk.0.ssm_out.weight");
+    std::vector<uint8_t> outputWeights(7208960);
+    if (!outputTensor || outputTensor->type!=13 || outputTensor->inputs!=DeltaInner
+        || outputTensor->outputs!=Hidden) { fclose(source);return 1; }
+    const unsigned outputIndex=unsigned(outputTensor-sourceModel.Tensors().data());
+    for (unsigned p=0;p*page.size()<outputWeights.size();p++) {
+        if (!reader.ReadPage(sourceModel,outputIndex,0,Hidden,p,page.data(),page.size())) {
+            fclose(source);return 1;
+        }
+        const size_t count=std::min(page.size(),outputWeights.size()-p*page.size());
+        std::memcpy(outputWeights.data()+p*page.size(),page.data(),count);
+    }
     std::vector<uint8_t> deltaParams(192*sizeof(float));
     const char* deltaNames[]={"blk.0.ssm_a","blk.0.ssm_dt.bias","blk.0.ssm_norm.weight"};
     const unsigned deltaSizes[]={32,32,128};
@@ -204,9 +216,33 @@ int main(int argc,char** argv)
     delta.stateRead={DeltaHeads,DeltaStateWords*4,1,1,{{0,0x24000000,0,DeltaHeads}}};
     delta.stateWrite={DeltaHeads,DeltaStateWords*4,1,1,{{0,0x25000000,0,DeltaHeads}}};
     if (!delta.Valid()) return 1;
-    constexpr unsigned recordCount=9;
+    // Preserve the RMS output for independent checking before the actual
+    // recurrent output projection overwrites activation slot 1.
+    DataflowResidualProgram rmsCheckpoint{};
+    rmsCheckpoint.mode=DataflowResidualSave;rmsCheckpoint.activationSlot=1;
+    std::memcpy(rmsCheckpoint.bankRoute,routes,sizeof(routes));
+    rmsCheckpoint.activation=model.activation[1];
+    rmsCheckpoint.residual={Hidden,4,1,16,{{0,0x21040000,0,Hidden}}};
+    if (!rmsCheckpoint.Valid()) return 1;
+    TensorSpace recurrentWeight{};recurrentWeight.type=13;recurrentWeight.inputs=DeltaInner;
+    recurrentWeight.place={Hidden,2816,1,16,{{0,0x2a000000,0,Hidden}}};
+    DataflowProjectionProgram recurrent{};PioneerQ35ProjectionProgram recurrentSchedule{};
+    if (!DataflowProgramBuilder::Build(recurrentWeight,conv.qkv,DeltaInner,model.activation[1],routes,
+            recurrent,recurrentSchedule,DataflowProjectionRecurrentVBase)
+        || recurrent.activeCores!=DataflowCoreCount) return 1;
+    auto recurrentInvocations=std::make_unique<DataflowCoreInvocation[]>(DataflowCoreCount);
+    auto recurrentSharing=std::make_unique<DataflowActivationSharePlan>();
+    for (unsigned core=0;core<DataflowCoreCount;core++)
+        if (!DataflowProgramBuilder::BindCore(recurrent,core,recurrentInvocations[core])
+            || !recurrentInvocations[core].assignment.active || !recurrentSharing->Add(recurrentInvocations[core])) return 1;
+    if (!recurrentSharing->Seal() || recurrentSharing->Groups()!=1) return 1;
+    for (unsigned core=0;core<DataflowCoreCount;core++)
+        if (!recurrentSharing->Get(core,recurrentInvocations[core].sharing) || !recurrentInvocations[core].Valid()) return 1;
+    constexpr unsigned recordCount=11;
+    constexpr unsigned postRmsStep=5;
 #else
     constexpr unsigned recordCount=7;
+    constexpr unsigned postRmsStep=4;
 #endif
     std::vector<DataflowGraphRunDescriptor> descriptors(DataflowCoreCount);
     std::vector<DataflowStreamRecord> records(DataflowCoreCount*recordCount);
@@ -232,16 +268,20 @@ int main(int argc,char** argv)
             || !DataflowStreamEncode(r,99,2,records[core*recordCount+1])
             || !DataflowRmsProgramBuilder::BindCore(rms,core,n)
             || !DataflowStreamEncode(n,99,3,records[core*recordCount+2])
-            || !DataflowStreamEncode(projections[core],99,4,records[core*recordCount+3])
-            || !DataflowStreamEncode(gateInvocations[core],99,5,records[core*recordCount+4])
+            || !DataflowStreamEncode(projections[core],99,postRmsStep,records[core*recordCount+postRmsStep-1])
+            || !DataflowStreamEncode(gateInvocations[core],99,postRmsStep+1,records[core*recordCount+postRmsStep])
             || !DataflowConvProgramBuilder::BindCore(conv,core,c)
-            || !DataflowStreamEncode(c,99,6,records[core*recordCount+5])) return 1;
+            || !DataflowStreamEncode(c,99,postRmsStep+2,records[core*recordCount+postRmsStep+1])) return 1;
 #ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+        DataflowResidualInvocation checkpoint{};
         DataflowDeltaShardInvocation update{},normalize{};
-        if (!DataflowDeltaShardBind(delta,core,DataflowDeltaShardUpdate,update)
+        if (!DataflowResidualProgramBuilder::BindCore(rmsCheckpoint,core,checkpoint)
+            || !DataflowStreamEncode(checkpoint,99,4,records[core*recordCount+3])
+            || !DataflowDeltaShardBind(delta,core,DataflowDeltaShardUpdate,update)
             || !DataflowDeltaShardBind(delta,core,DataflowDeltaShardNormalize,normalize)
-            || !DataflowStreamEncode(update,99,7,records[core*recordCount+6])
-            || !DataflowStreamEncode(normalize,99,8,records[core*recordCount+7])) return 1;
+            || !DataflowStreamEncode(update,99,8,records[core*recordCount+7])
+            || !DataflowStreamEncode(normalize,99,9,records[core*recordCount+8])
+            || !DataflowStreamEncode(recurrentInvocations[core],99,10,records[core*recordCount+9])) return 1;
 #endif
         // The final zero record deliberately terminates after the last barrier.
     }
@@ -266,14 +306,17 @@ int main(int argc,char** argv)
     std::vector<float> oldState(DeltaHeads*DeltaStateWords);
     for (size_t i=0;i<oldState.size();i++) oldState[i]=float(int((i*11)%97)-48)/1024.0f;
     const std::string paramsPath=directory+"/delta-params.bin",statePath=directory+"/delta-state.bin";
+    const std::string outputPath=directory+"/recurrent-output-weight.bin";
     const bool paramsWritten=WriteNew(paramsPath,deltaParams.data(),deltaParams.size());
     const bool stateWritten=paramsWritten && WriteNew(statePath,oldState.data(),oldState.size()*sizeof(float));
-    if (!stateWritten) {
+    const bool outputWritten=stateWritten && WriteNew(outputPath,outputWeights.data(),outputWeights.size());
+    if (!outputWritten) {
+        if (stateWritten) std::remove(statePath.c_str());
         if (paramsWritten) std::remove(paramsPath.c_str());
         for (const auto& path:paths) std::remove(path.c_str());
         return 1;
     }
-    std::puts("prepared authenticated 4B weights and eight synthetic resident graph steps; NO HARDWARE");
+    std::puts("prepared authenticated 4B weights and ten resident graph steps including one diagnostic copy; NO HARDWARE");
 #else
     std::puts("prepared authenticated 4B weights and six synthetic resident graph steps; NO HARDWARE");
 #endif

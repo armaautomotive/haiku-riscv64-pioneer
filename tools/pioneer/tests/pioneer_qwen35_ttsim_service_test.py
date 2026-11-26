@@ -14,16 +14,18 @@ from pathlib import Path
 import struct
 
 
-def projection_reference(fixture, quant, input_offset, tile, rows=1920, weight_offset=0):
+def projection_reference(fixture, quant, input_offset, tile, rows=1920, weight_offset=0, input_rows=2560):
     """Independently decode byte-major Q4_K, Q5_K, Q6_K or Q8_0 on the host.
 
     This is an offline reference for the simulator fixture, not an inference
     path. The fixed synthetic fixture has exactly representable outputs;
     real model weights require a floating-point tolerance.
     """
-    inputs = struct.unpack_from('<2560f', fixture, input_offset)
+    if input_rows <= 0 or input_rows % (32 if quant == 'q8' else 256):
+        raise ValueError('invalid reference projection input width')
+    inputs = struct.unpack_from(f'<{input_rows}f', fixture, input_offset)
     block_bytes = {'q4': 144, 'q5': 176, 'q6': 210, 'q8': 34}[quant]
-    blocks = 80 if quant == 'q8' else 10
+    blocks = input_rows // (32 if quant == 'q8' else 256)
     values, norms = [], []
     for row in range(rows):
         total = 0.0
@@ -442,7 +444,7 @@ def main():
             if delta_params_path.exists() != delta_state_path.exists():
                 raise ValueError('incomplete sharded recurrence fixture')
             sharded = delta_params_path.exists()
-            record_count = 9 if sharded else 7
+            record_count = 11 if sharded else 7
             if (len(command) != 128 or len(records) != 120 * record_count * 2048 or len(weights) != 33920
                     or hashlib.sha256(weights).hexdigest()
                     != 'd784c0b7fe8df8aab8d4797a8ea5a2c25b5db49a84c60a3ad93819086355871d'
@@ -463,7 +465,10 @@ def main():
                 raise ValueError('unexpected synthetic convolution history')
             if sharded:
                 delta_params, delta_state = delta_params_path.read_bytes(), delta_state_path.read_bytes()
-                if (len(delta_params) != 768 or len(delta_state) != 32 * 128 * 128 * 4
+                output_weight = (directory / 'recurrent-output-weight.bin').read_bytes()
+                if (len(output_weight) != 7208960 or hashlib.sha256(output_weight).hexdigest()
+                        != '25d73bfd7e111e9a0f06f78ed11e4531cf645c3909aa7fa954d414181404dd13'
+                        or len(delta_params) != 768 or len(delta_state) != 32 * 128 * 128 * 4
                         or hashlib.sha256(delta_params[:128]).hexdigest()
                         != '9d3fe9c2ddd97e58d62c12f113d62456850618bbd9117d584064bf23eaa0c9e7'
                         or hashlib.sha256(delta_params[128:256]).hexdigest()
@@ -526,7 +531,8 @@ def main():
                                          (0x23001000, delta_params[128:256]),
                                          (0x23002000, delta_params[256:]),
                                          (0x24000000, delta_state),
-                                         (0x25000000, struct.pack('<524288I', *([0x7fc00000] * 524288)))):
+                                         (0x25000000, struct.pack('<524288I', *([0x7fc00000] * 524288))),
+                                         (0x2a000000, output_weight)):
                     offset = 0
                     while offset < len(payload):
                         current = address + offset
@@ -538,7 +544,8 @@ def main():
                 select(2, address, 18, 12)
                 write(bar + 0x400000 + (address & 0x1fffff),
                       struct.pack('<2560I', *([0x7fc00000] * 2560)))
-            for address, rows in ((0x21000000, 8192), (0x21010000, 32), (0x21020000, 32), (0x21030000, 4096)):
+            for address, rows in ((0x21000000, 8192), (0x21010000, 32), (0x21020000, 32),
+                                  (0x21030000, 4096), (0x21040000, 2560)):
                 select(2, address, 18, 12)
                 write(bar + 0x400000 + (address & 0x1fffff),
                       struct.pack(f'<{rows}I', *([0x7fc00000] * rows)))
@@ -578,7 +585,9 @@ def main():
                       f'maximum absolute error {maximum:.9g}', flush=True)
             norm_weights = struct.unpack('<2560f', norm)
             rms_scale = 1.0 / math.sqrt(sum(value * value for value in expected) / 2560 + 1e-6)
-            address = 0x20020000
+            # The sharded graph copies RMS aside before the recurrent output
+            # projection reuses the normalized activation buffer.
+            address = 0x21040000 if sharded else 0x20020000
             select(2, address, 18, 12)
             actual = struct.unpack('<2560f', read(bar + 0x400000 + (address & 0x1fffff), 2560 * 4))
             maximum = 0.0
@@ -709,6 +718,21 @@ def main():
                             raise RuntimeError(f'recurrent output {head}:{lane}: {got} differs from {want}')
                 print(f'sharded recurrence: 524288 state values and 4096 outputs match independent '
                       f'position-{position} reference; max absolute errors {state_max:.9g}, {output_max:.9g}', flush=True)
+                recurrent_input = struct.pack('<4096f',
+                    *quantized_activation_reference(conv_actual[4096:], 'q5'))
+                reference, norms = projection_reference(output_weight + recurrent_input, 'q5',
+                    len(output_weight), 2816, 2560, input_rows=4096)
+                select(2, 0x20020000, 18, 12)
+                output = struct.unpack('<2560f', read(bar + 0x400000 + (0x20020000 & 0x1fffff), 2560 * 4))
+                maximum = worst = 0.0
+                for row, (got, want, magnitude) in enumerate(zip(output, reference, norms)):
+                    error = abs(got - want)
+                    ratio = error / max(1.0, magnitude)
+                    maximum, worst = max(maximum, error), max(worst, ratio)
+                    if not math.isfinite(got) or ratio > 2e-6:
+                        raise RuntimeError(f'recurrent projection row {row}: {got} differs from {want}')
+                print(f'recurrent output projection: 2560 values match independent Q5_K reference; '
+                      f'maximum absolute error {maximum:.9g}, normalized error {worst:.9g}', flush=True)
             select_worker(0)
             if struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
                 raise RuntimeError('intentionally faulted sequence published a candidate')
