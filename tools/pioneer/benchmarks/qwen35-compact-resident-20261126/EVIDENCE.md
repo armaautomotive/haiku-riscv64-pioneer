@@ -8,6 +8,13 @@ starts, and remain part of the existing held-fleet checks. The earlier fixture
 did not model these addresses, so using it with the fused graph correctly
 failed startup; this was a fixture limitation, not a device result.
 
+The real template installer and held-service setup also passed with the fused
+tree configuration against fake per-core MMIO, including their existing
+failure cases. The reusable test is
+`tests/pioneer_qwen35_fused_resident_templates_test.py`. A fused tree resident
+model host probe cross-compiled for Haiku/RISC-V. Both checks are now in the
+dataflow target suite.
+
 With the fused graph and tree settlement selected, the actual resident-owned
 runner and driver owner passed their simulated tests. Additional tests using
 explicitly simulated permission covered reuse of a transport and two authority
@@ -16,8 +23,10 @@ matching simulated recovery evidence. Ordinary and paired controls passed as
 well; see `/private/tmp/q35-resident-owned-modes-final-20261126.log`,
 `/private/tmp/q35-resident-owner-modes-final-20261126.log`, and
 `/private/tmp/q35-resident-{cache,recovery,close_fault}-tree-fused-20261126.log`.
-The broader target suite started before these fixture and test edits, so its
-result will not by itself validate this final source state. These tests use
+The broader target suite exited zero (`/private/tmp/q35-fused-metadata-target-suite-20261126.log`),
+but started before these fixture and test edits, so it does not by itself
+validate the final source state. The affected tests were rerun separately.
+These tests use
 fake MMIO and simulated authority; they do not qualify real firmware exclusion,
 physical owner lifetimes, launch, recovery or throughput. No card was accessed.
 

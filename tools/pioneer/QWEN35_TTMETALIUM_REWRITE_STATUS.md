@@ -1,5 +1,12 @@
 # Latest offline checks, 2026-11-26
 
+The fused tree graph's template installer and held-service integration passed
+with fake per-core MMIO, and the fused tree resident-model host probe
+cross-compiled for Haiku/RISC-V. Both are now included in the target suite.
+The prior broad target suite exited zero, but overlapped fixture and test
+edits; the affected checks were separately rerun. No physical launch,
+recovery or decode rate is established.
+
 The compact graph's higher-level resident runner and driver owner now pass
 simulated tests in fused and tree-fused modes. The fake service fixture was
 extended to clear and verify both previously unmodeled activation-sharing

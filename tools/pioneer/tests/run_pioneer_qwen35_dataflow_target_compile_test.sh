@@ -1316,6 +1316,15 @@ python3 -B "$directory/pioneer_qwen35_selected_service_image_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_graph_owner_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_model_transaction_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_graph_session_test.py"
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffp-contract=off \
+	-DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+	-DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS \
+	-DPIONEER_QWEN35_PAIRED_RECURRENCE -DPIONEER_QWEN35_FUSED_RECURRENCE \
+	-DPIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY -DPIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY \
+	-DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS -DPIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY \
+	-DPIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY -DPIONEER_QWEN35_TREE_SETTLEMENT \
+	-I"$sdk/headers" -I"$sdk/headers/os" -idirafter "$sdk/headers/posix" \
+	-c "$directory/pioneer_qwen35_resident_model_target_probe.cpp" -o "$temporary/fused-resident-model-haiku.o"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	"$directory/pioneer_qwen35_rms_save_graph_test.cpp" -o "$temporary/fused-rms-save-graph-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fused-rms-save-graph-test"
@@ -1384,6 +1393,7 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/res
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	"$directory/pioneer_qwen35_resident_template_service_integration_test.cpp" -o "$temporary/resident-template-integration-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-template-integration-test"
+python3 -B "$directory/pioneer_qwen35_fused_resident_templates_test.py"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
 	"$directory/pioneer_qwen35_resident_service_test.cpp" -o "$temporary/resident-service-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/resident-service-test"
