@@ -11,6 +11,7 @@
 #include "../PioneerQwen35DataflowResidentDispatch.h"
 #include "../PioneerQwen35DataflowResidualProgram.h"
 #include "../PioneerQwen35DataflowRmsProgram.h"
+#include "../PioneerQwen35DataflowSiluProgram.h"
 #include "../PioneerQwen35DataflowProjectionPair.h"
 #include "../PioneerQwen35DataflowActivationSharePlan.h"
 #include "../PioneerQwen35TiledReader.h"
@@ -127,6 +128,28 @@ int main(int argc,char** argv)
         const size_t count=std::min(page.size(),outputWeights.size()-p*page.size());
         std::memcpy(outputWeights.data()+p*page.size(),page.data(),count);
     }
+    const auto* ffnNormTensor=sourceModel.Find("blk.0.post_attention_norm.weight");
+    std::vector<uint8_t> ffnNorm(Hidden*sizeof(float));
+    if (!ffnNormTensor || ffnNormTensor->type!=0 || ffnNormTensor->inputs!=Hidden || ffnNormTensor->outputs!=1
+        || !sourceModel.ReadPacked(unsigned(ffnNormTensor-sourceModel.Tensors().data()),0,
+            unsigned(ffnNorm.size()),ffnNorm.data(),unsigned(ffnNorm.size()))) { fclose(source);return 1; }
+    const char* ffnNames[]={"blk.0.ffn_gate.weight","blk.0.ffn_up.weight","blk.0.ffn_down.weight"};
+    const unsigned ffnInputs[]={Hidden,Hidden,Ffn},ffnRows[]={Ffn,Ffn,Hidden};
+    const unsigned ffnTypes[]={12,12,14},ffnSizes[]={13271040,13271040,19537920};
+    const unsigned ffnOffsets[]={0,13271040,26542080};
+    std::vector<uint8_t> ffnWeights(46080000);
+    for (unsigned n=0;n<3;n++) {
+        const auto* t=sourceModel.Find(ffnNames[n]);
+        if (!t || t->type!=ffnTypes[n] || t->inputs!=ffnInputs[n] || t->outputs!=ffnRows[n]) { fclose(source);return 1; }
+        const unsigned tensorIndex=unsigned(t-sourceModel.Tensors().data());
+        for (unsigned p=0;p*page.size()<ffnSizes[n];p++) {
+            if (!reader.ReadPage(sourceModel,tensorIndex,0,ffnRows[n],p,page.data(),page.size())) {
+                fclose(source);return 1;
+            }
+            const size_t count=std::min(page.size(),size_t(ffnSizes[n])-p*page.size());
+            std::memcpy(ffnWeights.data()+ffnOffsets[n]+p*page.size(),page.data(),count);
+        }
+    }
     std::vector<uint8_t> deltaParams(192*sizeof(float));
     const char* deltaNames[]={"blk.0.ssm_a","blk.0.ssm_dt.bias","blk.0.ssm_norm.weight"};
     const unsigned deltaSizes[]={32,32,128};
@@ -238,7 +261,52 @@ int main(int argc,char** argv)
     if (!recurrentSharing->Seal() || recurrentSharing->Groups()!=1) return 1;
     for (unsigned core=0;core<DataflowCoreCount;core++)
         if (!recurrentSharing->Get(core,recurrentInvocations[core].sharing) || !recurrentInvocations[core].Valid()) return 1;
-    constexpr unsigned recordCount=11;
+    auto makeResidual=[&](unsigned mode,unsigned slot,unsigned destination) {
+        DataflowResidualProgram p{};p.mode=mode;p.activationSlot=slot;
+        std::memcpy(p.bankRoute,routes,sizeof(routes));p.activation=model.activation[slot];
+        p.residual={Hidden,4,1,16,{{0,destination,0,Hidden}}};return p;
+    };
+    auto recurrentCheckpoint=makeResidual(DataflowResidualSave,1,0x21060000);
+    auto embeddingCheckpoint=makeResidual(DataflowResidualSave,0,0x21080000);
+    auto attentionAdd=makeResidual(DataflowResidualAdd,1,0x20010000);
+    auto ffnSave=makeResidual(DataflowResidualSave,1,0x20010000);
+    auto ffnNormCheckpoint=makeResidual(DataflowResidualSave,0,0x21070000);
+    auto finalAdd=makeResidual(DataflowResidualAdd,0,0x20010000);
+    if (!recurrentCheckpoint.Valid() || !embeddingCheckpoint.Valid() || !attentionAdd.Valid()
+        || !ffnSave.Valid() || !ffnNormCheckpoint.Valid() || !finalAdd.Valid()) return 1;
+    model.layers[0].weights[PostAttentionNorm].type=0;
+    model.layers[0].weights[PostAttentionNorm].inputs=Hidden;
+    model.layers[0].weights[PostAttentionNorm].place={1,Hidden*4,1,1,{{0,0x20050000,0,1}}};
+    DataflowRmsProgram postRms{};
+    if (!DataflowRmsProgramBuilder::Build(model,0,PostAttentionNorm,1,0,routes,postRms)) return 1;
+    const RowSpace upOutput{Ffn,4,1,16,{{0,0x21050000,0,Ffn}}};
+    auto ffnPrograms=std::make_unique<DataflowProjectionProgram[]>(3);
+    auto ffnInvocations=std::make_unique<DataflowCoreInvocation[]>(3*DataflowCoreCount);
+    const unsigned weightBases[]={0x30000000,0x31000000,0x32000000};
+    for (unsigned n=0;n<3;n++) {
+        TensorSpace weight{};weight.type=ffnTypes[n];weight.inputs=ffnInputs[n];
+        weight.place={ffnRows[n],(ffnInputs[n]/256)*(n==2?212:144),1,16,{{0,weightBases[n],0,ffnRows[n]}}};
+        const RowSpace& input=n==2?model.activation[1]:model.activation[0];
+        const RowSpace& output=n==0?model.activation[1]:n==1?upOutput:model.activation[0];
+        PioneerQ35ProjectionProgram schedule{};
+        if (!DataflowProgramBuilder::Build(weight,input,ffnInputs[n],output,routes,ffnPrograms[n],schedule)
+            || ffnPrograms[n].activeCores!=DataflowCoreCount) return 1;
+        auto plan=std::make_unique<DataflowActivationSharePlan>();
+        for (unsigned core=0;core<DataflowCoreCount;core++) {
+            auto& invocation=ffnInvocations[n*DataflowCoreCount+core];
+            if (!DataflowProgramBuilder::BindCore(ffnPrograms[n],core,invocation)
+                || !invocation.assignment.active || !plan->Add(invocation)) return 1;
+        }
+        if (!plan->Seal() || plan->Groups()!=1) return 1;
+        for (unsigned core=0;core<DataflowCoreCount;core++) {
+            auto& invocation=ffnInvocations[n*DataflowCoreCount+core];
+            if (!plan->Get(core,invocation.sharing) || !invocation.Valid()) return 1;
+        }
+    }
+    DataflowSiluProgram silu{};silu.gateSlot=1;silu.gate=model.activation[1];silu.up=upOutput;
+    std::memcpy(silu.bankRoute,routes,sizeof(routes));
+    if (!silu.Valid()) return 1;
+    constexpr unsigned recordCount=22;
     constexpr unsigned postRmsStep=5;
 #else
     constexpr unsigned recordCount=7;
@@ -282,6 +350,23 @@ int main(int argc,char** argv)
             || !DataflowStreamEncode(update,99,8,records[core*recordCount+7])
             || !DataflowStreamEncode(normalize,99,9,records[core*recordCount+8])
             || !DataflowStreamEncode(recurrentInvocations[core],99,10,records[core*recordCount+9])) return 1;
+        auto emitResidual=[&](const DataflowResidualProgram& program,unsigned step) {
+            DataflowResidualInvocation invocation{};
+            return DataflowResidualProgramBuilder::BindCore(program,core,invocation)
+                && DataflowStreamEncode(invocation,99,step,records[core*recordCount+step-1]);
+        };
+        DataflowRmsInvocation postNorm{};DataflowSiluInvocation activation{};
+        if (!emitResidual(recurrentCheckpoint,11) || !emitResidual(embeddingCheckpoint,12)
+            || !emitResidual(attentionAdd,13) || !emitResidual(ffnSave,14)
+            || !DataflowRmsProgramBuilder::BindCore(postRms,core,postNorm)
+            || !DataflowStreamEncode(postNorm,99,15,records[core*recordCount+14])
+            || !emitResidual(ffnNormCheckpoint,16)
+            || !DataflowStreamEncode(ffnInvocations[core],99,17,records[core*recordCount+16])
+            || !DataflowStreamEncode(ffnInvocations[DataflowCoreCount+core],99,18,records[core*recordCount+17])
+            || !DataflowSiluProgramBuilder::BindCore(silu,core,activation)
+            || !DataflowStreamEncode(activation,99,19,records[core*recordCount+18])
+            || !DataflowStreamEncode(ffnInvocations[2*DataflowCoreCount+core],99,20,records[core*recordCount+19])
+            || !emitResidual(finalAdd,21)) return 1;
 #endif
         // The final zero record deliberately terminates after the last barrier.
     }
@@ -310,13 +395,18 @@ int main(int argc,char** argv)
     const bool paramsWritten=WriteNew(paramsPath,deltaParams.data(),deltaParams.size());
     const bool stateWritten=paramsWritten && WriteNew(statePath,oldState.data(),oldState.size()*sizeof(float));
     const bool outputWritten=stateWritten && WriteNew(outputPath,outputWeights.data(),outputWeights.size());
-    if (!outputWritten) {
+    const std::string ffnNormPath=directory+"/ffn-norm.bin",ffnWeightsPath=directory+"/ffn-weights.bin";
+    const bool ffnNormWritten=outputWritten && WriteNew(ffnNormPath,ffnNorm.data(),ffnNorm.size());
+    const bool ffnWritten=ffnNormWritten && WriteNew(ffnWeightsPath,ffnWeights.data(),ffnWeights.size());
+    if (!ffnWritten) {
+        if (ffnNormWritten) std::remove(ffnNormPath.c_str());
+        if (outputWritten) std::remove(outputPath.c_str());
         if (stateWritten) std::remove(statePath.c_str());
         if (paramsWritten) std::remove(paramsPath.c_str());
         for (const auto& path:paths) std::remove(path.c_str());
         return 1;
     }
-    std::puts("prepared authenticated 4B weights and ten resident graph steps including one diagnostic copy; NO HARDWARE");
+    std::puts("prepared authenticated 4B recurrent layer and four diagnostic copies; NO HARDWARE");
 #else
     std::puts("prepared authenticated 4B weights and six synthetic resident graph steps; NO HARDWARE");
 #endif

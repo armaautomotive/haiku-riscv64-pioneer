@@ -444,7 +444,7 @@ def main():
             if delta_params_path.exists() != delta_state_path.exists():
                 raise ValueError('incomplete sharded recurrence fixture')
             sharded = delta_params_path.exists()
-            record_count = 11 if sharded else 7
+            record_count = 22 if sharded else 7
             if (len(command) != 128 or len(records) != 120 * record_count * 2048 or len(weights) != 33920
                     or hashlib.sha256(weights).hexdigest()
                     != 'd784c0b7fe8df8aab8d4797a8ea5a2c25b5db49a84c60a3ad93819086355871d'
@@ -466,7 +466,12 @@ def main():
             if sharded:
                 delta_params, delta_state = delta_params_path.read_bytes(), delta_state_path.read_bytes()
                 output_weight = (directory / 'recurrent-output-weight.bin').read_bytes()
-                if (len(output_weight) != 7208960 or hashlib.sha256(output_weight).hexdigest()
+                ffn_norm = (directory / 'ffn-norm.bin').read_bytes()
+                ffn_weights = (directory / 'ffn-weights.bin').read_bytes()
+                if (len(ffn_norm) != 10240 or hashlib.sha256(ffn_norm).hexdigest()
+                        != '37ec1c3c62e961a58c845390743988f5e35a33aaa667a3fec5e60c43d01508ee'
+                        or len(ffn_weights) != 46080000
+                        or len(output_weight) != 7208960 or hashlib.sha256(output_weight).hexdigest()
                         != '25d73bfd7e111e9a0f06f78ed11e4531cf645c3909aa7fa954d414181404dd13'
                         or len(delta_params) != 768 or len(delta_state) != 32 * 128 * 128 * 4
                         or hashlib.sha256(delta_params[:128]).hexdigest()
@@ -476,6 +481,11 @@ def main():
                         or hashlib.sha256(delta_params[256:]).hexdigest()
                         != 'fecbf8328e83d0ed32ba85dcc096a922381da16fd22e430752a336bae198b701'):
                     raise ValueError('unexpected recurrent parameters or state size')
+                for first, size, digest in ((0, 13271040, 'a1edf952279392b0bb90de57ffe3da54196cd68ecf33ae84ca262ac46801ac3a'),
+                                            (13271040, 13271040, '5ec20ef4178d2397995cb5631c446bad2cc007142e6c9cb90e243c8727e83182'),
+                                            (26542080, 19537920, 'dd954f3958a3c1db4f8f23b87fe4769f4811f4b16ea954c2da9b91de08038dd7')):
+                    if hashlib.sha256(ffn_weights[first:first + size]).hexdigest() != digest:
+                        raise ValueError('feed-forward weights do not match pinned model')
                 old_state = struct.unpack('<524288f', delta_state)
                 if any(value != ((i * 11) % 97 - 48) / 1024.0 for i, value in enumerate(old_state)):
                     raise ValueError('unexpected synthetic recurrent state')
@@ -532,7 +542,11 @@ def main():
                                          (0x23002000, delta_params[256:]),
                                          (0x24000000, delta_state),
                                          (0x25000000, struct.pack('<524288I', *([0x7fc00000] * 524288))),
-                                         (0x2a000000, output_weight)):
+                                         (0x2a000000, output_weight),
+                                         (0x20050000, ffn_norm),
+                                         (0x30000000, ffn_weights[:13271040]),
+                                         (0x31000000, ffn_weights[13271040:26542080]),
+                                         (0x32000000, ffn_weights[26542080:])):
                     offset = 0
                     while offset < len(payload):
                         current = address + offset
@@ -545,7 +559,8 @@ def main():
                 write(bar + 0x400000 + (address & 0x1fffff),
                       struct.pack('<2560I', *([0x7fc00000] * 2560)))
             for address, rows in ((0x21000000, 8192), (0x21010000, 32), (0x21020000, 32),
-                                  (0x21030000, 4096), (0x21040000, 2560)):
+                                  (0x21030000, 4096), (0x21040000, 2560), (0x21050000, 9216),
+                                  (0x21060000, 2560), (0x21070000, 2560), (0x21080000, 2560)):
                 select(2, address, 18, 12)
                 write(bar + 0x400000 + (address & 0x1fffff),
                       struct.pack(f'<{rows}I', *([0x7fc00000] * rows)))
@@ -573,7 +588,8 @@ def main():
                         or words[9:15] != (0x31464735, 1, record_count - 1, 120, 0x80000004, 0)
                         or words[15] != core):
                     raise RuntimeError(f'core {core}: sequence failed before all {record_count - 1} barriers: {words}')
-            for name, address in (('embedding', 0x20000000), ('residual save', 0x20010000)):
+            for name, address in ((('embedding checkpoint', 0x21080000),) if sharded else
+                                  (('embedding', 0x20000000), ('residual save', 0x20010000))):
                 select(2, address, 18, 12)
                 actual = struct.unpack('<2560f', read(bar + 0x400000 + (address & 0x1fffff), 2560 * 4))
                 maximum = 0.0
@@ -722,8 +738,8 @@ def main():
                     *quantized_activation_reference(conv_actual[4096:], 'q5'))
                 reference, norms = projection_reference(output_weight + recurrent_input, 'q5',
                     len(output_weight), 2816, 2560, input_rows=4096)
-                select(2, 0x20020000, 18, 12)
-                output = struct.unpack('<2560f', read(bar + 0x400000 + (0x20020000 & 0x1fffff), 2560 * 4))
+                select(2, 0x21060000, 18, 12)
+                output = struct.unpack('<2560f', read(bar + 0x400000 + (0x21060000 & 0x1fffff), 2560 * 4))
                 maximum = worst = 0.0
                 for row, (got, want, magnitude) in enumerate(zip(output, reference, norms)):
                     error = abs(got - want)
@@ -732,6 +748,61 @@ def main():
                     if not math.isfinite(got) or ratio > 2e-6:
                         raise RuntimeError(f'recurrent projection row {row}: {got} differs from {want}')
                 print(f'recurrent output projection: 2560 values match independent Q5_K reference; '
+                      f'maximum absolute error {maximum:.9g}, normalized error {worst:.9g}', flush=True)
+                select(2, 0x20010000, 18, 12)
+                residual_saved = struct.unpack('<2560f', read(bar + 0x400000 + (0x20010000 & 0x1fffff), 10240))
+                for row, (got, embedding_value, projected) in enumerate(zip(residual_saved, expected, output)):
+                    want = embedding_value + projected
+                    if not math.isfinite(got) or abs(got - want) > 2e-6 * max(1.0, abs(want)):
+                        raise RuntimeError(f'attention residual row {row}: {got} differs from {want}')
+                print('attention residual: 2560 values match independent sum', flush=True)
+                select(2, 0x21070000, 18, 12)
+                ffn_rms = struct.unpack('<2560f', read(bar + 0x400000 + (0x21070000 & 0x1fffff), 10240))
+                post_weights = struct.unpack('<2560f', ffn_norm)
+                rms_scale = 1.0 / math.sqrt(sum(value * value for value in residual_saved) / 2560 + 1e-6)
+                maximum = 0.0
+                for row, (got, value, weight) in enumerate(zip(ffn_rms, residual_saved, post_weights)):
+                    want = value * rms_scale * weight
+                    maximum = max(maximum, abs(got - want))
+                    if not math.isfinite(got) or abs(got - want) > 2e-5 * max(1.0, abs(want)):
+                        raise RuntimeError(f'post-attention RMS row {row}: {got} differs from {want}')
+                print(f'post-attention RMS: 2560 values match independent reference; maximum error {maximum:.9g}', flush=True)
+                ffn_input = struct.pack('<2560f', *quantized_activation_reference(ffn_rms, 'q4'))
+                ffn_fixture = ffn_weights + ffn_input
+                gate_ref, gate_norms = projection_reference(ffn_fixture, 'q4', len(ffn_weights), 2304, 9216, 0)
+                up_ref, up_norms = projection_reference(ffn_fixture, 'q4', len(ffn_weights), 2304, 9216, 13271040)
+                select(2, 0x21050000, 18, 12)
+                up_actual = struct.unpack('<9216f', read(bar + 0x400000 + (0x21050000 & 0x1fffff), 9216 * 4))
+                select(2, 0x20020000, 18, 12)
+                silu_actual = struct.unpack('<9216f', read(bar + 0x400000 + (0x20020000 & 0x1fffff), 9216 * 4))
+                up_worst = silu_worst = 0.0
+                for row, (up, want_up, up_magnitude, gate, gate_magnitude, result) in enumerate(
+                        zip(up_actual, up_ref, up_norms, gate_ref, gate_norms, silu_actual)):
+                    ratio = abs(up - want_up) / max(1.0, up_magnitude)
+                    up_worst = max(up_worst, ratio)
+                    want = gate / (1.0 + math.exp(-gate)) * up
+                    scale = max(1.0, abs(want), gate_magnitude * abs(up))
+                    error = abs(result - want) / scale
+                    silu_worst = max(silu_worst, error)
+                    if not math.isfinite(up) or ratio > 2e-6 or not math.isfinite(result) or error > 2e-5:
+                        raise RuntimeError(f'FFN gate/up/SiLU row {row}: output {result}, expected {want}; '
+                                           f'up normalized error {ratio}, activation normalized error {error}')
+                print(f'FFN up and gated SiLU: 9216 values match independent references; '
+                      f'maximum normalized errors {up_worst:.9g}, {silu_worst:.9g}', flush=True)
+                down_input = struct.pack('<9216f', *quantized_activation_reference(silu_actual, 'q6'))
+                down_ref, down_norms = projection_reference(ffn_weights + down_input, 'q6',
+                    len(ffn_weights), 3392, 2560, 26542080, input_rows=9216)
+                select(2, 0x20000000, 18, 12)
+                final = struct.unpack('<2560f', read(bar + 0x400000 + (0x20000000 & 0x1fffff), 10240))
+                worst = maximum = 0.0
+                for row, (got, down, magnitude, skip) in enumerate(zip(final, down_ref, down_norms, residual_saved)):
+                    want = down + skip
+                    error = abs(got - want)
+                    ratio = error / max(1.0, magnitude, abs(want))
+                    worst, maximum = max(worst, ratio), max(maximum, error)
+                    if not math.isfinite(got) or ratio > 2e-6:
+                        raise RuntimeError(f'FFN down/residual row {row}: {got} differs from {want}')
+                print(f'FFN down and final residual: 2560 values match independent Q6_K reference; '
                       f'maximum absolute error {maximum:.9g}, normalized error {worst:.9g}', flush=True)
             select_worker(0)
             if struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:

@@ -113,10 +113,10 @@ update and normalization. Compile its fixture generator with the additional
 with position `0` or `1`, and pass that directory to the same simulator command
 with the sharded resident image (`delta-shard.marker`) and compatible roles.
 The image and fixture marker check rejects a sharded/non-sharded mismatch.
-The current fixture runs nine model operations, plus a diagnostic copy of the
-RMS activation before the recurrent output projection reuses its buffer. The
-eleventh record deliberately faults without a token candidate. For both
-positions, all 120 simulated workers reached all ten barriers. The test reads the authenticated layer-0 `ssm_a`, `ssm_dt.bias` and
+The current fixture runs the complete first recurrent layer: 17 model
+operations and four diagnostic copies of intermediate values before buffer
+reuse. The twenty-second record deliberately faults without a token candidate.
+For both positions, all 120 simulated workers reached all 21 barriers. The test reads the authenticated layer-0 `ssm_a`, `ssm_dt.bias` and
 `ssm_norm.weight` tensors, and compares all 524,288 recurrent-state values
 and 4,096 gated outputs to an independent double-precision reference. Position
 0 ignores a supplied nonzero synthetic old state; position 1 uses it. Maximum
@@ -127,10 +127,19 @@ across 2,560 values; maximum normalized errors were `5.035e-8` and `8.177e-8`
 (`/private/tmp/q35-resident-proj-position0-20261125.log` and
 `/private/tmp/q35-resident-proj-position1-20261125.log`). The pinned tiled
 `ssm_out.weight` SHA-256 `25d73bfd7e111e9a0f06f78ed11e4531cf645c3909aa7fa954d414181404dd13`
-matched an independent raw-GGUF transpose.
-The position-one fixture generator passed ASan/UBSan and reproduced the
-optimized output byte for byte; corrupted recurrent parameters or projection
-weights and a sharded fixture paired with a non-sharded image were rejected. The F32 parameter
+matched an independent raw-GGUF transpose. The subsequent attention residual,
+post-attention RMS, Q4_K feed-forward gate/up, gated SiLU, Q6_K down projection
+and final residual were checked against independent references. All 9,216 up
+and gated activation values and all 2,560 final outputs matched; the worst
+normalized final-output errors were `1.045e-7` for position 0 and `1.338e-7`
+for position 1 (`/private/tmp/q35-resident-layer-position0-20261125.log` and
+`/private/tmp/q35-resident-layer-position1-20261125.log`). The gate, up and
+down tiled weights were independently transposed from the raw GGUF, and the
+post-attention norm was independently checked from the file. The position-one
+fixture generator passed ASan/UBSan and reproduced the optimized output byte
+for byte; corrupted feed-forward weights were rejected. A non-sharded fixture
+still reproduces its earlier bytes. Previous checks also rejected corrupted
+recurrent parameters and a sharded fixture paired with a non-sharded image. The F32 parameter
 hashes were independently checked against the raw GGUF. The sharded image
 used here is `/private/tmp/q35-delta-shard-helper-final4/driver/qwen35-resident-service-image`;
 its text and dispatch SHA-256 values are `e32fdf37720ac2abb88d13abeeb581becc756c7687cf2000ef9e42450f00b4f7`
