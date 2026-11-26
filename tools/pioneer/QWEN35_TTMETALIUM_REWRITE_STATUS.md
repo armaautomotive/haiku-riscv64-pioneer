@@ -1,5 +1,12 @@
 # Latest offline checks, 2026-11-26
 
+An isolated final-layer replay from the baseline's captured layer-30 input
+passed the 120-worker audit and all 2,560 reference comparisons (maximum
+absolute difference `1.90734863e-05`). An independent offline CPU reference
+selected token `261` after retaining the exact replay output. This does not
+yet establish the running full simulator's own final output or candidate;
+the layer-30 capture remains provisional. No card was accessed.
+
 The baseline simulation's six additional same-input checks from layer 24→25
 through 29→30 passed the existing tolerance. The 32-layer capture is still
 running, so these snapshots remain provisional until its worker and candidate

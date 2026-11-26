@@ -1,5 +1,26 @@
 # Recorded mixed-layer and full-decode simulator work, 2026-11-25
 
+## Final-layer replay from captured layer 30, 2026-11-26
+
+An isolated layer-31 replay used the exact provisional layer-30 activation
+from the running baseline capture. All 120 workers' 17 replay records matched
+the original decode fixture's steps 504–520 after sequence renumbering, and
+each worker's next record was the intentional fault. The replay completed
+the worker audit and matched all 2,560 values against an independently
+authenticated CPU continuation within the existing tolerance (maximum
+absolute difference `1.90734863e-05`). The reference retained the exact
+replacement input. Log:
+`/private/tmp/q35-baseline-layer31-chained-sim-20261126.log`.
+
+Separately, the CPU reference retained the exact simulated layer-31 output
+and selected token `261`; log:
+`/private/tmp/q35-baseline-layer31-chained-token-reference-20261126.log`.
+This token check is offline reference work, not Work-mode inference. The
+running full simulation has not yet produced or audited its final layer or
+candidate, so the input snapshot and this replay are provisional and cannot
+establish a full decode, warm runs, physical recovery or throughput. No card
+was accessed.
+
 ## Provisional transitions through layer 30, 2026-11-26
 
 The baseline capture's same-input CPU checks passed all six transitions from
