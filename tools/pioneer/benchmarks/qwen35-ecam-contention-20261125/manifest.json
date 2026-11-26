@@ -14,5 +14,6 @@
     "Sg2042RootPolicy.h": "c79178e8fd666b1ea23a139cd26fb9d0618942d45f092343a411ab93db938d4e"
   },
   "jam_actions_sha256": "a9481a4b70b7cf9a9a817a6f36dfba08aa962a9f2b7f39c68577d96b79dcebbb",
-  "installed_or_booted": false
+  "installed_or_booted": true,
+  "boot_observation": "Isolated candidate booted; 75/75 exported symbol tuples match; not a full running-image hash"
 }

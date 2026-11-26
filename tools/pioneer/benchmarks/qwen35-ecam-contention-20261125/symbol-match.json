@@ -1,0 +1,26 @@
+{
+  "inventory_sha256": "11d6cf21f5ecec056dc1dbe602513359d7c4d986099f28daeb5f085610454076",
+  "results": [
+    {
+      "reference": "/private/tmp/q35-ecam-contention-repro3-20261125/qualification/ecam",
+      "reference_sha256": "190980822c2587dc013326e1ae144851f26a2ecc70b303c4eb392ebd15c6f3a2",
+      "runtime_symbols": 75,
+      "reference_symbols": 75,
+      "matching_symbols": 75,
+      "runtime_only": 0,
+      "reference_only": 0,
+      "exact_exported_symbols": true
+    },
+    {
+      "reference": "/private/tmp/q35-ecam-early-final1-20261125/qualification/ecam",
+      "reference_sha256": "138f97383da9db05288ab451621442c58d7733d6fd8f389c9156eccc658a8757",
+      "runtime_symbols": 75,
+      "reference_symbols": 68,
+      "matching_symbols": 0,
+      "runtime_only": 75,
+      "reference_only": 68,
+      "exact_exported_symbols": false
+    }
+  ],
+  "proves_binary_hash": false
+}

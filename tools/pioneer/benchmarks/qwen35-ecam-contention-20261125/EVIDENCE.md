@@ -22,7 +22,7 @@ The private BFS image `fdc7539b245e64ce12b5db8f28abc037210ecb2b4f7c539b0f1c8e02f
 passed package path, entry hash, filesystem and package-roundtrip checks. The
 separate helper is `d6e533802cb1f94ea08e331648c45360e09fc5193313cc2f0ec295ff22cdc7b7`;
 the original control and previous qualification profiles remain unchanged.
-Neither the candidate nor its helper has been uploaded, kexec-loaded or booted.
+At preparation time neither the candidate nor its helper had been uploaded, kexec-loaded or booted; the live result below supersedes that state.
 
 On the currently running fixed-probe controller, the new metadata-only probe
 confirmed that the distinct contention module is absent, then removed the
@@ -35,6 +35,33 @@ ECAM_CONTENTION_STATE version=1 status=-2147459069 active=0 waiter=-1 waiters=0
 PASS fixed ECAM lease contention-absent and cleanup; no PCI writes or accelerator execution
 ```
 
-No physical contention test, PCI reset, firmware/MMIO/DMA exclusion,
-no-reboot recovery, model output or decode throughput is established. Repeat
-the 27B/process and stable-idle preflight immediately before card access.
+At the time of that negative control, physical contention was untested; see
+the subsequent live result below. PCI reset, firmware/MMIO/DMA exclusion,
+no-reboot recovery, model output and decode throughput remain unverified.
+
+## Live contention qualification
+
+The isolated helper verified the candidate and booted it with 64 host CPUs.
+Before access, stable driver55 was generation 1, idle, with no diagnostic
+process or exclusive lock. The guarded probe held the fixed lease while a
+second, read-only PCI profile waited; it observed the specific waiting thread
+and completed the profile after release. The general recovery service still
+refused its callback. The temporary driver, registration, lock and verified
+staged files were removed, and stable55 remained idle.
+
+```text
+ECAM_CONTENTION observed=1 holder_ok=1 reader_ok=1 state_idle=1 clean=1
+P100A_RELOAD driver55 tag2026102100010012 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+PASS fixed ECAM lease contention and cleanup; no PCI writes or accelerator execution
+```
+
+The loaded ECAM's 75 exported symbol tuples match the candidate and differ
+from the prior fixed-lease build (`symbol-match.json`); this is layout
+evidence, not a full running-image hash. Both model files retained their
+recorded sizes (4B 2,740,937,888 bytes; 27B 18,973,870,528 bytes), not fresh
+hashes. The final-tree reload regression passed with exit 0
+(`/private/tmp/q35-ecam-contention-final2-reload-20261125.log`); its hardware
+operations were simulated. This live result proves one read waited and
+resumed under the lease; it does not prove device-removal safety, firmware,
+MMIO or DMA exclusion, PCI reset, no-reboot recovery, model output or speed.
+Repeat the 27B/process and stable-idle preflight before card access.
