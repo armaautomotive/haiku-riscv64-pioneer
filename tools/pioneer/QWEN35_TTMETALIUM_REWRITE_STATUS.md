@@ -1,14 +1,16 @@
 # Latest offline checks, 2026-11-26
 
 The guarded dense K/V pairing recorder now builds its own stream version 7
-schedule (428 decode / 425 prompt steps). An ASan/UBSan graph-recorder test
-checks all eight dense layers pair 60 key and 60 value projection workers,
-then pack from their disjoint scratch regions. Both driver-header packagers
-and the generic numerical simulator runner reject the marked image until a
-matching numerical fixture exists. Those checks pass, but no paired-image
-numerical execution or full-model output is established. The target Haiku
-cross-toolchain is not present in this workspace, so target-image compilation
-remains outstanding. See `benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+schedule (428 decode / 425 prompt steps). ASan/UBSan graph tests check all
+eight dense layers pair 60 key and 60 value projection workers, then pack from
+their disjoint scratch regions. A worker-level mock confirms the PackValue
+path's 128 half-precision outputs and rejects workspace aliasing in other
+attention modes. Both driver-header packagers and the generic numerical
+simulator runner reject the marked image until a matching numerical fixture
+exists. No paired-image model execution or full-model output is established.
+The target Haiku cross-toolchain is not present in this workspace, so target
+image compilation remains outstanding. See
+`benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
 
 An audit of the recorded compact 436-step decode found 153 projection steps
 with 120 active matrix workers and 16 with 64; the latter are separate dense

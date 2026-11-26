@@ -10,6 +10,11 @@ scratch, with 60 active projection workers for each matrix, before separate
 KV packing records. It also checks all 120 stream tickets through the dynamic
 patcher, warm-position recording, preservation of the original candidate
 state, and rollback after a partial stream write. The ASan/UBSan test passes.
+The same test executes the actual dense-attention worker template for
+PackValue against mock storage, checks all 128 packed half-precision lanes,
+and confirms the Up/context alias is rejected for key packing and attention
+run. This validates the worker's pack operation, not NoC access or projection
+results.
 
 This is a schedule/metadata test, not numerical projection or attention
 execution. The generic simulator runner and both service-header packagers
