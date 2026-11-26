@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-// Build six dependent resident stream records using pinned 4B weights.
+// Build dependent resident stream records using pinned 4B weights.
+// Define PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY to append sharded recurrence.
 // This synthetic layout is for simulator testing only and grants no authority.
 #define PIONEER_QWEN35_DEVICE_DISPATCH 1
 #define PIONEER_QWEN35_RECOVERY_COMPILE_ONLY 1
@@ -113,6 +114,19 @@ int main(int argc,char** argv)
     if (!convTensor || convTensor->type!=0 || convTensor->inputs!=4 || convTensor->outputs!=ConvChannels
         || !sourceModel.ReadPacked(unsigned(convTensor-sourceModel.Tensors().data()),0,
             unsigned(convWeights.size()),convWeights.data(),unsigned(convWeights.size()))) { fclose(source);return 1; }
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+    std::vector<uint8_t> deltaParams(192*sizeof(float));
+    const char* deltaNames[]={"blk.0.ssm_a","blk.0.ssm_dt.bias","blk.0.ssm_norm.weight"};
+    const unsigned deltaSizes[]={32,32,128};
+    unsigned deltaOffset=0;
+    for (unsigned i=0;i<3;i++) {
+        const auto* t=sourceModel.Find(deltaNames[i]);
+        if (!t || t->type!=0 || t->inputs!=deltaSizes[i] || t->outputs!=1
+            || !sourceModel.ReadPacked(unsigned(t-sourceModel.Tensors().data()),0,deltaSizes[i]*sizeof(float),
+                deltaParams.data()+deltaOffset,deltaSizes[i]*sizeof(float))) { fclose(source);return 1; }
+        deltaOffset+=deltaSizes[i]*sizeof(float);
+    }
+#endif
     if (!sourceModel.Stable() || fstat(fd,&after) || !SameFile(before,after)) { fclose(source);return 1; }
     fclose(source);
 
@@ -178,8 +192,24 @@ int main(int argc,char** argv)
     conv.historyRead={ConvChannels,12,1,1,{{0,0x22040000,0,ConvChannels}}};
     conv.historyWrite={ConvChannels,12,1,1,{{0,0x22060000,0,ConvChannels}}};
     if (!conv.Valid()) return 1;
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+    DataflowDeltaProgram delta{};delta.layer=0;delta.position=position;
+    std::memcpy(delta.bankRoute,routes,sizeof(routes));
+    delta.qkv=conv.qkv;delta.gate=gateOutput;
+    delta.alpha={DeltaHeads,4,1,16,{{0,0x21010000,0,DeltaHeads}}};
+    delta.beta={DeltaHeads,4,1,16,{{0,0x21020000,0,DeltaHeads}}};
+    delta.negativeA.inputs=DeltaHeads;delta.negativeA.place={1,DeltaHeads*4,1,1,{{0,0x23000000,0,1}}};
+    delta.deltaBias.inputs=DeltaHeads;delta.deltaBias.place={1,DeltaHeads*4,1,1,{{0,0x23001000,0,1}}};
+    delta.deltaNorm.inputs=DeltaWidth;delta.deltaNorm.place={1,DeltaWidth*4,1,1,{{0,0x23002000,0,1}}};
+    delta.stateRead={DeltaHeads,DeltaStateWords*4,1,1,{{0,0x24000000,0,DeltaHeads}}};
+    delta.stateWrite={DeltaHeads,DeltaStateWords*4,1,1,{{0,0x25000000,0,DeltaHeads}}};
+    if (!delta.Valid()) return 1;
+    constexpr unsigned recordCount=9;
+#else
+    constexpr unsigned recordCount=7;
+#endif
     std::vector<DataflowGraphRunDescriptor> descriptors(DataflowCoreCount);
-    std::vector<DataflowStreamRecord> records(DataflowCoreCount*7);
+    std::vector<DataflowStreamRecord> records(DataflowCoreCount*recordCount);
     std::array<DataflowBarrierPacket,2> command{};
     for (unsigned core=0;core<DataflowCoreCount;core++) {
         const unsigned base=0x04000000+core*0x100000;
@@ -187,7 +217,7 @@ int main(int argc,char** argv)
             99,core,0,routes[0][0],base,DataflowGraphDecodeSteps};
         const Range lease={0,base,DataflowGraphDecodeSteps*DataflowStreamRecordBytes};
         auto& descriptor=descriptors[core];
-        if (!DataflowGraphRunBuild(binding,lease,routes,token,{7,1,DataflowGraphPromptSteps},
+        if (!DataflowGraphRunBuild(binding,lease,routes,token,{recordCount,1,DataflowGraphPromptSteps},
                 1,1000000,0,descriptor)) return 1;
         if (!core) {
             DataflowResidentCommand dynamic{};
@@ -197,16 +227,23 @@ int main(int argc,char** argv)
         DataflowEmbeddingInvocation e{};DataflowResidualInvocation r{};DataflowRmsInvocation n{};
         DataflowConvInvocation c{};
         if (!DataflowEmbeddingProgramBuilder::BindCore(embedding,core,e)
-            || !DataflowStreamEncode(e,99,1,records[core*7])
+            || !DataflowStreamEncode(e,99,1,records[core*recordCount])
             || !DataflowResidualProgramBuilder::BindCore(residual,core,r)
-            || !DataflowStreamEncode(r,99,2,records[core*7+1])
+            || !DataflowStreamEncode(r,99,2,records[core*recordCount+1])
             || !DataflowRmsProgramBuilder::BindCore(rms,core,n)
-            || !DataflowStreamEncode(n,99,3,records[core*7+2])
-            || !DataflowStreamEncode(projections[core],99,4,records[core*7+3])
-            || !DataflowStreamEncode(gateInvocations[core],99,5,records[core*7+4])
+            || !DataflowStreamEncode(n,99,3,records[core*recordCount+2])
+            || !DataflowStreamEncode(projections[core],99,4,records[core*recordCount+3])
+            || !DataflowStreamEncode(gateInvocations[core],99,5,records[core*recordCount+4])
             || !DataflowConvProgramBuilder::BindCore(conv,core,c)
-            || !DataflowStreamEncode(c,99,6,records[core*7+5])) return 1;
-        // The final zero record deliberately terminates after six barriers.
+            || !DataflowStreamEncode(c,99,6,records[core*recordCount+5])) return 1;
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+        DataflowDeltaShardInvocation update{},normalize{};
+        if (!DataflowDeltaShardBind(delta,core,DataflowDeltaShardUpdate,update)
+            || !DataflowDeltaShardBind(delta,core,DataflowDeltaShardNormalize,normalize)
+            || !DataflowStreamEncode(update,99,7,records[core*recordCount+6])
+            || !DataflowStreamEncode(normalize,99,8,records[core*recordCount+7])) return 1;
+#endif
+        // The final zero record deliberately terminates after the last barrier.
     }
     std::vector<float> history(ConvChannels*3);
     for (size_t i=0;i<history.size();i++) history[i]=float(int((i*7)%29)-14)*0.0625f;
@@ -225,6 +262,20 @@ int main(int argc,char** argv)
         for (unsigned i=0;i<written;i++) std::remove(paths[i].c_str());
         return 1;
     }
+#ifdef PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY
+    std::vector<float> oldState(DeltaHeads*DeltaStateWords);
+    for (size_t i=0;i<oldState.size();i++) oldState[i]=float(int((i*11)%97)-48)/1024.0f;
+    const std::string paramsPath=directory+"/delta-params.bin",statePath=directory+"/delta-state.bin";
+    const bool paramsWritten=WriteNew(paramsPath,deltaParams.data(),deltaParams.size());
+    const bool stateWritten=paramsWritten && WriteNew(statePath,oldState.data(),oldState.size()*sizeof(float));
+    if (!stateWritten) {
+        if (paramsWritten) std::remove(paramsPath.c_str());
+        for (const auto& path:paths) std::remove(path.c_str());
+        return 1;
+    }
+    std::puts("prepared authenticated 4B weights and eight synthetic resident graph steps; NO HARDWARE");
+#else
     std::puts("prepared authenticated 4B weights and six synthetic resident graph steps; NO HARDWARE");
+#endif
     return 0;
 }

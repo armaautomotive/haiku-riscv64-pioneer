@@ -153,7 +153,9 @@ def main():
     image = args.image
     if not (image / 'activation-sharing.marker').is_file():
         raise ValueError('expected sharing-enabled standalone service image')
-    if bool(args.delta_shards_fixture) != (image / 'delta-shard.marker').is_file():
+    resident_shards = (args.resident_sequence_fixture is not None
+                       and (args.resident_sequence_fixture / 'delta-params.bin').is_file())
+    if bool(args.delta_shards_fixture or resident_shards) != (image / 'delta-shard.marker').is_file():
         raise ValueError('delta shard fixture and service image do not match')
     boot = (image / 'boot.bin').read_bytes()
     text = (image / 'text.bin').read_bytes()
@@ -436,7 +438,12 @@ def main():
             conv = (directory / 'conv.bin').read_bytes()
             history_input = (directory / 'history.bin').read_bytes()
             position_bytes = (directory / 'position.bin').read_bytes()
-            if (len(command) != 128 or len(records) != 120 * 7 * 2048 or len(weights) != 33920
+            delta_params_path, delta_state_path = directory / 'delta-params.bin', directory / 'delta-state.bin'
+            if delta_params_path.exists() != delta_state_path.exists():
+                raise ValueError('incomplete sharded recurrence fixture')
+            sharded = delta_params_path.exists()
+            record_count = 9 if sharded else 7
+            if (len(command) != 128 or len(records) != 120 * record_count * 2048 or len(weights) != 33920
                     or hashlib.sha256(weights).hexdigest()
                     != 'd784c0b7fe8df8aab8d4797a8ea5a2c25b5db49a84c60a3ad93819086355871d'
                     or len(norm) != 10240 or hashlib.sha256(norm).hexdigest()
@@ -454,6 +461,19 @@ def main():
             expected_history = tuple(((i * 7) % 29 - 14) * 0.0625 for i in range(24576))
             if history_prior != expected_history:
                 raise ValueError('unexpected synthetic convolution history')
+            if sharded:
+                delta_params, delta_state = delta_params_path.read_bytes(), delta_state_path.read_bytes()
+                if (len(delta_params) != 768 or len(delta_state) != 32 * 128 * 128 * 4
+                        or hashlib.sha256(delta_params[:128]).hexdigest()
+                        != '9d3fe9c2ddd97e58d62c12f113d62456850618bbd9117d584064bf23eaa0c9e7'
+                        or hashlib.sha256(delta_params[128:256]).hexdigest()
+                        != '54314db72054ddcf664d15dd95ac238b9fac69e07d593b2d2531267e9edadaee'
+                        or hashlib.sha256(delta_params[256:]).hexdigest()
+                        != 'fecbf8328e83d0ed32ba85dcc096a922381da16fd22e430752a336bae198b701'):
+                    raise ValueError('unexpected recurrent parameters or state size')
+                old_state = struct.unpack('<524288f', delta_state)
+                if any(value != ((i * 11) % 97 - 48) / 1024.0 for i, value in enumerate(old_state)):
+                    raise ValueError('unexpected synthetic recurrent state')
             tensors = ((0, 14417920, 'e45da19dfd2000f2c4b40f456a5663dc6677f7990a1626c897e7219387d9ca91'),
                        (14417920, 92160, 'c66aaea468bd19d584e6259ab39ef7770ed29a93d59ebe0dcdb9dd04d1f1d16d'),
                        (14512128, 92160, 'd04988bc4158cb6936a5ae77eb6b21299d2c81bf8e5536ee0e2d41e635996ffc'))
@@ -501,6 +521,19 @@ def main():
                                      (0x22060000, struct.pack('<24576I', *([0x7fc00000] * 24576)))):
                 select(2, address, 18, 12)
                 write(bar + 0x400000 + (address & 0x1fffff), payload)
+            if sharded:
+                for address, payload in ((0x23000000, delta_params[:128]),
+                                         (0x23001000, delta_params[128:256]),
+                                         (0x23002000, delta_params[256:]),
+                                         (0x24000000, delta_state),
+                                         (0x25000000, struct.pack('<524288I', *([0x7fc00000] * 524288)))):
+                    offset = 0
+                    while offset < len(payload):
+                        current = address + offset
+                        select(2, current, 18, 12)
+                        count = min(0x10000, len(payload) - offset, 0x200000 - (current & 0x1fffff))
+                        write(bar + 0x400000 + (current & 0x1fffff), payload[offset:offset + count])
+                        offset += count
             for address in (0x20000000, 0x20010000, 0x20020000):
                 select(2, address, 18, 12)
                 write(bar + 0x400000 + (address & 0x1fffff),
@@ -512,11 +545,11 @@ def main():
             for core in range(120):
                 address = 0x04000000 + core * 0x100000
                 select(2, address, 18, 12)
-                write(bar + 0x400000 + (address & 0x1fffff), records[core * 14336:(core + 1) * 14336])
+                write(bar + 0x400000 + (address & 0x1fffff), records[core * record_count * 2048:(core + 1) * record_count * 2048])
             select_worker(0)
             write(bar + 0xab080, command[:64])
             write(bar + 0xab0c0, command[64:])
-            for attempt in range(200):
+            for attempt in range(1000 if sharded else 200):
                 lib.libttsim_clock(100000)
                 snapshots = []
                 for core in range(120):
@@ -530,9 +563,9 @@ def main():
                 raise RuntimeError('resident sequence did not reach its intentional terminal fault')
             for core, words in enumerate(snapshots):
                 if (words[2:8] != (1, 0, 1, 4, 4, 5)
-                        or words[9:15] != (0x31464735, 1, 6, 120, 0x80000004, 0)
+                        or words[9:15] != (0x31464735, 1, record_count - 1, 120, 0x80000004, 0)
                         or words[15] != core):
-                    raise RuntimeError(f'core {core}: sequence failed before all six barriers: {words}')
+                    raise RuntimeError(f'core {core}: sequence failed before all {record_count - 1} barriers: {words}')
             for name, address in (('embedding', 0x20000000), ('residual save', 0x20010000)):
                 select(2, address, 18, 12)
                 actual = struct.unpack('<2560f', read(bar + 0x400000 + (address & 0x1fffff), 2560 * 4))
@@ -607,22 +640,80 @@ def main():
             conv_actual = struct.unpack('<8192f', read(bar + 0x400000 + (0x21000000 & 0x1fffff), 8192 * 4))
             conv_weights = struct.unpack('<32768f', conv)
             maximum = 0.0
+            conv_reference = []
             for row, (got, current) in enumerate(zip(conv_actual, qkv_original)):
                 terms = [history_prior[3 * row + i] * conv_weights[4 * row + i] if position else 0.0
                          for i in range(3)]
                 value = sum(terms) + current * conv_weights[4 * row + 3]
                 want = value / (1.0 + math.exp(-value))
-                error = abs(got - want)
-                maximum = max(maximum, error)
-                if not math.isfinite(got) or error > 2e-6 * max(1.0, abs(want)):
-                    raise RuntimeError(f'convolution row {row}: {got} differs from {want}; error {error}')
-            print(f'convolution: 8192 values and 24576 history entries match independent position-{position} '
-                  f'reference; maximum absolute error {maximum:.9g}', flush=True)
+                conv_reference.append(want)
+                # Sharded recurrence overwrites the V portion after convolution.
+                if not sharded or row < 4096:
+                    error = abs(got - want)
+                    maximum = max(maximum, error)
+                    if not math.isfinite(got) or error > 2e-6 * max(1.0, abs(want)):
+                        raise RuntimeError(f'convolution row {row}: {got} differs from {want}; error {error}')
+            checked = 4096 if sharded else 8192
+            print(f'convolution: {checked} retained values and 24576 history entries match independent '
+                  f'position-{position} reference; maximum absolute error {maximum:.9g}', flush=True)
+            if sharded:
+                negative_a = struct.unpack('<32f', delta_params[:128])
+                bias = struct.unpack('<32f', delta_params[128:256])
+                norm = struct.unpack('<128f', delta_params[256:])
+                select(2, 0x21010000, 18, 12)
+                alpha = struct.unpack('<32f', read(bar + 0x400000 + (0x21010000 & 0x1fffff), 128))
+                select(2, 0x21020000, 18, 12)
+                beta_logit = struct.unpack('<32f', read(bar + 0x400000 + (0x21020000 & 0x1fffff), 128))
+                state_bytes = bytearray()
+                for offset in range(0, len(delta_state), 0x10000):
+                    current = 0x25000000 + offset
+                    select(2, current, 18, 12)
+                    state_bytes.extend(read(bar + 0x400000 + (current & 0x1fffff),
+                                            min(0x10000, len(delta_state) - offset)))
+                state_actual = struct.unpack('<524288f', state_bytes)
+                state_max = output_max = 0.0
+                for head in range(32):
+                    key_head = head % 16
+                    query = conv_reference[key_head * 128:(key_head + 1) * 128]
+                    key = conv_reference[2048 + key_head * 128:2048 + (key_head + 1) * 128]
+                    query_scale = 1.0 / max(math.sqrt(sum(x * x for x in query)), 1e-6) / math.sqrt(128)
+                    key_scale = 1.0 / max(math.sqrt(sum(x * x for x in key)), 1e-6)
+                    query = [x * query_scale for x in query]
+                    key = [x * key_scale for x in key]
+                    shifted = alpha[head] + bias[head]
+                    softplus = max(shifted, 0.0) + math.log1p(math.exp(-abs(shifted)))
+                    decay = math.exp(negative_a[head] * softplus)
+                    beta = 1.0 / (1.0 + math.exp(-beta_logit[head]))
+                    raw_output = []
+                    for lane in range(128):
+                        base = (head * 128 + lane) * 128
+                        prior = old_state[base:base + 128] if position else [0.0] * 128
+                        prediction = sum(prior[k] * decay * key[k] for k in range(128))
+                        correction = (conv_reference[4096 + head * 128 + lane] - prediction) * beta
+                        expected_state = [prior[k] * decay + key[k] * correction for k in range(128)]
+                        raw_output.append(sum(expected_state[k] * query[k] for k in range(128)))
+                        for k, want in enumerate(expected_state):
+                            got = state_actual[base + k]
+                            error = abs(got - want)
+                            state_max = max(state_max, error)
+                            if not math.isfinite(got) or error > 2e-5 * max(1.0, abs(want)):
+                                raise RuntimeError(f'recurrent state {head}:{lane}:{k}: {got} differs from {want}')
+                    rms_scale = 1.0 / math.sqrt(sum(x * x for x in raw_output) / 128 + 1e-6)
+                    for lane, raw in enumerate(raw_output):
+                        gate_value = gate_actual[head * 128 + lane]
+                        want = raw * rms_scale * norm[lane] * gate_value / (1.0 + math.exp(-gate_value))
+                        got = conv_actual[4096 + head * 128 + lane]
+                        error = abs(got - want)
+                        output_max = max(output_max, error)
+                        if not math.isfinite(got) or error > 2e-4 * max(1.0, abs(want)):
+                            raise RuntimeError(f'recurrent output {head}:{lane}: {got} differs from {want}')
+                print(f'sharded recurrence: 524288 state values and 4096 outputs match independent '
+                      f'position-{position} reference; max absolute errors {state_max:.9g}, {output_max:.9g}', flush=True)
             select_worker(0)
             if struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
                 raise RuntimeError('intentionally faulted sequence published a candidate')
-            print('PASS resident graph completed embedding, residual, RMS, fused and gate projections and '
-                  'convolution barriers on 120 simulated workers; seventh record intentionally faults; NO HARDWARE')
+            print(f'PASS resident graph completed {record_count - 1} barriers on 120 simulated workers; '
+                  f'record {record_count} intentionally faults; NO HARDWARE')
             return
 
         if args.resident_fault_command:

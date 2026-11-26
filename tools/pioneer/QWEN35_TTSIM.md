@@ -106,6 +106,34 @@ SHA-256 `e0ff35e774d276fa65d1ccde5e6667345ed74da153f906d27b688fda88f155cd`.
 These are separate simulations with synthetic history, not sequential warm
 model runs or performance measurements.
 
+
+The same authenticated sequence can continue through the sharded recurrent
+update and normalization. Compile its fixture generator with the additional
+`-DPIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY=1` option, generate a fresh fixture
+with position `0` or `1`, and pass that directory to the same simulator command
+with the sharded resident image (`delta-shard.marker`) and compatible roles.
+The image and fixture marker check rejects a sharded/non-sharded mismatch.
+The eight valid records contain the six steps above followed by update and
+normalization; the ninth deliberately faults without a token candidate.
+
+For both positions, all 120 simulated workers reached all eight barriers.
+The test reads the authenticated layer-0 `ssm_a`, `ssm_dt.bias` and
+`ssm_norm.weight` tensors, and compares all 524,288 recurrent-state values
+and 4,096 gated outputs to an independent double-precision reference. Position
+0 ignores a supplied nonzero synthetic old state; position 1 uses it. Maximum
+absolute state/output errors were `1.260e-7`/`3.536e-7` and
+`2.005e-7`/`1.075e-6`, respectively (`/private/tmp/q35-resident-eight-shards-position0-final-20261125.log`
+and `/private/tmp/q35-resident-eight-shards-position1-final-20261125.log`).
+The position-one fixture generator passed ASan/UBSan and reproduced the
+optimized output byte for byte; corrupted recurrent parameters and a sharded
+fixture paired with a non-sharded image were rejected. The F32 parameter
+hashes were independently checked against the raw GGUF. The sharded image
+used here is `/private/tmp/q35-delta-shard-helper-final4/driver/qwen35-resident-service-image`;
+its text and dispatch SHA-256 values are `e32fdf37720ac2abb88d13abeeb581becc756c7687cf2000ef9e42450f00b4f7`
+and `55e2ae86fd22717cf5ea55866dd77ebb48cdf579df3eddfc4c98a3edafca6881`.
+These are separate simulations using the unqualified exploratory simulator,
+not sequential warm model runs, full model output or hardware performance.
+
 The separate sharded-delta witness tests a proposed two-stage recurrent
 update. The helper builds the fused, sharing-enabled service and its
 non-loadable driver with `--compile-delta-shard-prototype`, alongside the
