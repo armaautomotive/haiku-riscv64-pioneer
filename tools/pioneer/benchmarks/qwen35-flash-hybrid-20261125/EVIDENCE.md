@@ -29,3 +29,26 @@ bound. The unguarded and qualification builds remain refused.
 No device kernel, inter-core partial transfer, visibility/synchronization,
 resident graph integration, physical test, output or throughput was proved.
 The separate full-model simulator run was still active at this checkpoint.
+
+The guarded hybrid producer and reducer now execute this assignment using
+abstract IO. Producers normalize and rotate each assigned query and reuse
+16-position K/V tiles, then publish a partial per intersected query head.
+Reducers validate nonempty partials and zero out-of-slice lanes, merge
+position shards and write disjoint gated output slices. The caller must prove
+visibility before reduction; IO must authenticate stable partials by source,
+graph ticket, position and lane range. A failed publication may already have
+taken effect and must retain the fleet. The current IO in this test is only
+an in-memory mock: no device transport or barrier is implemented.
+
+The sanitizer suite ran these actual worker functions sequentially on 120 mocked workers
+at positions 0, 1, 2, 4, 7, 14, 29, 33, 63 and 127. Each output lane matched
+the existing sequential attention calculation, maximum absolute error
+`6.70552254e-08`. Tests cover failed reads, failed or partially effective
+publishes, missing/malformed partials and invalid cores. RV32IMF target wrappers
+compile with undefined mock IO methods (individual producer/reducer frames
+224/144 bytes); this is not a linked device image or a whole-program stack
+proof. The scratch layout totals 27,904 bytes within a 36,864-byte reserved
+cache, conditional on a future caller allocating disjoint regions. The earlier
+statement above that no device kernel existed refers to the earlier scheduler
+checkpoint; the new code still has no connected resident worker, transport,
+visibility proof or hardware authority.
