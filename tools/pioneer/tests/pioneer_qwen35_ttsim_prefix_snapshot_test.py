@@ -83,7 +83,27 @@ for offset, value in ((64 + 12 + 16, 71), (64 + 528 + 12, 2),
 compare = path.with_name('pioneer_qwen35_ttsim_prefix_snapshot_compare.py')
 with tempfile.TemporaryDirectory() as temporary:
     root = Path(temporary); actual = root / 'actual'; expected = root / 'reference'
+    first = root / 'first'; warm = root / 'warm'
+    service.validate_snapshot_destinations(first, warm, True, False, True)
+    service.validate_snapshot_destinations(first, None, True, False, False)
+    service.validate_snapshot_destinations(None, warm, True, False, True)
+    for destinations in ((first, first, True, False, True),
+                         (first, warm, False, False, True),
+                         (first, warm, True, True, True),
+                         (None, warm, True, False, False)):
+        try:
+            service.validate_snapshot_destinations(*destinations)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('invalid snapshot destinations accepted')
     actual.mkdir(); expected.mkdir()
+    try:
+        service.validate_snapshot_destinations(actual, warm, True, False, True)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('existing snapshot destination accepted')
     for layer in range(2):
         for directory in (actual, expected):
             (directory / f'layer{layer}.bin').write_bytes(bytes(2560 * 4))

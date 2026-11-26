@@ -2,6 +2,13 @@
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+The simulator runner now permits separate first- and second-position snapshot
+directories in one two-decode execution. It rejects identical, existing or
+otherwise invalid destinations; its destination and boundary tests pass.
+The existing capture was started before this change and only requests warm
+snapshots. Paired capture has not yet run against the actual simulator image;
+it remains an offline diagnostic and does not establish model correctness.
+
 The offline boundary auditor now supports position-one snapshots. For each
 boundary it runs both CPU positions, checks the first token against the
 separately audited simulator token, injects the exact warm simulator

@@ -1,5 +1,10 @@
 # Latest offline checks, 2026-11-26
 
+The simulator runner now accepts separate first- and second-position snapshot
+destinations in one execution; destination and existing boundary tests pass.
+The current capture predates the change and requests only warm snapshots.
+The paired mode has not yet been exercised with the actual simulator image.
+
 The boundary auditor can now check each warm simulator layer using the exact
 preceding simulator activation. Synthetic tests cover 32 layers, a mismatch
 and an incorrect first token. Its CPU retains CPU position-zero state, so the

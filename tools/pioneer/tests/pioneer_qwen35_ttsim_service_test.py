@@ -491,6 +491,17 @@ def quantized_activation_reference(values, quant):
     return result
 
 
+def validate_snapshot_destinations(first, warm, has_fixture, layer_slice, has_warm_reference):
+    """Validate separate destinations before the simulator or output is opened."""
+    for destination in (first, warm):
+        if destination and (not has_fixture or layer_slice or destination.exists() or destination.is_symlink()):
+            raise ValueError('snapshots require a recorded graph fixture and new directories')
+    if warm and not has_warm_reference:
+        raise ValueError('warm snapshots require a second recorded decode')
+    if first and warm and first.resolve() == warm.resolve():
+        raise ValueError('first and warm snapshots require separate directories')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('library', type=Path)
@@ -603,16 +614,15 @@ def main():
                                         or args.recorded_export_actual.exists()
                                         or args.recorded_export_actual.is_symlink()):
         parser.error('recorded output export requires one fixture run and a new output path')
-    if args.recorded_prefix_snapshots and (not args.recorded_layer_fixture or layer_slice
-            or args.recorded_warm_layer_reference
-            or args.recorded_prefix_snapshots.exists() or args.recorded_prefix_snapshots.is_symlink()):
-        parser.error('layer snapshots require one recorded run and a new directory')
     if (bool(args.recorded_warm_layer_reference) != bool(args.recorded_warm_token_reference)
             or (args.recorded_warm_layer_reference and not args.recorded_token_reference)):
         parser.error('warm recorded decode requires both warm references and a full decode fixture')
-    if args.recorded_warm_snapshots and (not args.recorded_warm_layer_reference or layer_slice
-            or args.recorded_warm_snapshots.exists() or args.recorded_warm_snapshots.is_symlink()):
-        parser.error('warm snapshots require two recorded decodes and a new directory')
+    try:
+        validate_snapshot_destinations(args.recorded_prefix_snapshots, args.recorded_warm_snapshots,
+                                       bool(args.recorded_layer_fixture), layer_slice,
+                                       bool(args.recorded_warm_layer_reference))
+    except ValueError as error:
+        parser.error(str(error))
     if bool(args.recorded_state_layout) != bool(args.recorded_first_state_output):
         parser.error('simulator state capture requires both layout and output')
     if args.recorded_first_state_output and (not args.recorded_layer_fixture or layer_slice
