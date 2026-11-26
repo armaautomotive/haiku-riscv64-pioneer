@@ -1,5 +1,21 @@
 # Compact resident simulator image, 2026-11-26
 
+## Non-loadable compact driver link, 2026-11-26
+
+The complete fused tree driver and PCI profile compiled and linked against
+the Haiku/RISC-V kernel with `--no-undefined`, using the actual compact
+resident text and dispatch. The temporary linked driver contained exactly one
+copy of each image, and its `init_hardware` disassembly matched the object
+checked to return `B_NOT_ALLOWED` without I/O. The separate qualification
+image remains an older compilation placeholder. The temporary driver was
+deleted without installation or card access. Log:
+`/private/tmp/q35-actual-compact-driver-link-final-20261126.log`.
+
+The normal-counter image is still compile-only and has not passed simulator
+or hardware inference. This link does not establish physical ownership,
+no-reboot recovery, clean unload or throughput. The existing image packagers
+continue to reject compact images.
+
 ## Actual compact image in a driver compile, 2026-11-26
 
 A test-only header generator now supplies the actual mixed-optimization,
@@ -8,8 +24,8 @@ driver object compile. The object contained exactly one copy each of the
 resident text (SHA-256
 `c15d1ed9048d92cf1d0d7b077b0550176e10f52213e615a70c2ca047cb2df9d6`)
 and dispatch (`4deb2c1466880fcf9045832d0702933239b90f18bcdd4a0cc31f21e614471ad2`).
-The old qualification image header remains a compilation placeholder. The
-object was not linked or installed; its compiled `init_hardware` was checked
+The old qualification image header remains a compilation placeholder. That
+first object was not linked or installed; its compiled `init_hardware` was checked
 to return `B_NOT_ALLOWED` without I/O. Log:
 `/private/tmp/q35-actual-compact-driver-compile-final-20261126.log`.
 

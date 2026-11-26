@@ -1,6 +1,13 @@
 # Latest offline checks, 2026-11-26
 
-The full fused tree Haiku driver now compiles to a temporary unlinked object
+The fused tree Haiku driver now also links with the actual compact resident
+image and no unresolved symbols. The temporary linked artifact retained the
+exact compact bytes and the no-I/O `B_NOT_ALLOWED` initialization guard; its
+qualification image remains an older placeholder. It was deleted without
+installation. This is not hardware launch, recovery or throughput evidence.
+See `benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
+The full fused tree Haiku driver also compiles to a temporary object
 containing the actual normal-counter compact resident text and dispatch, each
 verified byte-for-byte in the object. The qualification image is still an
 older placeholder. The generated header is restricted to compile-only mode,
