@@ -61,3 +61,31 @@ position 1, it checked the tied embedding address (120 records), convolution
 history swaps (2,880), recurrent state swaps (5,760), and dense attention
 positions (2,880); every other record was byte-identical. A corrupted command
 was rejected. This is a transformation audit, not execution of a warm run.
+
+## Completed full-decode mismatch — 2026-11-26
+
+The unprofiled non-hybrid full-decode process exited with failure after its
+120-worker candidate audit. It selected token `261`, matching the independent
+reference, but its first compared final hidden value was
+`-2.2534914016723633`, against reference `-2.3027868270874023`; the
+difference exceeds the existing `2e-5 * max(1, abs(reference))` threshold.
+The process did not retain the other actual values, so neither the worst error
+nor the cause is known. Correct token selection alone is not a numerical pass.
+Log: `/private/tmp/q35-recorded-full-decode-sim-20261125b.log`.
+
+The standalone offline CPU oracle was extended to export all 32 layer outputs
+from the authenticated GGUF. Its layer-0, layer-3, layer-31 and token files
+are byte-identical to the earlier independent oracle run. A new authenticated
+16-layer non-hybrid fixture contains 261 executed records and an intentional
+fault record; its simulator run against the independent layer-15 output is
+active in session `5931` (`/private/tmp/q35-baseline-16-layer-sim-20261126.log`).
+This is a diagnostic for the divergence, not Work-mode inference or a
+performance test.
+
+The simulator runner now reports the number of failing rows and worst error
+rather than stopping at the first mismatch, and optionally saves a single
+actual layer output before comparison using exclusive creation. Focused tests
+checked aggregate error, non-finite data, truncation and refusal to overwrite
+an existing output. Existing simulations started before this runner change
+and do not gain those diagnostics. The two hybrid full simulations remain
+active; no physical card, recovery or throughput result is implied.

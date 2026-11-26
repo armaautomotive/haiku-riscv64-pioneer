@@ -57,6 +57,7 @@ bool CompileHeldComposition(DataflowRoleFleetRecoveryOwner& owner,ActualScope& i
         && owner.StageHeldImages(image,1,image,1,image,1,image,1,io)
         && owner.RestoreHeldImagesBeforeRelease(io) && owner.VerifyAfterResidentRestore(io);
 }
+#ifndef PIONEER_Q35_FLASH_ACTUAL_ROLE_FIXTURE_ONLY
 int main() {
     PioneerStoreContext context;FakeService service;FakeGraph graph;
     context.qwen35DataflowService=&service;context.qwen35GraphOwner=&graph;
@@ -109,3 +110,4 @@ int main() {
     assert(views.Close());gPerCoreRoleWindows=false;gAllowWrite=false;assert(release_sem(sLock)==B_OK && !gLocked);
     std::puts("PASS actual role/flash PCI adapters and held fleet capture, stage and restore; SIMULATED ONLY");
 }
+#endif

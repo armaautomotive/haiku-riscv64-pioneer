@@ -32,6 +32,19 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  -I"$directory/role_haiku_stubs" "$directory/pioneer_qwen35_flash_actual_role_pci_test.cpp" -o "$temporary/actual-role-pci-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/actual-role-pci-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -I"$directory/role_haiku_stubs" "$directory/pioneer_qwen35_flash_route_bridge_test.cpp" -o "$temporary/flash-route-bridge-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/flash-route-bridge-test"
+route_guard="$directory/../../../src/add-ons/kernel/drivers/misc/PioneerQwen35DataflowFlashRouteGuard.h"
+printf '#include "%s"\n' "$route_guard" > "$temporary/route-guard.cpp"
+route_flags='-DPIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS -DPIONEER_QWEN35_ROLE_WRITE_COMPILE_ONLY -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_DEVICE_DISPATCH'
+# Deliberate splitting supplies the individual compiler flags.
+${CXX:-c++} -std=c++17 -E -I"$directory/role_haiku_stubs" $route_flags "$temporary/route-guard.cpp" > /dev/null
+for flags in '' "$route_flags -DPIONEER_QWEN35_RECOVERY_QUALIFY" "$route_flags -DPIONEER_QWEN35_DEVICE_DISPATCH_TRIAL"; do
+ if ${CXX:-c++} -std=c++17 -E -I"$directory/role_haiku_stubs" $flags "$temporary/route-guard.cpp" > /dev/null 2>&1; then
+  echo 'FAIL flash route bridge build guard' >&2;exit 1
+ fi
+done
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_qwen35_flash_hybrid_graph_test.cpp" -o "$temporary/graph-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/graph-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
@@ -41,6 +54,7 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  "$directory/pioneer_qwen35_ffn_pair_graph_test.cpp" -o "$temporary/ffn-pair-graph"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/ffn-pair-graph"
 python3 -B "$directory/pioneer_qwen35_ffn_pair_sim_guard_test.py"
+python3 -B "$directory/pioneer_qwen35_recorded_layer_compare_test.py"
 python3 -B "$directory/pioneer_qwen35_ttsim_state_handoff_test.py"
 ffn_flags='-DPIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_PAIRED_RECURRENCE -DPIONEER_QWEN35_FUSED_RECURRENCE -DPIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY -DPIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS'
 for header in PioneerQwen35DataflowFfnSequence.h PioneerQwen35DataflowGraphRunProtocol.h; do

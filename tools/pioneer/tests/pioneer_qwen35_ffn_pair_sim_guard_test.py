@@ -28,4 +28,8 @@ with tempfile.TemporaryDirectory() as tmp:
         result = subprocess.run(base, capture_output=True, text=True)
         assert result.returncode and 'paired FFN fixture and image markers do not match' in result.stderr
         assert 'no-library' not in result.stderr
+    existing = root / 'existing-output'; existing.write_bytes(b'preserve')
+    result = subprocess.run(base + ['--recorded-export-actual', str(existing)], capture_output=True, text=True)
+    assert result.returncode and 'requires one fixture run and a new output path' in result.stderr
+    assert existing.read_bytes() == b'preserve'
 print('PASS paired FFN image/fixture mismatch rejected before simulator load; NO HARDWARE')

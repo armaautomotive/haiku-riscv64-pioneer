@@ -112,3 +112,17 @@ role/flash session on every scope operation. The simulated test rejects a
 fresh ledger presented while the original retains an uncertain write. The
 ledger and this callback still do not provide a physical identity or lifetime
 proof; the real driver must supply and retain that authority.
+
+## Actual role-route guard bridge — 2026-11-26
+
+A non-loadable flash route guard composes the real role-session BAR, TLB and
+NoC route checks with an externally supplied authority. It records a route
+selection attempt before calling the existing selector and retains an
+uncertain selection if selection, mapping, route verification or confirmation
+fails. The authority must retain that selection ledger across guard objects
+and prove the mapping, snapshot and exclusive-writer lifetime independently.
+A fake-platform test exercised the actual route guard and adapters, rejected
+route drift before reading, injected a partially failed selection, and showed
+a recreated guard refused to retry while the same simulated ledger was
+uncertain. ASan/UBSan and Haiku/RV64 compile checks passed. No real authority
+or hardware recovery path is provided; no P100A access occurred.

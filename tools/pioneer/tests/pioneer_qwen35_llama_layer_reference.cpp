@@ -13,8 +13,8 @@
 #include <vector>
 #include <sys/stat.h>
 #include <unistd.h>
-struct Capture {std::array<float,2560> layer0{},layer3{},layer31{};
-    std::vector<float> logits;bool got0=false,got3=false,got31=false,gotLogits=false;};
+struct Capture {std::array<std::array<float,2560>,32> layers{};std::array<bool,32> gotLayer{};
+    std::vector<float> logits;bool gotLogits=false;};
 static bool SameFile(const struct stat& a,const struct stat& b) {
     if (a.st_dev!=b.st_dev || a.st_ino!=b.st_ino || a.st_size!=b.st_size
         || a.st_mtime!=b.st_mtime || a.st_ctime!=b.st_ctime) return false;
@@ -26,22 +26,21 @@ static bool SameFile(const struct stat& a,const struct stat& b) {
 }
 static bool Callback(ggml_tensor* tensor,bool ask,void* opaque) {
     auto& capture=*static_cast<Capture*>(opaque);
-    const bool first=std::strcmp(tensor->name,"l_out-0")==0;
-    const bool fourth=std::strcmp(tensor->name,"l_out-3")==0;
-    const bool last=std::strcmp(tensor->name,"l_out-31")==0;
+    unsigned layer=0;char trailing=0;
+    const bool isLayer=std::sscanf(tensor->name,"l_out-%u%c",&layer,&trailing)==1 && layer<32;
     const bool logits=std::strcmp(tensor->name,"result_output")==0;
-    if (ask) return first || fourth || last || logits;
+    if (ask) return isLayer || logits;
     if (tensor->type!=GGML_TYPE_F32 || !ggml_is_contiguous(tensor)) return false;
     if (logits) {
         if (ggml_nelements(tensor)!=248320 || ggml_nbytes(tensor)!=248320*sizeof(float)) return false;
         capture.logits.resize(248320);ggml_backend_tensor_get(tensor,capture.logits.data(),0,ggml_nbytes(tensor));
         capture.gotLogits=true;return true;
     }
-    if ((!first && !fourth && !last) || ggml_nelements(tensor)!=2560
+    if (!isLayer || ggml_nelements(tensor)!=2560
         || ggml_nbytes(tensor)!=2560*sizeof(float)) return false;
-    auto& target=first?capture.layer0:fourth?capture.layer3:capture.layer31;
+    auto& target=capture.layers[layer];
     ggml_backend_tensor_get(tensor,target.data(),0,target.size()*sizeof(float));
-    if (first) capture.got0=true;else if (fourth) capture.got3=true;else capture.got31=true;
+    capture.gotLayer[layer]=true;
     return true;
 }
 static bool WriteNew(const std::string& path,const std::array<float,2560>& values) {
@@ -51,8 +50,8 @@ static bool WriteNew(const std::string& path,const std::array<float,2560>& value
     if (!okay) std::remove(path.c_str());return okay;
 }
 static bool BestToken(const Capture& capture,unsigned& best) {
-    if (!capture.got0 || !capture.got3 || !capture.got31 || !capture.gotLogits
-        || capture.logits.size()!=248320) return false;
+    if (!capture.gotLogits || capture.logits.size()!=248320) return false;
+    for (bool got:capture.gotLayer) if (!got) return false;
     best=0;
     for (unsigned i=0;i<capture.logits.size();i++) {
         if (!std::isfinite(capture.logits[i])) return false;
@@ -61,9 +60,8 @@ static bool BestToken(const Capture& capture,unsigned& best) {
     return true;
 }
 static bool Save(const std::string& dir,const std::string& prefix,const Capture& capture,unsigned best) {
-    if (!WriteNew(dir+"/"+prefix+"layer0.bin",capture.layer0)
-        || !WriteNew(dir+"/"+prefix+"layer3.bin",capture.layer3)
-        || !WriteNew(dir+"/"+prefix+"layer31.bin",capture.layer31)) return false;
+    for (unsigned layer=0;layer<capture.layers.size();layer++)
+        if (!WriteNew(dir+"/"+prefix+"layer"+std::to_string(layer)+".bin",capture.layers[layer])) return false;
     FILE* logitsFile=std::fopen((dir+"/"+prefix+"logits.bin").c_str(),"wbx");if (!logitsFile) return false;
     const bool wrote=std::fwrite(capture.logits.data(),sizeof(float),capture.logits.size(),logitsFile)==capture.logits.size();
     if (std::fclose(logitsFile) || !wrote) return false;

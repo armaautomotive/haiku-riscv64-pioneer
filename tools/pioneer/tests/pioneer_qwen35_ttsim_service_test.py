@@ -14,6 +14,33 @@ from pathlib import Path
 import struct
 
 
+def compare_recorded_layer(actual, reference):
+    """Check every simulated hidden value, including aggregate error on failure."""
+    if len(actual) != 2560 * 4 or len(reference) != 2560 * 4:
+        raise ValueError('unexpected recorded layer output size')
+    maximum = 0.0
+    worst_scaled = 0.0
+    worst = None
+    failures = 0
+    for row, ((got,), (want,)) in enumerate(zip(struct.iter_unpack('<f', actual),
+                                                struct.iter_unpack('<f', reference))):
+        if not math.isfinite(got) or not math.isfinite(want):
+            raise RuntimeError(f'recorded final row {row}: non-finite actual or reference')
+        error = abs(got - want)
+        scaled = error / max(1.0, abs(want))
+        maximum = max(maximum, error)
+        if scaled > worst_scaled:
+            worst_scaled = scaled
+            worst = (row, got, want)
+        if scaled > 2e-5:
+            failures += 1
+    if failures:
+        raise RuntimeError(f'{failures}/2560 recorded final rows differ; max abs error {maximum:.9g}, '
+                           f'max scaled error {worst_scaled:.9g} at row {worst[0]}: '
+                           f'{worst[1]} versus {worst[2]}')
+    return maximum
+
+
 def resident_handoff_payload(raw):
     """Decode a simulator-only state snapshot; its hash detects corruption."""
     if (len(raw) != 40 + 24576 * 4 + 524288 * 4 or raw[:8] != b'Q35SIMW1'
@@ -274,6 +301,8 @@ def main():
                         help='compare the recorded model layer with a previously verified output')
     parser.add_argument('--recorded-token-reference', type=Path,
                         help='compare a full recorded decode token with an offline reference')
+    parser.add_argument('--recorded-export-actual', type=Path,
+                        help='save a single simulated layer output before its reference comparison')
     parser.add_argument('--recorded-warm-layer-reference', type=Path,
                         help='compare a second resident decode layer output with an offline reference')
     parser.add_argument('--recorded-warm-token-reference', type=Path,
@@ -290,6 +319,10 @@ def main():
         parser.error('recorded layer requires both fixture and reference')
     if args.recorded_token_reference and not args.recorded_layer_fixture:
         parser.error('recorded token reference requires a recorded layer fixture')
+    if args.recorded_export_actual and (not args.recorded_layer_fixture or args.recorded_warm_layer_reference
+                                        or args.recorded_export_actual.exists()
+                                        or args.recorded_export_actual.is_symlink()):
+        parser.error('recorded output export requires one fixture run and a new output path')
     if (bool(args.recorded_warm_layer_reference) != bool(args.recorded_warm_token_reference)
             or (args.recorded_warm_layer_reference and not args.recorded_token_reference)):
         parser.error('warm recorded decode requires both warm references and a full decode fixture')
@@ -756,14 +789,10 @@ def main():
                 if next_row != 9216:
                     raise ValueError('incomplete recorded output layout')
                 reference = layer_reference.read_bytes()
-                if len(reference) != 2560 * 4:
-                    raise ValueError('unexpected verified layer reference size')
-                maximum = 0.0
-                for row, ((got,), (want,)) in enumerate(zip(struct.iter_unpack('<f', result), struct.iter_unpack('<f', reference))):
-                    error = abs(got - want)
-                    if not math.isfinite(got) or not math.isfinite(want) or error > 2e-5 * max(1.0, abs(want)):
-                        raise RuntimeError(f'recorded final row {row}: {got} differs from verified reference {want}')
-                    maximum = max(maximum, error)
+                if args.recorded_export_actual:
+                    with args.recorded_export_actual.open('xb') as output_file:
+                        output_file.write(result)
+                maximum = compare_recorded_layer(result, reference)
                 select_worker(0)
                 if not full_prompt and struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
                     raise RuntimeError('intentionally faulted recorded layer published a candidate')
