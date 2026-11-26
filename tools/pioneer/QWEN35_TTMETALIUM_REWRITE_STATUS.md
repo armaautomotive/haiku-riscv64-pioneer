@@ -1,5 +1,14 @@
 # Latest offline checks, 2026-11-26
 
+An offline experiment replaced all 32 first-position CPU layer boundaries
+with the audited simulator boundaries before running position one. It still
+selected the reference's second token 89598, rather than simulated 1850; an
+all-layer self-injection reproduced all 68 baseline files. This suggests the
+boundary drift alone is insufficient to reproduce the mismatch in this CPU
+experiment, but the CPU's recurrent and KV state are not the simulator's.
+The in-progress simulator capture is still needed to investigate that state
+and subsequent device operations. See `benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
 The offline reference now supports injecting a captured layer output into the
 second position while retaining its own first-position recurrent state. A
 self-injection reproduced all 68 two-position output artifacts byte-for-byte;

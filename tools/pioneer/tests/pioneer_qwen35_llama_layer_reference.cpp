@@ -28,6 +28,7 @@ static const char* TraceName(unsigned layer,size_t index) {
 struct Capture {std::array<std::array<float,2560>,32> layers{};std::array<bool,32> gotLayer{};
     std::array<float,9216> replacement{};unsigned replaceLayer=32,traceLayer=32,replacementCount=2560;
     bool replaceAttentionResidual=false,replaceFfnSwiglu=false;
+    std::vector<std::array<float,2560>> forcedLayers;std::array<bool,32> forcedSeen{};
     std::array<std::vector<float>,traceNames.size()> trace{};std::array<bool,traceNames.size()> gotTrace{};
     std::vector<float> logits;bool gotLogits=false,replaced=false;};
 static bool SameFile(const struct stat& a,const struct stat& b) {
@@ -89,6 +90,14 @@ static bool Callback(ggml_tensor* tensor,bool ask,void* opaque) {
         || ggml_nbytes(tensor)!=2560*sizeof(float)) return false;
     auto& target=capture.layers[layer];
     ggml_backend_tensor_get(tensor,target.data(),0,target.size()*sizeof(float));
+    if (!capture.forcedLayers.empty()) {
+        if (capture.forcedLayers.size()!=32 || capture.forcedSeen[layer]) return false;
+        const auto& forced=capture.forcedLayers[layer];
+        ggml_backend_tensor_set(tensor,forced.data(),0,forced.size()*sizeof(float));
+        ggml_backend_tensor_get(tensor,target.data(),0,target.size()*sizeof(float));
+        if (std::memcmp(target.data(),forced.data(),target.size()*sizeof(float))) return false;
+        capture.forcedSeen[layer]=true;
+    }
     if (!capture.replaceAttentionResidual && !capture.replaceFfnSwiglu && capture.replaceLayer==layer) {
         if (capture.replaced) return false;
         ggml_backend_tensor_set(tensor,capture.replacement.data(),0,capture.replacementCount*sizeof(float));
@@ -109,6 +118,7 @@ static bool BestToken(const Capture& capture,unsigned& best) {
     if (!capture.gotLogits || capture.logits.size()!=248320
         || (capture.replaceLayer<32 && !capture.replaced)) return false;
     for (bool got:capture.gotLayer) if (!got) return false;
+    if (!capture.forcedLayers.empty()) for (bool got:capture.forcedSeen) if (!got) return false;
     if (capture.traceLayer<32) for (size_t i=0;i<traceNames.size();i++)
         if (TraceName(capture.traceLayer,i) && !capture.gotTrace[i]) return false;
     best=0;
@@ -131,15 +141,39 @@ static bool Save(const std::string& dir,const std::string& prefix,const Capture&
     const bool tokenWrote=std::fprintf(tokenFile,"%u\n",best)>0;
     return std::fclose(tokenFile)==0 && tokenWrote;
 }
+// Simulator-only diagnostic: the marker follows the candidate/fleet audit.
+// The caller separately authenticates these snapshots against its manifest.
+static bool LoadForcedLayers(const std::string& dir,Capture& capture) {
+    const int marker=open((dir+"/execution-complete.marker").c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC);
+    if (marker<0) return false;
+    struct stat markerStat{};const bool markerOkay=!fstat(marker,&markerStat) && S_ISREG(markerStat.st_mode);
+    close(marker);if (!markerOkay) return false;
+    capture.forcedLayers.resize(32);
+    for (unsigned i=0;i<32;i++) {
+        const std::string path=dir+"/layer"+std::to_string(i)+".bin";
+        const int fd=open(path.c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if (fd<0) return false;
+        struct stat before{},after{};auto& layer=capture.forcedLayers[i];
+        if (fstat(fd,&before) || !S_ISREG(before.st_mode)
+            || before.st_size!=static_cast<off_t>(layer.size()*sizeof(float))) {close(fd);return false;}
+        FILE* input=fdopen(fd,"rb");if (!input) {close(fd);return false;}
+        const bool okay=std::fread(layer.data(),sizeof(float),layer.size(),input)==layer.size()
+            && std::fgetc(input)==EOF && !std::ferror(input) && !fstat(fd,&after) && SameFile(before,after);
+        if (std::fclose(input) || !okay) return false;
+        for (float value:layer) if (!std::isfinite(value)) return false;
+    }
+    return true;
+}
 int main(int argc,char** argv) {
     if (argc<3) {
-        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two] [(--replace-layer | --replace-attn-residual | --replace-ffn-swiglu) N tensor.bin [--trace-layer N | --trace-layer25]]\n",argv[0]);return 2;
+        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two] [(--replace-layer | --replace-attn-residual | --replace-ffn-swiglu) N tensor.bin [--trace-layer N | --trace-layer25] | two --replace-first-layers snapshot-directory]\n",argv[0]);return 2;
     }
     const bool two=argc>3 && !std::strcmp(argv[3],"two");
     const int option=two?4:3;
-    if (argc!=option && argc!=option+3 && argc!=option+4 && argc!=option+5) return 2;
+    const bool forceFirst=two && argc==6 && !std::strcmp(argv[4],"--replace-first-layers");
+    if (!forceFirst && argc!=option && argc!=option+3 && argc!=option+4 && argc!=option+5) return 2;
     Capture capture{},replacement{};
-    if (argc>option) {
+    if (forceFirst && !LoadForcedLayers(argv[5],capture)) return 1;
+    if (!forceFirst && argc>option) {
         if (std::strcmp(argv[option],"--replace-layer") && std::strcmp(argv[option],"--replace-attn-residual")
             && std::strcmp(argv[option],"--replace-ffn-swiglu")) return 2;
         replacement.replaceAttentionResidual=!std::strcmp(argv[option],"--replace-attn-residual");

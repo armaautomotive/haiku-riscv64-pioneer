@@ -2,6 +2,22 @@
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+The offline oracle can also replace every position-zero layer boundary with
+the corresponding simulator boundary before advancing to the next layer. All
+32 inputs matched the saved, already audited snapshot SHA-256 manifest and
+each was read back exactly. The forced first position selected token 261; the
+next position still selected 89598, not the simulator's 1850. The forced
+oracle's second-position layer 0 was byte-identical to the ordinary reference;
+layers 3 and 31 differed, with maximum absolute errors `0.00475425273` and
+`0.238363504`, respectively. This shows the first-position boundary changes
+alone did not reproduce the simulated second token under this CPU computation;
+it does not recreate or compare the simulator's recurrent/KV state and does
+not eliminate per-operation or state-handoff defects. An all-layer
+self-injection reproduced all 68 baseline files byte-for-byte. A missing
+completion marker was rejected; the oracle checks all replacements are
+finite and read back exactly. Logs:
+`/private/tmp/q35-llama-force-{self,sim}-output-20261126b.log`.
+
 The offline CPU oracle now permits a tensor replacement on the second of two
 positions, after computing the first position normally and retaining its CPU
 recurrent state. An authenticated full two-position reference saved all 32
