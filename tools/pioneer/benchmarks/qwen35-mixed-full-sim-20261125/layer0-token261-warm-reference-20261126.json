@@ -1,0 +1,12 @@
+{
+  "input_token": 261,
+  "position": 1,
+  "layer": 0,
+  "max_absolute_error": 2.384185791015625e-07,
+  "mismatches": 0,
+  "simulator_sha256": "d845bd7581377231100000193e6785338ea99d3edecbfb9a2d10a2152e02785d",
+  "reference_sha256": "82b47ba902bc054705f1bdd67e7016a5ccbdf97a2c078beaad0cfa9d2d72844c",
+  "prior_simulator_state_sha256": "3799cdf3cb08a36009a836b841c6b9e20d592b733606e72b53d6d4f301fb3301",
+  "embedding_tile_sha256": "a91b05fc3b997b42e669d945ec85e01db2e534f6229c511f59ff906dda2c9c08",
+  "scope": "Separate first-layer 120-worker simulator replay using imported position-zero state; not the failed full-model run or hardware."
+}

@@ -2,6 +2,18 @@
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+The separate token-261 warm layer-0 replay completed all 21 barriers on 120
+simulated workers and reached its intentional record-22 fault. It imported
+the prior token-42 simulator state, and its full 2,560-value layer output
+matched the independent position-one CPU reference at the unchanged tolerance,
+with maximum absolute error `2.38418579e-07`. The runner separately checked
+all 524,288 updated delta values against its own same-input operator reference
+(maximum error `5.34374923e-07`). Results and hashes are in
+`layer0-token261-warm-reference-20261126.json`; log:
+`/private/tmp/q35-token261-layer0-warm-20261126c.log`. This uses a separate
+synthetic memory layout and simulator process, not the failed full-model run;
+it establishes neither full-model correctness nor hardware output or speed.
+
 The offline oracle now exports the 24 convolution and 24 delta inputs used
 at position one. Its existing 68 layer/logit/token artifacts remain
 byte-identical to the two-position reference, and the 48 captured states have
@@ -14,10 +26,9 @@ maximum absolute errors were `7.62939453e-06` and `1.07288361e-06`. See
 real model and token 42 but is not the failed full-model execution.
 
 To test its next layer input with the actual token 261, a synthetic-layout
-first-layer replay was generated for that token and started with the saved
-simulator state in session `13939` (log
-`/private/tmp/q35-token261-layer0-warm-20261126c.log`). Its output will be
-compared to the independent position-one layer-0 reference after completion.
+first-layer replay was generated and run with the saved simulator state; its
+completed comparison is recorded above (log
+`/private/tmp/q35-token261-layer0-warm-20261126c.log`).
 The 16-row embedding tile matched the original authenticated GGUF bytes in a
 separate raw-row audit, and a corrupted tile was rejected. Optimized and
 ASan/UBSan fixture builders produced identical 15 files; the token-42 control

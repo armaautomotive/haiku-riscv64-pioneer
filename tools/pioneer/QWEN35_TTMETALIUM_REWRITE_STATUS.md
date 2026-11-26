@@ -1,12 +1,20 @@
 # Latest offline checks, 2026-11-26
 
+The separate token-261 warm layer-0 simulator replay completed its 120-worker
+audit and matched all 2,560 independent CPU reference values, maximum
+absolute error `2.38418579e-07`. It imported the earlier simulated token-42
+state and used a separately authenticated embedding tile. This narrows the
+investigation but does not validate the failed full-model run, later layers,
+physical inference or throughput. See
+`benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
 The reference captures position-one convolution and delta input state for all
 24 recurrent layers without changing its existing outputs. A saved, separate
 first-layer simulator handoff passed comparison for all 24,576 convolution
-and 524,288 delta values at the existing tolerance. A focused replay of that
-state with the actual next token 261 is running in session `13939`, and a
-four-layer graph state capture is running in session `76253`; neither result
-is available. The full two-position capture remains active in session `45891`.
+and 524,288 delta values at the existing tolerance. The focused replay of that
+state with actual next token 261 has completed as described above. A four-layer
+graph state capture is running in session `76253`; no result is available.
+The full two-position capture remains active in session `45891`.
 The token-261 embedding tile matched authenticated raw GGUF rows and rejected
 corruption. These are simulator and offline-reference checks, not full-model
 or hardware validation. See `benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
