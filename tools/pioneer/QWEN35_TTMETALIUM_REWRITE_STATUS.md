@@ -7,8 +7,12 @@ matches the saved model identity. Using it, I generated the combined 32-layer
 fixture for the current paired K/V, paired FFN, fused RMS/save image: 425 prompt
 steps or 428 decode steps, with 2,740,473,856 staged weight bytes. The simulator
 runner's length guard now recognizes this stream and its focused marker/count
-test passes. The first full decode simulation is active; it has not produced
-an output yet. See
+test passes. The first full decode simulation is active and has not reached
+its final output. Captured boundaries for layers 0–3 are byte-identical to
+the earlier full simulator run, including dense layer 3 (SHA-256
+`23e2d5d9e1753671df264bea4a50fbd1eed1dd53d9af5ca836612f7ae952d563`). This is
+graph-equivalence evidence through the first dense K/V pair, not independent
+full-model CPU correctness. See
 `benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
 
 The Tenstorrent-style dense K/V rewrite passes a four-layer, 120-simulated-

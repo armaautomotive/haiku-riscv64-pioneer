@@ -88,9 +88,15 @@ expected 436 decode steps instead of the paired graph's 428. The runner now
 uses 425/428 for the matched dense K/V variant, with explicit tests retaining
 the other graph lengths (521/524, 529/532, 497/500, and 433/436). The focused
 marker/count test passes. The full 428-step simulation is running on the
-exploratory matrix simulator with all 32 layer snapshots requested; at the
-latest check it had reached poll 301 and had not produced a token. This is
-simulator-only, not a physical run or throughput measurement.
+exploratory matrix simulator with all 32 layer snapshots requested. At poll
+1,400, it had captured layers 0–3; each of their 2,560 F32 values is
+byte-identical to the earlier full simulator output. Layer 3 is the first
+dense-attention layer, and its snapshot hash is
+`23e2d5d9e1753671df264bea4a50fbd1eed1dd53d9af5ca836612f7ae952d563`, matching
+the baseline capture. This establishes graph equivalence through the first
+paired K/V operation, not independent full-model CPU correctness. The full
+decode has not completed. This is simulator-only, not a physical run or
+throughput measurement.
 
 ## Paired dense key/value recorder schedule, 2026-11-26
 
