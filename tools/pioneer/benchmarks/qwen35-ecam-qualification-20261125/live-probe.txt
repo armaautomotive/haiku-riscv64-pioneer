@@ -1,0 +1,5 @@
+P100A_RELOAD driver55 tag2026102100010012 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+ECAM_LEASE_PROBE version=1 manager=0 pci=0 cards=1 profile=0 stage=6 ready=1 lease_module=0 lease=0 callback=-2147483636 calls=1 recovery_module=0 recovery=-2147483633 recovery_calls=0
+P100A_RELOAD driver55 tag2026102100010012 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+PASS fixed ECAM lease present and cleanup; no PCI writes or accelerator execution

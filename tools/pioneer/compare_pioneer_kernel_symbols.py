@@ -20,7 +20,7 @@ def safe_name(name):
     return bool(name) and all(33 <= ord(char) <= 126 for char in name)
 
 
-def read_inventory(path):
+def read_inventory(path, minimum):
     rows = collections.Counter()
     for line in path.read_text().splitlines():
         name, value, size, info, section = line.split('\t')
@@ -29,7 +29,7 @@ def read_inventory(path):
         row = (name, int(value, 16), int(size), int(info), int(section))
         if row[3] & 15 != TYPE['SECTION']:
             rows[row] += 1
-    if len(rows) < 1000:
+    if len(rows) < minimum:
         raise ValueError('kernel inventory is unexpectedly small')
     return rows
 
@@ -59,8 +59,12 @@ def main():
     parser.add_argument('readelf', type=Path)
     parser.add_argument('inventory', type=Path)
     parser.add_argument('references', nargs='+', type=Path)
+    parser.add_argument('--minimum-symbols', type=int, default=1000,
+                        help='minimum distinct inventory rows (default 1000 for a kernel)')
     args = parser.parse_args()
-    runtime = read_inventory(args.inventory)
+    if args.minimum_symbols < 1:
+        parser.error('minimum symbols must be positive')
+    runtime = read_inventory(args.inventory, args.minimum_symbols)
     results = []
     for path in args.references:
         reference = read_elf(args.readelf, path)

@@ -1,0 +1,26 @@
+{
+  "inventory_sha256": "996ed38b7f6ac76d266a7948dd1bce7d3b9cb45466beb73fd738572a5c7ea3e2",
+  "results": [
+    {
+      "reference": "/private/tmp/q35-ecam-early-final1-20261125/qualification/ecam",
+      "reference_sha256": "138f97383da9db05288ab451621442c58d7733d6fd8f389c9156eccc658a8757",
+      "runtime_symbols": 68,
+      "reference_symbols": 68,
+      "matching_symbols": 68,
+      "runtime_only": 0,
+      "reference_only": 0,
+      "exact_exported_symbols": true
+    },
+    {
+      "reference": "generated.pioneer/tenstorrent/root-probe-20261014/ecam-final",
+      "reference_sha256": "23e65e2a9a3e886fc7d1429901db6534f2cc7a9077f121d3e334f4cf839cf11d",
+      "runtime_symbols": 68,
+      "reference_symbols": 60,
+      "matching_symbols": 0,
+      "runtime_only": 68,
+      "reference_only": 60,
+      "exact_exported_symbols": false
+    }
+  ],
+  "proves_binary_hash": false
+}

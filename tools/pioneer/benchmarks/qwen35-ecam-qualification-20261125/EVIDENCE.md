@@ -52,3 +52,31 @@ The rebuilt private BFS is `c4f7223d4f7542068b7c58ecaf4aca9f9a1321ae92ed042898af
 and its separate helper is `03a95c8d60741677c738c371ff4b37aa6f9064d4e4671ec3d2ab068c2ddabe34`.
 The candidate remains unbooted. The earlier full regression overlapped the
 refinement; the focused test and new witness build cover the final change.
+
+## Live fixed-lease qualification
+
+The isolated helper verified its staged inputs and kexec-booted the refined
+BFS. Haiku came up with 64 host CPUs and stable55 generation 1 idle. The
+loaded ECAM image reported 68 exported symbol tuples, all matching the
+qualification candidate and none matching the saved control; this is symbol
+layout evidence, not a full binary hash (`symbol-match.json`).
+
+After idle and process checks the guarded probe reached PCI profile stage 6,
+ran the internal fixed no-op lease callback once, and verified that the general
+recovery call returned `B_NOT_ALLOWED` without invoking its callback. Full
+output is in `live-probe.txt`. The temporary driver, device, lock and stage
+were removed. Both model files retained their recorded sizes, not fresh hashes.
+There were no PCI configuration writes, accelerator execution, firmware
+commands, DMA or reset operations in this test. The result does not prove
+concurrent physical config exclusion, device-removal behavior, DMA/MMIO or
+firmware exclusion, reset or no-reboot recovery.
+
+Serial logs in four recent boot segments contained approximately 37–41 P340
+pre-VM store-fault traces per boot, including earlier control boots; the
+source calls the VM fault handler after tracing and no P332 fatal marker or
+KERNEL PANIC appeared in those sampled segments. This observation does not
+prove the resolution of every individual fault.
+
+A clean reload regression for the idle-path refinement is running at
+`/private/tmp/q35-ecam-early-final-reload-20261125.log`; it had not completed
+when this live result was recorded.
