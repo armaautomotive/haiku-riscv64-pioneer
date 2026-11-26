@@ -28,23 +28,23 @@ int main(int argc,char** argv) {
         || !ReadExact(argv[2],packets,sizeof(packets))) return 1;
     DataflowResidentCommand command{};
     if (DataflowResidentCommandRead(packets[0].word,packets[1].word,1,5,command)!=DataflowBarrierReady
-        || command.trigger!=2 || command.epoch!=6 || command.firstSequence!=525
+        || command.trigger!=2 || command.epoch!=6 || command.firstSequence!=DataflowGraphDecodeSteps+1
         || command.count!=DataflowGraphDecodeSteps || command.position!=1
         || command.trigger>DataflowResidentRunLimit
         || command.firstSequence+command.count-1>DataflowResidentRunLimit) return 1;
     FILE* records=std::fopen(argv[3],"rb");if (!records) return 1;
-    unsigned embedding=0,conv=0,delta=0,dense=0;
+    unsigned embedding=0,conv=0,delta=0,dense=0,hybrid=0;
     for (unsigned core=0;core<DataflowCoreCount;core++) {
         DataflowGraphRunDescriptor expanded{},expected{};
         auto token=installed[core].token;token.token=command.token;token.position=command.position;
-        if (!DataflowResidentCommandExpand(command,installed[core],core,1,5,524,expanded)
+        if (!DataflowResidentCommandExpand(command,installed[core],core,1,5,DataflowGraphDecodeSteps,expanded)
             || !DataflowGraphRunBuild(installed[core].binding,installed[core].lease,
-                installed[core].routes,token,{6,525,DataflowGraphDecodeSteps},2,
+                installed[core].routes,token,{6,DataflowGraphDecodeSteps+1,DataflowGraphDecodeSteps},2,
                 command.pollLimit,command.inputSlot,expected)
             || std::memcmp(&expanded,&expected,sizeof(expected))
-            || DataflowResidentCommandExpand(command,installed[core],core,2,5,524,expanded)
-            || DataflowResidentCommandExpand(command,installed[core],core,1,6,524,expanded)
-            || DataflowResidentCommandExpand(command,installed[core],core,1,5,525,expanded)) return 1;
+            || DataflowResidentCommandExpand(command,installed[core],core,2,5,DataflowGraphDecodeSteps,expanded)
+            || DataflowResidentCommandExpand(command,installed[core],core,1,6,DataflowGraphDecodeSteps,expanded)
+            || DataflowResidentCommandExpand(command,installed[core],core,1,5,DataflowGraphDecodeSteps+1,expanded)) return 1;
         // Walk every actual full-model record: the dynamic patch must switch
         // embedding, convolution and recurrent state, and dense position.
         for (unsigned step=0;step<DataflowGraphDecodeSteps;step++) {
@@ -82,13 +82,28 @@ int main(int argc,char** argv) {
                 if (in.program.position!=0 || out.program.position!=1) return 1;
                 ++dense;break;
             }
+#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+            case DataflowFlashHybridMagic: {
+                DataflowFlashHybridInvocation in{},out{};DataflowDynamicRead(before,in);DataflowDynamicRead(after,out);
+                if (in.program.position!=0 || out.program.position!=1) return 1;
+                in.program.position=1;
+                if (std::memcmp(&in,&out,sizeof(in))) return 1;
+                ++hybrid;break;
+            }
+#endif
             default:
                 if (std::memcmp(&before,&after,sizeof(before))) return 1;
             }
         }
     }
     if (std::fgetc(records)!=EOF || std::ferror(records) || std::fclose(records)
-        || embedding!=120 || conv!=24*120 || delta!=48*120 || dense!=24*120) return 1;
-    std::printf("PASS second decode ticket and %u recorded embedding, %u conv, %u delta and %u dense patches; NO HARDWARE\n",
-        embedding,conv,delta,dense);
+        || embedding!=120 || conv!=24*120 || delta!=48*120
+#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+        || dense!=16*120 || hybrid!=16*120
+#else
+        || dense!=24*120 || hybrid!=0
+#endif
+        ) return 1;
+    std::printf("PASS second decode ticket and %u embedding, %u conv, %u delta, %u dense and %u hybrid patches; NO HARDWARE\n",
+        embedding,conv,delta,dense,hybrid);
 }

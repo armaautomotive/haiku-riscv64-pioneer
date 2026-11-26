@@ -47,3 +47,23 @@ correctness or speed. The flash suite, header-packaging guards, Python syntax,
 state-handoff and image/fixture mismatch tests passed. Physical authority,
 processor release, no-reboot recovery, full-model output and throughput
 remain unverified.
+
+## Full decode fixture and second-token patch audit
+
+The paired graph recorder generated an authenticated 32-layer, 500-record
+per-worker decode fixture at
+`/private/tmp/q35-ffn-pair-recorded-full-decode-20261126`. Its
+2,740,473,856 staged weight bytes compare byte-for-byte equal to the earlier
+authenticated hybrid full-decode fixture. The existing handoff verifier now
+uses the configured graph length and checks hybrid producer/reducer position
+patches as well as the dense pack records. Under ASan/UBSan it checked the
+actual fresh ticket and all 60,000 records, including 120 embedding, 2,880
+convolution, 5,760 delta, 1,920 dense and 1,920 hybrid patches; all other
+records remained byte-identical. Baseline 524-step and unpaired hybrid
+532-step fixture regressions also passed. Separately corrupted copies of the
+first record and the command commit were rejected. This verifies recorded metadata and
+state-address transformations, not numerical model execution.
+
+The paired four-layer numerical simulation remains running; the paired full
+fixture has not been run. Physical ownership, recovery and throughput remain
+unverified. No card was accessed.
