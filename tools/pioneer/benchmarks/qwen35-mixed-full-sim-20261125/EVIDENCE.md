@@ -1,5 +1,33 @@
 # Recorded mixed-layer and full-decode simulator work, 2026-11-25
 
+## Layer-18 output-projection sensitivity, 2026-11-26
+
+With the same captured input, isolated simulations passed the Z projection
+(4,096 values, maximum error `4.29153442e-06`), alpha and beta projections
+(32 values each, maxima `4.29153442e-06` and `3.81469727e-06`), convolution
+(8,192 values, maximum `3.87430191e-07`), and the recurrent update and gated
+normalization (8,192 retained QKV values, maximum `6.2584877e-07`). Each
+included the 120-worker and intentional-fault checks. The three-record QKV
+slice passed as recorded below.
+
+An independent CPU Q8_K counterfactual compared the reference recurrent
+output with the exact simulator output before the authenticated model's
+`blk.18.ssm_out.weight` projection. One quantized value and its block sum
+changed. The full projection changed by up to `0.000223390758`, versus
+`1.04308128e-07` for scale changes alone. Using the counterfactual projection
+and the same residual predicted the simulator attention residual within
+`9.53674316e-07` across all 2,560 rows. The original CPU/simulator residual
+difference was `0.000223394483`. This supports a quantization-threshold
+explanation for this specific attention discrepancy. An independent CPU
+continuation with the simulator's exact attention residual reproduced all
+2,560 final-layer values within the existing tolerance, with maximum absolute
+difference `1.14440918e-05`. This supports propagation of the attention
+discrepancy into this particular final-layer mismatch. CPU continuation log:
+`/private/tmp/q35-layer18-residual-injected-oracle-20261126.log`. No tolerance
+was relaxed and no card was used.
+
+Logs: `/private/tmp/q35-baseline-layer18-{z,alpha,beta,conv,recurrence}-sim-20261126.log`.
+
 ## Layer-18 replay results, 2026-11-26
 
 The isolated same-input layer-18 replay completed its 120-worker audit and

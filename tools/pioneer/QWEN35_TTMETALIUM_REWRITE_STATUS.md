@@ -1,5 +1,15 @@
 # Latest offline checks, 2026-11-26
 
+The layer-18 Z, alpha, beta, convolution and recurrent-update slices also
+passed their independent references. A CPU counterfactual found one changed
+Q8_K integer in the following output projection; the resulting projected
+residual matches the simulated residual within `9.53674316e-07` for this
+input. A CPU continuation from the exact simulated residual also matches all
+2,560 final-layer values within the existing tolerance (maximum absolute
+error `1.14440918e-05`), supporting the same explanation for this input's
+larger final-layer discrepancy. These are offline diagnostics, not hardware
+correctness or performance results.
+
 The mixed-optimization, two-region resident image passed a four-layer
 simulation on all 120 simulated workers; all 2,560 values matched the reference
 within `5.00679016e-06` and were byte-identical to the size-optimized image.

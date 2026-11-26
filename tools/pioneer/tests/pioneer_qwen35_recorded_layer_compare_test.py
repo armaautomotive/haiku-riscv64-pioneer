@@ -72,6 +72,15 @@ try:
     raise AssertionError('last Z output row mismatch accepted')
 except RecordedNumericalMismatch as error:
     assert '1/4096' in str(error) and 'row 4095' in str(error)
+scalar = struct.pack('<32f', *([1.0] * 32))
+assert compare_recorded_layer(scalar, scalar, 32) == 0
+bad_scalar = bytearray(scalar)
+struct.pack_into('<f', bad_scalar, 31 * 4, 2.0)
+try:
+    compare_recorded_layer(bad_scalar, scalar, 32)
+    raise AssertionError('last scalar output row mismatch accepted')
+except RecordedNumericalMismatch as error:
+    assert '1/32' in str(error) and 'row 31' in str(error)
 weights = [(0, 0x04000000, 4096, 0)]
 streams = [(0, 0, 0x04100000)]
 inputs = [(0, 0x04400000, 0, 16)]
