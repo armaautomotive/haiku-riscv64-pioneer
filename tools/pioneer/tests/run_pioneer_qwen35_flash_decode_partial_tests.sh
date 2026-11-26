@@ -26,6 +26,9 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  "$directory/pioneer_qwen35_flash_role_recovery_composition_test.cpp" -o "$temporary/role-recovery-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-recovery-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_qwen35_flash_role_pci_scope_test.cpp" -o "$temporary/role-pci-scope-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-pci-scope-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_qwen35_flash_hybrid_graph_test.cpp" -o "$temporary/graph-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/graph-test"
 for header in PioneerQwen35DataflowDenseAttentionPartial.h PioneerQwen35DataflowDenseAttentionHybrid.h \
@@ -40,7 +43,7 @@ for header in PioneerQwen35DataflowDenseAttentionPartial.h PioneerQwen35Dataflow
   fi
  done
 done
-for header in PioneerQwen35DataflowFlashCodeOwner.h PioneerQwen35DataflowFlashCodePciView.h; do
+for header in PioneerQwen35DataflowFlashCodeOwner.h PioneerQwen35DataflowFlashCodePciView.h PioneerQwen35DataflowFlashRolePciScope.h; do
  printf '#include "%s"\n' "$directory/../$header" > "$temporary/guard.cpp"
  for flags in '' '-DPIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS' '-DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY' \
   '-DPIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_RECOVERY_QUALIFY'; do

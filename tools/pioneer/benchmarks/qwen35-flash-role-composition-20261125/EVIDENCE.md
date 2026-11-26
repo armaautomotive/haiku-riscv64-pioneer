@@ -28,3 +28,19 @@ physical writes remain unproved. No card was touched. Full-model baseline and
 two-token hybrid simulations were still running at this checkpoint; neither
 simulation provides hardware throughput. Work continues on the rewrite and
 recovery before benchmarking or Assistant integration.
+
+## Flash BAR and role IO composition
+
+`DataflowFlashRolePciScope` routes only the fixed flash-code range to the
+existing PCI view; the separate role-image range continues through its role
+IO base. Its externally supplied guard must bind both to the same retained
+session and protect the buffers and route for the whole operation. The adapter
+does not supply physical authority. The sanitizer suite passed the actual
+PCI view, owner and adapter together over fake platform and role memory. It
+tested a rejected common authority, out-of-range access, held stage/rollback,
+and a partially effective flash write that prevents rollback until a
+separately authorized drain. The restored flash, role images, RAM and reset
+control all matched the fake originals. The Haiku/RV64 compile probe for this
+composition passed with the IO and guard methods unimplemented. The fake role
+IO is not the physical role PCI adapter, and these checks establish neither
+physical ownership nor safe processor release.

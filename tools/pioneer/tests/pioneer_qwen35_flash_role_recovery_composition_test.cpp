@@ -47,6 +47,7 @@ struct FlashRecoveryIO : RecoveryIO {
         return int(number)!=failFlashWrite;
     }
 };
+#ifndef PIONEER_Q35_FLASH_RECOVERY_FIXTURE_ONLY
 int main() {
     const uint32_t reader[]={1,2,3},writer[]={4,5},readerShim[]={6,7},writerShim[]={8,9},flashImage[]={0x101,0x202,0x303};
     for (unsigned mode=0;mode<3;mode++) {
@@ -89,3 +90,4 @@ int main() {
     }
     std::puts("PASS held role recovery includes flash window, RAM-snapshot protection and release refusal; NO HARDWARE");
 }
+#endif

@@ -54,6 +54,7 @@ struct Platform {
         words[guard.selected*DataflowFlashCodeWords+offset]=value;if (revokeAfterWrite) guard.write=false;
     }
 };
+#ifndef PIONEER_Q35_FLASH_PCI_FIXTURE_ONLY
 int main() {
     Guard guard;Platform platform{guard};DataflowFlashCodePciView<Platform> view(platform);
     uint32_t data[4]={11,22,33,44},out[4]{};
@@ -130,3 +131,4 @@ int main() {
     uncertainGuard.retire=true;assert(uncertainView.Close(uncertainGuard));
     std::puts("PASS fixed flash BAR view, retained uncertain writes and independent drainage; NO HARDWARE");
 }
+#endif
