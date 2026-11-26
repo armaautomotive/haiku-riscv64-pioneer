@@ -10,6 +10,11 @@ static_assert(unsigned(PioneerQwen35::DataflowGraphDecodeSteps)<unsigned(Pioneer
 #include "PioneerQwen35DataflowGraphTrace.h"
 #include "PioneerQwen35DataflowGraphProfile.h"
 #include "PioneerQwen35DataflowResidentDispatch.h"
+#if defined(PIONEER_QWEN35_TTSIM_UNPROFILED_COMPILE_ONLY) \
+    && (!defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS) \
+        || defined(PIONEER_QWEN35_RECOVERY_QUALIFY))
+#error Unprofiled simulator graph is an isolated non-loadable witness
+#endif
 #ifdef PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS
 #include "PioneerQwen35DataflowResidentStreamCache.h"
 static_assert(unsigned(PioneerQwen35::DataflowResidentStreamCacheEntries)>=unsigned(PioneerQwen35::DataflowGraphDecodeSteps),
@@ -159,6 +164,7 @@ extern "C" unsigned PioneerQwen35DeviceGraphRun(
 #endif
 	PioneerQwen35::DataflowGraphProfile profile;
 	GraphWitnessExecution execution{run,mailbox};
+#ifndef PIONEER_QWEN35_TTSIM_UNPROFILED_COMPILE_ONLY
 	if (run.core==0 && run.ticket.count==PioneerQwen35::DataflowGraphDecodeSteps) {
 		using namespace PioneerQwen35;
 		execution.profile=&profile;
@@ -168,6 +174,7 @@ extern "C" unsigned PioneerQwen35DeviceGraphRun(
 			DataflowStoreRelease(record[0],0);
 		}
 	}
+#endif
 	const uint64_t profileStart=execution.profile?DataflowProfileCycle():0;
 	PioneerQwen35::DataflowBlackholeBarrierIO transport(run.core);
 	PioneerQwen35::DataflowDeviceGraph<GraphWitnessExecution,

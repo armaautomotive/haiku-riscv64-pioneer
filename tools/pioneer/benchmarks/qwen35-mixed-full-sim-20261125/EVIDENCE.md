@@ -1,0 +1,48 @@
+# Recorded mixed-layer and full-decode simulator work, 2026-11-25
+
+The production recorder and packed plan generated a four-layer prefix from the
+SHA-256 authenticated Qwen3.5-4B Q4_K_M GGUF
+`00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4`.
+The fixture places the real weights across seven simulated banks and starts
+with token 42's real embedding. Three recurrent layers and the first dense
+attention layer completed 66 recorded steps on 120 simulated workers. All
+workers reached the deliberate next-record fault. All 2,560 output values
+matched an independently evaluated llama.cpp reference with maximum absolute
+error `5.00679016e-06` (acceptance `2e-5 * max(1, abs(reference))`).
+The log is `/private/tmp/q35-recorded-four-layer-sim-20261125a.log`.
+
+The llama.cpp reference is a standalone offline validation program built
+without Metal, from submodule commit `c060ca974c773c7c3d17fd1b66dc9d312bc292c0`.
+It authenticates the same opened GGUF, records layer activations and greedy
+choices, and can retain its own state for a second reference position. It is
+not linked into Work mode or used as an inference fallback. Its layer-zero
+result agreed with the earlier separately simulated reference to within
+`8.94e-8`. Its greedy token choices for the two positions are 261 and 89598.
+
+The full decode fixture contains all 524 recorded steps and stages
+2,740,473,856 bytes of weights, including the tied output head. Its first run
+stopped because this exploratory simulator does not implement the RISC-V
+`cycleh` CSR used by decode profiling. No simulator CSR behavior was faked.
+An explicitly marked compile-only image disables that profiling exclusively
+for simulation, and both hardware-image packagers reject the marker. The
+normal profiled control image remained byte-identical to the prior build. A
+120-worker synthetic decode fault-path test passed with the special image.
+The complete recorded decode was retried with that image and is running at
+this checkpoint; **its final output is not yet verified**. The active log is
+`/private/tmp/q35-recorded-full-decode-sim-20261125b.log`.
+
+The fixture generators reproduce byte-identically under optimized and
+ASan/UBSan builds for the tested one-layer case; four-layer binary files also
+match. Header packaging rejection, corrupted candidate receipts, command
+freshness, and the 120-worker receipt audit passed their offline tests. The
+experimental simulator contains exploratory matrix patches and is not a
+qualified hardware reference. These results do not establish physical card
+execution, a valid full-model output, clean unload, no-reboot recovery, or a
+decode rate. No P100A was accessed for this checkpoint.
+
+Full fixture SHA-256: records
+`fa2e60a7617262957e8ca3c3f09727e7474aa07417c2b86e896638213035bdda`,
+staged weights
+`591910f9cb91abd0392ac0efbb86c0b4c09f12e32a7bb4315b48972d23752be6`.
+The simulator-only image text SHA-256 is
+`60cbf8f5946a960a809acf2bf91160de586711e67e646215dc9258d61ea23a09`.

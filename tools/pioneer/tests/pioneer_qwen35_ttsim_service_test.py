@@ -62,7 +62,7 @@ def validate_resident_prompt_commands(first, second):
         raise ValueError('full-prompt commands do not have fresh disjoint tickets')
 
 
-def audit_resident_candidate(receipt, command, snapshots, select_worker, read, bar):
+def audit_resident_candidate(receipt, command, snapshots, select_worker, read, bar, decode=False):
     """Audit the simulated root candidate and each local sender receipt."""
     words = struct.unpack('<32I', command)
     trigger, epoch, first, count = words[2:6]
@@ -80,14 +80,25 @@ def audit_resident_candidate(receipt, command, snapshots, select_worker, read, b
         select_worker(core)
         again = struct.unpack('<16I', read(bar + 0xab000, 64))
         if (snapshot != again or snapshot[2:8] != (trigger, trigger, trigger, 1, 0, 0)
-                or any(snapshot[9:15]) or snapshot[15] != core):
+                or snapshot[15] != core):
             raise RuntimeError(f'core {core}: resident mailbox did not settle')
+        if decode and core == 0:
+            token, bits, sequence, magic, complement, observed = snapshot[9:15]
+            expected_result = (0x31524135 ^ token ^ ((bits << 7) & 0xffffffff)
+                               ^ (bits >> 25) ^ ((sequence * 0x9e3779b9) & 0xffffffff))
+            if (token >= 248320 or sequence != first + count - 1 or magic != 0x31524135
+                    or complement != ((~token) & 0xffffffff) or observed != expected_result
+                    or bits & 0x7f800000 == 0x7f800000):
+                raise RuntimeError('resident argmax result is invalid')
+        elif any(snapshot[9:15]):
+            raise RuntimeError(f'core {core}: unexpected mailbox result')
         sender = struct.unpack('<4I', read(bar + 0xab550, 16))
         sender_again = struct.unpack('<4I', read(bar + 0xab550, 16))
         sender_checksum = (0x31535335 ^ trigger ^ ((epoch << 7) & 0xffffffff)
                            ^ (epoch >> 25) ^ ((core * 0x9e3779b9) & 0xffffffff))
         if sender != sender_again or sender != (trigger, epoch, core, sender_checksum):
             raise RuntimeError(f'core {core}: resident sender receipt did not settle')
+    return snapshots[0][9] if decode else None
 
 
 def projection_reference(fixture, quant, input_offset, tile, rows=1920, weight_offset=0, input_rows=2560):
@@ -221,6 +232,8 @@ def main():
                         help='corrupt one resident template to exercise its startup fault')
     parser.add_argument('--resident-fault-command', type=Path,
                         help='submit a resident command against deliberately invalid stream records')
+    parser.add_argument('--resident-delta-sharded', action='store_true',
+                        help='use sharded-delta stream templates for a resident fault test')
     parser.add_argument('--resident-export-state', type=Path,
                         help='save verified position-zero simulator state to a new file')
     parser.add_argument('--resident-import-state', type=Path,
@@ -231,12 +244,18 @@ def main():
                         help='save the independently checked position-zero layer output to a new file')
     parser.add_argument('--recorded-layer-reference', type=Path,
                         help='compare the recorded model layer with a previously verified output')
+    parser.add_argument('--recorded-token-reference', type=Path,
+                        help='compare a full recorded decode token with an offline reference')
+    parser.add_argument('--ttsim-unprofiled', action='store_true',
+                        help='explicitly allow the non-packageable simulator image without cycle profiling')
     args = parser.parse_args()
     if ((args.resident_export_state or args.resident_import_state or args.resident_position_one_command)
             and not args.resident_sequence_fixture):
         parser.error('resident state options require --resident-sequence-fixture')
     if bool(args.recorded_layer_fixture) != bool(args.recorded_layer_reference):
         parser.error('recorded layer requires both fixture and reference')
+    if args.recorded_token_reference and not args.recorded_layer_fixture:
+        parser.error('recorded token reference requires a recorded layer fixture')
     if args.resident_export_layer_output and (not args.resident_sequence_fixture
             or args.resident_export_layer_output.exists() or args.resident_export_layer_output.is_symlink()):
         parser.error('layer output export requires a resident sequence and a new path')
@@ -252,6 +271,8 @@ def main():
         parser.error('--resident-corrupt-core requires resident templates and a core in 0..119')
     if args.resident_fault_command and (not args.resident_templates or args.resident_corrupt_core is not None):
         parser.error('--resident-fault-command requires resident templates and no corrupt core')
+    if args.resident_delta_sharded and not args.resident_fault_command:
+        parser.error('--resident-delta-sharded requires a resident fault command')
     template_directory = (args.resident_sequence_fixture or args.delta_shards_fixture
                           or args.dense_attention_fixture or args.recorded_layer_fixture)
     template_path = template_directory / 'templates.bin' if template_directory else args.resident_templates
@@ -259,11 +280,13 @@ def main():
     if resident_templates is not None and len(resident_templates) != 120 * 512:
         raise ValueError('unexpected resident-template fixture size')
     image = args.image
+    if args.ttsim_unprofiled != (image / 'ttsim-unprofiled.marker').is_file():
+        raise ValueError('unprofiled simulator flag and image marker do not match')
     if not (image / 'activation-sharing.marker').is_file():
         raise ValueError('expected sharing-enabled standalone service image')
     resident_shards = (args.resident_sequence_fixture is not None
                        and (args.resident_sequence_fixture / 'delta-params.bin').is_file())
-    if bool(args.delta_shards_fixture or args.dense_attention_fixture or args.recorded_layer_fixture or resident_shards) != (image / 'delta-shard.marker').is_file():
+    if bool(args.delta_shards_fixture or args.dense_attention_fixture or args.recorded_layer_fixture or resident_shards or args.resident_delta_sharded) != (image / 'delta-shard.marker').is_file():
         raise ValueError('delta shard fixture and service image do not match')
     dense_sharded = False
     if args.dense_attention_fixture:
@@ -550,13 +573,27 @@ def main():
             directory = args.recorded_layer_fixture
             command = (directory / 'command.bin').read_bytes()
             records = (directory / 'records.bin').read_bytes()
-            if len(command) != 128 or len(records) != 120 * 18 * 2048:
-                raise ValueError('unexpected recorded layer fixture size')
             entries = [line.split() for line in (directory / 'layout.txt').read_text().splitlines()]
+            configs = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'C' and len(row) in (4, 5)]
+            if len(configs) > 1:
+                raise ValueError('duplicate recorded layer configuration')
+            config = configs[0] if configs else (1, 17, 18, 0)
+            layers, executed, record_count = config[:3]
+            decode = len(config) == 4 and config[3] == 1
+            if len(config) == 4 and config[3] not in (0, 1):
+                raise ValueError('invalid recorded decode flag')
+            full_prompt = layers == 32
+            if (not 1 <= layers <= 32 or not 1 <= executed <= 521
+                    or (decode and not full_prompt)
+                    or bool(args.recorded_token_reference) != decode
+                    or record_count != (524 if decode else executed + (0 if full_prompt else 1))
+                    or (full_prompt and executed != 521) or len(command) != 128
+                    or len(records) != 120 * record_count * 2048):
+                raise ValueError('unexpected recorded layer fixture size')
             weights = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'W' and len(row) == 5]
             streams = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'S' and len(row) == 4]
             outputs = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'O' and len(row) == 5]
-            if len(weights) + len(streams) + len(outputs) != len(entries) or len(streams) != 120 or not outputs:
+            if len(configs) + len(weights) + len(streams) + len(outputs) != len(entries) or len(streams) != 120 or not outputs:
                 raise ValueError('invalid recorded layer layout')
             routes = (786, 978, 1170, 785, 977, 1169, 1361)
 
@@ -603,27 +640,47 @@ def main():
             for expected_core, (core, bank, address) in enumerate(streams):
                 if core != expected_core:
                     raise ValueError('recorded stream core order mismatch')
-                write_bank(bank, address, records[core * 18 * 2048:(core + 1) * 18 * 2048])
+                write_bank(bank, address, records[core * record_count * 2048:(core + 1) * record_count * 2048])
             select_worker(0)
             write(bar + 0xab080, command[:64])
             write(bar + 0xab0c0, command[64:])
-            for attempt in range(2000):
+            steps = record_count if full_prompt else executed
+            print(f'starting recorded {layers}-layer simulation ({steps} graph steps)', flush=True)
+            for attempt in range(20000):
                 lib.libttsim_clock(100000)
                 snapshots = []
                 for core in range(120):
                     select_worker(core)
                     snapshots.append(struct.unpack('<16I', read(mailbox_address, 64)))
-                if all(words[5] == 4 for words in snapshots):
+                if full_prompt:
+                    if any(words[5] in (4, 5) for words in snapshots):
+                        raise RuntimeError('full recorded prompt retained a worker fault')
+                    select_worker(0)
+                    receipt = struct.unpack('<8I', read(bar + 0xab310, 32))
+                    if receipt[7] == 1:
+                        token = audit_resident_candidate(receipt, command, snapshots, select_worker, read, bar, decode=decode)
+                        if decode:
+                            expected_token = int(args.recorded_token_reference.read_text().strip())
+                            if token != expected_token:
+                                raise RuntimeError(f'recorded decode token {token} differs from reference {expected_token}')
+                            print(f'recorded decode token {token} matches reference', flush=True)
+                        break
+                elif all(words[5] == 4 for words in snapshots):
                     break
-                if any(words[5] not in (1, 2, 4) for words in snapshots):
+                if not full_prompt and any(words[5] not in (1, 2, 4) for words in snapshots):
                     raise RuntimeError('unexpected worker state during recorded layer')
+                if attempt and attempt % 50 == 0:
+                    select_worker(0)
+                    progress = struct.unpack('<I', read(bar + 0xab300, 4))[0]
+                    print(f'recorded graph: polling attempt {attempt}, progress=0x{progress:08x}', flush=True)
             else:
-                raise RuntimeError('recorded layer did not reach its intentional terminal fault')
-            for core, words in enumerate(snapshots):
-                if (words[2:8] != (1, 0, 1, 4, 4, 5)
-                        or words[9:15] != (0x31464735, 1, 17, 120, 0x80000004, 0)
-                        or words[15] != core):
-                    raise RuntimeError(f'core {core}: recorded layer failed before 17 barriers: {words}')
+                raise RuntimeError('recorded layer did not reach its expected terminal state')
+            if not full_prompt:
+                for core, words in enumerate(snapshots):
+                    if (words[2:8] != (1, 0, 1, 4, 4, 5)
+                            or words[9:15] != (0x31464735, 1, executed, 120, 0x80000004, 0)
+                            or words[15] != core):
+                        raise RuntimeError(f'core {core}: recorded layer failed before {executed} barriers: {words}')
             result = bytearray(2560 * 4)
             next_row = 0
             for bank, address, first, rows in outputs:
@@ -645,10 +702,11 @@ def main():
                     raise RuntimeError(f'recorded final row {row}: {got} differs from verified reference {want}')
                 maximum = max(maximum, error)
             select_worker(0)
-            if struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
+            if not full_prompt and struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
                 raise RuntimeError('intentionally faulted recorded layer published a candidate')
-            print(f'PASS actual recorded model layer: 2560 values match verified reference; '
-                  f'maximum absolute error {maximum:.9g}; 18th record intentionally faults; NO HARDWARE', flush=True)
+            terminal = 'candidate audited' if full_prompt else f'record {record_count} intentionally faults'
+            print(f'PASS actual recorded {layers}-layer prefix: 2560 values match verified reference; '
+                  f'maximum absolute error {maximum:.9g}; {terminal}; NO HARDWARE', flush=True)
             return
 
         if args.dense_attention_fixture:

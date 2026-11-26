@@ -31,6 +31,15 @@ with tempfile.TemporaryDirectory() as temporary:
     (image / 'dispatch.bin').write_bytes(dispatch)
     (image / 'symbols.txt').write_text(symbols, encoding='ascii')
     header = module.generate(image)
+    for marker in ('dense-shard.marker', 'ttsim-unprofiled.marker'):
+        (image / marker).touch()
+        try:
+            module.generate(image)
+            raise AssertionError('accepted non-packageable ' + marker)
+        except ValueError:
+            pass
+        finally:
+            (image / marker).unlink()
     assert 'DataflowServiceStoppedParkAddress=0x00072004U' in header
     assert 'DataflowServiceImageBootWord=0x0006c06fU' in header
     assert 'PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS' in header

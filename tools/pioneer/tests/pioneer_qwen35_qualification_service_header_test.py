@@ -30,6 +30,15 @@ with tempfile.TemporaryDirectory() as temporary:
     for marker in ('activation-sharing.marker', 'fused-recurrence.marker'):
         (image / marker).touch()
     header = module.generate(image)
+    for marker in ('dense-shard.marker', 'ttsim-unprofiled.marker'):
+        (image / marker).touch()
+        try:
+            module.generate(image)
+            raise AssertionError('accepted non-packageable ' + marker)
+        except ValueError:
+            pass
+        finally:
+            (image / marker).unlink()
     assert 'DataflowQualificationServiceStoppedParkAddress=0x00072004U' in header
     assert 'DataflowQualificationServiceBootWord=0x0006c06fU' in header
     for name, expected in (('DataflowQualificationServiceTextWords', code),

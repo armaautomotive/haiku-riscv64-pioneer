@@ -93,6 +93,37 @@ def main():
         raise AssertionError('bad sender receipt accepted')
     except RuntimeError:
         pass
+    senders[47] = (1, 22, 47, 0x31535335 ^ 1 ^ (22 << 7) ^ ((47 * 0x9e3779b9) & 0xffffffff))
+    decode_words = list(struct.unpack('<32I', first)); decode_words[5] = 524
+    checksum = 2166136261
+    for word in decode_words[:10]:
+        checksum = ((checksum ^ word) * 16777619) & 0xffffffff
+    decode_words[10] = checksum
+    decode = struct.pack('<32I', *decode_words)
+    receipt[5] = 524
+    checksum = 2166136261
+    for word in receipt[:6]:
+        checksum = ((checksum ^ word) * 16777619) & 0xffffffff
+    receipt[6] = checksum
+    token, bits, sequence = 123, 0x3f800000, 524
+    checksum = (0x31524135 ^ token ^ ((bits << 7) & 0xffffffff)
+                ^ (bits >> 25) ^ ((sequence * 0x9e3779b9) & 0xffffffff))
+    root = list(snapshots[0]); root[9:15] = [token, bits, sequence, 0x31524135, (~token) & 0xffffffff, checksum]
+    snapshots[0] = tuple(root)
+    assert audit_resident_candidate(tuple(receipt), decode, snapshots, select, read, 0, decode=True) == token
+    for index in range(9, 15):
+        forged = list(root); forged[index] ^= 1; snapshots[0] = tuple(forged)
+        try:
+            audit_resident_candidate(tuple(receipt), decode, snapshots, select, read, 0, decode=True)
+            raise AssertionError(f'bad argmax word {index} accepted')
+        except RuntimeError:
+            pass
+    snapshots[0] = tuple(root)
+    try:
+        audit_resident_candidate(tuple(receipt), decode, snapshots, select, read, 0)
+        raise AssertionError('decode receipt accepted as prompt')
+    except RuntimeError:
+        pass
     print('PASS simulator handoff, command freshness and 120-worker receipt audit; NO HARDWARE')
 
 

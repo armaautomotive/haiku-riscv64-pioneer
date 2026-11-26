@@ -9,11 +9,14 @@
 #define PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS 1
 #include "../PioneerQwen35DataflowResidentDispatch.h"
 #include <cstdio>
+#include <cstring>
 
 using namespace PioneerQwen35;
 int main(int argc,char** argv)
 {
-    if (argc!=3) return 2;
+    if (argc!=3 && argc!=4) return 2;
+    const bool decode=argc==4 && std::strcmp(argv[3],"decode")==0;
+    if (argc==4 && !decode) return 2;
     const unsigned routes[2][Banks]={{786,978,1170,785,977,1169,1361},{786,978,1170,785,977,1169,1361}};
     DataflowDynamicTokenContext token{};
     token.token=42;token.position=0;token.context=32;
@@ -28,7 +31,7 @@ int main(int argc,char** argv)
             99,core,0,routes[0][0],base,DataflowGraphDecodeSteps};
         const Range lease={0,base,DataflowGraphDecodeSteps*DataflowStreamRecordBytes};
         DataflowGraphRunDescriptor descriptor{};
-        if (!DataflowGraphRunBuild(binding,lease,routes,token,{5,1,DataflowGraphPromptSteps},
+        if (!DataflowGraphRunBuild(binding,lease,routes,token,{5,1,decode?DataflowGraphDecodeSteps:DataflowGraphPromptSteps},
                 1,10000,0,descriptor)
             || (!core && !DataflowResidentCommandBuild(descriptor,command))
             || std::fwrite(&descriptor,1,sizeof(descriptor),out)!=sizeof(descriptor)) {

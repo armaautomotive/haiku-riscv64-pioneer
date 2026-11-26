@@ -448,3 +448,12 @@ standalone services with those descriptors; it does not execute the complete
 resident graph recorder or language model. The exploratory simulator remains
 unqualified, and these results provide no physical recovery or performance
 evidence.
+
+## Mixed recorded layers and full decode
+
+The authenticated real-model four-layer recorder passed an independent offline
+llama.cpp comparison, including the first dense layer. A full 524-step decode
+is in progress using a simulator-only image that disables an unsupported cycle
+CSR and cannot be packaged for hardware. The offline reference is not a Work
+mode fallback. Results, limits, and the active log are documented in
+[`mixed-layer evidence`](benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md).
