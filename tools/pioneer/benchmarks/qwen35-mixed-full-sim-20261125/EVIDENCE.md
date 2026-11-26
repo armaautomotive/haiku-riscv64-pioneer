@@ -256,6 +256,13 @@ is running as session `96447` with log
 `/private/tmp/q35-baseline-four-layer-snapshots-fine-20261126.log`. The
 revised method is not yet validated against the layer references.
 
+An isolated layer-4 replay using the independent layer-3 input and explicitly
+zeroed position-zero state also started in session `80579`, after the
+120-worker record, state-range and disjointness audit passed. Its log is
+`/private/tmp/q35-baseline-layer4-slice-sim-20261126.log`; no result is
+available yet. It will complement the passing isolated layer-5 replay and
+the still-running sequential six-layer comparison.
+
 As a separate offline sensitivity experiment, replacing layer 7 in the CPU
 oracle with the simulator's complete observed output produced a layer-31
 maximum difference `0.55916214` and row 0 `-2.617931365966797`, versus
