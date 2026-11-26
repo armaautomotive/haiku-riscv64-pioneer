@@ -503,12 +503,17 @@ The guard now computes the supported step count from the graph markers, and
 the focused rejection/count test passes.
 
 The first full numerical simulation of this combined graph is active in
-session 31294. At poll 4,201 it had captured layers 0–12. Each 2,560-element
-F32 boundary from layer 0 through layer 12 is byte-identical to the earlier
-full simulator capture. Layer 11 and 12 SHA-256 values are
+session 31294. At poll 4,500 it had captured layers 0–13. Each 2,560-element
+F32 boundary from layer 0 through layer 13 is byte-identical to the earlier
+full simulator capture. Layer 11 through 13 SHA-256 values are
 `d4bed668be7c7e27e4d7897a51087e72a4e56d43db6a86aea4237662a4ba43ea` and
-`3071fbacfe1253ce39f868b663e9500c695886e772127d4c906d4117384bb8f2`.
+`3071fbacfe1253ce39f868b663e9500c695886e772127d4c906d4117384bb8f2` and
+`f47033068ee55cea18435e908dcbab57c8ee104f6486bbffb40a8b3bfc485903`.
 The run has not reached its final output or a second position. This is
 equivalence to a prior simulator capture, not independent full-model CPU
 correctness or physical P100A execution. No model load time, prompt time,
 decode rate, warm-run result, or clean physical unload has been established.
+
+A fresh strict SSH attempt with the pinned Haiku key and host key returned
+`No route to host`. Process-list, exclusive-lock, and stable-driver status
+could not be observed. The attempt did not access the accelerator.

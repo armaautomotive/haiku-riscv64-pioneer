@@ -7,17 +7,22 @@ matches the saved model identity. Using it, I generated the combined 32-layer
 fixture for the paired K/V, paired FFN, fused RMS/save image: 425 prompt steps
 or 428 decode steps, with 2,740,473,856 staged weight bytes. The simulator
 runner's length guard recognizes this stream and its focused marker/count
-test passes. The full decode simulation is active at poll 4,201. Captured
-boundaries for layers 0–12 are byte-identical to the earlier full simulator
+test passes. The full decode simulation is active at poll 4,500. Captured
+boundaries for layers 0–13 are byte-identical to the earlier full simulator
 run, including all three dense-attention layers reached so far. Layer 3,
-layer 7, layer 11, and layer 12 hashes are
+layer 7, layer 11, layer 12, and layer 13 hashes are
 `23e2d5d9e1753671df264bea4a50fbd1eed1dd53d9af5ca836612f7ae952d563`,
 `84647096a90db77bafe61c06c8877789afdd78d8ab1a73d79b037c98d013bd6a`,
 `d4bed668be7c7e27e4d7897a51087e72a4e56d43db6a86aea4237662a4ba43ea`, and
-`3071fbacfe1253ce39f868b663e9500c695886e772127d4c906d4117384bb8f2`.
+`3071fbacfe1253ce39f868b663e9500c695886e772127d4c906d4117384bb8f2`, and
+`f47033068ee55cea18435e908dcbab57c8ee104f6486bbffb40a8b3bfc485903`.
 This is graph-equivalence evidence, not independent full-model CPU
 correctness. See
 `benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
+A fresh strict Haiku SSH preflight reached `No route to host`. No current
+process, lock, or stable-driver state could be read, and no card access was
+attempted. Retry that read-only preflight before any future device access.
 
 The Tenstorrent-style dense K/V rewrite passes a four-layer, 120-simulated-
 worker graph run: all 2,560 final values match the previously CPU-validated
