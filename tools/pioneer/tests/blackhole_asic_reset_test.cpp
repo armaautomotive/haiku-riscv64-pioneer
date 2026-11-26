@@ -18,10 +18,21 @@ struct FakePci {
 	uint32_t command=0x0402;
 	uint32_t bridgeCommand=0x0402;
 	unsigned clearMarkerAfter=0;
-	unsigned delays=0;
+	unsigned delays=0,readyCalls=0,readyAfter=0,failReadyAt=0,failPollReadyAt=0,pollReadyCalls=0;
+	unsigned cardReads=0,cardReadsWhileDown=0,markerReadsAtFirstPoll=0;
+	bool rootReady=true;
 	std::vector<Write> writes;
+	bool RootReady() {
+		++readyCalls;
+		if (delays) ++pollReadyCalls;
+		return rootReady && readyCalls!=failReadyAt && (!readyAfter || !delays || delays>=readyAfter)
+			&& (!delays || pollReadyCalls!=failPollReadyAt);
+	}
 	uint32_t CardRead(uint16_t offset,uint8_t size)
 	{
+		++cardReads;
+		if (!rootReady || (readyAfter && delays && delays<readyAfter)) ++cardReadsWhileDown;
+		if (offset==4 && size==2 && delays==1) ++markerReadsAtFirstPoll;
 		if (offset==0 && size==4) return vendor;
 		if (offset==4 && size==2) return command;
 		return 0;
@@ -104,11 +115,44 @@ static void TestResumeRefusesInvalidOrUnsafeEvidence()
 	assert(BlackholeAsicResetResumeWait(pci,1,result) && pci.writes.size()==3);
 }
 
+static void TestRootReadinessGatesEndpointReads()
+{
+	BlackholeAsicResetResult result{};FakePci pci;
+	pci.rootReady=false;
+	assert(!BlackholeAsicReset(pci,4,result) && pci.cardReads==0 && pci.writes.empty());
+	// Losing root readiness before the marker, after it, or after the target
+	// must stop immediately; no failed setup is automatically replayed.
+	pci=FakePci{};pci.failReadyAt=3;
+	assert(!BlackholeAsicReset(pci,2,result) && pci.writes.empty());
+	pci=FakePci{};pci.failReadyAt=4;
+	assert(!BlackholeAsicReset(pci,2,result) && pci.writes.size()==1
+		&& result.stage==BLACKHOLE_ASIC_RESET_MARKER && !BlackholeAsicResetResumable(result));
+	pci=FakePci{};pci.failReadyAt=6;
+	assert(!BlackholeAsicReset(pci,2,result) && pci.writes.size()==2
+		&& result.trigger_target==1 && !result.trigger_control && !BlackholeAsicResetResumable(result));
+	pci=FakePci{};pci.readyAfter=3;pci.clearMarkerAfter=3;
+	assert(BlackholeAsicReset(pci,5,result));
+	assert(result.polls==3 && pci.cardReadsWhileDown==0 && pci.writes.size()==3);
+	pci=FakePci{};pci.clearMarkerAfter=1;pci.failPollReadyAt=2;
+	assert(BlackholeAsicReset(pci,3,result));
+	assert(result.polls==2 && pci.markerReadsAtFirstPoll==0 && pci.writes.size()==3);
+	pci=FakePci{};pci.clearMarkerAfter=1;pci.failPollReadyAt=3;
+	assert(BlackholeAsicReset(pci,3,result));
+	assert(result.polls==2 && pci.writes.size()==3);
+	pci=FakePci{};pci.readyAfter=10;
+	assert(!BlackholeAsicReset(pci,2,result));
+	assert(result.stage==BLACKHOLE_ASIC_RESET_TIMEOUT && result.marker_after==UINT32_MAX
+		&& pci.cardReadsWhileDown==0 && pci.writes.size()==3);
+	pci.readyAfter=0;pci.clearMarkerAfter=3;
+	assert(BlackholeAsicResetResumeWait(pci,2,result) && pci.writes.size()==3);
+}
+
 int main()
 {
 	TestOneResetSequence();
 	TestFailClosedPreflight();
 	TestTimeoutDoesNotRetryOrClearMarker();
 	TestResumeRefusesInvalidOrUnsafeEvidence();
+	TestRootReadinessGatesEndpointReads();
 	puts("PASS Blackhole ASIC reset: exact three-write order, bus-master and identity gates, bounded marker wait, no retry or marker clear;NO PCI/MMIO/reset/native qualification");
 }

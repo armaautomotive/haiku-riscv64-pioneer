@@ -18,7 +18,7 @@ struct BlackholeAsicResetResult {
 	uint32_t stage=BLACKHOLE_ASIC_RESET_IDLE;
 	uint32_t polls=0;
 	uint32_t command_before=0;
-	uint32_t marker_after=0;
+	uint32_t marker_after=UINT32_MAX;
 	uint32_t trigger_target=0;
 	uint32_t trigger_control=0;
 };
@@ -44,16 +44,21 @@ BlackholeAsicResetResumeWait(IO& io,unsigned pollLimit,BlackholeAsicResetResult&
 	result.stage=BLACKHOLE_ASIC_RESET_WAIT;
 	for (unsigned poll=0;poll<pollLimit;poll++) {
 		io.RecoveryDelay();
-		const uint32_t vendor=io.CardRead(0,4);
-		const uint32_t marker=io.CardRead(4,2);
+		if (result.polls!=UINT32_MAX) ++result.polls;
+		// Check only the upstream root until its identity, bus-master state,
+		// link and AER status are suitable for a downstream config access.
+		// A root-ready sample cannot guarantee that the link remains healthy.
 		const uint32_t rootVendor=io.RootRead(0,4);
 		const uint32_t rootClass=io.RootRead(8,4);
 		const uint32_t bridgeCommand=io.RootRead(4,2);
-		if (result.polls!=UINT32_MAX) ++result.polls;
+		if (rootVendor!=0x20421e30 || (rootClass>>8)!=0x060400
+			|| bridgeCommand==UINT32_MAX || (bridgeCommand&0x0004) || !io.RootReady())
+			continue;
+		const uint32_t vendor=io.CardRead(0,4);
+		if (vendor!=0xb1401e52 || !io.RootReady()) continue;
+		const uint32_t marker=io.CardRead(4,2);
 		result.marker_after=marker;
-		if (vendor==0xb1401e52 && rootVendor==0x20421e30
-			&& (rootClass>>8)==0x060400 && marker!=UINT32_MAX
-			&& bridgeCommand!=UINT32_MAX && !(marker&0x0044) && !(bridgeCommand&0x0004)) {
+		if (marker!=UINT32_MAX && !(marker&0x0044) && io.RootReady()) {
 			result.stage=BLACKHOLE_ASIC_RESET_COMPLETE;
 			return true;
 		}
@@ -73,24 +78,26 @@ BlackholeAsicReset(IO& io,unsigned pollLimit,BlackholeAsicResetResult& result)
 {
 	result={};
 	result.stage=BLACKHOLE_ASIC_RESET_PREFLIGHT;
-	if (!pollLimit || io.CardRead(0,4)!=0xb1401e52
-		|| io.RootRead(0,4)!=0x20421e30
+	if (!pollLimit || io.RootRead(0,4)!=0x20421e30
 		|| (io.RootRead(8,4)>>8)!=0x060400)
 		return false;
-	const uint32_t command=io.CardRead(4,2);
 	const uint32_t bridgeCommand=io.RootRead(4,2);
+	if (bridgeCommand==UINT32_MAX || (bridgeCommand&0x0004) || !io.RootReady()
+		|| io.CardRead(0,4)!=0xb1401e52 || !io.RootReady()) return false;
+	const uint32_t command=io.CardRead(4,2);
 	result.command_before=command;
 	// Bus mastering must already be disabled, and the parity bit must be clear
 	// so this invocation cannot be mistaken for a completion of an old reset.
 	if (command==UINT32_MAX || bridgeCommand==UINT32_MAX
 		|| (command&0x0004) || (bridgeCommand&0x0004)
-		|| (command&0x0040))
+		|| (command&0x0040) || !io.RootReady())
 		return false;
 	io.CardWrite(4,2,command|0x0040);
 	result.stage=BLACKHOLE_ASIC_RESET_MARKER;
-	if (io.CardRead(4,2)!=(command|0x0040)) return false;
+	if (!io.RootReady() || io.CardRead(4,2)!=(command|0x0040) || !io.RootReady()) return false;
 	io.CardWrite(0x934,4,1);
 	result.trigger_target=1;
+	if (!io.RootReady()) return false;
 	io.CardWrite(0x930,4,0x11);
 	result.trigger_control=0x11;
 	result.stage=BLACKHOLE_ASIC_RESET_WAIT;

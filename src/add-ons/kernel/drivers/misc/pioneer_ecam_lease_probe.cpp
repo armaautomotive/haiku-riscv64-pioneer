@@ -13,6 +13,7 @@
 #include "../../busses/pci/ecam/PioneerSg2042LeaseProbeModule.h"
 #include "../../../../../tools/pioneer/PioneerEcamLeaseProbe.h"
 #include "PioneerPciPinnedNodes.h"
+#include "PioneerPcieRootResetReady.h"
 #define PIONEER_ECAM_CONTENTION_QUALIFICATION
 #include "PioneerEcamLeaseProbeLogic.h"
 
@@ -44,8 +45,45 @@ static bool safe_semaphores(sem_id ready, sem_id release)
 		&& (first.count == 0 || first.count == -1) && second.count == 0;
 }
 // PIONEER_ECAM_CONTENTION_SEMAPHORES_END
+struct RootResetReadyCall {
+	device_manager_info* dm;
+	pioneer_ecam_root_reset_ready* result;
+	struct RootIO {
+		pci_device_module_info* pci;
+		pci_device* device;
+		uint32 endpointReads=0;
+		uint32 RootRead(uint16 offset, uint8 width) { return pci->read_pci_config(device, offset, width); }
+		uint32 CardRead(uint16, uint8) { ++endpointReads; return UINT32_MAX; }
+	};
+	static status_t Run(device_node*, device_node* port, void* opaque) {
+		auto& call=*static_cast<RootResetReadyCall*>(opaque);
+		pci_device_module_info* pci=NULL; pci_device* device=NULL;
+		if (port==NULL || call.dm->get_driver(port,(driver_module_info**)&pci,(void**)&device)!=B_OK
+			|| pci==NULL || device==NULL || pci->info.info.name==NULL
+			|| strcmp(pci->info.info.name,"bus_managers/pci/driver_v1")!=0
+			|| pci->read_pci_config==NULL) return B_UNSUPPORTED;
+		RootIO io{pci,device};
+		call.result->ready=PioneerPcieRootResetReady(io)?1:0;
+		call.result->endpointReads=io.endpointReads;
+		return B_OK;
+	}
+};
 static status_t probe_control(void*, uint32 operation, void* data, size_t size)
 {
+	if (operation == PIONEER_ECAM_ROOT_RESET_READY) {
+		if (size != sizeof(pioneer_ecam_root_reset_ready)) return B_BAD_VALUE;
+		pioneer_ecam_root_reset_ready result={};result.version=1;result.status=B_NO_INIT;
+		device_manager_info* dm=NULL;
+		status_t status=get_module(B_DEVICE_MANAGER_MODULE_NAME,(module_info**)&dm);
+		if (status==B_OK) {
+			if (dm!=NULL) {
+				RootResetReadyCall call{dm,&result};
+				result.status=PioneerWithPinnedPciNodes(dm,RootResetReadyCall::Run,&call);
+			}
+			put_module(B_DEVICE_MANAGER_MODULE_NAME);
+		} else result.status=status;
+		return user_memcpy(data,&result,sizeof(result));
+	}
 	if (operation == PIONEER_ECAM_LEASE_STATE) {
 		if (size != sizeof(pioneer_ecam_lease_state)) return B_BAD_VALUE;
 		pioneer_ecam_lease_state state = {}; state.version = 1; state.stateStatus = B_NO_INIT; state.waiter = -1;

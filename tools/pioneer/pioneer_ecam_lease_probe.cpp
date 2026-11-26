@@ -9,11 +9,21 @@
 int main(int argc, char** argv) {
 	const bool expectAbsent = argc == 2 && strcmp(argv[1], "--expect-absent") == 0;
 	const bool expectContentionAbsent = argc == 2 && strcmp(argv[1], "--expect-contention-absent") == 0;
-	if (argc != 1 && !expectAbsent && !expectContentionAbsent) {
-		fprintf(stderr, "usage: ecam_lease_probe_client [--expect-absent|--expect-contention-absent]\n"); return 2;
+	const bool rootReady = argc == 2 && strcmp(argv[1], "--root-reset-ready") == 0;
+	if (argc != 1 && !expectAbsent && !expectContentionAbsent && !rootReady) {
+		fprintf(stderr, "usage: ecam_lease_probe_client [--expect-absent|--expect-contention-absent|--root-reset-ready]\n"); return 2;
 	}
 	int fd = open("/dev/misc/pioneer_ecam_lease_probe", O_RDONLY);
 	if (fd < 0) { perror("open ECAM lease probe"); return 1; }
+	if (rootReady) {
+		pioneer_ecam_root_reset_ready r{};
+		int status=ioctl(fd,PIONEER_ECAM_ROOT_RESET_READY,&r,sizeof(r));
+		int closed=close(fd);
+		if (status!=0 || closed!=0) { perror("root reset readiness ioctl/close"); return 1; }
+		printf("ECAM_ROOT_RESET_READY version=%lu status=%ld ready=%lu endpoint_reads=%lu\n",
+			(unsigned long)r.version,(long)r.status,(unsigned long)r.ready,(unsigned long)r.endpointReads);
+		return r.version==1 && r.status==B_OK && r.ready==1 && r.endpointReads==0 ? 0:1;
+	}
 	if (expectContentionAbsent) {
 		pioneer_ecam_lease_state state{};
 		int status = ioctl(fd, PIONEER_ECAM_LEASE_STATE, &state, sizeof(state));

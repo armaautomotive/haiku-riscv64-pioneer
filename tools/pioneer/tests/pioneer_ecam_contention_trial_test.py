@@ -20,7 +20,7 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-for scenario in ('success', 'clean_failure', 'retained_failure'):
+for scenario in ('success', 'clean_failure', 'retained_failure', 'root_ready'):
     with tempfile.TemporaryDirectory(prefix='q35-contention-trial-') as temporary:
         root = Path(temporary)
         stage = root / 'stage'
@@ -33,9 +33,10 @@ for scenario in ('success', 'clean_failure', 'retained_failure'):
         device = root / 'dev/pioneer_ecam_lease_probe'
         device.parent.mkdir()
         put(stage / 'pioneer_ecam_lease_probe', 'fake driver\n')
-        put(stage / 'ecam_lease_probe_client', '#!/bin/sh\nexit 0\n')
+        put(stage / 'ecam_lease_probe_client', '#!/bin/sh\n' +
+            ('test "$1" = --root-reset-ready\n' if scenario == 'root_ready' else 'exit 0\n'))
         put(stage / 'ecam_lease_contention_client', '#!/bin/sh\nexit ' +
-            {'success': '0', 'clean_failure': '1', 'retained_failure': '2'}[scenario] + '\n')
+            {'success': '0', 'clean_failure': '1', 'retained_failure': '2', 'root_ready': '0'}[scenario] + '\n')
         admin = home / 'pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload'
         put(admin, '#!/bin/sh\necho "P100A_RELOAD driver55 tag2026102100010012 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY"\n')
         mock = root / 'mock'
@@ -53,8 +54,8 @@ print(hashlib.sha256(open(p,'rb').read()).hexdigest(),p)
         script = original.replace('/boot/home', str(home)).replace(
             'device=/dev/misc/pioneer_ecam_lease_probe', 'device=' + str(device))
         pins = {
-            '709d0962a7d5da7c8aed6f3bc76fe1e5a503920da6713509f85140173f1a69a3': stage / 'pioneer_ecam_lease_probe',
-            '94963c46d47529f8be34354bbf123337bf813bd25514214fcaa0e0e80c765ebf': stage / 'ecam_lease_probe_client',
+            '710bdb640fb096d899447f58d6b25e7d16ea075d8a1fa4765e3baf77cfd2b346': stage / 'pioneer_ecam_lease_probe',
+            '2d9842a8b21b3fcb860f18efc223cd0c860332b633d0a6d4c1be78b468c10c77': stage / 'ecam_lease_probe_client',
             '25a04b825db7f6390026cc4dd34780e4b9c36ce4156de441bf9aee95f31e8de4': stage / 'ecam_lease_contention_client',
             'b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f': admin,
         }
@@ -64,12 +65,13 @@ print(hashlib.sha256(open(p,'rb').read()).hexdigest(),p)
         wrapper = root / 'trial.sh'
         put(wrapper, script)
         env = dict(os.environ, PATH=str(mock) + ':' + os.environ['PATH'], MOCK_DEVICE=str(device))
-        result = subprocess.run(['bash', str(wrapper), str(stage), '1', 'contention'], env=env,
+        mode = 'root-ready' if scenario == 'root_ready' else 'contention'
+        result = subprocess.run(['bash', str(wrapper), str(stage), '1', mode], env=env,
                                 text=True, capture_output=True, timeout=15)
         lock = home / '.pioneer-q38-head-csr-exclusive'
         installed = bin_dir / 'pioneer_ecam_lease_probe'
         link = dev_dir / 'pioneer_ecam_lease_probe'
-        if scenario == 'success':
+        if scenario in ('success', 'root_ready'):
             assert result.returncode == 0, (result.stdout, result.stderr)
             assert not lock.exists() and not installed.exists() and not link.is_symlink() and not device.exists()
         elif scenario == 'clean_failure':
@@ -79,4 +81,4 @@ print(hashlib.sha256(open(p,'rb').read()).hexdigest(),p)
             assert result.returncode != 0 and 'CONTENTION_PROBE_RETAINED' in result.stderr
             assert lock.is_dir() and installed.is_file() and link.is_symlink() and device.exists(), (
                 result.stdout, result.stderr, lock.is_dir(), installed.is_file(), link.is_symlink(), device.exists())
-print('PASS actual contention wrapper clean success and fault retention; SIMULATED FILESYSTEM ONLY')
+print('PASS contention and root-ready wrapper cleanup and fault retention; SIMULATED FILESYSTEM ONLY')

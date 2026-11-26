@@ -1,7 +1,7 @@
 #!/bin/bash
-# Read-only PCI/FDT profile and fixed no-op lease: no config writes, MMIO, DMA or firmware.
+# Read-only PCI/FDT lease or root-readiness checks: no config writes, MMIO, DMA or firmware.
 set -euo pipefail
-[[ $# == 3 && $1 == /* && $2 =~ ^[1-9][0-9]{0,8}$ && ( $3 == absent || $3 == present || $3 == contention-absent || $3 == contention ) ]] || exit 2
+[[ $# == 3 && $1 == /* && $2 =~ ^[1-9][0-9]{0,8}$ && ( $3 == absent || $3 == present || $3 == contention-absent || $3 == contention || $3 == root-ready ) ]] || exit 2
 stage=$1 generation=$2 mode=$3
 [[ $(uname -s):$(id -u) == Haiku:0 ]] || exit 2
 driver=$stage/pioneer_ecam_lease_probe
@@ -12,8 +12,8 @@ link=/boot/home/config/non-packaged/add-ons/kernel/drivers/dev/misc/pioneer_ecam
 device=/dev/misc/pioneer_ecam_lease_probe
 lock=/boot/home/.pioneer-q38-head-csr-exclusive
 admin=/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
-driver_hash=709d0962a7d5da7c8aed6f3bc76fe1e5a503920da6713509f85140173f1a69a3
-client_hash=94963c46d47529f8be34354bbf123337bf813bd25514214fcaa0e0e80c765ebf
+driver_hash=710bdb640fb096d899447f58d6b25e7d16ea075d8a1fa4765e3baf77cfd2b346
+client_hash=2d9842a8b21b3fcb860f18efc223cd0c860332b633d0a6d4c1be78b468c10c77
 contention_client_hash=25a04b825db7f6390026cc4dd34780e4b9c36ce4156de441bf9aee95f31e8de4
 admin_hash=b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
 hash_is() { [[ -f $1 && ! -L $1 && $(sha256sum "$1" | cut -d ' ' -f1) == "$2" ]]; }
@@ -57,6 +57,7 @@ case "$mode" in
  absent) "$client" --expect-absent;;
  present) "$client";;
  contention-absent) "$client" --expect-contention-absent;;
+ root-ready) "$client" --root-reset-ready;;
  contention)
   retain=1
   result=0
@@ -71,4 +72,8 @@ for ((i=0; i<15; i++)); do [[ ! -e $device ]] && break; sleep 1; done
 [[ ! -e $bin && ! -L $link && ! -e $device && ! -e $lock ]]
 if listimage 1 | grep -F pioneer_ecam_lease_probe >/dev/null; then echo 'probe image still loaded' >&2; exit 1; fi
 idle
-echo "PASS fixed ECAM lease $mode and cleanup; no PCI writes or accelerator execution"
+if [[ $mode == root-ready ]]; then
+ echo 'PASS root-only reset readiness and cleanup; no endpoint reads, PCI writes or accelerator execution'
+else
+ echo "PASS fixed ECAM lease $mode and cleanup; no PCI writes or accelerator execution"
+fi

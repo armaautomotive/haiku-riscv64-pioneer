@@ -5,7 +5,8 @@
 #include <OS.h>
 enum { PIONEER_ECAM_LEASE_PROBE = B_DEVICE_OP_CODES_END + 0x352 };
 enum { PIONEER_ECAM_LEASE_HOLD = B_DEVICE_OP_CODES_END + 0x353,
-	PIONEER_ECAM_LEASE_STATE = B_DEVICE_OP_CODES_END + 0x354 };
+	PIONEER_ECAM_LEASE_STATE = B_DEVICE_OP_CODES_END + 0x354,
+	PIONEER_ECAM_ROOT_RESET_READY = B_DEVICE_OP_CODES_END + 0x355 };
 struct pioneer_ecam_lease_probe_result {
 	uint32 version;
 	status_t managerStatus;
@@ -31,6 +32,12 @@ struct pioneer_ecam_lease_hold {
 	uint32 profileReady;
 	status_t holdStatus;
 	status_t callbackStatus;
+};
+struct pioneer_ecam_root_reset_ready {
+	uint32 version;
+	status_t status;
+	uint32 ready;
+	uint32 endpointReads;
 };
 struct pioneer_ecam_lease_state {
 	uint32 version;

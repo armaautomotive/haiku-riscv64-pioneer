@@ -12149,6 +12149,7 @@ DriverReloadControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_
 #ifdef PIONEER_QWEN35_INPLACE_RECOVERY
 #include "PioneerRecoveryProtocol.h"
 #include "PioneerPcieRootAerSnapshot.h"
+#include "PioneerPcieRootResetReady.h"
 #ifdef PIONEER_QWEN35_LINK_RESET_WITNESS
 #if !defined(PIONEER_QWEN35_ROOT_RECOVERY_GATEWAY_WITNESS) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY)
 #error The link-reset sequence requires the non-loadable root recovery gateway
@@ -12232,6 +12233,7 @@ struct Qwen35RecoveryResetIO {
 		return result;
 	}
 	uint32 RootRead(uint16 offset,uint8 size) { return delayFailed?UINT32_MAX:io.RootRead(offset,size); }
+	bool RootReady() { return !delayFailed && PioneerPcieRootResetReady(*this); }
 	void CardWrite(uint16 offset,uint8 size,uint32 value) {
 		io.CardWrite(offset,size,value);
 		#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY

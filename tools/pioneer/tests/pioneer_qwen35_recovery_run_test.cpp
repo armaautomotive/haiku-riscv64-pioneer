@@ -226,6 +226,7 @@ template<class IO> static bool BlackholeAsicResetResumeWait(IO&,unsigned,Blackho
 static bool PioneerPostResetPciRestore(PioneerSessionIO&,PioneerPostResetPciResult& r) {
 	r.stage=4;return Step(PIONEER_RECOVERY_STAGE_PCI_RESTORE);
 }
+template<class IO> static bool PioneerPcieRootResetReady(IO&) { return true; }
 #ifdef TEST_LINK_RESET
 template<class IO> struct PioneerQ35PcieAuditAccess {IO& io;};
 template<class IO> static bool PioneerQ35PcieLinkSample(IO&,unsigned,unsigned& speed,unsigned& width) {
