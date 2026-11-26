@@ -1,11 +1,20 @@
 #!/usr/bin/env python3
 """Reject K/V pair recorder images before the generic numerical runner starts."""
 from pathlib import Path
+import importlib.util
 import subprocess
 import sys
 import tempfile
 
 runner = Path(__file__).with_name('pioneer_qwen35_ttsim_service_test.py')
+spec = importlib.util.spec_from_file_location('qwen35_ttsim_service_test', runner)
+service = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(service)
+assert service.recorded_graph_step_counts(True, True, True, True) == (425, 428)
+assert service.recorded_graph_step_counts(False, True, True, True) == (433, 436)
+assert service.recorded_graph_step_counts(False, False, True, True) == (497, 500)
+assert service.recorded_graph_step_counts(False, False, False, True) == (529, 532)
+assert service.recorded_graph_step_counts(False, False, False, False) == (521, 524)
 with tempfile.TemporaryDirectory() as temporary:
     root = Path(temporary)
     image = root / 'image'

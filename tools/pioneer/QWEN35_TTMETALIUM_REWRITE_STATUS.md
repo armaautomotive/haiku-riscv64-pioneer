@@ -2,6 +2,15 @@
 
 ## Current checkpoint
 
+The pinned 4B model is also available in the workspace and its full SHA-256
+matches the saved model identity. Using it, I generated the combined 32-layer
+fixture for the current paired K/V, paired FFN, fused RMS/save image: 425 prompt
+steps or 428 decode steps, with 2,740,473,856 staged weight bytes. The simulator
+runner's length guard now recognizes this stream and its focused marker/count
+test passes. The first full decode simulation is active; it has not produced
+an output yet. See
+`benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
 The Tenstorrent-style dense K/V rewrite passes a four-layer, 120-simulated-
 worker graph run: all 2,560 final values match the previously CPU-validated
 four-layer reference bit-for-bit. The paired graph is still a non-loadable

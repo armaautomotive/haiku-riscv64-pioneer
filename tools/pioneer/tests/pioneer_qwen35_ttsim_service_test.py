@@ -152,6 +152,14 @@ def recorded_prefix_snapshot_points(records, record_count, executed, layers):
     return points
 
 
+def recorded_graph_step_counts(dense_kv_paired, rms_save_fused, ffn_paired, flash_hybrid):
+    """Return the prompt/decode lengths for the guarded compact graph variants."""
+    if dense_kv_paired:
+        return 425, 428
+    prompt_steps = 433 if rms_save_fused else 497 if ffn_paired else 529 if flash_hybrid else 521
+    return prompt_steps, prompt_steps + 3
+
+
 def recorded_snapshot_progress(word, target_step):
     """Return waiting, safe or missed for a root progress sample."""
     if word & 0xffff0000 != 0x51350000:
@@ -1093,8 +1101,8 @@ def main():
             if len(config) == 4 and config[3] not in (0, 1):
                 raise ValueError('invalid recorded decode flag')
             full_prompt = layers == 32 and not layer_slice
-            prompt_steps = 433 if rms_save_fused else 497 if ffn_paired else 529 if args.flash_hybrid else 521
-            decode_steps = prompt_steps + 3
+            prompt_steps, decode_steps = recorded_graph_step_counts(
+                dense_kv_paired, rms_save_fused, ffn_paired, args.flash_hybrid)
             if (not 1 <= layers <= 32 or not 1 <= executed <= prompt_steps
                     or (decode and not full_prompt)
                     or bool(args.recorded_token_reference) != decode

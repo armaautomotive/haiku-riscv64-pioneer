@@ -68,6 +68,30 @@ This is a four-layer simulator result only. The full 32-layer graph, warm
 outputs, physical ownership/recovery, clean unload and decode throughput
 remain unverified. The patched simulator clock is not P100A throughput.
 
+## Combined 32-layer paired graph fixture and simulation (2026-11-26)
+
+The local 4B model file has the pinned SHA-256
+`00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4` and
+size 2,740,937,888 bytes. The matching compile-only image at
+`/private/tmp/qwen35-dense-kv-pair-e154a69362/image` carries the dense K/V,
+FFN pair, fused RMS/save, hybrid flash, and compact two-region markers. A
+full authenticated fixture was generated locally with the same graph flags;
+its layout is `C 32 425 428 1`, and it stages 2,740,473,856 weight bytes.
+Fixture hashes are command
+`fb2521fb1c97674c7af14ac63b08af934b404cd301951a78f50c47035961f7e8`, templates
+`41bb5d74e31dbc4e367b28212a275cb4d530df53d1cc3316f4184fdac014438c`, records
+`6a903aaa5a9ef0e175c9053bab18dc5aba3993ca1190eda9a7a4cdee633e5a7c`, and
+weights `591910f9cb91abd0392ac0efbb86c0b4c09f12e32a7bb4315b48972d23752be6`.
+
+The first full simulator launch exposed a stale runner length guard: it
+expected 436 decode steps instead of the paired graph's 428. The runner now
+uses 425/428 for the matched dense K/V variant, with explicit tests retaining
+the other graph lengths (521/524, 529/532, 497/500, and 433/436). The focused
+marker/count test passes. The full 428-step simulation is running on the
+exploratory matrix simulator with all 32 layer snapshots requested; at the
+latest check it had reached poll 301 and had not produced a token. This is
+simulator-only, not a physical run or throughput measurement.
+
 ## Paired dense key/value recorder schedule, 2026-11-26
 
 The compile-only rewrite adds a distinct stream version 7. Its recorded graph
