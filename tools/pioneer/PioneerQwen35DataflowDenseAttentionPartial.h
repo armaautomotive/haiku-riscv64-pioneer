@@ -33,6 +33,60 @@ inline bool DataflowFlashAssign(unsigned core,unsigned position,DataflowFlashPar
     return out.kvHead<DenseKeyHeads && first<=total && count<=total-first;
 }
 
+// Hybrid position/output partition. Every worker has a nonempty position
+// interval and an aligned output-block interval even for position zero.
+// Long histories progressively trade redundant KV reads for temporal
+// parallelism; at 30 or more positions each KV history is read only once
+// across its 30 workers. The output interval can cross query-head boundaries,
+// so a worker must process each intersected head separately.
+enum : unsigned { DataflowFlashOutputBlock=16,
+    DataflowFlashBlocksPerHead=DenseHeadWidth/DataflowFlashOutputBlock,
+    DataflowFlashBlocksPerKv=DataflowFlashQueriesPerKv*DataflowFlashBlocksPerHead };
+struct DataflowFlashHybridPartition {
+    unsigned kvHead,positionShard,positionShards,firstPosition,positionCount;
+    unsigned outputShard,outputShards,firstBlock,blockCount;
+};
+inline bool DataflowFlashHybridAssign(unsigned core,unsigned position,DataflowFlashHybridPartition& out)
+{
+    out={};
+    if (core>=DataflowCoreCount || position>=MaxPositions) return false;
+    const unsigned total=position+1;
+    unsigned positions=DataflowFlashWorkersPerKv;
+    while (positions>1 && (positions>total || DataflowFlashWorkersPerKv%positions)) --positions;
+    const unsigned outputs=DataflowFlashWorkersPerKv/positions;
+    const unsigned rank=core%DataflowFlashWorkersPerKv;
+    const unsigned positionShard=rank/outputs,outputShard=rank%outputs;
+    const unsigned positionBase=total/positions,positionExtra=total%positions;
+    const unsigned blockBase=DataflowFlashBlocksPerKv/outputs,blockExtra=DataflowFlashBlocksPerKv%outputs;
+    out={core/DataflowFlashWorkersPerKv,positionShard,positions,
+        positionShard*positionBase+(positionShard<positionExtra?positionShard:positionExtra),
+        positionBase+unsigned(positionShard<positionExtra),outputShard,outputs,
+        outputShard*blockBase+(outputShard<blockExtra?outputShard:blockExtra),
+        blockBase+unsigned(outputShard<blockExtra)};
+    return out.positionCount && out.blockCount && out.kvHead<DenseKeyHeads
+        && out.firstPosition<=total && out.positionCount<=total-out.firstPosition
+        && out.firstBlock<DataflowFlashBlocksPerKv
+        && out.blockCount<=DataflowFlashBlocksPerKv-out.firstBlock;
+}
+// An output shard can straddle heads; return its aligned lane intersection
+// with one of its KV head's four query heads. Empty intersections are valid.
+inline bool DataflowFlashHybridRange(const DataflowFlashHybridPartition& part,unsigned query,
+    unsigned& firstLane,unsigned& laneCount)
+{
+    firstLane=laneCount=0;
+    if (query>=DataflowFlashQueriesPerKv || part.kvHead>=DenseKeyHeads
+        || part.firstBlock>=DataflowFlashBlocksPerKv || !part.blockCount
+        || part.blockCount>DataflowFlashBlocksPerKv-part.firstBlock) return false;
+    const unsigned start=query*DataflowFlashBlocksPerHead,end=start+DataflowFlashBlocksPerHead;
+    const unsigned first=part.firstBlock>start?part.firstBlock:start;
+    const unsigned limit=part.firstBlock+part.blockCount<end?part.firstBlock+part.blockCount:end;
+    if (first<limit) {
+        firstLane=(first-start)*DataflowFlashOutputBlock;
+        laneCount=(limit-first)*DataflowFlashOutputBlock;
+    }
+    return true;
+}
+
 // Merge two online-softmax partials after the producer's data is complete and
 // visible. Partial sums are unnormalized. The caller owns separate 256-float
 // buffers, must reject uncertain transfers and must retain any failed graph.
