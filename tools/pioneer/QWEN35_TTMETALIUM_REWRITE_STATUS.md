@@ -1,5 +1,12 @@
 # Latest offline checks, 2026-11-26
 
+The baseline simulation's six additional same-input checks from layer 24→25
+through 29→30 passed the existing tolerance. The 32-layer capture is still
+running, so these snapshots remain provisional until its worker and candidate
+audit completes. The compact and fused captures matched all overlapping
+baseline snapshots byte-for-byte when checked. This does not establish a
+completed full-model run or any hardware result.
+
 The layer-18 Z, alpha, beta, convolution and recurrent-update slices also
 passed their independent references. A CPU counterfactual found one changed
 Q8_K integer in the following output projection; the resulting projected

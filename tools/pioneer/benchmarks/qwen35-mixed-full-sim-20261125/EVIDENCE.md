@@ -1,5 +1,16 @@
 # Recorded mixed-layer and full-decode simulator work, 2026-11-25
 
+## Provisional transitions through layer 30, 2026-11-26
+
+The baseline capture's same-input CPU checks passed all six transitions from
+24→25 through 29→30 under the existing absolute/relative tolerance. Each
+reference replaced its input with the exact captured simulator activation and
+verified the replacement and both snapshot files remained unchanged. Hashes,
+individual results and limitations are in
+`/private/tmp/q35-provisional-boundaries-24-29-20261126/provisional.json`.
+These snapshots remain provisional until the running 32-layer simulation
+finishes its full worker and candidate audit. No card was accessed.
+
 ## Layer-18 output-projection sensitivity, 2026-11-26
 
 With the same captured input, isolated simulations passed the Z projection
