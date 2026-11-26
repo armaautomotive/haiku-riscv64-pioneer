@@ -503,18 +503,30 @@ The guard now computes the supported step count from the graph markers, and
 the focused rejection/count test passes.
 
 The first full numerical simulation of this combined graph is active in
-session 31294. At poll 4,800 it had captured layers 0–14. Each 2,560-element
-F32 boundary from layer 0 through layer 14 is byte-identical to the earlier
-full simulator capture. Layer 11–14 SHA-256 values are:
+session 31294. At poll 5,800 it had captured layers 0–17. Each 2,560-element
+F32 boundary through layer 17 is byte-identical to the earlier full simulator
+capture. Latest layer hashes:
 
-- Layer 11: `d4bed668be7c7e27e4d7897a51087e72a4e56d43db6a86aea4237662a4ba43ea`
-- Layer 12: `3071fbacfe1253ce39f868b663e9500c695886e772127d4c906d4117384bb8f2`
-- Layer 13: `f47033068ee55cea18435e908dcbab57c8ee104f6486bbffb40a8b3bfc485903`
-- Layer 14: `5e5946968b883bf3641126651e1a6294561abd97879ddf5556abbc31e0c52f12`
-The run has not reached its final output or a second position. This is
-equivalence to a prior simulator capture, not independent full-model CPU
-correctness or physical P100A execution. No model load time, prompt time,
-decode rate, warm-run result, or clean physical unload has been established.
+- Layer 15: `295ced56a09274f27cf6dee83274c7f3fbcd0b27c5c00937e3ac36e71e24b3c3`
+- Layer 16: `7f277d20e17b23429fd00a1ee5839f3aeacfcf539dc688efaa0910caadb0455d`
+- Layer 17: `6e41a05fcf7bd29c7117faeb5aaef85d3fddbf0478aaa8a99d1cb1bdfc5d8f1e`
+
+A provisional same-input CPU audit used the pinned model SHA-256
+`00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4` and
+the existing oracle SHA-256
+`12083a72ac852e0fc445d2e0d173d40409c564d04e05a78e46d57f8d9f6d86b7`.
+Through layer 15, initial layer 0 and 14 of 15 transitions passed. Transition
+layer 8→9 failed on 36/2,560 values with maximum absolute error
+`2.74516642e-05`, reproducing the earlier full-baseline discrepancy. All 15
+CPU continuation runs selected token 261. The captured boundaries remain
+provisional until the 32-layer simulator completes, and the CPU mismatch
+means this is not a numerical full-model pass. Machine-readable results are
+in `provisional-same-input-audit-20261126.json`.
+
+No second position or full-model final output has been verified. This remains
+simulator evidence, not physical P100A execution. No model load time, prompt
+time, decode rate, warm-run result, or clean physical unload has been
+established.
 
 A fresh strict SSH attempt with the pinned Haiku key and host key returned
 `No route to host`; a separate attempt with the Linux profile timed out.

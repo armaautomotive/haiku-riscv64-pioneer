@@ -7,20 +7,22 @@ matches the saved model identity. Using it, I generated the combined 32-layer
 fixture for the paired K/V, paired FFN, fused RMS/save image: 425 prompt steps
 or 428 decode steps, with 2,740,473,856 staged weight bytes. The simulator
 runner's length guard recognizes this stream and its focused marker/count
-test passes. The full decode simulation is active at poll 4,800. Captured
-boundaries for layers 0–14 are byte-identical to the earlier full simulator
-run, including all three dense-attention layers reached so far. Layer
-boundary SHA-256 values are:
+test passes. The full decode simulation is active at poll 5,800. Boundaries
+for layers 0–17 match the earlier simulator capture byte for byte, including
+dense-attention layers 3, 7, 11, and 15. The latest hashes are layer 15
+`295ced56a09274f27cf6dee83274c7f3fbcd0b27c5c00937e3ac36e71e24b3c3`, layer
+16 `7f277d20e17b23429fd00a1ee5839f3aeacfcf539dc688efaa0910caadb0455d`, and
+layer 17 `6e41a05fcf7bd29c7117faeb5aaef85d3fddbf0478aaa8a99d1cb1bdfc5d8f1e`.
 
-- Layer 3: `23e2d5d9e1753671df264bea4a50fbd1eed1dd53d9af5ca836612f7ae952d563`
-- Layer 7: `84647096a90db77bafe61c06c8877789afdd78d8ab1a73d79b037c98d013bd6a`
-- Layer 11: `d4bed668be7c7e27e4d7897a51087e72a4e56d43db6a86aea4237662a4ba43ea`
-- Layer 12: `3071fbacfe1253ce39f868b663e9500c695886e772127d4c906d4117384bb8f2`
-- Layer 13: `f47033068ee55cea18435e908dcbab57c8ee104f6486bbffb40a8b3bfc485903`
-- Layer 14: `5e5946968b883bf3641126651e1a6294561abd97879ddf5556abbc31e0c52f12`
-This is graph-equivalence evidence, not independent full-model CPU
-correctness. See
-`benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+A provisional same-input CPU audit used the pinned model and authenticated
+oracle. Initial layer 0 and 14 of 15 transitions through layer 15 passed; the
+layer 8→9 transition repeated the existing 36/2,560-value mismatch (maximum
+absolute error `2.74516642e-05`). All 15 CPU continuation runs selected token
+261. The mismatch remains a numerical audit failure, not a full-model pass;
+the report is
+`benchmarks/qwen35-compact-resident-20261126/provisional-same-input-audit-20261126.json`.
+See the benchmark evidence for the existing quantization-threshold
+investigation.
 
 A fresh strict Haiku SSH preflight returned `No route to host`; the separate
 strict Linux profile timed out. No current process, lock, or stable-driver

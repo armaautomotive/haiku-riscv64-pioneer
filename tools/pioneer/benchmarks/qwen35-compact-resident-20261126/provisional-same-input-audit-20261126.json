@@ -1,0 +1,144 @@
+{
+  "scope": "provisional partial same-input CPU audit of active simulator capture; not a complete execution or hardware result",
+  "through_layer": 15,
+  "model_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+  "oracle_sha256": "12083a72ac852e0fc445d2e0d173d40409c564d04e05a78e46d57f8d9f6d86b7",
+  "candidate_layer_sha256": [
+    "2031cf9624a9f3b3295668f93319b0a3aba0f650786affb119cb85db1de1d2be",
+    "58cdf9a312ec0468dc1593a0e9a952bf24c6ac061c9d48619e4c2dae8ef7c755",
+    "33c18c995b0cae841c09b0d96baceb152fc8cb043f4628eaf6a1de2186cd1a06",
+    "23e2d5d9e1753671df264bea4a50fbd1eed1dd53d9af5ca836612f7ae952d563",
+    "267668063ac177002c2fb6c9cee3f29215a0229bdd2d9a154885195435e92309",
+    "e5b10b1c1c93fd806b8e5be9d47a21b0e5c7c2c05ae3ab5251ee6b40a41265b3",
+    "e8b0a9cba3f7e12ea9d692a57fd3360c335c883045d9d67cf001f7c70968fe4b",
+    "84647096a90db77bafe61c06c8877789afdd78d8ab1a73d79b037c98d013bd6a",
+    "7e972e2a8fd9dd23ef9961e7a4407209176ce68cd590b6ad8a73e20eb1e83e38",
+    "9884bea0a5b5222b7cd02ca2804a3c3b811733ba744010dfc1f938b5b0284513",
+    "1ba1c031d3cf81146fc9437d9d4fc1f51d447cf57e1672dab408064b4aa6e129",
+    "d4bed668be7c7e27e4d7897a51087e72a4e56d43db6a86aea4237662a4ba43ea",
+    "3071fbacfe1253ce39f868b663e9500c695886e772127d4c906d4117384bb8f2",
+    "f47033068ee55cea18435e908dcbab57c8ee104f6486bbffb40a8b3bfc485903",
+    "5e5946968b883bf3641126651e1a6294561abd97879ddf5556abbc31e0c52f12",
+    "295ced56a09274f27cf6dee83274c7f3fbcd0b27c5c00937e3ac36e71e24b3c3"
+  ],
+  "checks": [
+    {
+      "label": "initial layer 0",
+      "passed": true,
+      "max_absolute_error": 8.940696716308594e-08
+    },
+    {
+      "label": "layer 1 from simulator layer 0",
+      "passed": true,
+      "max_absolute_error": 2.384185791015625e-07,
+      "oracle_token": 261,
+      "token_matches_reference": true
+    },
+    {
+      "label": "layer 2 from simulator layer 1",
+      "passed": true,
+      "max_absolute_error": 9.5367431640625e-07,
+      "oracle_token": 261,
+      "token_matches_reference": true
+    },
+    {
+      "label": "layer 3 from simulator layer 2",
+      "passed": true,
+      "max_absolute_error": 8.58306884765625e-06,
+      "oracle_token": 261,
+      "token_matches_reference": true
+    },
+    {
+      "label": "layer 4 from simulator layer 3",
+      "passed": true,
+      "max_absolute_error": 4.76837158203125e-07,
+      "oracle_token": 261,
+      "token_matches_reference": true
+    },
+    {
+      "label": "layer 5 from simulator layer 4",
+      "passed": true,
+      "max_absolute_error": 7.152557373046875e-07,
+      "oracle_token": 261,
+      "token_matches_reference": true
+    },
+    {
+      "label": "layer 6 from simulator layer 5",
+      "passed": true,
+      "max_absolute_error": 9.5367431640625e-06,
+      "oracle_token": 261,
+      "token_matches_reference": true
+    },
+    {
+      "label": "layer 7 from simulator layer 6",
+      "passed": true,
+      "max_absolute_error": 8.940696716308594e-07,
+      "oracle_token": 261,
+      "token_matches_reference": true
+    },
+    {
+      "label": "layer 8 from simulator layer 7",
+      "passed": true,
+      "max_absolute_error": 1.1920928955078125e-07,
+      "oracle_token": 261,
+      "token_matches_reference": true
+    },
+    {
+      "label": "layer 9 from simulator layer 8",
+      "passed": false,
+      "detail": "36/2560 recorded final rows differ; max abs error 2.74516642e-05, max scaled error 2.74516642e-05 at row 1715: 0.04317202791571617 versus 0.043144576251506805",
+      "oracle_token": 261,
+      "token_matches_reference": true
+    },
+    {
+      "label": "layer 10 from simulator layer 9",
+      "passed": true,
+      "max_absolute_error": 1.9073486328125e-06,
+      "oracle_token": 261,
+      "token_matches_reference": true
+    },
+    {
+      "label": "layer 11 from simulator layer 10",
+      "passed": true,
+      "max_absolute_error": 4.172325134277344e-07,
+      "oracle_token": 261,
+      "token_matches_reference": true
+    },
+    {
+      "label": "layer 12 from simulator layer 11",
+      "passed": true,
+      "max_absolute_error": 1.7881393432617188e-07,
+      "oracle_token": 261,
+      "token_matches_reference": true
+    },
+    {
+      "label": "layer 13 from simulator layer 12",
+      "passed": true,
+      "max_absolute_error": 1.1920928955078125e-07,
+      "oracle_token": 261,
+      "token_matches_reference": true
+    },
+    {
+      "label": "layer 14 from simulator layer 13",
+      "passed": true,
+      "max_absolute_error": 1.5497207641601562e-05,
+      "oracle_token": 261,
+      "token_matches_reference": true
+    },
+    {
+      "label": "layer 15 from simulator layer 14",
+      "passed": true,
+      "max_absolute_error": 3.5762786865234375e-07,
+      "oracle_token": 261,
+      "token_matches_reference": true
+    }
+  ],
+  "reference_token": 261,
+  "audited_transitions": 15,
+  "passed": false,
+  "simulator_session": 31294,
+  "simulator_capture_provisional": true,
+  "simulator_capture_dir": "/private/tmp/q35-dense-kv-pair-combined-full-snapshots-ae776b0d90",
+  "simulator_capture_had_reached_layer": 15,
+  "audit_output_dir": "/private/tmp/q35-dense-kv-pair-provisional-cpu-audit-20261126"
+}
