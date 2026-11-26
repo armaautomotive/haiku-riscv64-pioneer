@@ -54,3 +54,10 @@ verifier checked the generated command using the actual resident reader and
 all 120 recorded descriptors, and rejected a corrupted command and stale
 sequence or epoch. Framing tests also checked corruption and exhaustion. The
 two-token full-model path has not been run and remains unverified.
+
+The sanitizer-built handoff verifier subsequently walked all 62,880 actual
+full-decode records through the resident dynamic patcher. For token 261 at
+position 1, it checked the tied embedding address (120 records), convolution
+history swaps (2,880), recurrent state swaps (5,760), and dense attention
+positions (2,880); every other record was byte-identical. A corrupted command
+was rejected. This is a transformation audit, not execution of a warm run.
