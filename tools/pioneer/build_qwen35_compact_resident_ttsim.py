@@ -21,7 +21,11 @@ def main():
                         help='compile the stream and graph dispatch objects with -O2')
     parser.add_argument('--profiled-compile-only', action='store_true',
                         help='compile normal cycle-counter profiling; do not execute in ttsim')
+    parser.add_argument('--qualification', action='store_true',
+                        help='build the matching standalone qualification service, compile-only')
     args = parser.parse_args()
+    if args.qualification and not args.profiled_compile_only:
+        parser.error('qualification is restricted to the normal-counter compile-only image')
     if not args.output.is_absolute() or args.output.exists() or args.output.is_symlink():
         parser.error('output must be a new absolute directory')
     root = Path(__file__).resolve().parent
@@ -38,6 +42,8 @@ def main():
                     else 'ttsim-unprofiled.marker')).touch(exist_ok=False)
     if args.mixed_optimization:
         (args.output / 'compact-mixed-optimization.marker').touch(exist_ok=False)
+    if args.qualification:
+        (args.output / 'compact-qualification.marker').touch(exist_ok=False)
 
     flags = ('-std=c++17 -Oz -Wall -Wextra -Werror -ffreestanding -fno-exceptions '
              '-fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin '
@@ -56,8 +62,9 @@ def main():
              ('device-stream.o', 'tests/pioneer_qwen35_dataflow_device_stream_target_probe.cpp'),
              ('device-barrier.o', 'tests/pioneer_qwen35_dataflow_device_barrier_target_probe.cpp'),
              ('device-graph.o', 'PioneerQwen35DataflowDeviceDispatch.cpp'),
-             ('shared-roles.o', 'PioneerQwen35DataflowSharedRoles.cpp'),
-             ('resident-service-entry.o', 'PioneerQwen35DataflowResidentServiceEntry.cpp')]
+             ('shared-roles.o', 'PioneerQwen35DataflowSharedRoles.cpp')]
+    if not args.qualification:
+        files.append(('resident-service-entry.o', 'PioneerQwen35DataflowResidentServiceEntry.cpp'))
     for name, source in files:
         extra = (['-DPIONEER_QWEN35_TREE_SETTLEMENT', '-fno-inline-functions-called-once']
                  if name == 'resident-service-entry.o' else [])
@@ -67,11 +74,15 @@ def main():
                         *extra, *includes, '-c', str(root / source), '-o', str(args.output / name)], check=True)
     subprocess.run([str(cross) + '-g++', *flags, *includes, '-c',
                     str(root / 'PioneerQwen35DataflowMemory.cpp'), '-o', str(args.output / 'memory.o')], check=True)
+    start = ('blackhole_qwen35_dataflow_service_start.S' if args.qualification
+             else 'blackhole_qwen35_resident_service_start.S')
+    start_object = 'qualification-start.o' if args.qualification else 'resident-start.o'
     subprocess.run([str(cross) + '-as', '-march=rv32imf_zicsr', '-mabi=ilp32', '-mno-relax',
-                    str(root / 'blackhole_qwen35_resident_service_start.S'),
-                    '-o', str(args.output / 'resident-start.o')], check=True)
-    objects = ['resident-start.o', 'service.o', 'memory.o', 'device-stream.o', 'device-barrier.o',
-               'device-graph.o', 'shared-roles.o', 'resident-service-entry.o']
+                    str(root / start), '-o', str(args.output / start_object)], check=True)
+    objects = [start_object, 'service.o', 'memory.o', 'device-stream.o', 'device-barrier.o',
+               'device-graph.o', 'shared-roles.o']
+    if not args.qualification:
+        objects.append('resident-service-entry.o')
     elf = args.output / 'service.elf'
     subprocess.run([str(cross) + '-ld', '-m', 'elf32lriscv', '--no-relax', '--gc-sections',
                     '-u', 'PioneerQwen35DeviceGraphRun', '-T',
@@ -87,7 +98,8 @@ def main():
     (args.output / 'disassembly.txt').write_text(disassembly)
     if re.search(r'\s(?:amo[a-z]+\.w|lr\.w|sc\.w|(?:fdiv|fsqrt)\.[sd]|fcvt\.(?:w|wu)\.[sd])\s', disassembly):
         raise RuntimeError('compact image uses unsupported RV32 operations')
-    for name in ('qwen35_resident_graph_service_main', 'qwen35_graph_run_descriptor',
+    main_name = 'qwen35_dataflow_service_main' if args.qualification else 'qwen35_resident_graph_service_main'
+    for name in (main_name, 'qwen35_graph_run_descriptor',
                  'qwen35_shared_compute_coordinate', 'TraceProjection', 'MatrixPanel'):
         if not re.search(r'jalr[^\n]*' + re.escape(name), disassembly):
             raise RuntimeError('missing call in compact image: ' + name)
@@ -118,19 +130,22 @@ def main():
         addresses[name] = address
     if addresses.get('qwen35_dataflow_entry') != 0x72000:
         raise RuntimeError('unexpected compact service entry')
-    park = addresses.get('qwen35_resident_graph_stopped_park', 0) - 0x72000
+    park_name = 'qwen35_dataflow_stopped_park' if args.qualification else 'qwen35_resident_graph_stopped_park'
+    park = addresses.get(park_name, 0) - 0x72000
     if park < 0 or park % 4 or images['text'][park:park + 4] != bytes.fromhex('6f000000'):
         raise RuntimeError('unexpected compact stopped-park instruction')
 
     # Reuse the existing resident stack checks without producing a driver header.
-    source = (root / 'build_qwen35_resident_service_witness.sh').read_text()
-    needle = "<<'PY'\n"
+    source = (root / ('build_qwen35_dataflow_service_image.sh' if args.qualification
+                      else 'build_qwen35_resident_service_witness.sh')).read_text()
+    needle = ("python3 - \"$output\" \"$role_graph\" <<'PY'\n" if args.qualification else "<<'PY'\n")
     if source.count(needle) != 1:
         raise RuntimeError('resident stack-check script changed')
     start = source.index(needle) + len(needle)
     end = source.index('\nPY\n', start)
-    subprocess.run([sys.executable, '-B', '-c', source[start:end], str(args.output), str(args.output),
-                    '1', '1', '0', '1', '1'], check=True)
+    stack_args = ([str(args.output), '1'] if args.qualification else
+                  [str(args.output), str(args.output), '1', '1', '0', '1', '1'])
+    subprocess.run([sys.executable, '-B', '-c', source[start:end], *stack_args], check=True)
     print('NON-LOADABLE WITNESS; no driver, physical ownership, recovery or throughput qualification', flush=True)
 
 

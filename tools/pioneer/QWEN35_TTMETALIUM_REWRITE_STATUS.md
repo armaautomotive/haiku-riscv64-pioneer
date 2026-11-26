@@ -1,5 +1,14 @@
 # Latest offline checks, 2026-11-26
 
+The fused Haiku driver now compiles and links with both the actual compact
+resident service and a newly built matching compact standalone qualification
+service, replacing the older placeholder in this compile check. Shared graph
+objects matched byte-for-byte, both qualification builds reproduced, and the
+linked driver retained its no-I/O `B_NOT_ALLOWED` guard. Header and unsafe
+build-option tests passed. The images remain non-loadable; qualification
+execution, physical ownership, recovery and speed remain unverified. See
+`benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
 The warm boundary auditor now accepts any available audited recurrent-state
 pairs, checks their exact readback and hashes, and labels all other layers as
 using CPU prior state. Synthetic full-graph tests cover mixed state sources,

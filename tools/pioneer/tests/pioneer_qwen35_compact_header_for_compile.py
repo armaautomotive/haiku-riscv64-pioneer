@@ -5,7 +5,7 @@ from pathlib import Path
 from struct import iter_unpack, unpack
 
 
-def generate(directory: Path) -> str:
+def generate(directory: Path, qualification: bool = False) -> str:
     required = ('profiled-compile-only.marker', 'compact-two-region.marker',
                 'activation-sharing.marker', 'delta-shard.marker', 'flash-hybrid.marker',
                 'ffn-pair.marker', 'fused-rms-save.marker')
@@ -13,6 +13,10 @@ def generate(directory: Path) -> str:
         raise ValueError('missing compact compile-only image marker')
     if any((directory / name).exists() for name in ('ttsim-unprofiled.marker', 'dense-shard.marker', 'flash.bin')):
         raise ValueError('simulator or extra-region image is not a compact driver compile input')
+    marker = directory / 'compact-qualification.marker'
+    if (marker.is_symlink() or (qualification and not marker.is_file())
+            or (not qualification and marker.exists())):
+        raise ValueError('compact qualification marker does not match image type')
     boot = (directory / 'boot.bin').read_bytes()
     text = (directory / 'text.bin').read_bytes()
     dispatch = (directory / 'dispatch.bin').read_bytes()
@@ -32,11 +36,16 @@ def generate(directory: Path) -> str:
             symbols[name] = int(value, 16)
     if symbols.get('qwen35_dataflow_entry') != 0x72000:
         raise ValueError('unexpected compact entry address')
-    park = symbols.get('qwen35_resident_graph_stopped_park', 0)
+    park_name = 'qwen35_dataflow_stopped_park' if qualification else 'qwen35_resident_graph_stopped_park'
+    main_name = 'qwen35_dataflow_service_main' if qualification else 'qwen35_resident_graph_service_main'
+    other_main = 'qwen35_resident_graph_service_main' if qualification else 'qwen35_dataflow_service_main'
+    if other_main in symbols:
+        raise ValueError('compact image contains the wrong service entry point')
+    park = symbols.get(park_name, 0)
     offset = park - 0x72000
     if offset < 0 or offset % 4 or offset + 4 > len(text) or text[offset:offset + 4] != bytes.fromhex('6f000000'):
         raise ValueError('unexpected compact stopped-park instruction')
-    for name in ('qwen35_resident_graph_service_main', 'qwen35_graph_run_descriptor',
+    for name in (main_name, 'qwen35_graph_run_descriptor',
                  'qwen35_shared_compute_coordinate', 'qwen35_graph_execute'):
         address = symbols.get(name, 0)
         if address % 4 or not (0x72000 <= address < 0x72000 + len(text)
@@ -59,21 +68,23 @@ def generate(directory: Path) -> str:
     def words(data):
         return ''.join(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I', data))
 
+    name_prefix = 'DataflowQualificationService' if qualification else 'DataflowService'
     return ('#pragma once\n#if ' + condition + '\n'
             '#error "compact image is restricted to the non-loadable driver compile test"\n'
             '#endif\nnamespace PioneerQwen35 {\n'
-            f'inline constexpr unsigned DataflowServiceImageBootWord=0x{unpack("<I", boot)[0]:08x}U;\n'
-            f'inline constexpr unsigned DataflowServiceStoppedParkAddress=0x{park:08x}U;\n'
-            'inline constexpr unsigned DataflowServiceTextWords[]={\n' + words(text) + '};\n'
-            'inline constexpr unsigned DataflowServiceDispatchWords[]={\n' + words(dispatch) + '};\n}\n')
+            f'inline constexpr unsigned {name_prefix}{"BootWord" if qualification else "ImageBootWord"}=0x{unpack("<I", boot)[0]:08x}U;\n'
+            f'inline constexpr unsigned {name_prefix}StoppedParkAddress=0x{park:08x}U;\n'
+            f'inline constexpr unsigned {name_prefix}TextWords[]={{\n' + words(text) + '};\n'
+            f'inline constexpr unsigned {name_prefix}DispatchWords[]={{\n' + words(dispatch) + '};\n}\n')
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('image', type=Path)
     parser.add_argument('header', type=Path)
+    parser.add_argument('--qualification', action='store_true')
     args = parser.parse_args()
-    header = generate(args.image)
+    header = generate(args.image, args.qualification)
     with args.header.open('x', encoding='ascii', newline='\n') as output:
         output.write(header)
 

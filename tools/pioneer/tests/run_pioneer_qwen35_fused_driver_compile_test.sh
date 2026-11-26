@@ -1,11 +1,13 @@
 #!/bin/sh
-# Compile only: the resident image is compact, while the qualification header is a placeholder.
+# Compile only: optionally use a matching compact qualification image as well.
 # All artifacts are temporary and retain the hardware-denial guard; none are installed.
 set -eu
-[ "$#" = 3 ] || exit 2
+[ "$#" = 3 ] || [ "$#" = 4 ] || exit 2
 build=$(CDPATH= cd -- "$1" && pwd)
 images=$(CDPATH= cd -- "$2" && pwd)
 compact=$(CDPATH= cd -- "$3" && pwd)
+qualification=
+if [ "$#" = 4 ]; then qualification=$(CDPATH= cd -- "$4" && pwd); fi
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 project=$(CDPATH= cd -- "$directory/../../.." && pwd)
 sdk="$build/objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop"
@@ -25,6 +27,10 @@ temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-q35-fused-driver.XXXXXXXX")
 trap 'rm -rf "$temporary"' EXIT HUP INT TERM
 python3 -B "$directory/pioneer_qwen35_compact_header_for_compile.py" "$compact" \
  "$temporary/PioneerQwen35DataflowServiceImage.h"
+if [ -n "$qualification" ]; then
+ python3 -B "$directory/pioneer_qwen35_compact_header_for_compile.py" "$qualification" \
+  "$temporary/PioneerQwen35QualificationServiceImage.h" --qualification
+fi
 set -- -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -ffreestanding \
  -fno-semantic-interposition -fno-tree-vectorize -fno-use-cxa-atexit -fno-strict-aliasing \
  -fno-delete-null-pointer-checks -mcmodel=medany -fpic -D_KERNEL_MODE \
@@ -149,4 +155,21 @@ for name in sys.argv[4:]:
         raise SystemExit('compact image missing or duplicated in linked driver: ' + name)
 print('PASS linked driver retains the no-I/O init guard and exact compact images')
 PY
-echo 'PASS compact fused Haiku driver compile and link; qualification placeholder, NO INSTALL OR HARDWARE'
+if [ -n "$qualification" ]; then
+ python3 -B - "$temporary/fused-driver.o" "$temporary/tenstorrent_pci_probe-compile-only" \
+  "$qualification/text.bin" "$qualification/dispatch.bin" <<'PY'
+import hashlib
+from pathlib import Path
+import sys
+for container in sys.argv[1:3]:
+    binary = Path(container).read_bytes()
+    for name in sys.argv[3:]:
+        image = Path(name).read_bytes()
+        if not image or binary.count(image) != 1:
+            raise SystemExit('qualification image missing or duplicated: ' + name)
+        print(Path(container).name + ' qualification ' + Path(name).name + ' SHA-256 ' + hashlib.sha256(image).hexdigest())
+PY
+ echo 'PASS matching compact resident and qualification images; NO INSTALL OR HARDWARE'
+else
+ echo 'PASS compact fused Haiku driver compile and link; qualification placeholder, NO INSTALL OR HARDWARE'
+fi

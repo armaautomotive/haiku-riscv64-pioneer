@@ -1,5 +1,39 @@
 # Compact resident simulator image, 2026-11-26
 
+## Matching compact qualification image, 2026-11-26
+
+The compact image builder can now build a standalone qualification service
+from the same normal-counter graph, compute, stream and barrier sources as
+the compact resident service. The six shared objects were byte-identical
+between independent qualification and resident builds. The qualification
+image uses the standalone entry and stopped-park symbol; it is not the
+resident service and remains explicitly non-loadable. Two qualification
+builds produced the same boot, text and dispatch bytes. Text is 53,744 bytes
+at `0x72000`; dispatch is 33,276 bytes at `0xa0400`. The conservative worker
+stack envelope is `7088/8192` including a 1,024-byte allowance; it is not a
+whole-program stack proof.
+
+A separate compile-only header generator checks the qualification marker,
+entry, stopped park, bounds, all required feature flags and forbidden build
+flags. Its tests reject swapped image types, mixed entry points, absent flags,
+simulator variants and an unprofiled qualification build. The ordinary
+resident and qualification packagers still reject compact images. The
+existing resident image rebuilt byte-for-byte, and its previous header tests
+passed.
+
+The complete fused Haiku/RISC-V driver compiled and linked with no unresolved
+symbols using both actual compact resident and matching qualification images.
+Each image's text and dispatch appeared once in both the driver object and
+linked artifact. The linked `init_hardware` instructions remained identical
+to the no-I/O `B_NOT_ALLOWED` compile-only guard. Both temporary artifacts
+were deleted without installation; this removes the earlier qualification
+placeholder from this build check, but does not establish qualification image
+behavior in simulation, physical ownership, recovery or throughput.
+
+Qualification hashes: boot `e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b`,
+text `0f2e107c0c1fb29ecc11678afd9df9f11aec96bf28cb5ec14c1bf74b70791b1c`,
+dispatch `b4cc9f91a675d2465e7f03d99ac7010aff5db7c5265bd95a61654f9a610e15ee`.
+
 ## Full compact simulator result, 2026-11-26
 
 The unprofiled, size-optimized two-region image completed all 436 recorded
