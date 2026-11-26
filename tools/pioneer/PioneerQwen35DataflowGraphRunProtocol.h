@@ -14,6 +14,13 @@
 #error Paired FFN graph is an isolated non-loadable hybrid graph experiment
 #endif
 #endif
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+#if !defined(PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY) || !defined(PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY) \
+    || !defined(PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY) || !defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS) \
+    || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL)
+#error Fused RMS/save requires the non-loadable paired hybrid graph
+#endif
+#endif
 
 namespace PioneerQwen35 {
 enum : unsigned {
@@ -33,8 +40,13 @@ enum : unsigned {
 #endif
 #ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
 #ifdef PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+	DataflowGraphDecodeSteps=436,
+	DataflowGraphPromptSteps=433
+#else
 	DataflowGraphDecodeSteps=500,
 	DataflowGraphPromptSteps=497
+#endif
 #else
 	DataflowGraphDecodeSteps=532,
 	DataflowGraphPromptSteps=529

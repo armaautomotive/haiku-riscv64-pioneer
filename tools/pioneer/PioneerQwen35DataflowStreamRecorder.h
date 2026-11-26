@@ -145,6 +145,28 @@ public:
 		return candidate.BeginRms(p) && Emit<DataflowRmsProgramBuilder,DataflowRmsInvocation>(p)
 			&& candidate.CompleteRms(p)?0:Fail();
 	}
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+	// Both logical transitions belong to this speculative graph only. A
+	// failed bind or stage aborts the entire sink; runtime completion is still
+	// proved by the resident fleet barrier, not by this planning metadata.
+	template<class IO> int RunRmsSave(const DataflowRmsProgram& rms,
+		const DataflowResidualProgram& residual,IO&) {
+		if (failed || steps>=plan.count || !candidate.AuthorizeResidual(residual)
+			|| !candidate.AuthorizeRms(rms) || !candidate.BeginResidual(residual)
+			|| !candidate.CompleteResidual(residual) || !candidate.BeginRms(rms)) return Fail();
+		auto* invocation=new(std::nothrow) DataflowRmsSaveInvocation;
+		if (!invocation) return Fail();
+		for (unsigned core=0;core<DataflowCoreCount;core++) {
+			if (!DataflowRmsSaveBind(rms,residual,core,*invocation)
+				|| !DataflowStreamEncode(*invocation,plan.epoch,steps+1,record)
+				|| !sink.StageRecord(plan.binding[core],plan.lease[core],steps,record)) {
+				delete invocation;return Fail();
+			}
+		}
+		delete invocation;steps++;
+		return candidate.CompleteRms(rms)?0:Fail();
+	}
+#endif
 	template<class IO> int RunSilu(const DataflowSiluProgram& p,IO&) {
 		return candidate.BeginSilu(p) && Emit<DataflowSiluProgramBuilder,DataflowSiluInvocation>(p)
 			&& candidate.CompleteSilu(p)?0:Fail();

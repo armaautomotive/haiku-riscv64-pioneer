@@ -63,6 +63,13 @@ case "${PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY:-0}" in
        : > "$output/ffn-pair.marker" ;;
     *) exit 2 ;;
 esac
+case "${PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY:-0}" in
+    0) [ ! -e "$graph/fused-rms-save.marker" ] || exit 2; rms_save_flags= ;;
+    1) [ -f "$graph/fused-rms-save.marker" ] && [ "${PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY:-0}" = 1 ] || exit 2
+       rms_save_flags=-DPIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+       : > "$output/fused-rms-save.marker" ;;
+    *) exit 2 ;;
+esac
 case "${PIONEER_QWEN35_TTSIM_UNPROFILED_COMPILE_ONLY:-0}" in
     0) [ ! -e "$graph/ttsim-unprofiled.marker" ] || exit 2; sim_flags= ;;
     1) [ -f "$graph/ttsim-unprofiled.marker" ] && [ "${PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY:-0}" = 1 ] || exit 2
@@ -72,7 +79,7 @@ case "${PIONEER_QWEN35_TTSIM_UNPROFILED_COMPILE_ONLY:-0}" in
 esac
 flags='-std=c++17 -Os -fno-inline-functions-called-once -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -fstack-usage -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32'
 "$cross-g++" $flags -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
-    -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE $tree_flags $fused_flags $sharing_flags $delta_flags $dense_flags $flash_flags $ffn_flags $sim_flags \
+    -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE $tree_flags $fused_flags $sharing_flags $delta_flags $dense_flags $flash_flags $ffn_flags $rms_save_flags $sim_flags \
     -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
     -c "$directory/PioneerQwen35DataflowResidentServiceEntry.cpp" -o "$output/resident-service-entry.o"
 "$cross-as" -march=rv32imf_zicsr -mabi=ilp32 -mno-relax \
@@ -80,6 +87,9 @@ flags='-std=c++17 -Os -fno-inline-functions-called-once -Wall -Wextra -Werror -f
 linker_script="$directory/blackhole_qwen35_resident_graph_witness.ld"
 if [ "${PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY:-0}" = 1 ]; then
     linker_script="$directory/blackhole_qwen35_flash_resident_graph_ttsim.ld"
+fi
+if [ "${PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY:-0}" = 1 ]; then
+    linker_script="$directory/blackhole_qwen35_rms_save_resident_graph_ttsim.ld"
 fi
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections -u PioneerQwen35DeviceGraphRun \
     -T "$linker_script" \
@@ -116,7 +126,7 @@ if [ "${PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY:-0}" = 1 ]; then
     "$cross-objcopy" -O binary -j .flash "$output/service.elf" "$output/flash.bin"
 fi
 "$cross-size" -A "$output/service.elf"
-python3 - "$graph" "$output" "${PIONEER_QWEN35_TREE_SETTLEMENT_WITNESS:-0}" "${PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY:-0}" "${PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY:-0}" "${PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY:-0}" <<'PY'
+python3 - "$graph" "$output" "${PIONEER_QWEN35_TREE_SETTLEMENT_WITNESS:-0}" "${PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY:-0}" "${PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY:-0}" "${PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY:-0}" "${PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY:-0}" <<'PY'
 from pathlib import Path
 import sys
 graph,out=map(Path,sys.argv[1:3])
@@ -124,6 +134,7 @@ tree=sys.argv[3]=='1'
 shards=sys.argv[4]=='1'
 dense_shards=sys.argv[5]=='1'
 flash_hybrid=sys.argv[6]=='1'
+fused_rms_save=sys.argv[7]=='1'
 entries=[]
 for path in (graph/'service.su',graph/'device-graph.su',graph/'shared-roles.su',out/'resident-service-entry.su'):
     for line in path.read_text().splitlines():
@@ -146,6 +157,22 @@ for marker in markers:
     total+=max(frame for frame,_ in matches)
 if total>8192: raise SystemExit(f'resident graph stack envelope {total} exceeds 8192 bytes')
 print(f'resident_graph_stack_envelope_bytes={total}/8192 (includes 1024-byte allowance; not whole-program proof)')
+if fused_rms_save:
+    fused_markers=('qwen35_resident_graph_service_main()', 'DataflowResidentServiceRun<IO, BarrierIO>::Tick()',
+        'qwen35_graph_run_descriptor(', 'PioneerQwen35DeviceGraphRun(', 'DataflowDeviceGraph<IO, BarrierIO>::Tick()',
+        'qwen35_graph_execute(', 'DataflowWorkerExecuteAuthorized(', 'DataflowWorkerExecuteRmsSave(',
+        'PioneerQwen35DataflowRmsSaveWorker(', 'PioneerQwen35DataflowRmsWorker(',
+        'DataflowRmsSaveInvocation::Valid()', 'DataflowRmsInvocation::Valid()',
+        'DataflowResidualInvocation::Valid()', 'DataflowBlackholeResidualOps::WriteResidualPanel(',
+        'DataflowBlackholeResidualOps::WritePanel(', 'DataflowBlackholeNoc<Noc>::Transfer(')
+    fused_total=1024
+    for marker in fused_markers:
+        matches=[(frame,kind) for name,frame,kind in entries if marker in name]
+        if not matches or any(kind!='static' for _,kind in matches):
+            raise SystemExit('missing or unbounded fused RMS/save stack frame: '+marker)
+        fused_total+=max(frame for frame,_ in matches)
+    if fused_total>8192: raise SystemExit(f'fused RMS/save stack envelope {fused_total} exceeds 8192 bytes')
+    print(f'resident_fused_rms_save_stack_envelope_bytes={fused_total}/8192 (includes 1024-byte allowance; not whole-program proof)')
 if flash_hybrid:
     # Conservative frame sum across the producer and reducer paths, including
     # their shared resident callers; some branches cannot coexist. The

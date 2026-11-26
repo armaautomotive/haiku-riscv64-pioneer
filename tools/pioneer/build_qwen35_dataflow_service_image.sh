@@ -70,6 +70,13 @@ case "${PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY:-0}" in
 	: > "$output/ffn-pair.marker" ;;
 *) exit 2 ;;
 esac
+case "${PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY:-0}" in
+0) ;;
+1) [ "${PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY:-0}:${PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY:-0}" = 1:1 ] || exit 2
+	service_flags="$service_flags -DPIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY"
+	: > "$output/fused-rms-save.marker" ;;
+*) exit 2 ;;
+esac
 case "${PIONEER_QWEN35_TTSIM_UNPROFILED_COMPILE_ONLY:-0}" in
 0) ;;
 1) [ "$role_graph:${PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY:-0}" = 1:1 ] || exit 2
@@ -114,6 +121,9 @@ case "$dispatch" in
 		if [ "${PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY:-0}" = 1 ]; then
 			linker_script="$directory/blackhole_qwen35_flash_dataflow_dispatch_ttsim.ld"
 		fi
+		if [ "${PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY:-0}" = 1 ]; then
+			linker_script="$directory/blackhole_qwen35_rms_save_dataflow_dispatch_ttsim.ld"
+		fi
 		"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
 			-u PioneerQwen35DeviceGraphRun \
 			-T "$linker_script" \
@@ -147,13 +157,14 @@ if [ "$role_graph" = 1 ]; then
 		exit 1
 	fi
 fi
-python3 - "$output" "$role_graph" <<'PY'
+python3 - "$output" "$role_graph" "${PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY:-0}" <<'PY'
 from pathlib import Path
 from struct import iter_unpack, unpack
 import sys
 
 out = Path(sys.argv[1])
 role_graph = sys.argv[2] == '1'
+fused_rms_save = sys.argv[3] == '1'
 boot = (out / 'boot.bin').read_bytes()
 code = (out / 'text.bin').read_bytes()
 symbol_rows = [line.split() for line in (out / 'symbols.txt').read_text().splitlines()]
@@ -176,16 +187,26 @@ if dispatch and (len(dispatch) > 0x5c00 or len(dispatch) % 4):
     raise SystemExit('unexpected dispatch witness image size')
 if dispatch:
     rms = [int(value, 16) for value, kind, name in symbol_rows
-           if kind in ('T', 'W') and 'PioneerQwen35DataflowRmsWorker' in name]
+           if kind in ('T', 'W') and 'PioneerQwen35DataflowRmsWorker' in name
+           and 'DataflowRmsSaveAdapter' not in name]
     bridge = symbols.get('qwen35_graph_execute', 0)
     if len(rms) != 1 or not all(0xa0400 <= address < 0xa0400 + len(dispatch)
                                 for address in (rms[0], bridge)):
         raise SystemExit('RMS worker or graph bridge is outside the verified dispatch image')
+    if fused_rms_save:
+        fused = [int(value, 16) for value, kind, name in symbol_rows
+                 if kind in ('T', 'W') and 'PioneerQwen35DataflowRmsWorker' in name
+                 and 'DataflowRmsSaveAdapter' in name]
+        flash = (out / 'flash.bin').read_bytes()
+        if len(fused) != 1 or not 0xd0000 <= fused[0] < 0xd0000 + len(flash):
+            raise SystemExit('fused RMS worker is outside the simulator flash image')
 dispatch_words = ''.join(f'\t0x{word:08x}U,\n' for word, in iter_unpack('<I', dispatch))
 dispatch_definition = ('inline constexpr unsigned DataflowServiceDispatchWords[]={\n'
                        + dispatch_words + '};\n') if dispatch else ''
 (out / 'PioneerQwen35DataflowServiceImage.h').write_text(
-    '#pragma once\nnamespace PioneerQwen35 {\n'
+    '#pragma once\n'
+    + ('#error "fused RMS/save simulator image is not a driver image"\n' if fused_rms_save else '')
+    + 'namespace PioneerQwen35 {\n'
     f'inline constexpr unsigned DataflowServiceImageBootWord=0x{unpack("<I", boot)[0]:08x}U;\n'
     + park_definition
     + 'inline constexpr unsigned DataflowServiceTextWords[]={\n' + words + '};\n'

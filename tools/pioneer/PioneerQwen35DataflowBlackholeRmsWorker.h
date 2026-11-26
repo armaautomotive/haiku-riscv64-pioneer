@@ -89,6 +89,9 @@ enum DataflowRmsWorkerStage : unsigned {
 };
 
 template<class IO>
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+__attribute__((noinline))
+#endif
 bool PioneerQwen35DataflowRmsWorker(const DataflowRmsInvocation& invocation,
 	unsigned sequence,float* inputCache,float* inputPage,float* weightPage,
 	float* outputPage,IO& io,unsigned* failureStage=nullptr)

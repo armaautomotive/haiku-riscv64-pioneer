@@ -113,6 +113,9 @@ int main(int argc,char** argv) {
 #ifdef PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY
     if (!WriteNew(dir+"/ffn-pair.marker","",0)) return 1;
 #endif
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+    if (!WriteNew(dir+"/fused-rms-save.marker","",0)) return 1;
+#endif
     FILE* data=std::fopen((dir+"/weights.bin").c_str(),"wbx");
     FILE* index=std::fopen((dir+"/layout.txt").c_str(),"wx");
     if (!data || !index) return 1;

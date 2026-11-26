@@ -11,6 +11,8 @@ from struct import iter_unpack, unpack
 
 
 def generate(directory: Path) -> str:
+    if (directory / 'fused-rms-save.marker').exists():
+        raise ValueError('fused RMS/save simulator image is not packageable')
     if (directory / 'ffn-pair.marker').exists():
         raise ValueError('paired FFN simulator image is not packageable')
     if (directory / 'flash-hybrid.marker').exists():

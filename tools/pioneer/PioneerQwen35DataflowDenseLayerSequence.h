@@ -49,15 +49,21 @@ public:
 		if (!authority.BuildResidual(DataflowResidualSave,inputSlot,residualSave))
 			return static_cast<DataflowDenseLayerSequenceResult>(
 				stage=DataflowDenseSaveBuildFailed);
+#ifndef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
 		if (service.RunResidual(residualSave,io)!=0)
 			return static_cast<DataflowDenseLayerSequenceResult>(
 				stage=DataflowDenseSaveRunFailed);
+#endif
 
 		DataflowRmsProgram norm{};
 		if (!authority.BuildRms(layer,AttentionNorm,inputSlot,normalizedSlot,norm))
 			return static_cast<DataflowDenseLayerSequenceResult>(
 				stage=DataflowDenseNormBuildFailed);
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+		if (service.RunRmsSave(norm,residualSave,io)!=0)
+#else
 		if (service.RunRms(norm,io)!=0)
+#endif
 			return static_cast<DataflowDenseLayerSequenceResult>(
 				stage=DataflowDenseNormRunFailed);
 

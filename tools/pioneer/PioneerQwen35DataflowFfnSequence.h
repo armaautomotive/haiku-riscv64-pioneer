@@ -57,13 +57,19 @@ public:
 		DataflowResidualProgram residualSave{};
 		if (!authority.BuildResidual(DataflowResidualSave,inputSlot,residualSave))
 			return DataflowFfnSaveBuildFailed;
+#ifndef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
 		if (service.RunResidual(residualSave,io)!=0)
 			return DataflowFfnSaveRunFailed;
+#endif
 
 		DataflowRmsProgram norm{};
 		if (!authority.BuildRms(layer,PostAttentionNorm,inputSlot,
 			normalizedSlot,norm)) return DataflowFfnNormBuildFailed;
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+		if (service.RunRmsSave(norm,residualSave,io)!=0)
+#else
 		if (service.RunRms(norm,io)!=0)
+#endif
 			return DataflowFfnNormRunFailed;
 
 		DataflowProjectionProgram& gate=projectionScratch;

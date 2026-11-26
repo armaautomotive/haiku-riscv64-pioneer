@@ -79,7 +79,7 @@ public:
 };
 
 template<class IO>
-bool PioneerQwen35DataflowRmsSaveWorker(const DataflowRmsSaveInvocation& invocation,
+__attribute__((noinline)) bool PioneerQwen35DataflowRmsSaveWorker(const DataflowRmsSaveInvocation& invocation,
     unsigned sequence,float* inputCache,float* inputPage,float* weightPage,float* outputPage,
     IO& io,unsigned* failureStage=nullptr) {
     if (!invocation.Valid()) return false;

@@ -251,6 +251,30 @@ struct DataflowWorkerExecutionResult {
 	uint32_t embeddingAddress=0,embeddingRoute=0,embeddingBytes=0;
 };
 
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+__attribute__((noinline)) inline bool DataflowWorkerExecuteRmsSave(unsigned core,unsigned sequence,
+    uint32_t& detail) {
+    const auto* fused=reinterpret_cast<const DataflowRmsSaveInvocation*>(
+        static_cast<uintptr_t>(DataflowProgramAddress));
+    unsigned rmsStage=DataflowRmsWorkerInvalid;
+    DataflowBlackholeRmsSaveOps io;
+    const bool okay=DataflowWorkerQueuesClean() && fused->Valid() && fused->core==core
+        && io.Bind(*fused,sequence)
+        && PioneerQwen35DataflowRmsSaveWorker(*fused,sequence,
+            reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowActivationCacheAddress)),
+            reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowInputBufferAddress)),
+            reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowWeightBufferAddress)),
+            reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowOutputBufferAddress)),io,&rmsStage);
+    if (!okay) {
+        const auto& diagnostic=io.Diagnostic();
+        detail=0x80000000U | (rmsStage&0xfU) | ((diagnostic.stage&0xfU)<<4)
+            | ((diagnostic.index&0xffU)<<8) | ((diagnostic.counterMatchMask&0xffU)<<16)
+            | ((diagnostic.initiatorBusyMask&0xfU)<<24);
+    }
+    return okay;
+}
+#endif
+
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 __attribute__((noinline))
 #endif
@@ -323,26 +347,8 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 	}
 #ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
 	else if (invocationMagic==DataflowRmsSaveMagic) {
-		const auto* fused=reinterpret_cast<const DataflowRmsSaveInvocation*>(
-			static_cast<uintptr_t>(DataflowProgramAddress));
-		unsigned rmsStage=DataflowRmsWorkerInvalid;
-		DataflowBlackholeRmsSaveOps io;
-		if (DataflowWorkerQueuesClean() && fused->Valid() && fused->core==core) {
-			okay=io.Bind(*fused,sequence)
-				&& PioneerQwen35DataflowRmsSaveWorker(*fused,sequence,
-					reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowActivationCacheAddress)),
-					reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowInputBufferAddress)),
-					reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowWeightBufferAddress)),
-					reinterpret_cast<float*>(static_cast<uintptr_t>(DataflowOutputBufferAddress)),io,&rmsStage);
-		}
-		if (!okay) {
-			const auto& diagnostic=io.Diagnostic();
-			result.executionDetail=0x80000000U | (rmsStage&0xfU)
-				| ((diagnostic.stage&0xfU)<<4) | ((diagnostic.index&0xffU)<<8)
-				| ((diagnostic.counterMatchMask&0xffU)<<16)
-				| ((diagnostic.initiatorBusyMask&0xfU)<<24);
-			DataflowSignalLocalFailure(DataflowFailureReader);
-		}
+		okay=DataflowWorkerExecuteRmsSave(core,sequence,result.executionDetail);
+		if (!okay) DataflowSignalLocalFailure(DataflowFailureReader);
 	}
 #endif
 	else if (invocationMagic==DataflowRmsMagic) {

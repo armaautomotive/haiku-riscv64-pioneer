@@ -36,3 +36,40 @@ sequential eight-layer simulation. The ordinary reference comparison still
 fails at layer 7 because of the documented quantization threshold. The
 32-layer capture and two-decode diagnostics remain active. No card was
 accessed for this work.
+
+## Graph integration and simulator run
+
+The compile-only paired hybrid recorder now emits the fused operation in
+place of both residual-save/RMS pairs per layer. Its prompt and decode graphs
+contain 433 and 436 steps, down from 497 and 500 in the otherwise matching
+paired graph. An ASan/UBSan full-graph test verified all 64 fused steps and all
+32 paired FFN steps over 120 records per step, both prompt and decode; it
+also verified dynamic-token patch invariance and sink abort on a partial
+fused-stage failure. This is recording evidence, not fleet execution.
+
+The first candidate device link exceeded the primary L1 code region; the
+experimental fused image now uses separate simulator-only linker layouts and
+fits its reserved regions. The final resident image has 57,024 bytes of
+primary text, 26,028 bytes of dispatch and 14,240 bytes of extra simulator
+code. Its added fused-path stack-frame envelope is 5,712/8,192 bytes including
+a 1,024-byte allowance; this is not a whole-program proof. The final rebuilt
+boot, text, dispatch and extra-code regions match the image used below byte
+for byte. The generated fused service header contains a compile-time error,
+and both driver-header packagers reject its marker. Baseline paired graph,
+FFN sequencing, marker mismatch, header packaging and worker tests passed.
+The pre-existing paired-hybrid control was also rebuilt after these changes;
+its boot, text, dispatch and extra-code binaries matched the previous
+`/private/tmp/q35-ffn-pair-resident-20261126` image byte for byte.
+
+The authenticated 4B fixture recorded a four-layer prefix with 55 executed
+steps and an intentional 56th-record fault. It is running in exploratory
+ttsim as session `13066` using 120 simulated workers; its log is
+`/private/tmp/q35-rms-save-four-layer-sim-20261126.log`. No numerical outcome
+is available yet. The simulator-only extra code window remains unqualified
+for hardware, and the in-place recovery and physical ownership proofs are
+still incomplete. No P100A was accessed and no tokens/sec was measured.
+
+The actual fused recorder method also cross-compiled for Haiku/RV64; the
+emitted binder frame is 976 bytes and the probe frame 128 bytes, neither a
+complete kernel stack bound. Build and stack records are at
+`/private/tmp/q35-rms-save-recorder-rv64-20261126.{o,su}`.

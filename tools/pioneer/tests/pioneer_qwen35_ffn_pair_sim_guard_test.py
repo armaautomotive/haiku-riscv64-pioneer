@@ -28,6 +28,20 @@ with tempfile.TemporaryDirectory() as tmp:
         result = subprocess.run(base, capture_output=True, text=True)
         assert result.returncode and 'paired FFN fixture and image markers do not match' in result.stderr
         assert 'no-library' not in result.stderr
+    for directory in (image, fixture):
+        (directory / 'ffn-pair.marker').touch()
+    for image_marker, fixture_marker in ((True, False), (False, True)):
+        for directory, enabled in ((image, image_marker), (fixture, fixture_marker)):
+            path = directory / 'fused-rms-save.marker'
+            if enabled:
+                path.touch()
+            else:
+                path.unlink(missing_ok=True)
+        result = subprocess.run(base, capture_output=True, text=True)
+        assert result.returncode and 'fused RMS/save fixture and image markers do not match' in result.stderr
+        assert 'no-library' not in result.stderr
+    for directory in (image, fixture):
+        (directory / 'fused-rms-save.marker').unlink(missing_ok=True)
     existing = root / 'existing-output'; existing.write_bytes(b'preserve')
     result = subprocess.run(base + ['--recorded-export-actual', str(existing)], capture_output=True, text=True)
     assert result.returncode and 'requires one fixture run and a new output path' in result.stderr

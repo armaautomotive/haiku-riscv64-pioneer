@@ -117,6 +117,13 @@ def main():
     paired_words[10] = checksum
     paired_next = resident_next_decode_command(struct.pack('<32I', *paired_words), 261)
     assert struct.unpack('<32I', paired_next)[2:10] == (2, 23, 501, 500, 1000000, 0, 261, 1)
+    fused_words = decode_words.copy();fused_words[5] = 436
+    checksum = 2166136261
+    for word in fused_words[:10]:
+        checksum = ((checksum ^ word) * 16777619) & 0xffffffff
+    fused_words[10] = checksum
+    fused_next = resident_next_decode_command(struct.pack('<32I', *fused_words), 261)
+    assert struct.unpack('<32I', fused_next)[2:10] == (2, 23, 437, 436, 1000000, 0, 261, 1)
     rejected(resident_next_decode_command, decode, -1)
     rejected(resident_next_decode_command, decode, 248320)
     rejected(resident_next_decode_command, decode[:-1], 261)
