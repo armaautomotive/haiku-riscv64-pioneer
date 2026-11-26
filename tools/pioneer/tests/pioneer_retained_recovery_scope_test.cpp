@@ -9,12 +9,14 @@
 #include <cstdio>
 #include <cstring>
 #include <mutex>
+#include <new>
 #include <thread>
 using uint8=uint8_t;using thread_id=int;
 using status_t=int;using uint64=uint64_t;
-enum { B_OK=0,B_ERROR=-1,B_BAD_VALUE=-2,B_NOT_ALLOWED=-3,B_BUSY=-4,B_DEV_NOT_READY=-5 };
+enum { B_OK=0,B_ERROR=-1,B_BAD_VALUE=-2,B_NOT_ALLOWED=-3,B_BUSY=-4,B_DEV_NOT_READY=-5,B_NO_MEMORY=-6 };
 constexpr unsigned NODE_FLAG_DEVICE_REMOVED=1;
 using pioneer_dm_pinned_operation=status_t (*)(void*);
+using pioneer_dm_retained_pin_operation=status_t (*)(void*);
 static std::recursive_mutex sLock;
 struct RecursiveLocker {std::unique_lock<std::recursive_mutex> lock;explicit RecursiveLocker(std::recursive_mutex& m):lock(m) {}};
 #define TRACE(...) ((void)0)
@@ -42,6 +44,14 @@ struct device_node {
 };
 #include "pioneer_dm_init_lifetime.inc"
 #include "pioneer_dm_retained_driver_pin.inc"
+#include "pioneer_dm_retained_pin_service.inc"
+struct pioneer_dm_retained_pin_module_info {
+    status_t (*acquire)(device_node*,const void*,uint64,uint64*);
+    status_t (*run)(uint64,const void*,uint64,pioneer_dm_retained_pin_operation,void*,status_t*);
+    status_t (*release)(uint64,const void*,uint64,bool);
+};
+static pioneer_dm_retained_pin_module_info pinService={
+    pioneer_acquire_retained_pin,pioneer_run_retained_pin,pioneer_release_retained_pin};
 struct mutex { std::mutex native; };
 static void mutex_lock(mutex* m) { m->native.lock(); }
 static void mutex_unlock(mutex* m) { m->native.unlock(); }
@@ -74,8 +84,25 @@ public:
 };
 #include "sg2042_recovery_controller.inc"
 
+#define PIONEER_SG2042_RETAINED_LEASE_MODULE "test/retained"
+struct pioneer_sg2042_retained_lease_module_info {
+    struct {const char* name;} info;
+    status_t (*begin)(void*,const void*,uint64,uint64*);
+    status_t (*park)(void*,const void*,uint64,uint64);
+    status_t (*resume)(void*,const void*,uint64,uint64);
+    status_t (*finish)(void*,const void*,uint64,uint64,bool);
+};
+#include "sg2042_retained_lease_service.inc"
+
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerRetainedRecoveryScope.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerRetainedRecoveryModuleAdapters.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerRetainedRecoveryBinding.h"
 using Scope=PioneerRetainedRecoveryScope<PioneerRetainedDriverPin,ECAMPCIController>;
+using ModulePin=PioneerRetainedRecoveryPinAdapter<pioneer_dm_retained_pin_module_info>;
+using ModuleController=PioneerRetainedRecoveryControllerAdapter<pioneer_sg2042_retained_lease_module_info>;
+using ModuleScope=PioneerRetainedRecoveryScope<ModulePin,ModuleController>;
+using ModuleBinding=PioneerRetainedRecoveryBinding<pioneer_dm_retained_pin_module_info,
+    pioneer_sg2042_retained_lease_module_info>;
 struct Context { explicit Context(ECAMPCIController* c):controller(c) {} ECAMPCIController* controller;device_node* remove=nullptr;int calls=0;bool pending=true;status_t result=B_DEV_NOT_READY;std::thread waiter;std::atomic<int> waiterResult{123}; };
 static status_t Access(ECAMPCIController& controller) {
     mutex_lock(&controller.fLock);status_t s=controller.WaitPioneerConfigAccess();mutex_unlock(&controller.fLock);return s;
@@ -130,5 +157,47 @@ int main() {
     assert(ctl2.FinishPioneerRetainedRecovery(&owner,8,ticket,true)==B_OK);
     assert(rp2.Release(&owner,8,rg,true)==B_OK && cp2.Release(&owner,8,cg,true)==B_OK);
     assert(c2.UninitDriver());
-    assert(modules==0);std::puts("PASS retained pins and controller lease integration; SIMULATED ONLY");
+    assert(modules==0);
+    device_node r3,c3;c3.parent=&r3;assert(c3.InitDriver()==B_OK);
+    uint64 cardId=0,rootId=0;
+    assert(pinService.acquire(&c3,&owner,9,&cardId)==B_OK);
+    assert(pinService.acquire(&r3,&owner,9,&rootId)==B_OK);
+    ECAMPCIController ctl3;
+    uint64 invalid=123;
+    assert(gPioneerRetainedLease.begin(nullptr,&owner,9,&invalid)==B_BAD_VALUE && invalid==0);
+    assert(gPioneerRetainedLease.begin(&ctl3,&owner,9,nullptr)==B_BAD_VALUE);
+    ModuleBinding binding(&pinService,&gPioneerRetainedLease,&ctl3,&owner,9,cardId,rootId);
+    Context e{&ctl3};current=44;
+    assert(binding.Step(Run,&e,operation)==ModuleScope::Pending && operation==B_DEV_NOT_READY);
+    e.waiter.join();assert(e.waiterResult==B_DEV_NOT_READY);
+    ticket=binding.Ticket();assert(ticket && ctl3.fPioneerRecoveryLease.Parked());
+    assert(gPioneerRetainedLease.finish(&ctl3,&owner,9,ticket,true)==B_BAD_VALUE);
+    assert(pinService.release(cardId,&owner,9,false)==B_BAD_VALUE);
+    e.pending=false;e.result=B_OK;current=55;
+    assert(binding.Step(Run,&e,operation)==ModuleScope::AwaitingProof && operation==B_OK);
+    assert(binding.Retire(false)==B_NOT_ALLOWED && ctl3.fPioneerRecoveryLease.Parked());
+    assert(binding.Retire(true)==B_OK && binding.Retired());
+    assert(!ctl3.fPioneerRecoveryLease.Active() && binding.Retire(true)==B_NOT_ALLOWED);
+    assert(c3.UninitDriver() && modules==0);
+    device_node r4,c4;c4.parent=&r4;assert(c4.InitDriver()==B_OK);
+    cardId=rootId=0;
+    assert(pinService.acquire(&c4,&owner,10,&cardId)==B_OK);
+    assert(pinService.acquire(&r4,&owner,10,&rootId)==B_OK);
+    ECAMPCIController ctl4;auto failingService=gPioneerRetainedLease;
+    failingService.finish=[](void*,const void*,uint64,uint64,bool) -> status_t {return B_ERROR;};
+    ModuleBinding failedBinding(&pinService,&failingService,&ctl4,&owner,10,cardId,rootId);
+    Context f{&ctl4};current=66;
+    assert(failedBinding.Step(Run,&f,operation)==ModuleScope::Pending);
+    f.waiter.join();f.pending=false;f.result=B_OK;current=77;
+    assert(failedBinding.Step(Run,&f,operation)==ModuleScope::AwaitingProof);
+    ticket=failedBinding.Ticket();
+    assert(failedBinding.Retire(true)==B_ERROR && ctl4.fPioneerRecoveryLease.Parked());
+    assert(failedBinding.Retire(true)==B_NOT_ALLOWED && c4.fInitialized==2 && r4.fInitialized==3);
+    // Simulation-only teardown after checking the failure retained ownership.
+    assert(gPioneerRetainedLease.resume(&ctl4,&owner,10,ticket)==B_OK);
+    assert(gPioneerRetainedLease.finish(&ctl4,&owner,10,ticket,true)==B_OK);
+    assert(pinService.release(rootId,&owner,10,true)==B_OK);
+    assert(pinService.release(cardId,&owner,10,true)==B_OK);
+    assert(c4.UninitDriver() && modules==0);
+    std::puts("PASS retained pin and controller module integration; SIMULATED ONLY");
 }

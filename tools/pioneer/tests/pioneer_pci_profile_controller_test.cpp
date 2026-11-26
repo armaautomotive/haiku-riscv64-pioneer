@@ -4,11 +4,13 @@
 #include <cstdio>
 #include <cstring>
 #include <mutex>
+#include <new>
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerPciProfile.h"
 #include "../../../src/add-ons/kernel/busses/pci/ecam/Sg2042RootPolicy.h"
 using uint8=uint8_t; using uint16=uint16_t; using uint32=uint32_t; using uint64=uint64_t;
 using status_t=int;
-enum {B_OK=0,B_ENTRY_NOT_FOUND=-1,B_UNSUPPORTED=-2,B_BAD_VALUE=-3,B_ERROR=-4,B_NOT_ALLOWED=-5};
+enum {B_OK=0,B_ENTRY_NOT_FOUND=-1,B_UNSUPPORTED=-2,B_BAD_VALUE=-3,B_ERROR=-4,B_NOT_ALLOWED=-5,
+ B_BUSY=-6,B_DEV_NOT_READY=-7,B_NO_MEMORY=-8};
 enum {B_STRING_TYPE=1,B_UINT16_TYPE,B_UINT8_TYPE,B_IO_PORT,B_IO_MEMORY};
 enum {PCI_address_prefetchable=1,PCI_address_type_64=2};
 #define B_DEVICE_BUS "bus"
@@ -26,7 +28,7 @@ struct device_node {
  bool IsInitialized() const {return true;}
  unsigned Flags() const {return 0;}
  status_t InitDriver(){++pins;return B_OK;}
- bool UninitDriver(){assert(pins==1);--pins;return false;}
+ bool UninitDriver(){assert(pins>0);--pins;return false;}
 };
 static std::recursive_mutex sLock;
 struct RecursiveLocker {std::unique_lock<std::recursive_mutex> lock;explicit RecursiveLocker(std::recursive_mutex& m):lock(m) {}};
@@ -47,12 +49,15 @@ struct device_manager_info {device_node* (*get_root_node)();status_t (*find_chil
  status_t (*get_next_child_node)(device_node*,const device_attr*,device_node**);
  status_t (*get_attr_string)(device_node*,const char*,const char**,bool);};
 using pioneer_pci_controller_operation=status_t (*)(void*,void*);
+using pioneer_pci_controller_nodes_operation=status_t (*)(void*,device_node*,device_node*,void*);
 using pioneer_dm_pinned_operation=status_t (*)(void*);
+using pioneer_dm_retained_pin_operation=status_t (*)(void*);
 struct module_info {};
 struct pioneer_dm_driver_pin_module_info {module_info info;status_t (*run)(device_node*,pioneer_dm_pinned_operation,void*,status_t*);};
 #define PIONEER_DEVICE_MANAGER_PIN_MODULE "test-pin"
 static int pinDepth=0,pinRefs=0;static bool pinUnavailable=false,portPinDenied=false;
 #include "pioneer_dm_driver_pin.inc"
+#include "pioneer_dm_retained_pin_service.inc"
 static status_t pinRun(device_node* n,pioneer_dm_pinned_operation operation,void* argument,status_t* result){
  assert(n && (n->id==1 || n->id==5) && n->refs>0);if(portPinDenied && n->id==5)return B_NOT_ALLOWED;++pinDepth;status_t status=pioneer_run_with_initialized_driver(n,operation,argument,result);--pinDepth;return status;
 }
@@ -107,6 +112,17 @@ static status_t callback(void* cookie,void*){
  assert(pinDepth==2 && nodes[1].pins==1 && port.pins==1 && cookie==&hostCookie && nodes[0].refs && nodes[1].refs && nodes[2].refs && nodes[3].refs && nodes[4].refs && port.refs);
  ++callbackCalls;return B_ERROR;
 }
+static int retainedOwner;
+static uint64 retainedCard=0,retainedPort=0;
+static status_t nodesCallback(void* cookie,device_node* card,device_node* root,void*) {
+ assert(cookie==&hostCookie && card==&nodes[1] && root==&port);
+ assert(pinDepth==2 && card->pins==1 && root->pins==1 && card->refs && root->refs);
+ assert(pioneer_acquire_retained_pin(card,&retainedOwner,1,&retainedCard)==B_OK);
+ assert(pioneer_acquire_retained_pin(root,&retainedOwner,1,&retainedPort)==B_OK);
+ assert(card->pins==2 && root->pins==2);
+ ++callbackCalls;return B_ERROR;
+}
+static status_t retainedCallback(void*) {return B_OK;}
 static void released(){for(auto& n:nodes)assert(n.refs==0);assert(port.refs==0 && alternatePort.refs==0);}
 int main(){pci_info expected{0x1e52,0xb140,17,0,0};tt_pioneer_profile profile{};
  pioneer_pci_pin_probe_result probe{};PioneerPciPinProbeCall call{&manager,&probe};
@@ -118,18 +134,34 @@ int main(){pci_info expected{0x1e52,0xb140,17,0,0};tt_pioneer_profile profile{};
  wrongMetadata=false;
  assert(WithPioneerPciController(&manager,expected,profile,callback,nullptr)==B_ERROR);
  assert(callbackCalls==1 && profile.ready && profile.stage==6);released();
- assert(GetPioneerPciProfile(&manager,expected,profile)==B_OK && callbackCalls==1);released();
+ assert(WithPioneerPciControllerNodes(&manager,expected,profile,nodesCallback,nullptr)==B_ERROR);
+ assert(callbackCalls==2 && profile.ready && profile.stage==6);released();
+ assert(nodes[1].pins==1 && port.pins==1 && retainedCard && retainedPort);
+ status_t retainedResult=B_ERROR;
+ assert(pioneer_run_retained_pin(retainedCard,&retainedOwner,1,retainedCallback,nullptr,&retainedResult)==B_OK);
+ assert(retainedResult==B_OK);
+ assert(pioneer_release_retained_pin(retainedPort,&retainedOwner,1,true)==B_OK);
+ assert(pioneer_release_retained_pin(retainedCard,&retainedOwner,1,true)==B_OK);
+ assert(!nodes[1].pins && !port.pins);
+ assert(GetPioneerPciProfile(&manager,expected,profile)==B_OK && callbackCalls==2);released();
  badFdt=true;assert(WithPioneerPciController(&manager,expected,profile,callback,nullptr)==B_UNSUPPORTED);
- assert(callbackCalls==1 && !profile.ready);released();
+ assert(callbackCalls==2 && !profile.ready);released();
+ assert(WithPioneerPciControllerNodes(&manager,expected,profile,nodesCallback,nullptr)==B_UNSUPPORTED);
+ assert(callbackCalls==2 && !profile.ready);released();
  badFdt=false;replacePort=true;portSearches=0;
  assert(WithPioneerPciController(&manager,expected,profile,callback,nullptr)==B_NOT_ALLOWED);
- assert(callbackCalls==1 && !profile.ready && nodes[1].pins==0 && port.pins==0);released();
+ assert(callbackCalls==2 && !profile.ready && nodes[1].pins==0 && port.pins==0);released();
+ portSearches=0;
+ assert(WithPioneerPciControllerNodes(&manager,expected,profile,nodesCallback,nullptr)==B_NOT_ALLOWED);
+ assert(callbackCalls==2 && !profile.ready && nodes[1].pins==0 && port.pins==0);released();
  replacePort=false;portPinDenied=true;
  assert(WithPioneerPciController(&manager,expected,profile,callback,nullptr)==B_NOT_ALLOWED);
- assert(!profile.ready && callbackCalls==1 && pinDepth==0 && pinRefs==0 && nodes[1].pins==0 && port.pins==0);released();
+ assert(!profile.ready && callbackCalls==2 && pinDepth==0 && pinRefs==0 && nodes[1].pins==0 && port.pins==0);released();
  portPinDenied=false;pinUnavailable=true;assert(WithPioneerPciController(&manager,expected,profile,callback,nullptr)==B_ERROR);
- assert(!profile.ready && callbackCalls==1 && pinDepth==0 && pinRefs==0 && nodes[1].pins==0 && port.pins==0);released();
+ assert(!profile.ready && callbackCalls==2 && pinDepth==0 && pinRefs==0 && nodes[1].pins==0 && port.pins==0);released();
  assert(WithPioneerPciController(nullptr,expected,profile,callback,nullptr)==B_BAD_VALUE);
  assert(WithPioneerPciController(&manager,expected,profile,nullptr,nullptr)==B_BAD_VALUE);released();
+ assert(WithPioneerPciControllerNodes(nullptr,expected,profile,nodesCallback,nullptr)==B_BAD_VALUE);
+ assert(WithPioneerPciControllerNodes(&manager,expected,profile,nullptr,nullptr)==B_BAD_VALUE);released();
  std::puts("PASS actual profile and device-manager pin compose over simulated nodes and reject mismatched FDT");
 }

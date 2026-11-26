@@ -1,5 +1,25 @@
 # Latest offline checks, 2026-11-26
 
+The retained ECAM service now exports begin, park, resume and finish to a
+driver adapter in an explicitly non-loadable configuration. Simulated tests
+compose the actual device-manager service, actual ECAM service and controller
+lease through the driver-side binding across retry threads; an injected
+controller-finish failure re-parks the lease and retains both pins. The
+validated PCI
+profile can hand the card and root-port nodes to a callback that acquires its
+own retained pins before the existing temporary pins are released. The actual
+profile/pin handoff passed simulated positive and identity-refusal tests. The
+compact resident driver linked with this binding; the ECAM component linked
+and its controller initialization still rejects use. The saved ECAM baseline
+was reproduced before a separate fixed-probe qualification control was built.
+No candidate was installed or booted. In the compile-only retained mode,
+recovery completion now keeps the owner and cold latch until the caller has
+retired the controller lease and both pins; it reports incomplete recovery to
+the caller until then. The actual recovery sequence and deferred finalizer
+passed simulated tests, but the live recovery ioctl still
+does not use this gateway and no physical release proof exists. Physical
+removal, firmware and DMA/MMIO exclusion remain unproven.
+
 An opt-in Haiku device-manager module now retains initialized card or root
 nodes across recovery calls using monotonic IDs and owner/session checks.
 Its actual implementation passed simulated concurrent, reentrant, stale-ID,
@@ -12,9 +32,10 @@ See `benchmarks/qwen35-pin-kernel-20261125/EVIDENCE.md`.
 
 The fused 32-layer simulator reached its audited token 261, matching the
 reference, but failed the existing strict hidden-state comparison on 2558 of
-2560 values (maximum absolute difference 0.370739102). A same-input boundary
-audit is in progress. This is not a valid warm hardware run or a throughput
-measurement.
+2560 values (maximum absolute difference 0.370739102). Its 32 captured layer
+boundaries match the baseline byte-for-byte. The completed same-input audit
+passed 30 of 32 layers, with layers 9 and 18 failing. This is not a valid warm
+hardware run or a throughput measurement.
 
 The fused tree Haiku driver now also links with the actual compact resident
 image and no unresolved symbols. The temporary linked artifact retained the

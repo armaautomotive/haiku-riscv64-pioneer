@@ -1,5 +1,20 @@
 # Fused residual save and normalization, 2026-11-26
 
+## Full fused run and same-input audit
+
+The 436-step full-model simulator run completed its worker and candidate
+audit and produced token 261, matching the reference, but failed the strict
+final hidden-state comparison: 2558/2560 values differ, with maximum absolute
+error `0.370739102`. All 32 captured layer boundaries are byte-identical to
+the completed unfused baseline capture. The independent CPU same-input audit
+passed 30/32 boundaries; layers 9 and 18 failed the existing tolerance, and
+the CPU continuation from the exact final simulated hidden state selected the
+same token 261. The machine-readable record is
+`fused-same-input-audit-20261126.json`. The baseline investigation reports
+input-specific quantization-threshold effects for those layers; it does not
+turn this full run into a numerical pass. No card or hardware benchmark was
+used. The compact full-model and two-token simulator runs remain active.
+
 ## Latest: fused four-layer result and full run
 
 The four-layer run completed all 55 recorded graph steps with 120 simulated

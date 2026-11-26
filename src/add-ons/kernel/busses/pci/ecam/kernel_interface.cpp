@@ -8,6 +8,9 @@
 #ifdef PIONEER_SG2042_RECOVERY_WITNESS
 #include "PioneerSg2042RecoveryModule.h"
 #endif
+#ifdef PIONEER_SG2042_RETAINED_LEASE_SERVICE
+#include "PioneerSg2042RetainedLeaseModule.h"
+#endif
 #ifdef PIONEER_SG2042_RECOVERY_QUALIFICATION
 #include "PioneerSg2042LeaseProbeModule.h"
 #endif
@@ -82,6 +85,32 @@ pioneer_sg2042_recovery_module_info gPioneerRecovery = {
 };
 #endif
 
+#ifdef PIONEER_SG2042_RETAINED_LEASE_SERVICE
+// PIONEER_SG2042_RETAINED_LEASE_SERVICE_BEGIN
+pioneer_sg2042_retained_lease_module_info gPioneerRetainedLease = {
+	.info = { .name = PIONEER_SG2042_RETAINED_LEASE_MODULE },
+	.begin = [](void* cookie,const void* owner,uint64 session,uint64* ticket) -> status_t {
+		if (ticket == NULL) return B_BAD_VALUE;
+		*ticket=0;
+		if (cookie == NULL) return B_BAD_VALUE;
+		return static_cast<ECAMPCIController*>(cookie)->BeginPioneerRetainedRecovery(owner,session,*ticket);
+	},
+	.park = [](void* cookie,const void* owner,uint64 session,uint64 ticket) -> status_t {
+		if (cookie == NULL) return B_BAD_VALUE;
+		return static_cast<ECAMPCIController*>(cookie)->ParkPioneerRetainedRecovery(owner,session,ticket);
+	},
+	.resume = [](void* cookie,const void* owner,uint64 session,uint64 ticket) -> status_t {
+		if (cookie == NULL) return B_BAD_VALUE;
+		return static_cast<ECAMPCIController*>(cookie)->ResumePioneerRetainedRecovery(owner,session,ticket);
+	},
+	.finish = [](void* cookie,const void* owner,uint64 session,uint64 ticket,bool authorized) -> status_t {
+		if (cookie == NULL) return B_BAD_VALUE;
+		return static_cast<ECAMPCIController*>(cookie)->FinishPioneerRetainedRecovery(owner,session,ticket,authorized);
+	}
+};
+// PIONEER_SG2042_RETAINED_LEASE_SERVICE_END
+#endif
+
 #ifdef PIONEER_SG2042_RECOVERY_QUALIFICATION
 // PIONEER_SG2042_LEASE_PROBE_BEGIN
 static status_t
@@ -128,6 +157,9 @@ _EXPORT module_info *modules[] = {
 	(module_info *)&gPciControllerDriver,
 	#ifdef PIONEER_SG2042_RECOVERY_WITNESS
 	(module_info *)&gPioneerRecovery,
+	#endif
+	#ifdef PIONEER_SG2042_RETAINED_LEASE_SERVICE
+	(module_info *)&gPioneerRetainedLease,
 	#endif
 	#ifdef PIONEER_SG2042_RECOVERY_QUALIFICATION
 	(module_info *)&gPioneerLeaseProbe,

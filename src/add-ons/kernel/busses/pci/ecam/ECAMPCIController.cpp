@@ -255,7 +255,7 @@ ECAMPCIController::WaitPioneerConfigAccess()
 	if (thread < B_OK)
 		return B_BAD_VALUE;
 	while (fPioneerRecoveryLease.Active() && !fPioneerRecoveryLease.Allows(thread)) {
-		#ifdef PIONEER_SG2042_RETAINED_LEASE_WITNESS
+		#if defined(PIONEER_SG2042_RETAINED_LEASE_WITNESS) || defined(PIONEER_SG2042_RETAINED_LEASE_SERVICE)
 		// A pending reset cannot safely wait for an arbitrary future retry.
 		// Wake existing waiters and fail new accesses while it is parked.
 		if (fPioneerRecoveryLease.Parked())
@@ -270,7 +270,7 @@ ECAMPCIController::WaitPioneerConfigAccess()
 	}
 	return B_OK;
 }
-#ifdef PIONEER_SG2042_RETAINED_LEASE_WITNESS
+#if defined(PIONEER_SG2042_RETAINED_LEASE_WITNESS) || defined(PIONEER_SG2042_RETAINED_LEASE_SERVICE)
 status_t
 ECAMPCIController::BeginPioneerRetainedRecovery(const void* owner, uint64 session, uint64& ticket)
 {

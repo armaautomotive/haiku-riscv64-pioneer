@@ -4099,6 +4099,11 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 };
 
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+#if defined(PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS) \
+	&& (!defined(PIONEER_QWEN35_RETAINED_SCOPE_WITNESS) \
+		|| !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY))
+#error Retained recovery completion requires the non-loadable retained scope
+#endif
 #include "PioneerPostResetPci.h"
 #ifdef PIONEER_QWEN35_FABRIC_GUARD_WITNESS
 #include "PioneerQ35PcieIdleAudit.h"
@@ -4165,6 +4170,18 @@ struct PioneerRootLeaseCompileQuarantine {
 	void Quarantine() { sColdRecoveryRequired=true; }
 };
 template class PioneerPciRootLeaseScope<PioneerRootLeaseCompileQuarantine,pioneer_sg2042_recovery_module_info>;
+#ifdef PIONEER_QWEN35_RETAINED_SCOPE_WITNESS
+#include "../../../../system/kernel/device_manager/PioneerDeviceManagerRetainedPinModule.h"
+#include "../../busses/pci/ecam/PioneerSg2042RetainedLeaseModule.h"
+#include "PioneerRetainedRecoveryModuleAdapters.h"
+#include "PioneerRetainedRecoveryScope.h"
+#include "PioneerRetainedRecoveryBinding.h"
+using PioneerQ35RetainedPinAdapter=PioneerRetainedRecoveryPinAdapter<pioneer_dm_retained_pin_module_info>;
+using PioneerQ35RetainedControllerAdapter=PioneerRetainedRecoveryControllerAdapter<pioneer_sg2042_retained_lease_module_info>;
+template class PioneerRetainedRecoveryScope<PioneerQ35RetainedPinAdapter,PioneerQ35RetainedControllerAdapter>;
+template class PioneerRetainedRecoveryBinding<pioneer_dm_retained_pin_module_info,
+	pioneer_sg2042_retained_lease_module_info>;
+#endif
 #endif
 #endif
 #ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
@@ -4272,6 +4289,12 @@ struct PioneerStoreContext {
 	uint64 recoveryFinishTicket=0;
 	bool recoveryFinishPending=false;
 	bool recoveryFinishNeedsAudit=false;
+#ifdef PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS
+	// Guard completion precedes controller-lease retirement. Keep the owner
+	// and cold latch intact until the gateway has retired that lease and pins.
+	uint64 recoveryFinishCompletedGeneration=0;
+	bool recoveryFinishCompleted=false,recoveryFinishKeepOwnerCookie=false;
+#endif
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
 	// The original retained context owns this separate post-reset transfer
 	// session. It must be explicitly retired before the original can die.
@@ -12355,6 +12378,9 @@ static status_t
 Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* context,
 	pioneer_driver_recovery_guard_v2_info* guard,tt_pioneer_recovery_run& r,bool keepOwnerCookie)
 {
+#ifdef PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS
+	if (context->recoveryFinishCompleted) return B_NOT_ALLOWED;
+#endif
 	const uint64 ticket=context->recoveryFinishTicket;
 	const PioneerDriverRecoveryProof proof=context->recoveryFinishProof;
 	auto retain=[&](status_t failure) {
@@ -12433,6 +12459,14 @@ Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* contex
 		if (status==B_OK) sColdRecoveryRequired=true;
 		return abandon(status!=B_OK?status:B_DEV_NOT_READY);
 	}
+#ifdef PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS
+	// The gateway still owns the parked controller lease and node pins. A
+	// postcheck or lease release can fail, so success is not published here.
+	context->recoveryFinishCompleted=true;
+	context->recoveryFinishCompletedGeneration=nextGeneration;
+	context->recoveryFinishKeepOwnerCookie=keepOwnerCookie;
+	put_module(PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE);return B_OK;
+#else
 	sReloadGeneration=nextGeneration;
 	owner->context=NULL;sRuntimeOwner=NULL;sBankStorageOnly=false;
 	delete context;
@@ -12440,7 +12474,34 @@ Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* contex
 	sColdRecoveryRequired.ClearAfterVerifiedRecovery();
 	r.new_generation=nextGeneration;r.stage=PIONEER_RECOVERY_STAGE_COMPLETE;
 	put_module(PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE);return B_OK;
+#endif
 }
+
+#ifdef PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS
+// PIONEER_Q35_RETAINED_FINISH_BEGIN
+// sLock is held. The caller may assert retirement only after the controller
+// service has finished the lease and both retained pin releases succeeded.
+// Failures preserve the cold latch and the owner for explicit recovery.
+[[maybe_unused]] static status_t
+Qwen35FinalizeRetainedRecoveryLocked(PioneerProbeCookie* owner,PioneerStoreContext* context,
+	tt_pioneer_recovery_run& r,bool leaseAndPinsRetired)
+{
+	if (!leaseAndPinsRetired || !owner || !context || owner!=sRuntimeOwner
+		|| owner->context!=context || !context->recoveryFinishCompleted
+		|| !context->recoveryFinishCompletedGeneration || !sColdRecoveryRequired
+		|| r.stage!=PIONEER_RECOVERY_STAGE_GUARD_COMPLETE) return B_NOT_ALLOWED;
+	const uint64 nextGeneration=context->recoveryFinishCompletedGeneration;
+	const bool keepOwnerCookie=context->recoveryFinishKeepOwnerCookie;
+	sReloadGeneration=nextGeneration;
+	owner->context=NULL;sRuntimeOwner=NULL;sBankStorageOnly=false;
+	delete context;
+	if (!keepOwnerCookie) { owner->magic=0;delete owner; }
+	sColdRecoveryRequired.ClearAfterVerifiedRecovery();
+	r.new_generation=nextGeneration;r.stage=PIONEER_RECOVERY_STAGE_COMPLETE;
+	return B_OK;
+}
+// PIONEER_Q35_RETAINED_FINISH_END
+#endif
 #endif
 
 // A retained graph can be faulted while the service itself is still ready.
@@ -12980,6 +13041,12 @@ Qwen35RecoveryRequest(PioneerProbeCookie* cookie,void* data,size_t length,bool f
 	(void)force;
 #endif
 		r.operation_status=Qwen35RecoveryRunSelected(cookie,r);
+#ifdef PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS
+	// Internal reset success is not externally complete until the retained
+	// controller lease and pins have been retired and the owner finalized.
+	if (r.operation_status==B_OK && r.stage!=PIONEER_RECOVERY_STAGE_COMPLETE)
+		r.operation_status=B_DEV_NOT_READY;
+#endif
 #ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
 	// The failed owner remains quarantined. Preserve root AER evidence without
 	// writing or acknowledging status, before the caller releases its fd.

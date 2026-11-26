@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #define B_DEVICE_OP_CODES_END 1000
 #define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026112100010121)
+#ifdef TEST_RETAINED_GATEWAY
+#define PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS 1
+#endif
 #ifdef TEST_LINK_RESET
 #define PIONEER_QWEN35_LINK_RESET_WITNESS 1
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerPcieLinkReset.h"
@@ -343,6 +346,10 @@ struct PioneerStoreContext {
 #endif
 	PioneerDriverRecoveryProof recoveryFinishProof{};uint64 recoveryFinishTicket=0;bool recoveryFinishPending=false;
 	PioneerPciePayloadSnapshot recoveryPayload{};bool recoveryFinishNeedsAudit=false;
+#ifdef TEST_RETAINED_GATEWAY
+	uint64 recoveryFinishCompletedGeneration=0;
+	bool recoveryFinishCompleted=false,recoveryFinishKeepOwnerCookie=false;
+#endif
 	uint64 recoveryPrepareTicket=0;bool recoveryPreparePending=false;
 	BlackholeAsicResetResult recoveryResetResult{};uint64 recoveryResetTicket=0;bool recoveryResetPending=false;
 	uint64 recoveryFirmwareTicket=0;bool recoveryFirmwarePending=false;
@@ -447,7 +454,25 @@ static void Setup() {
 	sRuntimeOwner=new PioneerProbeCookie;sRuntimeOwner->context=new PioneerStoreContext;sRuntimeOwner->finalFreeRetained=true;
 }
 static void Cleanup(){if(sRuntimeOwner){delete sRuntimeOwner->context;delete sRuntimeOwner;sRuntimeOwner=nullptr;}}
-#ifdef TEST_LINK_RESET
+#ifdef TEST_RETAINED_GATEWAY
+int main(){
+	PioneerProbeCookie inspector;Setup();auto* owner=sRuntimeOwner;auto* context=owner->context;
+	auto r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY);
+	assert(r.stage==PIONEER_RECOVERY_STAGE_GUARD_COMPLETE && !r.new_generation
+		&& sRuntimeOwner==owner && owner->context==context && sColdRecoveryRequired
+		&& sReloadGeneration==3 && context->recoveryFinishCompleted
+		&& context->recoveryFinishCompletedGeneration==4 && completeCount==1
+		&& !contextDeleted && !cookieDeleted);
+	assert(Qwen35FinalizeRetainedRecoveryLocked(owner,context,r,false)==B_NOT_ALLOWED);
+	assert(sRuntimeOwner==owner && sColdRecoveryRequired && !contextDeleted && !cookieDeleted);
+	assert(Qwen35FinalizeRetainedRecoveryLocked(owner,context,r,true)==B_OK);
+	assert(!sRuntimeOwner && !sColdRecoveryRequired && sReloadGeneration==4
+		&& r.stage==PIONEER_RECOVERY_STAGE_COMPLETE && r.new_generation==4
+		&& contextDeleted==1 && cookieDeleted==1);
+	Cleanup();puts("PASS actual recovery defers completion until lease retirement; SIMULATED HARDWARE ONLY");
+}
+#elif defined(TEST_LINK_RESET)
 int main(){
 	PioneerProbeCookie inspector;
 	Setup();auto r=Request();

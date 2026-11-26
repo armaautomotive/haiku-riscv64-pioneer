@@ -52,6 +52,13 @@ typedef status_t (*pioneer_pci_controller_operation)(void* controllerCookie,
 	void* argument);
 status_t WithPioneerPciController(device_manager_info*, const pci_info&,
 	tt_pioneer_profile&, pioneer_pci_controller_operation, void* argument);
+// The nodes and cookie are borrowed for this callback only. A consumer that
+// needs them across calls must acquire its own initialized-driver pins and
+// module references while the callback holds the existing pins.
+typedef status_t (*pioneer_pci_controller_nodes_operation)(void* controllerCookie,
+	device_node* card, device_node* rootPort, void* argument);
+status_t WithPioneerPciControllerNodes(device_manager_info*, const pci_info&,
+	tt_pioneer_profile&, pioneer_pci_controller_nodes_operation, void* argument);
 #endif
 
 #endif

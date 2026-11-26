@@ -217,6 +217,29 @@ struct PinnedProfileCall {
 			call.operation, call.argument, card, port);
 	}
 };
+struct PinnedProfileNodesCall {
+	device_manager_info* dm;
+	const pci_info& expected;
+	tt_pioneer_profile& profile;
+	pioneer_pci_controller_nodes_operation operation;
+	void* argument;
+	device_node* card = NULL;
+	device_node* port = NULL;
+	static status_t Controller(void* cookie, void* argument) {
+		PinnedProfileNodesCall& call = *static_cast<PinnedProfileNodesCall*>(argument);
+		return call.operation(cookie, call.card, call.port, call.argument);
+	}
+	static status_t RunProfile(device_node* card, device_node* port, void* argument) {
+		PinnedProfileNodesCall& call = *static_cast<PinnedProfileNodesCall*>(argument);
+		call.card = card;
+		call.port = port;
+		const status_t status = InspectPioneerPciProfile(call.dm, call.expected, call.profile,
+			Controller, &call, card, port);
+		call.card = NULL;
+		call.port = NULL;
+		return status;
+	}
+};
 }
 
 status_t
@@ -229,4 +252,16 @@ WithPioneerPciController(device_manager_info* dm, const pci_info& expected,
 	profile = {};
 	PinnedProfileCall call{dm, expected, profile, operation, argument};
 	return PioneerWithPinnedPciNodes(dm, PinnedProfileCall::RunProfile, &call);
+}
+
+status_t
+WithPioneerPciControllerNodes(device_manager_info* dm, const pci_info& expected,
+	tt_pioneer_profile& profile, pioneer_pci_controller_nodes_operation operation,
+	void* argument)
+{
+	if (dm == NULL || operation == NULL)
+		return B_BAD_VALUE;
+	profile = {};
+	PinnedProfileNodesCall call{dm, expected, profile, operation, argument};
+	return PioneerWithPinnedPciNodes(dm, PinnedProfileNodesCall::RunProfile, &call);
 }

@@ -31,12 +31,13 @@ set -- -isystem "$sdk/headers/os/drivers" \
 for include in "$sdk/headers/os" "$sdk"/headers/os/*; do
  [ ! -d "$include" ] || set -- "$@" -isystem "$include"
 done
-for mode in control witness gateway qualification; do
+for mode in control witness gateway qualification retained; do
  mkdir -m 700 "$output/$mode"
  flag=
  [ "$mode" = control ] || flag=-DPIONEER_SG2042_RECOVERY_WITNESS
  [ "$mode" != gateway ] || flag="$flag -DPIONEER_SG2042_RECOVERY_GATEWAY_WITNESS"
  [ "$mode" != qualification ] || flag="$flag -DPIONEER_SG2042_RECOVERY_QUALIFICATION"
+ [ "$mode" != retained ] || flag="$flag -DPIONEER_SG2042_RETAINED_LEASE_SERVICE"
  for source in ECAMPCIController ECAMPCIControllerFDT ECAMPCIControllerACPI kernel_interface; do
   "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -Wno-unused-parameter -Wno-missing-field-initializers \
    -fno-exceptions -fno-rtti -ffreestanding -fno-use-cxa-atexit -fno-strict-aliasing \
@@ -50,17 +51,24 @@ for mode in control witness gateway qualification; do
   "$release/system/kernel/kernel.so" "$("$cxx" -print-file-name=libgcc.a)" \
   "$("$cxx" -print-file-name=crtendS.o)" -o "$output/$mode/ecam"
 done
-for invalid in gateway-with-qualification qualification-without-witness; do
+for invalid in gateway-with-qualification qualification-without-witness retained-without-witness retained-with-qualification retained-with-gateway retained-with-witness; do
  case "$invalid" in
   gateway-with-qualification) flags='-DPIONEER_SG2042_RECOVERY_WITNESS -DPIONEER_SG2042_RECOVERY_GATEWAY_WITNESS -DPIONEER_SG2042_RECOVERY_QUALIFICATION';;
   qualification-without-witness) flags='-DPIONEER_SG2042_RECOVERY_QUALIFICATION';;
+  retained-without-witness) flags='-DPIONEER_SG2042_RETAINED_LEASE_SERVICE';;
+  retained-with-qualification) flags='-DPIONEER_SG2042_RECOVERY_WITNESS -DPIONEER_SG2042_RETAINED_LEASE_SERVICE -DPIONEER_SG2042_RECOVERY_QUALIFICATION';;
+  retained-with-gateway) flags='-DPIONEER_SG2042_RECOVERY_WITNESS -DPIONEER_SG2042_RETAINED_LEASE_SERVICE -DPIONEER_SG2042_RECOVERY_GATEWAY_WITNESS';;
+  retained-with-witness) flags='-DPIONEER_SG2042_RECOVERY_WITNESS -DPIONEER_SG2042_RETAINED_LEASE_SERVICE -DPIONEER_SG2042_RETAINED_LEASE_WITNESS';;
  esac
  # Intentional word splitting: flags is one of the two fixed literals above.
  if "$cxx" -std=gnu++17 -fno-exceptions -ffreestanding -mcmodel=medany -fpic -D_KERNEL_MODE \
    $flags "$@" -fsyntax-only "$project/src/add-ons/kernel/busses/pci/ecam/kernel_interface.cpp" > "$output/$invalid.log" 2>&1; then
   echo "unsafe qualification flags accepted: $invalid" >&2; exit 1
  fi
- grep -q 'Qualification requires the witness and excludes the general recovery gateway' "$output/$invalid.log"
+ case "$invalid" in
+  gateway-with-qualification|qualification-without-witness) grep -q 'Qualification requires the witness and excludes the general recovery gateway' "$output/$invalid.log";;
+  *) grep -q 'Retained lease requires the non-loadable recovery configuration' "$output/$invalid.log";;
+ esac
 done
 if "$nm" -C "$output/control/ecam" | grep -q 'gPioneerRecovery'; then
  echo 'unexpected recovery module in control' >&2; exit 1
@@ -69,6 +77,10 @@ fi
 "$nm" -C "$output/gateway/ecam" | grep -q 'gPioneerRecovery'
 "$nm" -C "$output/qualification/ecam" | grep -q 'gPioneerLeaseProbe'
 "$nm" -C "$output/qualification/ecam" | grep -q 'gPioneerLeaseContention'
+"$nm" -C "$output/retained/ecam" | grep -q 'gPioneerRetainedLease'
+if "$nm" -C "$output/control/ecam" "$output/witness/ecam" "$output/gateway/ecam" "$output/qualification/ecam" | grep -q 'gPioneerRetainedLease'; then
+ echo 'unexpected retained lease module in another build' >&2; exit 1
+fi
 if "$nm" -C "$output/control/ecam" "$output/witness/ecam" "$output/gateway/ecam" | grep -Eq 'gPioneerLease(Probe|Contention)'; then
  echo 'unexpected qualification probe in another build' >&2; exit 1
 fi
@@ -84,11 +96,15 @@ sed -n '/<gPioneerRecovery.*_FUN/,/^$/p' "$output/witness/interface.txt" > "$out
 sed -n '/<ECAMPCIController::InitDriver(/,/^$/p' "$output/gateway/disassembly.txt" > "$output/gateway/init.txt"
 grep -q 'lui.*a0,0x80000' "$output/gateway/init.txt"
 grep -q 'add.*a0,a0,15' "$output/gateway/init.txt"
+"$objdump" -Cd "$output/retained/ECAMPCIController.o" > "$output/retained/disassembly.txt"
+sed -n '/<ECAMPCIController::InitDriver(/,/^$/p' "$output/retained/disassembly.txt" > "$output/retained/init.txt"
+grep -q 'lui.*a0,0x80000' "$output/retained/init.txt"
+grep -q 'add.*a0,a0,15' "$output/retained/init.txt"
 "$nm" -C "$output/gateway/kernel_interface.o" | grep -q 'ECAMPCIController::RunPioneerRecovery'
 "$objdump" -Cd "$output/qualification/kernel_interface.o" > "$output/qualification/interface.txt"
 sed -n '/<gPioneerRecovery.*_FUN/,/^$/p' "$output/qualification/interface.txt" > "$output/qualification/refusal.txt"
 [ "$(grep -c 'lui.*a0,0x80000' "$output/qualification/refusal.txt")" = 1 ]
 [ "$(grep -c 'add.*a0,a0,15' "$output/qualification/refusal.txt")" = 1 ]
 "$nm" -C "$output/qualification/kernel_interface.o" | grep -q 'ECAMPCIController::RunPioneerRecovery'
-shasum -a 256 "$output/control/ecam" "$output/witness/ecam" "$output/gateway/ecam" "$output/qualification/ecam"
+shasum -a 256 "$output/control/ecam" "$output/witness/ecam" "$output/gateway/ecam" "$output/qualification/ecam" "$output/retained/ecam"
 echo 'PASS SG2042 non-loadable witnesses and offline fixed-probe qualification candidate'

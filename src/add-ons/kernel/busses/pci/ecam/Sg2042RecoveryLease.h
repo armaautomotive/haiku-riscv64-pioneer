@@ -3,10 +3,11 @@
 #define SG2042_RECOVERY_LEASE_H
 
 #include <stdint.h>
-#if defined(PIONEER_SG2042_RETAINED_LEASE_WITNESS) \
+#if (defined(PIONEER_SG2042_RETAINED_LEASE_WITNESS) || defined(PIONEER_SG2042_RETAINED_LEASE_SERVICE)) \
 	&& (!defined(PIONEER_SG2042_RECOVERY_WITNESS) || defined(PIONEER_SG2042_RECOVERY_QUALIFICATION) \
-		|| defined(PIONEER_SG2042_RECOVERY_GATEWAY_WITNESS))
-#error Retained lease is restricted to an isolated non-loadable controller witness
+		|| defined(PIONEER_SG2042_RECOVERY_GATEWAY_WITNESS) \
+		|| (defined(PIONEER_SG2042_RETAINED_LEASE_WITNESS) && defined(PIONEER_SG2042_RETAINED_LEASE_SERVICE)))
+#error Retained lease requires the non-loadable recovery configuration
 #endif
 
 // Thread-scoped config-space exclusion for the private Pioneer root. The
@@ -16,7 +17,7 @@
 class Sg2042RecoveryLease {
 	uint64_t generation=0,active=0;
 	int64_t owner=-1;
-#ifdef PIONEER_SG2042_RETAINED_LEASE_WITNESS
+#if defined(PIONEER_SG2042_RETAINED_LEASE_WITNESS) || defined(PIONEER_SG2042_RETAINED_LEASE_SERVICE)
 	const void* retainedOwner=nullptr;
 	uint64_t retainedSession=0;
 	bool parked=false;
@@ -33,17 +34,17 @@ public:
 	}
 	bool Allows(int64_t thread) const { return !active || (thread>=0 && thread==owner); }
 	bool End(int64_t thread,uint64_t ticket) {
-	#ifdef PIONEER_SG2042_RETAINED_LEASE_WITNESS
+	#if defined(PIONEER_SG2042_RETAINED_LEASE_WITNESS) || defined(PIONEER_SG2042_RETAINED_LEASE_SERVICE)
 		if (retainedOwner) return false;
 	#endif
 		if (!active || !ticket || ticket!=active || thread<0 || thread!=owner) return false;
 		active=0;owner=-1;return true;
 	}
 	bool Active() const { return active!=0; }
-#ifdef PIONEER_SG2042_RETAINED_LEASE_WITNESS
+#if defined(PIONEER_SG2042_RETAINED_LEASE_WITNESS) || defined(PIONEER_SG2042_RETAINED_LEASE_SERVICE)
 	// The identity and session are kernel-owned. Their lifetime, uniqueness,
 	// device pinning and recovery proof are obligations of the future caller.
-	// This witness supplies exclusion only and is not a hardware reset API.
+	// This supplies exclusion only and is not a hardware reset API.
 	bool BeginRetained(bool eligible,int64_t thread,const void* identity,uint64_t session,uint64_t& ticket) {
 		ticket=0;
 		if (!identity || !session || !Begin(eligible,thread,ticket)) return false;

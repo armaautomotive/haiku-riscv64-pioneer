@@ -5,6 +5,8 @@ temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-p100a-reload.XXXXXXXX")
 source=$directory/../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp
 awk '/PIONEER_Q35_PCI_RESERVATION_RELEASE_BEGIN/ {copying=1;next} /PIONEER_Q35_PCI_RESERVATION_RELEASE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
  "$source" > "$temporary/q35_pci_reservation_release.inc"
+awk '/PIONEER_Q35_RETAINED_FINISH_BEGIN/ {copying=1;next} /PIONEER_Q35_RETAINED_FINISH_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+ "$source" > "$temporary/pioneer_q35_retained_finish.inc"
 awk '/PIONEER_SG2042_RECOVERY_LEASE_BEGIN/ {copying=1;next} /PIONEER_SG2042_RECOVERY_LEASE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
  "$directory/../../../src/add-ons/kernel/busses/pci/ecam/ECAMPCIController.cpp" > "$temporary/sg2042_recovery_controller.inc"
 awk '/PIONEER_SG2042_CONFIG_ACCESS_BEGIN/ {copying=1;next} /PIONEER_SG2042_CONFIG_ACCESS_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
@@ -21,6 +23,8 @@ awk 'BEGIN {copying=0} /^namespace \{/ {copying=1} copying {print} END {if(!copy
  "$directory/../../../src/add-ons/kernel/drivers/misc/PioneerPciProfile.cpp" > "$temporary/pioneer_pci_profile_actual.inc"
 awk '/PIONEER_DM_DRIVER_PIN_BEGIN/ {copying=1;next} /PIONEER_DM_DRIVER_PIN_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
  "$directory/../../../src/system/kernel/device_manager/device_manager.cpp" > "$temporary/pioneer_dm_driver_pin.inc"
+awk '/PIONEER_DM_RETAINED_PIN_SERVICE_BEGIN/ {copying=1;next} /PIONEER_DM_RETAINED_PIN_SERVICE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+ "$directory/../../../src/system/kernel/device_manager/device_manager.cpp" > "$temporary/pioneer_dm_retained_pin_service.inc"
 for pair in DRIVER_RELOAD_STATE:reload_state DRIVER_RELOAD_CONTROL:reload_control PROBE_LOCK:lock QWEN35_PROBE_OPEN:probe_open QWEN35_PROBE_FREE:probe_free QWEN35_RECOVERY_STATUS:recovery_status QWEN35_RECOVERY_RUN:recovery_run QWEN35_DBI_CAPTURE:dbi_capture Q38_DISPATCH_COOKIE_RELEASE:cookie_release; do
  section=${pair%%:*}; name=${pair#*:}
  awk -v begin="PIONEER_${section}_BEGIN" -v end="PIONEER_${section}_END" '
@@ -59,6 +63,9 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/fab
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I"$temporary" "$directory/pioneer_qwen35_pci_reservation_release_test.cpp" -o "$temporary/q35-pci-reservation-release-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/q35-pci-reservation-release-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -I"$temporary" "$directory/pioneer_qwen35_retained_finish_test.cpp" -o "$temporary/q35-retained-finish-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/q35-retained-finish-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/blackhole_asic_reset_test.cpp" -o "$temporary/asic-reset-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/asic-reset-test"
@@ -240,6 +247,9 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/gra
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I"$temporary" "$directory/pioneer_qwen35_recovery_run_test.cpp" -o "$temporary/recovery-run-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/recovery-run-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DTEST_RETAINED_GATEWAY -I"$temporary" "$directory/pioneer_qwen35_recovery_run_test.cpp" -o "$temporary/retained-gateway-recovery-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/retained-gateway-recovery-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -DTEST_FIRMWARE_RESET -I"$temporary" "$directory/pioneer_qwen35_recovery_run_test.cpp" -o "$temporary/firmware-recovery-run-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/firmware-recovery-run-test"

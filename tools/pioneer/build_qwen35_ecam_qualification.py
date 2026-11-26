@@ -13,14 +13,14 @@ REPO = Path(__file__).resolve().parents[2]
 REL = Path('src/add-ons/kernel/busses/pci/ecam')
 BASE = '23e65e2a9a3e886fc7d1429901db6534f2cc7a9077f121d3e334f4cf839cf11d'
 SOURCES = {
-    'ECAMPCIController.cpp': '6c10bb9760b09251b80c365b672e46141dfdb8f9bdffa224d28684e5413bcc79',
-    'ECAMPCIController.h': '62efb5aefbe479aad048f0bc85f4e31ed8a97ac13db2abdfa727d462f0fd8f3f',
+    'ECAMPCIController.cpp': '8d335cb5cffbe58e04d40aaccb99ca534e56219c1c757d2fac25723cf22ca382',
+    'ECAMPCIController.h': 'd9d329d52a6ff05f118cb8927b711cba6f2df64c1c8b9408abd6238e35f4d56d',
     'ECAMPCIControllerACPI.cpp': 'c6db08da4a4df641e931fefe550b673a484a425ee2e5681d899dcd45ded59a8f',
     'ECAMPCIControllerFDT.cpp': '6a61955b718d262cf77397379bf24c33148a51411e94656931f5243464c83bcb',
-    'kernel_interface.cpp': '2d7a25831f9ce983475e848bf2fc9fe5c31c37fb9cd33390dfdeaec1122f9780',
+    'kernel_interface.cpp': '64d6fbfd77d44e6defd60b0fbe731378090b260deeff745c58fecadfaa9d7a3f',
     'PioneerSg2042LeaseProbeModule.h': 'ec2a63eff6eb5ec98afbd113b270b7b0ca45014410e454b7aee300c59fcf2d61',
     'PioneerSg2042RecoveryModule.h': '39708d8c2cf420cb9afe027758ccfe2c223c58bd0bc780fe873db3dafcfb3c55',
-    'Sg2042RecoveryLease.h': '13c61fe3f85e58b32974f27f77d7e4f1959a904113f7ce622b52140e1d18eb1e',
+    'Sg2042RecoveryLease.h': '071684bc2a4310a3ad70bb138ffe93bbd83e22a16c5cdde0effc620c0b3b9043',
     'Sg2042RootPolicy.h': 'c79178e8fd666b1ea23a139cd26fb9d0618942d45f092343a411ab93db938d4e',
 }
 UNITS = ('ECAMPCIController', 'ECAMPCIControllerACPI', 'ECAMPCIControllerFDT', 'kernel_interface')

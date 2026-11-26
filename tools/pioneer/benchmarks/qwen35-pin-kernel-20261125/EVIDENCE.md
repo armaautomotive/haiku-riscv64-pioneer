@@ -1,5 +1,40 @@
 # Offline Pioneer pin-service kernel candidate
 
+## Retained controller module and topology handoff (2026-11-26)
+
+The non-loadable ECAM retained-lease module exports the controller's existing
+begin/park/resume/finish methods. The controller still refuses initialization
+in this configuration. The driver-side binding, adapters and retained scope exercise
+the actual device-manager and ECAM module entry points in simulation, including
+a pending call, a retry from another thread, parked config refusal and gated
+release. An injected finish failure re-parks the lease and retains both pins.
+The PCI profile now provides validated card and root-port nodes to a
+callback while the synchronous pins remain held; a simulation acquires the
+retained pins there and checks they survive callback return. Wrong FDT and a
+replaced root port are refused before callback. These references do not exclude
+physical removal or other hardware access.
+
+`build_sg2042_recovery_witness.sh` built and linked control, refusing witness,
+gateway, fixed-probe and non-loadable retained modes against Haiku/RISC-V;
+it checked module presence, invalid flag combinations and the retained
+controller's initialization refusal. The retained binary SHA-256 is
+`c490ccddeb5ed571197d457e5033b60614c899e75008dd8da04010f2a7fb9299`.
+The recorded ECAM baseline also reproduced byte-for-byte in the qualification
+builder. The compact resident driver and profile linked with the actual
+binding and retained their no-I/O initialization guard. Nothing was installed
+or booted. The compile-only retained mode now defers owner destruction and
+cold-latch clearing until the gateway has retired the controller lease and
+pins. Both the real recovery sequence and the finalizer passed focused
+simulation tests, including refusal before retirement and an incomplete status
+returned to the caller. The recovery ioctl
+does not yet use this retained scope; physical ownership and release proofs
+remain to be established before hardware qualification.
+
+The offline reload suite exited zero. Its source extraction preceded the final
+incomplete-status change and some fixture edits; the changed recovery sequence,
+profile/pin handoff and binding were rerun separately under ASan/UBSan, and the
+final driver was linked again against the actual compact resident image.
+
 ## Retained lifetime service (2026-11-26)
 
 An opt-in built-in device-manager module retains initialized nodes and their
