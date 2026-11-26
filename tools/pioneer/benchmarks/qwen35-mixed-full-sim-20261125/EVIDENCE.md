@@ -1,5 +1,35 @@
 # Recorded mixed-layer and full-decode simulator work, 2026-11-25
 
+## Provisional layer-18 discrepancy, 2026-11-26
+
+The active baseline capture has not yet completed its full fleet audit. Its
+position-zero snapshots for transitions 15→16, 16→17 and 18→19 through
+23→24 passed the original same-input tolerance. Transition 17→18 failed on
+2,469 of 2,560 rows, with maximum absolute error `0.00355863571`; the cause
+is unknown and the earlier layer-9 threshold explanation must not be assumed
+to apply. Hashes and individual outcomes are in
+`/private/tmp/q35-provisional-boundaries-15-23-20261126/provisional.json`.
+
+An isolated layer-18 fixture using the exact simulator layer-17 activation
+was independently checked against all 120 original worker records, input,
+output and zero-initialization ranges. Its complete replay runs in session
+`85356`, log `/private/tmp/q35-baseline-layer18-chained-sim-20261126.log`.
+An independently audited replay through the attention residual runs in
+session `38101`, log
+`/private/tmp/q35-baseline-layer18-attention-sim-20261126.log`. A CPU trace
+with the exact input reproduced the untraced layer-18 reference byte for byte.
+Neither simulator replay has a result yet; no tolerance has been changed.
+
+The existing ttsim checkout explicitly reports the cycle CSR read as
+`UnsupportedFunctionality`. A temporary experimental counter-read modification
+was discarded once this restriction was confirmed and was not used for any
+model run. Building that separate checkout removed the original temporary
+library, so it was rebuilt from the unchanged exploratory source; SHA-256 is
+`1dbc4a6b269aa743870dcb7be5d89e9c6db142f27140296ea68bc00e41ec6d67`.
+All previously running simulator handles remained live. The profiled image
+remains blocked from ttsim and from driver packaging; this is not a hardware
+timing, output or recovery result. No card was accessed.
+
 ## Provisional later-boundary check, 2026-11-26
 
 The active baseline 32-layer capture has not completed its full worker audit;

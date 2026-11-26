@@ -19,7 +19,7 @@ same-input numerical discrepancy documented in the mixed full-simulator
 evidence. No card was accessed.
 
 While both full-model simulations are still active, their provisional
-position-zero snapshots for layers 0 through 9 match byte for byte between
+position-zero snapshots for layers 0 through 14 match byte for byte between
 the fused paired graph and the earlier unpaired baseline. These snapshots have
 not yet passed their respective full-fleet completion audits, so they are
 not evidence of a completed full-model or hardware run.
