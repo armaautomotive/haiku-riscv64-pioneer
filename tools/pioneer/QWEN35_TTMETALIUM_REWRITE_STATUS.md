@@ -17,9 +17,10 @@ fleet and candidate audit. It is not a valid warm run. See
 The exact normal-counter compact resident image started and stopped on all
 120 simulated workers; a corrupt template faulted its designated worker
 while the others stopped. A separately guarded four-layer graph check using
-the same image is running as session `52825`. These use the patched simulator
-and do not establish physical launch, recovery, valid full-model output or
-speed. See `benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+the same image completed all 55 steps on 120 simulated workers, matching all
+2,560 reference values within `5.00679016e-06` before its deliberate fault.
+These use the patched simulator and do not establish physical launch,
+recovery, valid full-model output or speed. See `benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
 
 The exact normal-counter compact qualification image linked into the
 non-loadable driver completed two 120-worker standalone model-weight

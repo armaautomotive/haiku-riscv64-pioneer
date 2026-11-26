@@ -1,0 +1,10 @@
+{
+  "log_sha256": "a600fa9dee47282e2dbf59104f50ad7cb08be75c78105eb6100fe35214e9643c",
+  "image_sha256": {
+    "boot.bin": "e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b",
+    "text.bin": "c15d1ed9048d92cf1d0d7b077b0550176e10f52213e615a70c2ca047cb2df9d6",
+    "dispatch.bin": "4deb2c1466880fcf9045832d0702933239b90f18bcdd4a0cc31f21e614471ad2"
+  },
+  "model_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+  "scope": "Exact normal-counter resident image; four-layer 55-step model graph on 120 workers using exploratory patched simulator. Intentional record 56 fault; profiling path not exercised. No physical hardware, clean unload, full-model result, recovery or throughput."
+}

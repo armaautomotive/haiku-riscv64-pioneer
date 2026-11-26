@@ -11,6 +11,17 @@ position-zero state snapshots and is not a valid warm run or a hardware result.
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+An offline comparison of the three previously generated CPU position-one
+logit tensors found a close leading pair. Flash/F16 ranked token 89598 above
+1850 by `0.111943245`; nonflash/F16 ranked 1850 above 89598 by `0.098207474`;
+nonflash/F32 ranked 89598 first by `0.033162117`. All 248,320 logits in each
+file were finite. The maximum and RMS differences from flash/F16 were
+`0.403138638` and `0.0825954285` for nonflash/F16, and `0.398836613` and
+`0.0809339776` for nonflash/F32. The ranks, file hashes and scope are in
+`cpu-warm-logit-ranks-20261126.json`. This quantifies reference sensitivity;
+it does not validate the simulator, waive the failed hidden check, or prove
+physical output.
+
 The warm boundary auditor now accepts available position-zero simulator
 recurrent-state pairs and injects the target layer's history and delta state
 with the preceding activation. It reads each injected state back exactly,

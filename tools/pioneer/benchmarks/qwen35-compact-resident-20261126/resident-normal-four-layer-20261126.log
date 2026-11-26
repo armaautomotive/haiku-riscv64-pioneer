@@ -1,0 +1,29 @@
+starting recorded 4-layer prefix simulation (55 graph steps)
+recorded graph: polling attempt 50, progress=0x51350014
+recorded graph: polling attempt 100, progress=0x5135003b
+recorded graph: polling attempt 150, progress=0x51350053
+recorded graph: polling attempt 200, progress=0x51350053
+recorded graph: polling attempt 250, progress=0x51350063
+recorded graph: polling attempt 300, progress=0x51350064
+recorded graph: polling attempt 350, progress=0x5135007b
+recorded graph: polling attempt 400, progress=0x51350083
+recorded graph: polling attempt 450, progress=0x513500a3
+recorded graph: polling attempt 500, progress=0x513500bb
+recorded graph: polling attempt 550, progress=0x513500bb
+recorded graph: polling attempt 600, progress=0x513500cb
+recorded graph: polling attempt 650, progress=0x513500cc
+recorded graph: polling attempt 700, progress=0x513500e3
+recorded graph: polling attempt 750, progress=0x513500eb
+recorded graph: polling attempt 800, progress=0x5135010c
+recorded graph: polling attempt 850, progress=0x51350123
+recorded graph: polling attempt 900, progress=0x51350123
+recorded graph: polling attempt 950, progress=0x51350133
+recorded graph: polling attempt 1000, progress=0x51350134
+recorded graph: polling attempt 1050, progress=0x5135014b
+recorded graph: polling attempt 1100, progress=0x51350164
+recorded graph: polling attempt 1150, progress=0x5135019b
+recorded graph: polling attempt 1200, progress=0x5135019b
+recorded graph: polling attempt 1250, progress=0x513501ab
+recorded graph: polling attempt 1300, progress=0x513501ab
+PASS actual recorded 4-layer prefix: 2560 values match verified reference; maximum absolute error 5.00679016e-06; record 56 intentionally faults; NO HARDWARE
+[135100000] 996.0 seconds (135.6 KHz)

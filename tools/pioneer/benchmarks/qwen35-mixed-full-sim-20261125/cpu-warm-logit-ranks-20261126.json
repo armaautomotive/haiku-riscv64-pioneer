@@ -1,0 +1,93 @@
+{
+  "scope": "CPU position-one logits only, offline; no hardware or simulator output validation.",
+  "model_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+  "modes": {
+    "flash_f16": {
+      "sha256": "6d7f6541bbd1331a5f95beff2531bfc74d7e974b903cfaaab18384d0378a04dc",
+      "values": 248320,
+      "top_5": [
+        {
+          "token": 89598,
+          "logit": 13.291460990905762
+        },
+        {
+          "token": 1850,
+          "logit": 13.17951774597168
+        },
+        {
+          "token": 14340,
+          "logit": 13.0796480178833
+        },
+        {
+          "token": 1701,
+          "logit": 12.556715965270996
+        },
+        {
+          "token": 157979,
+          "logit": 12.49866008758545
+        }
+      ],
+      "top_margin": 0.11194324493408203,
+      "max_abs_vs_flash_f16": 0.0,
+      "rms_vs_flash_f16": 0.0
+    },
+    "nonflash_f16": {
+      "sha256": "35a6bf529c48edc5a0d9cc8794d0412fa39e9b48ce95d8aa971e21358f7e7a7a",
+      "values": 248320,
+      "top_5": [
+        {
+          "token": 1850,
+          "logit": 13.387910842895508
+        },
+        {
+          "token": 89598,
+          "logit": 13.289703369140625
+        },
+        {
+          "token": 14340,
+          "logit": 13.076620101928711
+        },
+        {
+          "token": 1701,
+          "logit": 12.455857276916504
+        },
+        {
+          "token": 157979,
+          "logit": 12.408332824707031
+        }
+      ],
+      "top_margin": 0.09820747375488281,
+      "max_abs_vs_flash_f16": 0.4031386375427246,
+      "rms_vs_flash_f16": 0.0825954284973789
+    },
+    "nonflash_f32": {
+      "sha256": "9a25a01aa712b352da11df35f4d2ee03f3386e6a60c942cf062aae128b1dc2a1",
+      "values": 248320,
+      "top_5": [
+        {
+          "token": 89598,
+          "logit": 13.328953742980957
+        },
+        {
+          "token": 1850,
+          "logit": 13.295791625976562
+        },
+        {
+          "token": 14340,
+          "logit": 13.218049049377441
+        },
+        {
+          "token": 1701,
+          "logit": 12.547029495239258
+        },
+        {
+          "token": 4189,
+          "logit": 12.486536026000977
+        }
+      ],
+      "top_margin": 0.03316211700439453,
+      "max_abs_vs_flash_f16": 0.398836612701416,
+      "rms_vs_flash_f16": 0.08093397756177141
+    }
+  }
+}
