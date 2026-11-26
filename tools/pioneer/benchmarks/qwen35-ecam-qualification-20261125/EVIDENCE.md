@@ -77,6 +77,6 @@ source calls the VM fault handler after tracing and no P332 fatal marker or
 KERNEL PANIC appeared in those sampled segments. This observation does not
 prove the resolution of every individual fault.
 
-A clean reload regression for the idle-path refinement is running at
-`/private/tmp/q35-ecam-early-final-reload-20261125.log`; it had not completed
-when this live result was recorded.
+The clean reload regression for the idle-path refinement completed with exit 0
+(`/private/tmp/q35-ecam-early-final-reload-20261125.log`). Hardware operations
+in that regression were simulated.
