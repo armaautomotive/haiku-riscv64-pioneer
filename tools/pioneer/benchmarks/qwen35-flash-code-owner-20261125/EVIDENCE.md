@@ -17,8 +17,10 @@ selected worker route, host-buffer access and pre/post permissions. A failed
 or uncertain write is sticky: subsequent reads, writes and close are refused
 until a guard independently proves that all previous writes have drained.
 Retrying fleet restore additionally requires a stronger retry proof. A failed
-unmap leaves mapping state uncertain and the view cannot retry close; further
-mapping-lifetime recovery is still required. Nothing here obtains a BAR lease,
+unmap leaves mapping state uncertain. The view can reconcile it only if an
+independent retained-area identity proof establishes that the original mapping
+is absent or exactly unchanged; only the latter permits a guarded close retry.
+No real mapping-identity proof is supplied. Nothing here obtains a BAR lease,
 selects a real route or supplies physical authority.
 
 `sh tools/pioneer/tests/run_pioneer_qwen35_flash_decode_partial_tests.sh`
@@ -34,7 +36,13 @@ capture/stage/restore frames were 368/368/368 bytes and view read/write frames
 No existing driver or recovery path calls this code. It still needs real
 retained device and controller leases; validated held/quiet fleet, firmware,
 DMA and route exclusion; protected snapshot and image lifetimes; explicit
-integration with the other image owners; a safe retry and failed-map/unmap
+integration with the other image owners; a real safe retry and failed-map/unmap
 lifecycle; and qualification of the extra region before physical use. It is
 not proof of in-place recovery, a clean hardware unload or throughput, and the
 simulator-only image remains non-packageable. No card was accessed.
+
+A further fake-platform test exercised failed-close reconciliation for both
+proved-absent and proved-identical outcomes, and refused retry without either
+proof. The target wrapper compiled with both mapping-identity methods still
+undefined. This is not evidence that Haiku can presently establish those
+proofs or recover a real mapping without reboot.

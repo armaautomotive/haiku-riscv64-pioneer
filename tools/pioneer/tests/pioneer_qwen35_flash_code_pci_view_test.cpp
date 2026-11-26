@@ -9,6 +9,7 @@
 using namespace PioneerQwen35;
 struct Guard {
     bool pinned=true,route=true,read=true,write=true,mapping=true,area=true,buffer=true,drained=false,retire=false;
+    bool absent=false,exact=false;
     unsigned selected=7;
     bool ProvePinnedBar(uint64_t a,uint64_t b) const {return pinned && a==0x100000000ULL && b==0x11fffffffULL;}
     bool ProveSelectedRoute(unsigned core) const {return route && core==selected;}
@@ -25,6 +26,8 @@ struct Guard {
     }
     bool ProveFlashWriteDrained() const {return drained;}
     bool ProveFlashMappingRetirementSafe(int32_t id) const {return retire && id==3;}
+    bool ProveFlashOriginalMappingAbsent(int32_t id) const {return absent && id==3;}
+    bool ProveFlashOriginalMappingExact(int32_t id,const volatile uint32_t* p) const {return exact && id==3 && p;}
     bool ProveFlashFleetHeldAndQuiet() const {return pinned && route;}
     bool ProveFlashSnapshotSafe(const uint32_t* p,unsigned words,bool) const {
         return buffer && p && words==DataflowFlashFleetSnapshotWords;
@@ -88,6 +91,15 @@ int main() {
     closeGuard.retire=true;failedClose.unmapOkay=false;
     assert(!closeView.Close(closeGuard) && closeView.HasMapping() && failedClose.unmaps==1);
     failedClose.unmapOkay=true;assert(!closeView.Close(closeGuard) && failedClose.unmaps==1);
+    assert(!closeView.ReconcileFailedClose(closeGuard));
+    closeGuard.exact=true;assert(closeView.ReconcileFailedClose(closeGuard) && closeView.Opened());
+    assert(closeView.Close(closeGuard) && failedClose.unmaps==2);
+
+    Guard absentGuard;Platform absentPlatform{absentGuard};DataflowFlashCodePciView<Platform> absentView(absentPlatform);
+    assert(absentView.Open(0x100000000ULL,0x11fffffffULL,absentGuard));
+    absentGuard.retire=true;absentPlatform.unmapOkay=false;
+    assert(!absentView.Close(absentGuard) && absentView.HasMapping());
+    absentGuard.absent=true;assert(absentView.ReconcileFailedClose(absentGuard) && !absentView.HasMapping());
 
     Guard fleetGuard;Platform fleet{fleetGuard};
     for (unsigned i=0;i<fleet.words.size();i++) fleet.words[i]=i^0x63a1d275U;

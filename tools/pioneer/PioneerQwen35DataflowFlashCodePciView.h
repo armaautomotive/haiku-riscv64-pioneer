@@ -12,7 +12,7 @@ namespace PioneerQwen35 {
 template<class Platform> class DataflowFlashCodePciView {
     Platform& fPlatform;int32_t fArea=-1;volatile uint32_t* fView=nullptr;
     uint64_t fBarStart=0,fBarEnd=0;bool fAttempted=false,fOpen=false;
-    bool fWriteUnconfirmed=false,fCloseAttempted=false;
+    bool fWriteUnconfirmed=false,fCloseAttempted=false,fWasOpenAtClose=false;
     template<class Guard> bool Route(unsigned core,Guard& guard) const {
         return guard.ProvePinnedBar(fBarStart,fBarEnd) && guard.ProveFlashMappingArea(fArea)
             && guard.ProveSelectedRoute(core);
@@ -89,9 +89,30 @@ public:
         if (fArea<0 || fCloseAttempted || fWriteUnconfirmed
             || !guard.ProvePinnedBar(fBarStart,fBarEnd) || !guard.ProveFlashMappingRetirementSafe(fArea)) return false;
         // An error can leave map state uncertain; this instance cannot retry.
-        fCloseAttempted=true;fOpen=false;
+        fCloseAttempted=true;fWasOpenAtClose=fOpen;fOpen=false;
         if (!fPlatform.Unmap(fArea)) return false;
         fArea=-1;fView=nullptr;return true;
+    }
+    // A failed unmap may have taken effect. Only an independent retained-area
+    // identity proof can distinguish an absent original mapping from the same
+    // still-live mapping; an area id alone may have been reused. The guard
+    // must exclude concurrent unmap/remap and preserve the proof throughout.
+    // A partial Open with no trusted view cannot use the mapped branch.
+    template<class Guard> bool ReconcileFailedClose(Guard& guard) {
+        if (fArea<0 || !fCloseAttempted || fOpen || fWriteUnconfirmed
+            || !guard.ProvePinnedBar(fBarStart,fBarEnd)
+            || !guard.ProveFlashMappingRetirementSafe(fArea)) return false;
+        if (guard.ProveFlashOriginalMappingAbsent(fArea)) {
+            if (!guard.ProvePinnedBar(fBarStart,fBarEnd)
+                || !guard.ProveFlashMappingRetirementSafe(fArea)
+                || !guard.ProveFlashOriginalMappingAbsent(fArea)) return false;
+            fArea=-1;fView=nullptr;return true;
+        }
+        if (!fWasOpenAtClose || !fView || !guard.ProveFlashOriginalMappingExact(fArea,fView)
+            || !guard.ProvePinnedBar(fBarStart,fBarEnd)
+            || !guard.ProveFlashMappingRetirementSafe(fArea)
+            || !guard.ProveFlashOriginalMappingExact(fArea,fView)) return false;
+        fCloseAttempted=false;fOpen=true;return true;
     }
 };
 

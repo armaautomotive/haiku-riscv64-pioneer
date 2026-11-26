@@ -16,6 +16,8 @@ struct ProbeGuard {
     bool ProveFlashMappingSafe(uint64_t,unsigned);
     bool ProveFlashMappingArea(int32_t);
     bool ProveFlashMappingRetirementSafe(int32_t);
+    bool ProveFlashOriginalMappingAbsent(int32_t);
+    bool ProveFlashOriginalMappingExact(int32_t,const volatile uint32_t*);
     bool ProveFlashHostBuffer(const uint32_t*,unsigned,bool);
     bool ProveFlashReadAllowed(unsigned,unsigned,unsigned);
     bool ProveFlashWriteAllowed(unsigned,unsigned,unsigned);
@@ -44,3 +46,4 @@ extern "C" bool q35_flash_pci_restore(DataflowFlashCodeFleetOwner& owner,View& v
 }
 extern "C" bool q35_flash_pci_drain(View& view,ProbeGuard& guard) {return view.ConfirmWriteDrain(guard);}
 extern "C" bool q35_flash_pci_close(View& view,ProbeGuard& guard) {return view.Close(guard);}
+extern "C" bool q35_flash_pci_reconcile(View& view,ProbeGuard& guard) {return view.ReconcileFailedClose(guard);}
