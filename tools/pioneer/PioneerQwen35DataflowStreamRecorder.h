@@ -169,6 +169,13 @@ public:
 #endif
 	}
 	template<class IO> int RunDenseAttention(const DataflowDenseAttentionProgram& p,IO&) {
+#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+		if (p.mode==DataflowDenseAttentionRun)
+			return candidate.BeginDenseAttention(p)
+				&& Emit<DataflowFlashHybridBuilder<DataflowFlashHybridProducer>,DataflowFlashHybridInvocation>(p)
+				&& Emit<DataflowFlashHybridBuilder<DataflowFlashHybridReducer>,DataflowFlashHybridInvocation>(p)
+				&& candidate.CompleteDenseAttention(p)?0:Fail();
+#endif
 #ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
 		if (p.mode==DataflowDenseAttentionRun)
 			return candidate.BeginDenseAttention(p)

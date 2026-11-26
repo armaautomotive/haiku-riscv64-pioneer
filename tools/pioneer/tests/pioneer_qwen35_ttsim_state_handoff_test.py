@@ -103,6 +103,13 @@ def main():
     next_decode = resident_next_decode_command(decode, 261)
     next_words = struct.unpack('<32I', next_decode)
     assert next_words[2:10] == (2, 23, 525, 524, 1000000, 0, 261, 1)
+    hybrid_words = decode_words.copy();hybrid_words[5] = 532
+    checksum = 2166136261
+    for word in hybrid_words[:10]:
+        checksum = ((checksum ^ word) * 16777619) & 0xffffffff
+    hybrid_words[10] = checksum
+    hybrid_next = resident_next_decode_command(struct.pack('<32I', *hybrid_words), 261)
+    assert struct.unpack('<32I', hybrid_next)[2:10] == (2, 23, 533, 532, 1000000, 0, 261, 1)
     rejected(resident_next_decode_command, decode, -1)
     rejected(resident_next_decode_command, decode, 248320)
     rejected(resident_next_decode_command, decode[:-1], 261)

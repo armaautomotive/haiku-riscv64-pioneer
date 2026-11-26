@@ -22,8 +22,13 @@ enum : unsigned {
 #if !defined(PIONEER_QWEN35_FUSED_RECURRENCE) || !defined(PIONEER_QWEN35_PAIRED_RECURRENCE)
 #error Sharded recurrence witness requires fused paired recurrence
 #endif
+#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+	DataflowGraphDecodeSteps=532,
+	DataflowGraphPromptSteps=529
+#else
 	DataflowGraphDecodeSteps=524,
 	DataflowGraphPromptSteps=521
+#endif
 #elif defined(PIONEER_QWEN35_FUSED_RECURRENCE)
 #ifndef PIONEER_QWEN35_PAIRED_RECURRENCE
 #error Fused recurrence requires the paired recurrence infrastructure

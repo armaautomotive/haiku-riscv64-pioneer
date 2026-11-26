@@ -116,6 +116,15 @@ class DataflowDynamicPatcher {
 			DataflowDynamicWrite(record,invocation);break;
 		}
 #endif
+#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+		case DataflowFlashHybridMagic: {
+			DataflowFlashHybridInvocation invocation{};DataflowDynamicRead(record,invocation);
+			if (invocation.program.context!=run.context) return false;
+			invocation.program.position=run.position;
+			if (!invocation.Valid()) return false;
+			DataflowDynamicWrite(record,invocation);break;
+		}
+#endif
 		default:break;
 		}
 		record.header[7]=DataflowStreamChecksum(record.payload,record.header[6]/4);

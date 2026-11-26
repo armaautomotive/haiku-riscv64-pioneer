@@ -11,6 +11,8 @@ from struct import iter_unpack, unpack
 
 
 def generate(directory: Path) -> str:
+    if (directory / 'flash-hybrid.marker').exists():
+        raise ValueError('flash hybrid witness must not be packaged')
     if (directory / 'ttsim-unprofiled.marker').exists():
         raise ValueError('unprofiled simulator image cannot be packaged')
     if (directory / 'dense-shard.marker').exists():

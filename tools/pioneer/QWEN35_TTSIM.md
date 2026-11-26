@@ -457,3 +457,12 @@ is in progress using a simulator-only image that disables an unsupported cycle
 CSR and cannot be packaged for hardware. The offline reference is not a Work
 mode fallback. Results, limits, and the active log are documented in
 [`mixed-layer evidence`](benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md).
+
+## Hybrid dense attention in the resident graph
+
+The guarded hybrid image adds producer and reducer records and a simulator-only
+extra code section. Synthetic short and longer contexts passed on 120 simulated
+producer workers; the authenticated model prefix run is in progress. This
+image cannot be packaged for the card. Fixture/image markers and explicit
+`--flash-hybrid --ttsim-unprofiled` flags are mandatory. See
+[`hybrid resident evidence`](benchmarks/qwen35-flash-resident-sim-20261125/EVIDENCE.md).

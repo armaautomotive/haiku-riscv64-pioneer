@@ -471,7 +471,7 @@ inline DataflowWorkerExecutionResult DataflowWorkerExecuteAuthorized(
 		const auto* dense=reinterpret_cast<const DataflowDenseAttentionInvocation*>(
 			static_cast<uintptr_t>(DataflowProgramAddress));
 		if (DataflowWorkerQueuesClean() && dense->Valid()
-#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+#if defined(PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY) || defined(PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY)
 			&& dense->program.mode!=DataflowDenseAttentionRun
 #endif
 			&& dense->core==core) {

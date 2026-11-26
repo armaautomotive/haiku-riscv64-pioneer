@@ -107,6 +107,9 @@ int main(int argc,char** argv) {
     if (!WriteNew(dir+"/templates.bin",descriptors.data(),descriptors.size()*sizeof(descriptors[0]))
         || !WriteNew(dir+"/records.bin",compact.data(),compact.size()*sizeof(compact[0]))
         || !WriteNew(dir+"/command.bin",command.data(),sizeof(command))) return 1;
+#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+    if (!WriteNew(dir+"/flash-hybrid.marker","",0)) return 1;
+#endif
     FILE* data=std::fopen((dir+"/weights.bin").c_str(),"wbx");
     FILE* index=std::fopen((dir+"/layout.txt").c_str(),"wx");
     if (!data || !index) return 1;

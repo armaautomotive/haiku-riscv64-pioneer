@@ -62,7 +62,13 @@ int main(int argc,char** argv) {
         }
     const auto initialKv=kv;
     std::vector<DataflowGraphRunDescriptor> descriptors(120);
-    std::vector<DataflowStreamRecord> records(120*5);
+    const unsigned recordCount=
+#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+        6;
+#else
+        5;
+#endif
+    std::vector<DataflowStreamRecord> records(120*recordCount);
     std::array<DataflowBarrierPacket,2> command{};
     DataflowDynamicTokenContext token{};token.token=42;token.position=position;token.context=context;
     token.tied={Vocabulary,2120,1,16,{{0,0x50000000,0,Vocabulary}}};
@@ -82,21 +88,31 @@ int main(int argc,char** argv) {
         FlatRows(copy.residual,Hidden,sizeof(float),0,0x11000000,16);
         DataflowResidualInvocation copyInvocation{};
         if (!DataflowResidualProgramBuilder::BindCore(copy,core,copyInvocation)
-            || !DataflowStreamEncode(copyInvocation,99,2,records[core*5+1])) return 1;
+            || !DataflowStreamEncode(copyInvocation,99,2,records[core*recordCount+1])) return 1;
         for (unsigned mode=1;mode<=3;mode++) {
             program.mode=mode;
             const unsigned step=mode==1?1:mode+1;
+#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+            if (mode==DataflowDenseAttentionRun) {
+                DataflowFlashHybridInvocation produce{},reduce{};
+                if (!DataflowFlashHybridBuilder<DataflowFlashHybridProducer>::BindCore(program,core,produce)
+                    || !DataflowFlashHybridBuilder<DataflowFlashHybridReducer>::BindCore(program,core,reduce)
+                    || !DataflowStreamEncode(produce,99,step,records[core*recordCount+step-1])
+                    || !DataflowStreamEncode(reduce,99,step+1,records[core*recordCount+step])) return 1;
+                continue;
+            }
+#endif
 #ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
             if (mode==DataflowDenseAttentionRun) {
                 DataflowDenseAttentionShardInvocation inv{};
                 if (!DataflowDenseAttentionShardBuilder::BindCore(program,core,inv)
-                    || !DataflowStreamEncode(inv,99,step,records[core*5+step-1])) return 1;
+                    || !DataflowStreamEncode(inv,99,step,records[core*recordCount+step-1])) return 1;
                 continue;
             }
 #endif
             DataflowDenseAttentionInvocation inv{};
             if (!DataflowDenseAttentionProgramBuilder::BindCore(program,core,inv)
-                || !DataflowStreamEncode(inv,99,step,records[core*5+step-1])) return 1;
+                || !DataflowStreamEncode(inv,99,step,records[core*recordCount+step-1])) return 1;
         }
     }
     // The host operator reference is separate from the device worker and NoC IO.
@@ -129,7 +145,9 @@ int main(int argc,char** argv) {
     append(keyNorm.data(),keyNorm.size()*4);append(rope.data(),rope.size()*4);append(initialKv.data(),initialKv.size()*2);
     const std::string dir=argv[1];
     const std::array<uint32_t,3> metadata={position,context,
-#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+        2
+#elif defined(PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY)
         1
 #else
         0
@@ -145,7 +163,7 @@ int main(int argc,char** argv) {
     if (written!=paths.size()) {for (unsigned i=0;i<written;i++) std::remove(paths[i].c_str());return 1;}
     std::printf("prepared synthetic dense attention position %u/%u; active workers key/value/query: %u/%u/%u; NO HARDWARE\n",
         position,context,DenseKeyHeads,DenseKeyHeads,
-#ifdef PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY
+#if defined(PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY) || defined(PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY)
         DataflowCoreCount
 #else
         DenseHeads

@@ -40,6 +40,16 @@ int main() {
     assert(DataflowFlashPartialProducerStep(32,true,producerStep) && producerStep==31);
     assert(!DataflowFlashPartialProducerStep(1,true,producerStep) && !producerStep);
     assert(!DataflowFlashPartialProducerStep(0,false,producerStep) && !producerStep);
+    alignas(64) std::array<uint32_t,16> receipt{};
+    assert(!DataflowFlashProducerReceiptMatches(receipt.data(),5,31,3,33,0));
+    assert(DataflowFlashProducerReceiptPublish(receipt.data(),5,31,3,33,0));
+    assert(DataflowFlashProducerReceiptMatches(receipt.data(),5,31,3,33,0));
+    assert(!DataflowFlashProducerReceiptMatches(receipt.data(),5,32,3,33,0));
+    for (unsigned i=0;i<16;i++) {
+        receipt[i]^=1;assert(!DataflowFlashProducerReceiptMatches(receipt.data(),5,31,3,33,0));receipt[i]^=1;
+    }
+    DataflowFlashProducerReceiptClear(receipt.data());
+    assert(!DataflowFlashProducerReceiptMatches(receipt.data(),5,31,3,33,0));
     alignas(64) std::array<uint32_t,DataflowFlashPartialBytes/4> packet{};
     std::array<float,DenseHeadWidth> values{},output{};
     DataflowFlashPartialIdentity id{5,31,3,33,1,0};

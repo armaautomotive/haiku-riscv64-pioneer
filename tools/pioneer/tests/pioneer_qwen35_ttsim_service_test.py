@@ -73,7 +73,7 @@ def resident_next_decode_command(initial, token):
     for word in words[:10]:
         checksum = ((checksum ^ word) * 16777619) & 0xffffffff
     if (words[:2] != [0x31444335, 1] or not trigger or not epoch or not first
-            or count != 524 or words[9] != 0 or any(words[11:16])
+            or count not in (524, 532) or words[9] != 0 or any(words[11:16])
             or words[10] != checksum or not words[6] or words[8] >= 248320
             or words[16:] != [epoch, (~epoch) & 0xffffffff, marker, (~marker) & 0xffffffff] * 4
             or trigger >= 0x0fffffff or epoch == 0xffffffff
@@ -280,6 +280,8 @@ def main():
                         help='compare the second resident decode token with an offline reference')
     parser.add_argument('--ttsim-unprofiled', action='store_true',
                         help='explicitly allow the non-packageable simulator image without cycle profiling')
+    parser.add_argument('--flash-hybrid', action='store_true',
+                        help='explicitly allow the simulator-only hybrid attention image and fixture')
     args = parser.parse_args()
     if ((args.resident_export_state or args.resident_import_state or args.resident_position_one_command)
             and not args.resident_sequence_fixture):
@@ -317,6 +319,8 @@ def main():
     image = args.image
     if args.ttsim_unprofiled != (image / 'ttsim-unprofiled.marker').is_file():
         raise ValueError('unprofiled simulator flag and image marker do not match')
+    if args.flash_hybrid != (image / 'flash-hybrid.marker').is_file():
+        raise ValueError('flash hybrid simulator flag and image marker do not match')
     if not (image / 'activation-sharing.marker').is_file():
         raise ValueError('expected sharing-enabled standalone service image')
     resident_shards = (args.resident_sequence_fixture is not None
@@ -324,24 +328,33 @@ def main():
     if bool(args.delta_shards_fixture or args.dense_attention_fixture or args.recorded_layer_fixture or resident_shards or args.resident_delta_sharded) != (image / 'delta-shard.marker').is_file():
         raise ValueError('delta shard fixture and service image do not match')
     dense_sharded = False
+    dense_hybrid = False
     if args.dense_attention_fixture:
         metadata = (args.dense_attention_fixture / 'metadata.bin').read_bytes()
         if len(metadata) != 12:
             raise ValueError('unexpected dense attention metadata size')
         _, _, shard_flag = struct.unpack('<3I', metadata)
-        if shard_flag not in (0, 1):
+        if shard_flag not in (0, 1, 2):
             raise ValueError('invalid dense attention shard flag')
-        dense_sharded = bool(shard_flag)
+        dense_sharded = shard_flag == 1
+        dense_hybrid = shard_flag == 2
     if dense_sharded != (image / 'dense-shard.marker').is_file():
         raise ValueError('dense shard fixture and service image do not match')
+    recorded_hybrid = bool(args.recorded_layer_fixture
+                           and (args.recorded_layer_fixture / 'flash-hybrid.marker').is_file())
+    if (dense_hybrid or recorded_hybrid) != args.flash_hybrid:
+        raise ValueError('hybrid dense fixture and service image do not match')
     boot = (image / 'boot.bin').read_bytes()
     text = (image / 'text.bin').read_bytes()
     dispatch = (image / 'dispatch.bin').read_bytes()
+    flash = (image / 'flash.bin').read_bytes() if args.flash_hybrid else b''
     dispatch_limit = 0x7000 if resident_templates is not None else 0x5c00
     if boot != bytes.fromhex('6fc00600') or not 0 < len(text) <= 0xe000 or not 0 < len(dispatch) <= dispatch_limit:
         raise ValueError('invalid service image layout')
     if len(text) % 4 or len(dispatch) % 4:
         raise ValueError('unaligned service image')
+    if args.flash_hybrid and (not flash or len(flash) > 0x8000 or len(flash) % 4):
+        raise ValueError('invalid simulator-only flash code region')
     role_images = []
     for name, address, limit in (('reader-shim.bin', 0x70000, 0x70100),
                                  ('writer-shim.bin', 0x70100, 0x70200),
@@ -477,7 +490,8 @@ def main():
             select_worker(core)
             if struct.unpack('<I', read(reset_address, 4))[0] != 0x47800:
                 raise RuntimeError(f'core {core}: unexpected initial reset')
-            for address, data in ((0x6000, boot), (0x72000, text), (0xa0400, dispatch), *role_images):
+            extra = ((0xd0000, flash),) if args.flash_hybrid else ()
+            for address, data in ((0x6000, boot), (0x72000, text), (0xa0400, dispatch), *extra, *role_images):
                 write(bar + address, data)
                 if read(bar + address, len(data)) != data:
                     raise RuntimeError(f'core {core}: service image mismatch at {address:#x}')
@@ -618,11 +632,13 @@ def main():
             if len(config) == 4 and config[3] not in (0, 1):
                 raise ValueError('invalid recorded decode flag')
             full_prompt = layers == 32
-            if (not 1 <= layers <= 32 or not 1 <= executed <= 521
+            prompt_steps = 529 if args.flash_hybrid else 521
+            decode_steps = prompt_steps + 3
+            if (not 1 <= layers <= 32 or not 1 <= executed <= prompt_steps
                     or (decode and not full_prompt)
                     or bool(args.recorded_token_reference) != decode
-                    or record_count != (524 if decode else executed + (0 if full_prompt else 1))
-                    or (full_prompt and executed != 521) or len(command) != 128
+                    or record_count != (decode_steps if decode else executed + (0 if full_prompt else 1))
+                    or (full_prompt and executed != prompt_steps) or len(command) != 128
                     or len(records) != 120 * record_count * 2048):
                 raise ValueError('unexpected recorded layer fixture size')
             weights = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'W' and len(row) == 5]
@@ -775,13 +791,15 @@ def main():
             position, context, shard_flag = struct.unpack('<3I', metadata)
             if not 0 <= position < context <= 64:
                 raise ValueError('invalid dense attention position or context')
-            if shard_flag != int(dense_sharded):
+            if shard_flag != (2 if dense_hybrid else int(dense_sharded)):
                 raise ValueError('dense attention fixture changed during startup')
+            record_count = 6 if dense_hybrid else 5
+            completed_steps = record_count - 1
             layouts = ((0x10000000, 8192 * 4), (0x11000000, 4096 * 4),
                        (0x17000000, 9216 * 4),
                        (0x14000000, 256 * 4), (0x15000000, 256 * 4),
                        (0x16000000, context * 64 * 4), (0x13000000, 8 * context * 256 * 2))
-            if (len(command) != 128 or len(records) != 120 * 5 * 2048
+            if (len(command) != 128 or len(records) != 120 * record_count * 2048
                     or len(initial) != sum(size for _, size in layouts)
                     or len(expected_kv) != 8 * context * 256 * 2 or len(expected_output) != 9216 * 4):
                 raise ValueError('unexpected dense attention fixture size')
@@ -798,7 +816,8 @@ def main():
             for core in range(120):
                 address = 0x04000000 + core * 0x100000
                 select(2, address, 18, 12)
-                write(bar + 0x400000 + (address & 0x1fffff), records[core * 10240:(core + 1) * 10240])
+                chunk = record_count * 2048
+                write(bar + 0x400000 + (address & 0x1fffff), records[core * chunk:(core + 1) * chunk])
             select_worker(0)
             write(bar + 0xab080, command[:64])
             write(bar + 0xab0c0, command[64:])
@@ -816,9 +835,9 @@ def main():
                 raise RuntimeError('dense attention did not reach its intentional terminal fault')
             for core, words in enumerate(snapshots):
                 if (words[2:8] != (1, 0, 1, 4, 4, 5)
-                        or words[9:15] != (0x31464735, 1, 4, 120, 0x80000004, 0)
+                        or words[9:15] != (0x31464735, 1, completed_steps, 120, 0x80000004, 0)
                         or words[15] != core):
-                    raise RuntimeError(f'core {core}: dense attention failed before four barriers: {words}')
+                    raise RuntimeError(f'core {core}: dense attention failed before {completed_steps} barriers: {words}')
             select(2, 0x13000000, 18, 12)
             actual_kv = b''.join(read(bar + 0x400000 + offset, min(0x10000, len(expected_kv) - offset))
                                  for offset in range(0, len(expected_kv), 0x10000))
@@ -838,8 +857,8 @@ def main():
             if struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
                 raise RuntimeError('intentionally faulted dense sequence published a candidate')
             print(f'PASS dense attention position {position}/{context}: all KV values and 9216 outputs checked; '
-                  f'maximum absolute error {maximum:.9g}; fifth record intentionally faults; '
-                  f'active key/value/query workers 4/4/{120 if dense_sharded else 16}; NO HARDWARE', flush=True)
+                      f'maximum absolute error {maximum:.9g}; record {record_count} intentionally faults; '
+                      f'active key/value/query workers 4/4/{120 if dense_sharded or dense_hybrid else 16}; NO HARDWARE', flush=True)
             return
 
         if args.resident_sequence_fixture:

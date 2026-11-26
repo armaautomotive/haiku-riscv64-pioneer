@@ -40,6 +40,10 @@ extern "C" __attribute__((noinline)) bool qwen35_graph_authorize(
 }
 extern "C" bool qwen35_graph_execute(unsigned core,unsigned sequence,
 	PioneerQwen35::DataflowWorkerMailbox* mailbox,unsigned* detail);
+#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+extern "C" bool qwen35_graph_flash_execute(const PioneerQwen35::DataflowGraphRunDescriptor*,
+    unsigned index,unsigned sequence,PioneerQwen35::DataflowWorkerMailbox*,unsigned* detail);
+#endif
 extern "C" bool qwen35_graph_reset_queues();
 
 // BabyRISCV exposes cycle/cycleh. The high-low-high read handles rollover;
@@ -123,7 +127,13 @@ struct GraphWitnessExecution {
 			PioneerQwen35::DataflowProgramAddress));
 		const unsigned operation=profile?PioneerQwen35::DataflowGraphProfileOperation(*program):0;
 		const uint64_t start=profile?DataflowProfileCycle():0;
-		const bool result=qwen35_graph_execute(run.core,sequence,mailbox,&detail);
+		bool result;
+#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+		if (PioneerQwen35::DataflowLoadAcquire(program[0])==PioneerQwen35::DataflowFlashHybridMagic)
+			result=qwen35_graph_flash_execute(&run,index,sequence,mailbox,&detail);
+		else
+#endif
+			result=qwen35_graph_execute(run.core,sequence,mailbox,&detail);
 		if (profile) profile->Add(operation,start,DataflowProfileCycle());
 		if (result && run.core==0) {
 			using namespace PioneerQwen35;

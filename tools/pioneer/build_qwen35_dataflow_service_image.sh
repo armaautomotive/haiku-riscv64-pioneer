@@ -56,6 +56,13 @@ case "${PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY:-0}" in
 	: > "$output/dense-shard.marker" ;;
 *) exit 2 ;;
 esac
+case "${PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY:-0}" in
+0) ;;
+1) [ "$role_graph:${PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY:-0}:${PIONEER_QWEN35_DENSE_SHARD_COMPILE_ONLY:-0}:${PIONEER_QWEN35_TTSIM_UNPROFILED_COMPILE_ONLY:-0}" = 1:1:0:1 ] || exit 2
+	service_flags="$service_flags -DPIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY"
+	: > "$output/flash-hybrid.marker" ;;
+*) exit 2 ;;
+esac
 case "${PIONEER_QWEN35_TTSIM_UNPROFILED_COMPILE_ONLY:-0}" in
 0) ;;
 1) [ "$role_graph:${PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY:-0}" = 1:1 ] || exit 2
@@ -96,9 +103,13 @@ case "$dispatch" in
 	if [ "$role_graph" = 1 ]; then
 		"$cross-g++" $flags $graph_flags -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
 			-c "$directory/PioneerQwen35DataflowSharedRoles.cpp" -o "$output/shared-roles.o"
+		linker_script="$directory/blackhole_qwen35_dataflow_dispatch_witness.ld"
+		if [ "${PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY:-0}" = 1 ]; then
+			linker_script="$directory/blackhole_qwen35_flash_dataflow_dispatch_ttsim.ld"
+		fi
 		"$cross-ld" -m elf32lriscv --no-relax --gc-sections \
 			-u PioneerQwen35DeviceGraphRun \
-			-T "$directory/blackhole_qwen35_dataflow_dispatch_witness.ld" \
+			-T "$linker_script" \
 			"$output/start.o" "$output/service.o" "$output/memory.o" \
 			"$output/device-stream.o" "$output/device-barrier.o" "$output/device-graph.o" \
 			"$output/shared-roles.o" -Map "$output/service.map" -o "$output/service.elf"
@@ -113,6 +124,9 @@ case "$dispatch" in
 	"$cross-objcopy" -O binary -j .dispatch "$output/service.elf" "$output/dispatch.bin";;
 *) exit 2;;
 esac
+if [ "${PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY:-0}" = 1 ]; then
+	"$cross-objcopy" -O binary -j .flash "$output/service.elf" "$output/flash.bin"
+fi
 "$cross-objcopy" -O binary -j .boot "$output/service.elf" "$output/boot.bin"
 "$cross-objcopy" -O binary -j .text "$output/service.elf" "$output/text.bin"
 "$cross-nm" -u "$output/service.elf" > "$output/imports.txt"

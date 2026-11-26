@@ -17,11 +17,12 @@ enum : unsigned {
     DataflowFlashPartialBase=DataflowActivationCacheAddress+DataflowFlashHybridScratchBytes,
     DataflowFlashPartialHeaderScratch=DataflowFlashPartialBase+DataflowFlashQueriesPerKv*DataflowFlashPartialBytes,
     DataflowFlashPartialHeaderAgain=DataflowFlashPartialHeaderScratch+DataflowFlashPartialHeaderBytes,
+    DataflowFlashPartialLocalReceipt=DataflowFlashPartialHeaderAgain+DataflowFlashPartialHeaderBytes,
     DataflowFlashPartialIncoming=DataflowActivationCacheAddress+DataflowFlashHybridScratchBytes-DataflowFlashPartialDataBytes
 };
 static_assert(!(DataflowFlashPartialBase&63) && !(DataflowFlashPartialBytes&63)
     && !(DataflowFlashPartialIncoming&63)
-    && DataflowFlashPartialHeaderAgain+DataflowFlashPartialHeaderBytes
+    && DataflowFlashPartialLocalReceipt+DataflowFlashPartialHeaderBytes
         <=DataflowActivationCacheAddress+DataflowActivationCacheBytes,
     "hybrid scratch and partial packets must fit the fixed activation cache");
 struct DataflowFlashPartialIdentity { unsigned epoch,step,layer,position,producer,query; };
@@ -35,6 +36,45 @@ inline bool DataflowFlashPartialProducerMatches(const DataflowFlashPartialIdenti
 }
 struct alignas(64) DataflowFlashPartialHeader { uint32_t word[16]; };
 static_assert(sizeof(DataflowFlashPartialHeader)==DataflowFlashPartialHeaderBytes,"partial header fits one packet");
+
+// Per-core completion of the producer operation. The caller clears this
+// before starting and seals it only after every local partial is published.
+// It is not a fleet barrier or a proof of NoC/role quiescence.
+inline bool DataflowFlashProducerReceiptBuild(unsigned epoch,unsigned step,unsigned layer,
+    unsigned position,unsigned core,DataflowFlashPartialHeader& out) {
+    DataflowFlashHybridPartition partition{};
+    if (!epoch || !step || layer>=Layers || !Dense(layer)
+        || !DataflowFlashHybridAssign(core,position,partition)) return false;
+    DataflowFlashPartialHeader h{};
+    h.word[0]=0x31524641;h.word[1]=epoch;h.word[2]=step;h.word[3]=layer;
+    h.word[4]=position;h.word[5]=core;
+    uint32_t checksum=2166136261U;
+    for (unsigned i=0;i<6;i++) checksum=(checksum^h.word[i])*16777619U;
+    h.word[6]=checksum;h.word[7]=~checksum;h.word[14]=epoch;h.word[15]=step;
+    out=h;return true;
+}
+inline void DataflowFlashProducerReceiptClear(volatile uint32_t* words) {
+    DataflowStoreRelease(words[14],0);DataflowStoreRelease(words[15],0);
+    DataflowL1StoresVisible(words+15);
+}
+inline bool DataflowFlashProducerReceiptPublish(volatile uint32_t* words,unsigned epoch,unsigned step,
+    unsigned layer,unsigned position,unsigned core) {
+    DataflowFlashPartialHeader receipt{};
+    if (!words || !DataflowFlashProducerReceiptBuild(epoch,step,layer,position,core,receipt)) return false;
+    DataflowFlashProducerReceiptClear(words);
+    for (unsigned i=0;i<14;i++) words[i]=receipt.word[i];
+    DataflowL1StoresVisible(words+13);
+    DataflowStoreRelease(words[14],epoch);DataflowStoreRelease(words[15],step);
+    DataflowL1StoresVisible(words+15);return true;
+}
+inline bool DataflowFlashProducerReceiptMatches(const volatile uint32_t* words,unsigned epoch,unsigned step,
+    unsigned layer,unsigned position,unsigned core) {
+    DataflowFlashPartialHeader expected{};
+    if (!words || !DataflowFlashProducerReceiptBuild(epoch,step,layer,position,core,expected)
+        || DataflowLoadAcquire(words[14])!=epoch || DataflowLoadAcquire(words[15])!=step) return false;
+    for (unsigned i=0;i<14;i++) if (DataflowLoadAcquire(words[i])!=expected.word[i]) return false;
+    return DataflowLoadAcquire(words[14])==epoch && DataflowLoadAcquire(words[15])==step;
+}
 
 inline bool DataflowFlashPartialIdentityRange(const DataflowFlashPartialIdentity& id,
     unsigned& first,unsigned& count) {
