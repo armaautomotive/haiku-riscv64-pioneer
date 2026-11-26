@@ -1,5 +1,14 @@
 # Latest offline checks, 2026-11-26
 
+The complete Haiku driver source now compiles with the fused tree resident
+configuration: incompatible old host-per-operation sequence handlers are
+explicitly denied in that configuration. The ordinary configuration passed
+a syntax control, the fused tree configuration produced an unlinked RISC-V
+object, and a focused test confirmed all four denied handlers. The compile
+used older image headers only as placeholders; the result is non-loadable and
+does not validate image compatibility, physical launch, recovery or speed.
+See `benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
 The fused tree graph's template installer and held-service integration passed
 with fake per-core MMIO, and the fused tree resident-model host probe
 cross-compiled for Haiku/RISC-V. Both are now included in the target suite.

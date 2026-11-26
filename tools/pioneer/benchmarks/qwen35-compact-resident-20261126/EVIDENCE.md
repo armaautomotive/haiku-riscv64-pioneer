@@ -1,5 +1,24 @@
 # Compact resident simulator image, 2026-11-26
 
+## Fused resident driver compilation, 2026-11-26
+
+Compiling the complete Haiku driver translation unit with the fused tree
+graph exposed old host-per-operation sequence handlers that tried to call
+operations unavailable in the resident graph. In the fused compile-only
+configuration, the FFN, recurrent-layer, dense-layer and decoder-sequence
+handlers now return `B_NOT_ALLOWED`; generation remains on the resident
+graph path. Ordinary configurations retain the existing handlers.
+
+The standard configuration passed a Haiku/RISC-V syntax check and the fused
+configuration compiled to a Haiku/RISC-V object with warnings as errors.
+The object was not linked or installed and used previously generated,
+nonmatching image headers as compilation placeholders. The compile-only
+guard remains active. A focused test compiled and called all four fused-build
+handlers and confirmed rejection. Reproduce the compile checks with
+`tests/run_pioneer_qwen35_fused_driver_compile_test.sh BUILD WITNESS_IMAGES`;
+the resulting temporary object is deleted. This does not qualify the actual
+optimized image, physical ownership, launch, recovery or throughput.
+
 ## Higher-level resident ownership checks, 2026-11-26
 
 The service-owner simulation fixture now models both activation-sharing L1

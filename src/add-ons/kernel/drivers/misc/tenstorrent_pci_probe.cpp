@@ -10208,6 +10208,12 @@ Qwen35DataflowReadActivation(PioneerProbeCookie* cookie,void* data,size_t length
 static status_t
 Qwen35DataflowFfnSequence(PioneerProbeCookie* cookie,void* data,size_t length)
 {
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+	// The optimized graph is resident-only; it cannot be dispatched through
+	// the older host-per-operation service.
+	(void)cookie; (void)data; (void)length;
+	return B_NOT_ALLOWED;
+#else
 	if (!data || length!=sizeof(tt_qwen35_dataflow_ffn_sequence))
 		return B_BAD_VALUE;
 	thread_info thread={};
@@ -10261,11 +10267,16 @@ Qwen35DataflowFfnSequence(PioneerProbeCookie* cookie,void* data,size_t length)
 	release_sem(sLock);
 	free(request);
 	return status;
+#endif
 }
 
 static status_t
 Qwen35DataflowRecurrentLayer(PioneerProbeCookie* cookie,void* data,size_t length)
 {
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+	(void)cookie; (void)data; (void)length;
+	return B_NOT_ALLOWED;
+#else
 	if (!data || length!=sizeof(tt_qwen35_dataflow_recurrent_layer))
 		return B_BAD_VALUE;
 	thread_info thread={};
@@ -10322,6 +10333,7 @@ Qwen35DataflowRecurrentLayer(PioneerProbeCookie* cookie,void* data,size_t length
 	release_sem(sLock);
 	free(request);
 	return status;
+#endif
 }
 
 static status_t
@@ -10384,6 +10396,10 @@ Qwen35DataflowDenseAttention(PioneerProbeCookie* cookie,void* data,size_t length
 static status_t
 Qwen35DataflowDenseLayer(PioneerProbeCookie* cookie,void* data,size_t length)
 {
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+	(void)cookie; (void)data; (void)length;
+	return B_NOT_ALLOWED;
+#else
 	if (!data || length!=sizeof(tt_qwen35_dataflow_dense_layer))
 		return B_BAD_VALUE;
 	thread_info thread={};
@@ -10440,11 +10456,16 @@ Qwen35DataflowDenseLayer(PioneerProbeCookie* cookie,void* data,size_t length)
 	release_sem(sLock);
 	free(request);
 	return status;
+#endif
 }
 
 static status_t
 Qwen35DataflowDecoderSequence(PioneerProbeCookie* cookie,void* data,size_t length)
 {
+#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+	(void)cookie; (void)data; (void)length;
+	return B_NOT_ALLOWED;
+#else
 	if (!data || length!=sizeof(tt_qwen35_dataflow_decoder_sequence))
 		return B_BAD_VALUE;
 	thread_info thread={};
@@ -10500,6 +10521,7 @@ Qwen35DataflowDecoderSequence(PioneerProbeCookie* cookie,void* data,size_t lengt
 	release_sem(sLock);
 	free(request);
 	return status;
+#endif
 }
 
 static status_t
