@@ -11,6 +11,26 @@ position-zero state snapshots and is not a valid warm run or a hardware result.
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+A second, separate full two-position diagnostic is now running as session
+`46629` (log `/private/tmp/q35-paired-state-two-position-20261126.log`). It
+requests both sets of layer boundaries and all first-position recurrent and
+KV states, retaining the same simulated fleet across positions. The current
+extractor reproduced the earlier 32-layer state map from all 120 worker
+streams; the Python validator checked all 392 fragments across 24 history,
+24 delta and eight KV groups for geometry and overlap with the fixture. The
+map is `full-hybrid-state-layout-20261126.txt`, SHA-256
+`75ee2a19c50a39fac9de034f103b9fe236fbbd36fbbc859c97d3871b8b6f6c83`;
+the source and fixture hashes are in `full-hybrid-state-layout-20261126.json`.
+The capture is not a correctness pass, and files are provisional until its
+worker and candidate audits complete.
+
+The capture code now rejects wrong-sized or non-finite history, delta **and**
+half-precision KV tensors before writing the worker-audit marker. Tests cover
+NaN, infinity and truncation for each kind. The running capture started before
+this check was added, so every captured state file must be independently
+checked with the current validator before use; its marker alone is not that
+check and does not prove provenance or numerical correctness.
+
 An offline comparison of the three previously generated CPU position-one
 logit tensors found a close leading pair. Flash/F16 ranked token 89598 above
 1850 by `0.111943245`; nonflash/F16 ranked 1850 above 89598 by `0.098207474`;

@@ -1,5 +1,13 @@
 # Latest offline checks, 2026-11-26
 
+A second full simulator diagnostic now requests first- and second-position
+layer boundaries plus all first-position state, using the validated full-graph
+state map; session `46629` is running alongside the earlier capture. The
+capture checker now rejects non-finite half-precision KV as well as recurrent
+state, but this process started before that fix and must be independently
+validated before use. The results remain provisional and simulator-only. See
+`benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
 The compile-only retained recovery gateway and link-reset witness now build
 together. Simulated tests cover the actual recovery orchestration and, in a
 separate composition with a stubbed recovery operation, the retained lease,

@@ -1,0 +1,14 @@
+{
+  "scope": "Full 32-layer position-zero state destinations, extracted from 120 simulated worker streams and checked against fixture ranges; no state capture result, hardware access or inference validation.",
+  "state_fragments": 392,
+  "state_groups": {
+    "history": 24,
+    "delta": 24,
+    "kv": 8
+  },
+  "state_map_sha256": "75ee2a19c50a39fac9de034f103b9fe236fbbd36fbbc859c97d3871b8b6f6c83",
+  "extractor_source_sha256": "0c6cc207f38c5aa4ae35aa3adc6a76fb6a5e4fdc8f584cb546c6fd1b9b2fce16",
+  "templates_sha256": "2cff010ab08c890c6104228fe5aa155809bca48eb359206d7c8869b9f2f7ea30",
+  "records_sha256": "2d9d43561b387c9e39b9a8263c8f7897f5113671e28ce77389e947798e1d739f",
+  "layout_sha256": "d3abbb8d4f518d8a2aaa6798d535f0a94204ccbaa73d04c40b49a1b9b72a8738"
+}

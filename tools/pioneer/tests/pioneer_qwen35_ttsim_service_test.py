@@ -256,6 +256,18 @@ def validate_recorded_state_layout(raw, weights, streams, inputs, outputs, strea
     return groups
 
 
+def validate_captured_state(kind, payload):
+    """Reject malformed or non-finite simulator state before marking its audit."""
+    formats = {'H': (8192 * 12, '<f'), 'D': (32 * 65536, '<f'), 'K': (8 * 512, '<e')}
+    if kind not in formats:
+        raise ValueError('invalid captured simulator state kind')
+    size, value_format = formats[kind]
+    if len(payload) != size:
+        raise ValueError(f'invalid captured simulator {kind} state size')
+    if any(not math.isfinite(value) for (value,) in struct.iter_unpack(value_format, payload)):
+        raise ValueError(f'non-finite captured simulator {kind} state')
+
+
 def resident_handoff_payload(raw):
     """Decode a simulator-only state snapshot; its hash detects corruption."""
     if (len(raw) != 40 + 24576 * 4 + 524288 * 4 or raw[:8] != b'Q35SIMW1'
@@ -1298,8 +1310,7 @@ def main():
                                     payload.extend(read_bank(bank, address + row * row_bytes, 512))
                             else:
                                 payload.extend(read_bank(bank, address, rows * row_bytes))
-                        if kind != 'K' and any(not math.isfinite(value) for (value,) in struct.iter_unpack('<f', payload)):
-                            raise RuntimeError(f'non-finite simulator {kind} state at layer {layer}')
+                        validate_captured_state(kind, payload)
                         with (state_dir / f'{kind}-layer{layer}.bin').open('xb') as state_file:
                             state_file.write(payload)
                     (state_dir / 'worker-audit-complete.marker').touch(exist_ok=False)

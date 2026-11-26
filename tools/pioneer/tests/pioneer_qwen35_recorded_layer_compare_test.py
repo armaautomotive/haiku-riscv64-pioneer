@@ -8,7 +8,8 @@ import sys
 import tempfile
 from pioneer_qwen35_ttsim_service_test import (RecordedNumericalMismatch, compare_recorded_layer,
                                                compare_recorded_layer_diagnostic, compare_recorded_token,
-                                               validate_isolated_zero_ranges, validate_recorded_state_layout)
+                                               validate_captured_state, validate_isolated_zero_ranges,
+                                               validate_recorded_state_layout)
 from pioneer_qwen35_ttsim_state_compare import compare_state, compare_position_zero_kv
 
 assert compare_recorded_token(261, 261, False) is None
@@ -26,11 +27,11 @@ with tempfile.TemporaryDirectory() as directory:
                '--recorded-token-reference', 'missing-token']
     missing_warm = subprocess.run(command + ['--recorded-warm-snapshots', str(Path(directory) / 'new')],
                                   capture_output=True, text=True)
-    assert missing_warm.returncode != 0 and 'warm snapshots require two recorded decodes' in missing_warm.stderr
+    assert missing_warm.returncode != 0 and 'warm snapshots require a second recorded decode' in missing_warm.stderr
     existing = subprocess.run(command + ['--recorded-warm-layer-reference', 'warm-layer',
                               '--recorded-warm-token-reference', 'warm-token',
                               '--recorded-warm-snapshots', directory], capture_output=True, text=True)
-    assert existing.returncode != 0 and 'warm snapshots require two recorded decodes' in existing.stderr
+    assert existing.returncode != 0 and 'snapshots require a recorded graph fixture and new directories' in existing.stderr
 
 state_map = 'H 0 12 0 67108864 0 8192\nD 0 65536 0 83886080 0 32\n'
 state_weights = [(0, 100663296, 4096, 0)]
@@ -53,6 +54,26 @@ for bad_map in (state_map.splitlines()[0], state_map + state_map.splitlines()[0]
         raise AssertionError('invalid or overlapping simulator state map accepted')
     except ValueError:
         pass
+for kind, size, fmt in (('H', 8192 * 12, '<f'), ('D', 32 * 65536, '<f'), ('K', 8 * 512, '<e')):
+    valid = bytearray(size)
+    validate_captured_state(kind, valid)
+    for offset, bad in ((0, math.nan), (size - struct.calcsize(fmt), math.inf)):
+        changed = valid.copy(); struct.pack_into(fmt, changed, offset, bad)
+        try:
+            validate_captured_state(kind, changed)
+            raise AssertionError('non-finite captured state accepted')
+        except ValueError:
+            pass
+    try:
+        validate_captured_state(kind, valid[:-1])
+        raise AssertionError('short captured state accepted')
+    except ValueError:
+        pass
+try:
+    validate_captured_state('X', b'')
+    raise AssertionError('unknown captured state accepted')
+except ValueError:
+    pass
 assert compare_state(struct.pack('<3f', 0, 1, -2), struct.pack('<3f', 0, 1, -2), 3)['mismatches'] == 0
 assert compare_state(struct.pack('<3f', 0, 1, 3), struct.pack('<3f', 0, 1, -2), 3)['worst_index'] == 2
 for bad in (b'', struct.pack('<3f', 0, math.nan, 2)):
