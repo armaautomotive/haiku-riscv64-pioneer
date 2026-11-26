@@ -1,5 +1,12 @@
 # Latest offline checks, 2026-11-26
 
+Warm recurrent layers 1 and 2 each matched all 2,560 simulated outputs with
+maximum absolute error `4.76837158e-07` when the offline CPU reference was
+given the exact same layer input and previously audited simulator history and
+delta state. Self-injection, sensitivity and loader rejection checks passed.
+These are isolated replays, not a full-model or hardware pass. See
+`benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
 The simulator runner now accepts separate first- and second-position snapshot
 destinations in one execution; destination and existing boundary tests pass.
 The current capture predates the change and requests only warm snapshots.

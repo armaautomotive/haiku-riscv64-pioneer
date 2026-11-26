@@ -38,6 +38,8 @@ struct Capture {std::array<std::array<float,2560>,32> layers{};std::array<bool,3
     bool forcedKey=false,forcedValue=false;
     unsigned forceWarmQkvLayer=32;std::array<std::vector<float>,3> forceWarmQkv{};
     std::array<bool,3> forcedWarmQkv{};
+    unsigned forceWarmStateLayer=32;std::array<std::vector<float>,2> forceWarmState{};
+    std::array<bool,2> forcedWarmState{};
     std::array<std::vector<float>,traceNames.size()> trace{};std::array<bool,traceNames.size()> gotTrace{};
     std::vector<float> logits;bool gotLogits=false,replaced=false;};
 static bool SameFile(const struct stat& a,const struct stat& b) {
@@ -54,10 +56,12 @@ static bool Callback(ggml_tensor* tensor,bool ask,void* opaque) {
     unsigned layer=0;char trailing=0;
     const bool isLayer=std::sscanf(tensor->name,"l_out-%u%c",&layer,&trailing)==1 && layer<32;
     unsigned stateLayer=0;char stateTrailing=0;
-    const bool convState=capture.traceRecurrentState
-        && std::sscanf(tensor->name,"conv_states-%u%c",&stateLayer,&stateTrailing)==1 && stateLayer<32;
-    const bool deltaState=capture.traceRecurrentState && !convState
-        && std::sscanf(tensor->name,"state_predelta-%u%c",&stateLayer,&stateTrailing)==1 && stateLayer<32;
+    const bool convState=(capture.traceRecurrentState || capture.forceWarmStateLayer<32)
+        && std::sscanf(tensor->name,"conv_states-%u%c",&stateLayer,&stateTrailing)==1 && stateLayer<32
+        && (capture.traceRecurrentState || stateLayer==capture.forceWarmStateLayer);
+    const bool deltaState=(capture.traceRecurrentState || capture.forceWarmStateLayer<32) && !convState
+        && std::sscanf(tensor->name,"state_predelta-%u%c",&stateLayer,&stateTrailing)==1 && stateLayer<32
+        && (capture.traceRecurrentState || stateLayer==capture.forceWarmStateLayer);
     unsigned kvLayer=0;char kvTrailing=0;
     const bool denseKey=capture.traceFirstDenseKv
         && std::sscanf(tensor->name,"Kcur_normed-%u%c",&kvLayer,&kvTrailing)==1 && kvLayer<32;
@@ -139,8 +143,18 @@ static bool Callback(ggml_tensor* tensor,bool ask,void* opaque) {
         const size_t count=convState?24576:524288;
         if (!target.empty() || ggml_nelements(tensor)!=int64_t(count)
             || ggml_nbytes(tensor)!=count*sizeof(float)) return false;
+        if (stateLayer==capture.forceWarmStateLayer) {
+            const unsigned index=convState?0:1;const auto& replacement=capture.forceWarmState[index];
+            if (capture.forcedWarmState[index] || replacement.size()!=count) return false;
+            ggml_backend_tensor_set(tensor,replacement.data(),0,count*sizeof(float));
+        }
         target.resize(count);ggml_backend_tensor_get(tensor,target.data(),0,count*sizeof(float));
         for (float value:target) if (!std::isfinite(value)) return false;
+        if (stateLayer==capture.forceWarmStateLayer) {
+            const unsigned index=convState?0:1;
+            if (std::memcmp(target.data(),capture.forceWarmState[index].data(),count*sizeof(float))) return false;
+            capture.forcedWarmState[index]=true;
+        }
         return true;
     }
     if (replaceIntermediate) {
@@ -201,6 +215,7 @@ static bool BestToken(const Capture& capture,unsigned& best) {
     if (!capture.forcedLayers.empty()) for (bool got:capture.forcedSeen) if (!got) return false;
     if (capture.forceFirstKvLayer<32 && (!capture.forcedKey || !capture.forcedValue)) return false;
     if (capture.forceWarmQkvLayer<32) for (bool got:capture.forcedWarmQkv) if (!got) return false;
+    if (capture.forceWarmStateLayer<32) for (bool got:capture.forcedWarmState) if (!got) return false;
     if (capture.traceRecurrentState) for (unsigned layer=0;layer<32;layer++) {
         if (layer%4==3) {
             if (!capture.convState[layer].empty() || !capture.deltaState[layer].empty()) return false;
@@ -223,6 +238,11 @@ static bool Save(const std::string& dir,const std::string& prefix,const Capture&
     for (unsigned layer=0;layer<capture.layers.size();layer++)
         if (!WriteNew(dir+"/"+prefix+"layer"+std::to_string(layer)+".bin",capture.layers[layer])) return false;
     if (capture.traceRecurrentState) for (unsigned layer=0;layer<32;layer++) if (layer%4!=3) {
+        if (!WriteNew(dir+"/"+prefix+"conv-state-"+std::to_string(layer)+".bin",capture.convState[layer])
+            || !WriteNew(dir+"/"+prefix+"delta-state-"+std::to_string(layer)+".bin",capture.deltaState[layer])) return false;
+    }
+    if (capture.forceWarmStateLayer<32) {
+        const unsigned layer=capture.forceWarmStateLayer;
         if (!WriteNew(dir+"/"+prefix+"conv-state-"+std::to_string(layer)+".bin",capture.convState[layer])
             || !WriteNew(dir+"/"+prefix+"delta-state-"+std::to_string(layer)+".bin",capture.deltaState[layer])) return false;
     }
@@ -294,12 +314,38 @@ static bool LoadWarmQkv(const std::string& dir,Capture& capture,unsigned layer) 
     }
     capture.forceWarmQkvLayer=layer;capture.traceLayer=layer;return true;
 }
+// Offline only: callers independently verify that this worker-audited state
+// was captured from the simulator execution being compared.
+static bool LoadWarmState(const std::string& dir,Capture& capture,unsigned layer) {
+    if (layer>=32 || layer%4==3) return false;
+    const int marker=open((dir+"/worker-audit-complete.marker").c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC);
+    if (marker<0) return false;
+    struct stat markerStat{};const bool markerOkay=!fstat(marker,&markerStat) && S_ISREG(markerStat.st_mode);
+    close(marker);if (!markerOkay) return false;
+    const char* names[]={"H-layer","D-layer"};const size_t counts[]={24576,524288};
+    for (unsigned i=0;i<2;i++) {
+        const std::string path=dir+"/"+names[i]+std::to_string(layer)+".bin";
+        const int fd=open(path.c_str(),O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if (fd<0) return false;
+        struct stat before{},after{};auto& values=capture.forceWarmState[i];
+        if (fstat(fd,&before) || !S_ISREG(before.st_mode) || before.st_size!=off_t(counts[i]*sizeof(float))) {close(fd);return false;}
+        FILE* input=fdopen(fd,"rb");if (!input) {close(fd);return false;}
+        values.resize(counts[i]);
+        const bool okay=std::fread(values.data(),sizeof(float),values.size(),input)==values.size()
+            && std::fgetc(input)==EOF && !std::ferror(input) && !fstat(fd,&after) && SameFile(before,after);
+        if (std::fclose(input) || !okay) return false;
+        for (float value:values) if (!std::isfinite(value)) return false;
+    }
+    capture.forceWarmStateLayer=layer;return true;
+}
 int main(int argc,char** argv) {
     if (argc<3) {
-        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two] [(--replace-layer | --replace-attn-residual | --replace-ffn-swiglu) N tensor.bin [--trace-layer N | --trace-layer25 | --export-first-kv] | two --replace-first-layers snapshot-directory | two --replace-first-kv layer packed.bin | two --replace-warm-qkv layer directory | two --export-warm-state | two --export-first-kv | two --attention-mode f32|f16]\n",argv[0]);return 2;
+        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two] [(--replace-layer | --replace-attn-residual | --replace-ffn-swiglu) N tensor.bin [--trace-layer N | --trace-layer25 | --export-first-kv] | two --replace-first-layers snapshot-directory | two --replace-first-kv layer packed.bin | two --replace-warm-qkv layer directory | two --replace-warm-state layer directory [--replace-layer N tensor.bin] | two --export-warm-state | two --export-first-kv | two --attention-mode f32|f16]\n",argv[0]);return 2;
     }
     const bool two=argc>3 && !std::strcmp(argv[3],"two");
-    const int option=two?4:3;
+    const bool forceWarmState=two && (argc==7 || argc==10) && !std::strcmp(argv[4],"--replace-warm-state");
+    const bool combinedWarmState=forceWarmState && argc==10 && !std::strcmp(argv[7],"--replace-layer");
+    if (forceWarmState && argc==10 && !combinedWarmState) return 2;
+    const int option=combinedWarmState?7:two?4:3;
     const bool forceFirst=two && argc==6 && !std::strcmp(argv[4],"--replace-first-layers");
     const bool forceFirstKv=two && argc==7 && !std::strcmp(argv[4],"--replace-first-kv");
     const bool forceWarmQkv=two && (argc==7 || argc==9) && !std::strcmp(argv[4],"--replace-warm-qkv");
@@ -311,7 +357,7 @@ int main(int argc,char** argv) {
     const bool alternateAttention=combinedAttention || standaloneAttention;
     const bool traceWarmState=two && argc==5 && !std::strcmp(argv[4],"--export-warm-state");
     const bool traceFirstKv=two && argc==5 && !std::strcmp(argv[4],"--export-first-kv");
-    if (!forceFirst && !forceFirstKv && !forceWarmQkv && !alternateAttention && !traceWarmState && !traceFirstKv && argc!=option && argc!=option+3 && argc!=option+4 && argc!=option+5) return 2;
+    if (!forceFirst && !forceFirstKv && !forceWarmQkv && !forceWarmState && !alternateAttention && !traceWarmState && !traceFirstKv && argc!=option && argc!=option+3 && argc!=option+4 && argc!=option+5) return 2;
     Capture capture{},replacement{};
     capture.traceFirstDenseKv=traceFirstKv;
     replacement.traceRecurrentState=traceWarmState;
@@ -326,7 +372,13 @@ int main(int argc,char** argv) {
         if (!argv[5][0] || *end || layer>=32) return 2;
         if (!LoadWarmQkv(argv[6],replacement,unsigned(layer))) return 1;
     }
-    if (!forceFirst && !forceFirstKv && !forceWarmQkv && !alternateAttention && !traceWarmState && !traceFirstKv && argc>option) {
+    if (forceWarmState) {
+        char* end=nullptr;const unsigned long layer=std::strtoul(argv[5],&end,10);
+        if (!argv[5][0] || *end || layer>=32) return 2;
+        if (!LoadWarmState(argv[6],replacement,unsigned(layer))) return 1;
+    }
+    if (!forceFirst && !forceFirstKv && !forceWarmQkv && (!forceWarmState || combinedWarmState)
+        && !alternateAttention && !traceWarmState && !traceFirstKv && argc>option) {
         if (std::strcmp(argv[option],"--replace-layer") && std::strcmp(argv[option],"--replace-attn-residual")
             && std::strcmp(argv[option],"--replace-ffn-swiglu")) return 2;
         replacement.replaceAttentionResidual=!std::strcmp(argv[option],"--replace-attn-residual");
@@ -399,5 +451,6 @@ int main(int argc,char** argv) {
     const std::string dir=argv[2];
     if (!Save(dir,"",first,firstToken) || (two && !Save(dir,"position1-",second,secondToken))) return 1;
     std::printf("wrote standalone CPU reference argmax %u%s%s; NO PIONEER HARDWARE\n",
-        firstToken,two?" and next position":"",(forceFirst || forceFirstKv || forceWarmQkv || (!alternateAttention && !traceWarmState && !traceFirstKv && argc>option))?" with tensor replacement":"");
+        firstToken,two?" and next position":"",(forceFirst || forceFirstKv || forceWarmQkv || forceWarmState || (!alternateAttention && !traceWarmState && !traceFirstKv && argc>option))?" with tensor replacement":"");
+    return 0;
 }

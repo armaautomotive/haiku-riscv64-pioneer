@@ -2,6 +2,23 @@
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+The offline reference can inject and read back one recurrent layer's exact
+warm convolution history and delta state, together with the preceding warm
+activation. With the previously audited position-zero simulator state and
+the exact CPU activations used by the isolated simulator replays, warm
+layers 1 and 2 each matched all 2,560 simulator outputs, maximum absolute
+error `4.76837158e-07`. This is a same-input, same-recurrent-state comparison
+for those two isolated replays, not the running full graph or hardware.
+
+Self-injecting the CPU's own state and activation preserved 68 original
+output artifacts byte-for-byte. Changing one warm-history value changed the
+warm layer-1 output while preserving all 34 position-zero artifacts, and the
+modified state was read back exactly. The actual loader's ASan/UBSan test
+passed and rejected a missing audit marker, dense layer, short data,
+non-finite data and a symlink. Input and output hashes are in
+`warm-recurrent-exact-state-20261126.json`. The simulator address map and
+state were audited in the earlier four-layer capture, not the full run.
+
 The simulator runner now permits separate first- and second-position snapshot
 directories in one two-decode execution. It rejects identical, existing or
 otherwise invalid destinations; its destination and boundary tests pass.
