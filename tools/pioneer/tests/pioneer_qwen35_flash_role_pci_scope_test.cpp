@@ -7,6 +7,17 @@
 #include "../PioneerQwen35DataflowFlashRolePciScope.h"
 struct CombinedGuard : Guard {
     bool common=true,roles=true,ram=true,images=true,restore=true;
+    const void* expectedLedger=nullptr;
+    unsigned routeChecks=0,failRouteAt=UINT32_MAX;
+    bool ProveFlashRoleLedgerBound(const void* role,const void* flash,const void* ledger) const {
+        return role && flash && ledger && ledger==expectedLedger;
+    }
+    bool ProveFlashRoleRouteSame(const void* role,const void* flash,unsigned core) {
+        return role && flash && selected==core && routeChecks++!=failRouteAt;
+    }
+    bool ProveFlashRoleWriteDrained(const void* role,const void* flash) const {
+        return role && flash && drained;
+    }
     bool ProveFlashRoleCommonAuthority(const void* role,const void* flash,const void* owner,const void* extra) const {
         return common && role && flash && owner && extra;
     }
@@ -30,8 +41,33 @@ int main() {
         const auto originalFlash=platform.words;
         DataflowFlashCodePciView<Platform> view(platform);
         assert(view.Open(0x100000000ULL,0x11fffffffULL,guard));
-        DataflowFlashRolePciScope<RecoveryIO,decltype(view),CombinedGuard> io(view,guard);
+        DataflowFlashRoleRouteLedger ledger;
+        guard.expectedLedger=&ledger;
+        DataflowFlashRolePciScope<RecoveryIO,decltype(view),CombinedGuard> io(view,guard,ledger);
         io.heldImageStageAllowed=true;io.heldImageRollbackAllowed=true;
+        if (!mode) {
+            const unsigned address=DataflowFlashCodeAddress;
+            const uint32_t unchanged=platform.words[7*DataflowFlashCodeWords];
+            assert(io.FlashWriteAllowed(7,address,4));
+            guard.failRouteAt=guard.routeChecks+1;
+            assert(!io.Write(7,address,&unchanged,4) && view.WritesConfirmed() && ledger.WriteUnconfirmed());
+            guard.failRouteAt=UINT32_MAX;
+            uint32_t output=0;
+            assert(!io.Read(7,DataflowRoleExtraL1Address,&output,4));
+            assert(!io.FlashReadAllowed(7,address,4) && !io.ConfirmRoleFlashWriteDrain());
+            {
+                DataflowFlashRolePciScope<RecoveryIO,decltype(view),CombinedGuard> resumed(view,guard,ledger);
+                CombinedGuard otherGuard;
+                DataflowFlashRolePciScope<RecoveryIO,decltype(view),CombinedGuard> wrong(view,otherGuard,ledger);
+                DataflowFlashRoleRouteLedger freshLedger;
+                DataflowFlashRolePciScope<RecoveryIO,decltype(view),CombinedGuard> fresh(view,guard,freshLedger);
+                assert(!resumed.FlashReadAllowed(7,address,4) && !wrong.FlashFleetHeldAndQuiet());
+                assert(!fresh.FlashFleetHeldAndQuiet() && !fresh.FlashReadAllowed(7,address,4));
+                guard.drained=true;assert(!wrong.ConfirmRoleFlashWriteDrain());
+                assert(resumed.ConfirmRoleFlashWriteDrain() && !ledger.WriteUnconfirmed());
+            }
+            guard.drained=false;
+        }
         const auto originalCode=io.code,originalBoot=io.boots,originalShim=io.shims;
         const auto originalRam=io.ram,originalDisable=io.resetDisable;
         DataflowRoleFleetRecoveryOwner owner;
@@ -48,7 +84,9 @@ int main() {
             assert(!staged && owner.RestorationRequired() && !view.WritesConfirmed());
             platform.revokeAfterWrite=false;guard.write=true;
             assert(!owner.RestoreFlashBeforeRoleStage(io));
-            guard.drained=true;assert(view.ConfirmWriteDrain(guard));
+            guard.drained=true;assert(!io.ConfirmRoleFlashWriteDrain());
+            assert(view.ConfirmWriteDrain(guard));
+            assert(io.ConfirmRoleFlashWriteDrain());
             assert(owner.RestoreFlashBeforeRoleStage(io));
         } else {
             assert(staged && owner.StageHeldImages(reader,3,writer,2,rs,2,ws,2,io));

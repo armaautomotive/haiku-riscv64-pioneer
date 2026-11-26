@@ -74,3 +74,41 @@ attempt is rejected. The authorization and MMIO devices are fake, including
 the held-image permission; no physical fleet, NoC, firmware, DMA or session
 proof is supplied. The ASan/UBSan flash suite passed, and the combined test
 cross-compiled for Haiku/RV64 with warnings as errors.
+
+## Shared route and independent write drainage — 2026-11-26
+
+The guarded role/flash scope now requires an external proof that its actual
+role adapter and flash view select the same worker before and after each
+flash transfer. It retains a separate uncertain-write ledger when this proof
+is lost after a write, even if the flash view's own readback succeeded. While
+retained, role/flash range IO and restoration admission fail. An independent
+cross-adapter drain proof can retire this ledger only after any uncertain
+flash-view write has itself been drained. The proof provider must maintain
+the shared route for the entire operation, not merely at the sampled checks.
+
+ASan/UBSan tests rejected a selected-route drift before a read, simulated a
+lost cross-adapter proof after a successful view write, and required both
+independent drain layers after a partially effective write. The actual role
+PCI adapter and flash-view owner completed the held-fleet transaction using
+one simulated route selector; the full flash suite passed. A final focused
+regression additionally checked that cross-adapter drainage is denied before
+view-level drainage. The combined test and unresolved-IO wrapper cross-
+compiled for Haiku/RV64. All guards and devices are simulated; there is no
+physical provider for these proofs, no enabled release path, and no physical
+recovery or speed result.
+
+The cross-adapter uncertain-write state is now held by a separate noncopyable
+ledger rather than a temporary IO adapter. The ledger is bound to the same
+retained view and guard objects; recreated adapters observe the same pending
+write and an adapter using a different guard is refused. Tests recreated an
+adapter after an uncertain write, confirmed access remained denied, and
+required the independent drain before retry. Pointer binding cannot establish
+physical identity or prevent address reuse: the real owner must serialize
+operations, retain the ledger, view and guard together, and independently
+prove mapping and session lifetime. No physical provider exists yet.
+
+The guard is now also asked to bind the exact ledger to the retained
+role/flash session on every scope operation. The simulated test rejects a
+fresh ledger presented while the original retains an uncertain write. The
+ledger and this callback still do not provide a physical identity or lifetime
+proof; the real driver must supply and retain that authority.

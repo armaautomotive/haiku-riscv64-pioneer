@@ -8,6 +8,9 @@ struct FlashCompileView {
     template<class Guard> bool Write(unsigned,unsigned,const uint32_t*,unsigned,Guard&);
 };
 struct FlashCompileGuard {
+    bool ProveFlashRoleLedgerBound(const void*,const void*,const void*);
+    bool ProveFlashRoleRouteSame(const void*,const void*,unsigned);
+    bool ProveFlashRoleWriteDrained(const void*,const void*);
     bool ProveFlashRoleCommonAuthority(const void*,const void*,const void*,const void*);
     bool ProveFlashRoleSnapshotsSafe(const uint32_t*,unsigned,const uint32_t*,unsigned,bool);
     bool ProveFlashRoleRamSnapshotSafe(const uint32_t*,unsigned,const uint32_t*,unsigned,bool);
@@ -30,4 +33,7 @@ extern "C" bool q35_flash_pci_role_stage(DataflowRoleFleetRecoveryOwner& owner,F
 }
 extern "C" bool q35_flash_pci_role_restore(DataflowRoleFleetRecoveryOwner& owner,FlashRoleScope& io) {
     return owner.RestoreHeldImagesBeforeRelease(io) && owner.VerifyAfterResidentRestore(io);
+}
+extern "C" bool q35_flash_pci_role_confirm_write_drain(FlashRoleScope& io) {
+    return io.ConfirmRoleFlashWriteDrain();
 }

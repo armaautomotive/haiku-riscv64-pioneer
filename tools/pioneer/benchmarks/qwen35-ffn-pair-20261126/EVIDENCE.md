@@ -67,3 +67,20 @@ state-address transformations, not numerical model execution.
 The paired four-layer numerical simulation remains running; the paired full
 fixture has not been run. Physical ownership, recovery and throughput remain
 unverified. No card was accessed.
+
+## Four-layer numerical result and full two-decode run
+
+The paired RV32 simulator image and authenticated four-layer fixture completed
+all 63 intended graph records across 120 simulated workers and deliberately
+faulted at record 64. All 2,560 final-layer values matched the independent
+llama.cpp reference, with maximum absolute error `5.00679016e-06`
+(`/private/tmp/q35-ffn-pair-recorded-four-layer-sim-20261126.log`). The
+simulator is exploratory and unqualified; the CPU reference is offline
+validation, not Work inference.
+
+The full 500-record paired decode fixture has started a two-consecutive-token
+run on one simulated fleet with separate first- and second-position reference
+files (`/private/tmp/q35-ffn-pair-two-decodes-sim-20261126.log`, session
+`88296`). It has not produced a result at this checkpoint. This result does
+not establish physical execution, firmware/NoC ownership, no-reboot recovery,
+clean unload or any hardware throughput.

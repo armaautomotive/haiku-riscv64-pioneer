@@ -10,6 +10,24 @@
 #include "pioneer_qwen35_flash_code_pci_view_test.cpp"
 #include "../PioneerQwen35DataflowFlashRolePciScope.h"
 struct ActualRoleFlashGuard : Guard {
+    PioneerSessionIO& io;
+    const void* expectedLedger=nullptr;
+    explicit ActualRoleFlashGuard(PioneerSessionIO& session):io(session) {}
+    bool ProveFlashRoleLedgerBound(const void* role,const void* flash,const void* ledger) const {
+        return role && flash && ledger && ledger==expectedLedger;
+    }
+    bool SelectFlashRoute(unsigned core) {
+        return Guard::SelectFlashRoute(core) && io.SelectRuntimeCore(core) && io.runtimeCore==core;
+    }
+    bool ProveSelectedRoute(unsigned core) const {
+        return Guard::ProveSelectedRoute(core) && io.runtimeCore==core;
+    }
+    bool ProveFlashRoleRouteSame(const void* role,const void* flash,unsigned core) const {
+        return role && flash && ProveSelectedRoute(core);
+    }
+    bool ProveFlashRoleWriteDrained(const void* role,const void* flash) const {
+        return role && flash && drained;
+    }
     bool ProveFlashRoleCommonAuthority(const void* a,const void* b,const void* c,const void* d) {return a && b && c && d;}
     bool ProveFlashRoleSnapshotsSafe(const uint32_t* a,unsigned aw,const uint32_t* b,unsigned bw,bool) {
         return a && b && aw && bw;
@@ -49,16 +67,21 @@ int main() {
     DataflowRoleWritableViews<PioneerQwen35RoleHaikuMap> views(rolePlatform);
     PioneerQwen35RoleRouteGuard<PioneerSessionIO,ActualRoleScope> route(context.io,roleGuard);
     assert(views.Open(context.io.profile.bar0_host_start,context.io.profile.bar0_host_end,route));
-    ActualRoleFlashGuard guard;Platform flashPlatform{guard};
+    ActualRoleFlashGuard guard(context.io);Platform flashPlatform{guard};
     DataflowFlashCodePciView<Platform> flashView(flashPlatform);
     assert(flashView.Open(0x100000000ULL,0x11fffffffULL,guard));
-    ActualScope io(flashView,guard,context.io,roleGuard,views);
+    DataflowFlashRoleRouteLedger ledger;
+    guard.expectedLedger=&ledger;
+    ActualScope io(flashView,guard,ledger,context.io,roleGuard,views);
     gRoleTileWindows[7][DataflowRolePhysicalExtraCode][0]=0x1234abcd;
     flashPlatform.words[7*DataflowFlashCodeWords]=0x73ace024;
     uint32_t observed=0;
     assert(io.Read(7,DataflowRoleExtraL1Address,&observed,4) && observed==0x1234abcd);
     assert(io.FlashReadAllowed(7,DataflowFlashCodeAddress,4));
     assert(io.Read(7,DataflowFlashCodeAddress,&observed,4) && observed==0x73ace024);
+    assert(io.FlashReadAllowed(7,DataflowFlashCodeAddress,4) && context.io.SelectRuntimeCore(8));
+    const unsigned readsBeforeDrift=flashPlatform.reads;
+    assert(!io.Read(7,DataflowFlashCodeAddress,&observed,4) && flashPlatform.reads==readsBeforeDrift);
     const unsigned reads=flashPlatform.reads;
     assert(!io.Read(7,DataflowFlashCodeLimit-4,&observed,8) && flashPlatform.reads==reads);
     // Both actual adapters participate in the held-only owner lifecycle.
