@@ -41,6 +41,24 @@ with tempfile.TemporaryDirectory() as tmp:
         assert result.returncode and 'fused RMS/save fixture and image markers do not match' in result.stderr
         assert 'no-library' not in result.stderr
     for directory in (image, fixture):
+        (directory / 'fused-rms-save.marker').touch()
+    compact_marker = image / 'compact-two-region.marker'
+    for flag, marker in ((True, False), (False, True)):
+        if marker:
+            compact_marker.touch()
+        else:
+            compact_marker.unlink(missing_ok=True)
+        result = subprocess.run(base + (['--compact-two-region'] if flag else []), capture_output=True, text=True)
+        assert result.returncode and 'compact two-region simulator flag and image marker do not match' in result.stderr
+        assert 'no-library' not in result.stderr
+    compact_marker.touch()
+    (image / 'flash.bin').write_bytes(bytes(4))
+    result = subprocess.run(base + ['--compact-two-region'], capture_output=True, text=True)
+    assert result.returncode and 'compact image requires fused hybrid markers and no extra code image' in result.stderr
+    assert 'no-library' not in result.stderr
+    (image / 'flash.bin').unlink()
+    compact_marker.unlink()
+    for directory in (image, fixture):
         (directory / 'fused-rms-save.marker').unlink(missing_ok=True)
     existing = root / 'existing-output'; existing.write_bytes(b'preserve')
     result = subprocess.run(base + ['--recorded-export-actual', str(existing)], capture_output=True, text=True)

@@ -30,7 +30,7 @@ with tempfile.TemporaryDirectory() as temporary:
     for marker in ('activation-sharing.marker', 'fused-recurrence.marker'):
         (image / marker).touch()
     header = module.generate(image)
-    for marker in ('dense-shard.marker', 'ttsim-unprofiled.marker', 'flash-hybrid.marker', 'ffn-pair.marker', 'fused-rms-save.marker'):
+    for marker in ('dense-shard.marker', 'ttsim-unprofiled.marker', 'flash-hybrid.marker', 'ffn-pair.marker', 'fused-rms-save.marker', 'compact-two-region.marker'):
         (image / marker).touch()
         try:
             module.generate(image)

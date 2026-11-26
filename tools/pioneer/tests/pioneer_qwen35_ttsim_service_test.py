@@ -478,6 +478,8 @@ def main():
                         help='explicitly allow the non-packageable simulator image without cycle profiling')
     parser.add_argument('--flash-hybrid', action='store_true',
                         help='explicitly allow the simulator-only hybrid attention image and fixture')
+    parser.add_argument('--compact-two-region', action='store_true',
+                        help='allow a marked simulator-only hybrid image without the extra code region')
     args = parser.parse_args()
     if ((args.resident_export_state or args.resident_import_state or args.resident_position_one_command)
             and not args.resident_sequence_fixture):
@@ -538,6 +540,8 @@ def main():
         raise ValueError('unprofiled simulator flag and image marker do not match')
     if args.flash_hybrid != (image / 'flash-hybrid.marker').is_file():
         raise ValueError('flash hybrid simulator flag and image marker do not match')
+    if args.compact_two_region != (image / 'compact-two-region.marker').is_file():
+        raise ValueError('compact two-region simulator flag and image marker do not match')
     ffn_paired = (image / 'ffn-pair.marker').is_file()
     if ffn_paired and (not args.flash_hybrid or not args.recorded_layer_fixture):
         raise ValueError('paired FFN image requires the matching hybrid recorded fixture')
@@ -548,6 +552,9 @@ def main():
         raise ValueError('fused RMS/save image requires the paired recorded fixture')
     if args.recorded_layer_fixture and rms_save_fused != (args.recorded_layer_fixture / 'fused-rms-save.marker').is_file():
         raise ValueError('fused RMS/save fixture and image markers do not match')
+    if args.compact_two_region and (not args.flash_hybrid or not rms_save_fused
+                                    or (image / 'flash.bin').exists()):
+        raise ValueError('compact image requires fused hybrid markers and no extra code image')
     if not (image / 'activation-sharing.marker').is_file():
         raise ValueError('expected sharing-enabled standalone service image')
     resident_shards = (args.resident_sequence_fixture is not None
@@ -574,13 +581,13 @@ def main():
     boot = (image / 'boot.bin').read_bytes()
     text = (image / 'text.bin').read_bytes()
     dispatch = (image / 'dispatch.bin').read_bytes()
-    flash = (image / 'flash.bin').read_bytes() if args.flash_hybrid else b''
-    dispatch_limit = 0x7000 if resident_templates is not None else 0x5c00
+    flash = (image / 'flash.bin').read_bytes() if args.flash_hybrid and not args.compact_two_region else b''
+    dispatch_limit = 0x9c00 if args.compact_two_region else 0x7000 if resident_templates is not None else 0x5c00
     if boot != bytes.fromhex('6fc00600') or not 0 < len(text) <= 0xe000 or not 0 < len(dispatch) <= dispatch_limit:
         raise ValueError('invalid service image layout')
     if len(text) % 4 or len(dispatch) % 4:
         raise ValueError('unaligned service image')
-    if args.flash_hybrid and (not flash or len(flash) > 0x8000 or len(flash) % 4):
+    if args.flash_hybrid and not args.compact_two_region and (not flash or len(flash) > 0x8000 or len(flash) % 4):
         raise ValueError('invalid simulator-only flash code region')
     role_images = []
     for name, address, limit in (('reader-shim.bin', 0x70000, 0x70100),
@@ -717,7 +724,7 @@ def main():
             select_worker(core)
             if struct.unpack('<I', read(reset_address, 4))[0] != 0x47800:
                 raise RuntimeError(f'core {core}: unexpected initial reset')
-            extra = ((0xd0000, flash),) if args.flash_hybrid else ()
+            extra = ((0xd0000, flash),) if flash else ()
             for address, data in ((0x6000, boot), (0x72000, text), (0xa0400, dispatch), *extra, *role_images):
                 write(bar + address, data)
                 if read(bar + address, len(data)) != data:
