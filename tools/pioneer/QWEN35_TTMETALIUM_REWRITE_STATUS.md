@@ -1,5 +1,21 @@
 # Latest offline checks, 2026-11-26
 
+The completed baseline's all-layer same-input audit passed 30/32 checks and
+failed layers 9 and 18 under the unchanged tolerance. The separate CPU token
+check from the exact final simulated hidden state matched the audited token
+`261`. Earlier input-specific counterfactuals explain the observed layer-9
+and layer-18 differences; the audit still fails and does not establish warm
+output, hardware correctness or throughput. The full report is committed as
+`benchmarks/qwen35-mixed-full-sim-20261125/baseline-same-input-audit-20261126.json`.
+
+The baseline 524-step full simulation completed its worker/candidate audit
+and selected reference token `261`, but failed the unchanged final hidden
+state comparison on 2,558/2,560 rows (maximum absolute difference
+`0.370739102`). The independently audited layer-31 replay reproduced that
+full hidden state byte-for-byte. See above for the completed same-input audit.
+This is not a full numerical pass, a warm run, hardware inference, recovery
+or throughput. See `benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
 The resident host graph metadata now handles the fused RMS/save operation and
 counts the flash dense-attention producer and reducer separately. Previously
 the optimized graph could execute in simulation but its host transaction

@@ -1,5 +1,32 @@
 # Recorded mixed-layer and full-decode simulator work, 2026-11-25
 
+## Completed baseline same-input audit, 2026-11-26
+
+The independent audit of the completed baseline run passed 30 of 32
+same-input layer checks. Layers 9 and 18 failed the unchanged tolerance; the
+input-specific quantization-threshold investigations below account for the
+observed discrepancies in those two cases. Replacing the CPU reference's
+final hidden state with the exact simulated state selected the same audited
+token, `261`. The full audit still **failed** because two layer checks failed;
+it does not validate all inputs, warm decode, physical inference or speed.
+The complete report, including hashes and individual results, is
+`baseline-same-input-audit-20261126.json`. No card was accessed.
+
+## Baseline full execution and final-layer replay, 2026-11-26
+
+The 524-step baseline full-model simulation completed its worker and
+candidate audits and selected reference token `261`. Its final hidden state
+failed the unchanged fixed-reference comparison on 2,558/2,560 rows, with
+maximum absolute difference `0.370739102`; the simulator process exited with
+failure. The separately audited layer-31 replay from the captured layer-30
+input reproduced the full run's final hidden tensor byte-for-byte. The
+execution marker and all layer snapshots now exist. The independent full
+same-input boundary audit and token check are reported above. This is not a
+full numerical pass, a warm run,
+hardware inference, recovery or throughput. Logs:
+`/private/tmp/q35-baseline-full-layer-snapshots-20261126.log` and
+`/private/tmp/q35-baseline-full-same-input-audit-20261126.log`.
+
 ## Two-position diagnostic progress, 2026-11-26
 
 The unpaired hybrid simulator's first decode completed the full worker and

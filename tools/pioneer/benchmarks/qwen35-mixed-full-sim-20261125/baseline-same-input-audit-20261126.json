@@ -1,0 +1,208 @@
+{
+  "candidate_token": 261,
+  "checks": [
+    {
+      "label": "initial layer 0",
+      "max_absolute_error": 8.940696716308594e-08,
+      "passed": true
+    },
+    {
+      "label": "layer 1 from simulator layer 0",
+      "max_absolute_error": 2.384185791015625e-07,
+      "passed": true
+    },
+    {
+      "label": "layer 2 from simulator layer 1",
+      "max_absolute_error": 9.5367431640625e-07,
+      "passed": true
+    },
+    {
+      "label": "layer 3 from simulator layer 2",
+      "max_absolute_error": 8.58306884765625e-06,
+      "passed": true
+    },
+    {
+      "label": "layer 4 from simulator layer 3",
+      "max_absolute_error": 4.76837158203125e-07,
+      "passed": true
+    },
+    {
+      "label": "layer 5 from simulator layer 4",
+      "max_absolute_error": 7.152557373046875e-07,
+      "passed": true
+    },
+    {
+      "label": "layer 6 from simulator layer 5",
+      "max_absolute_error": 9.5367431640625e-06,
+      "passed": true
+    },
+    {
+      "label": "layer 7 from simulator layer 6",
+      "max_absolute_error": 8.940696716308594e-07,
+      "passed": true
+    },
+    {
+      "label": "layer 8 from simulator layer 7",
+      "max_absolute_error": 1.1920928955078125e-07,
+      "passed": true
+    },
+    {
+      "detail": "36/2560 recorded final rows differ; max abs error 2.74516642e-05, max scaled error 2.74516642e-05 at row 1715: 0.04317202791571617 versus 0.043144576251506805",
+      "label": "layer 9 from simulator layer 8",
+      "passed": false
+    },
+    {
+      "label": "layer 10 from simulator layer 9",
+      "max_absolute_error": 1.9073486328125e-06,
+      "passed": true
+    },
+    {
+      "label": "layer 11 from simulator layer 10",
+      "max_absolute_error": 4.172325134277344e-07,
+      "passed": true
+    },
+    {
+      "label": "layer 12 from simulator layer 11",
+      "max_absolute_error": 1.7881393432617188e-07,
+      "passed": true
+    },
+    {
+      "label": "layer 13 from simulator layer 12",
+      "max_absolute_error": 1.1920928955078125e-07,
+      "passed": true
+    },
+    {
+      "label": "layer 14 from simulator layer 13",
+      "max_absolute_error": 1.5497207641601562e-05,
+      "passed": true
+    },
+    {
+      "label": "layer 15 from simulator layer 14",
+      "max_absolute_error": 3.5762786865234375e-07,
+      "passed": true
+    },
+    {
+      "label": "layer 16 from simulator layer 15",
+      "max_absolute_error": 1.7881393432617188e-07,
+      "passed": true
+    },
+    {
+      "label": "layer 17 from simulator layer 16",
+      "max_absolute_error": 4.470348358154297e-07,
+      "passed": true
+    },
+    {
+      "detail": "2469/2560 recorded final rows differ; max abs error 0.00355863571, max scaled error 0.00186395645 at row 1: 0.03245502710342407 versus 0.030591070652008057",
+      "label": "layer 18 from simulator layer 17",
+      "passed": false
+    },
+    {
+      "label": "layer 19 from simulator layer 18",
+      "max_absolute_error": 4.76837158203125e-06,
+      "passed": true
+    },
+    {
+      "label": "layer 20 from simulator layer 19",
+      "max_absolute_error": 2.980232238769531e-07,
+      "passed": true
+    },
+    {
+      "label": "layer 21 from simulator layer 20",
+      "max_absolute_error": 5.960464477539062e-07,
+      "passed": true
+    },
+    {
+      "label": "layer 22 from simulator layer 21",
+      "max_absolute_error": 3.814697265625e-06,
+      "passed": true
+    },
+    {
+      "label": "layer 23 from simulator layer 22",
+      "max_absolute_error": 9.5367431640625e-06,
+      "passed": true
+    },
+    {
+      "label": "layer 24 from simulator layer 23",
+      "max_absolute_error": 9.5367431640625e-07,
+      "passed": true
+    },
+    {
+      "label": "layer 25 from simulator layer 24",
+      "max_absolute_error": 1.9073486328125e-06,
+      "passed": true
+    },
+    {
+      "label": "layer 26 from simulator layer 25",
+      "max_absolute_error": 7.62939453125e-06,
+      "passed": true
+    },
+    {
+      "label": "layer 27 from simulator layer 26",
+      "max_absolute_error": 3.814697265625e-05,
+      "passed": true
+    },
+    {
+      "label": "layer 28 from simulator layer 27",
+      "max_absolute_error": 1.430511474609375e-06,
+      "passed": true
+    },
+    {
+      "label": "layer 29 from simulator layer 28",
+      "max_absolute_error": 1.6689300537109375e-06,
+      "passed": true
+    },
+    {
+      "label": "layer 30 from simulator layer 29",
+      "max_absolute_error": 7.62939453125e-06,
+      "passed": true
+    },
+    {
+      "label": "layer 31 from simulator layer 30",
+      "max_absolute_error": 1.9073486328125e-05,
+      "passed": true
+    }
+  ],
+  "fixture_command_sha256": "e05f9dfab2bd125b1476e77ee6e436e215315a34069963ca363617d1866c29ca",
+  "fixture_layout_sha256": "f49a1ff0adaf85cf717249c2d235e87a480572dca1fbea3d4d1679f127ae142c",
+  "fixture_records_sha256": "fa2e60a7617262957e8ca3c3f09727e7474aa07417c2b86e896638213035bdda",
+  "layers": 32,
+  "oracle_executable_sha256": "12083a72ac852e0fc445d2e0d173d40409c564d04e05a78e46d57f8d9f6d86b7",
+  "oracle_token": 261,
+  "passed": false,
+  "scope": "offline simulator comparison only; no hardware or Work inference",
+  "snapshot_sha256": [
+    "2031cf9624a9f3b3295668f93319b0a3aba0f650786affb119cb85db1de1d2be",
+    "58cdf9a312ec0468dc1593a0e9a952bf24c6ac061c9d48619e4c2dae8ef7c755",
+    "33c18c995b0cae841c09b0d96baceb152fc8cb043f4628eaf6a1de2186cd1a06",
+    "23e2d5d9e1753671df264bea4a50fbd1eed1dd53d9af5ca836612f7ae952d563",
+    "267668063ac177002c2fb6c9cee3f29215a0229bdd2d9a154885195435e92309",
+    "e5b10b1c1c93fd806b8e5be9d47a21b0e5c7c2c05ae3ab5251ee6b40a41265b3",
+    "e8b0a9cba3f7e12ea9d692a57fd3360c335c883045d9d67cf001f7c70968fe4b",
+    "84647096a90db77bafe61c06c8877789afdd78d8ab1a73d79b037c98d013bd6a",
+    "7e972e2a8fd9dd23ef9961e7a4407209176ce68cd590b6ad8a73e20eb1e83e38",
+    "9884bea0a5b5222b7cd02ca2804a3c3b811733ba744010dfc1f938b5b0284513",
+    "1ba1c031d3cf81146fc9437d9d4fc1f51d447cf57e1672dab408064b4aa6e129",
+    "d4bed668be7c7e27e4d7897a51087e72a4e56d43db6a86aea4237662a4ba43ea",
+    "3071fbacfe1253ce39f868b663e9500c695886e772127d4c906d4117384bb8f2",
+    "f47033068ee55cea18435e908dcbab57c8ee104f6486bbffb40a8b3bfc485903",
+    "5e5946968b883bf3641126651e1a6294561abd97879ddf5556abbc31e0c52f12",
+    "295ced56a09274f27cf6dee83274c7f3fbcd0b27c5c00937e3ac36e71e24b3c3",
+    "7f277d20e17b23429fd00a1ee5839f3aeacfcf539dc688efaa0910caadb0455d",
+    "6e41a05fcf7bd29c7117faeb5aaef85d3fddbf0478aaa8a99d1cb1bdfc5d8f1e",
+    "64521480ee03eff062410c1a70d2c9aaf1052596c64eaa2ea02d494d4fad2d42",
+    "8326c237f037f1dabfad626ed80d8701e66888247821f1c3a50dc9909091e659",
+    "492d50e438c06a3f92281567f4b411917b490077ec33cd0196022dfc63ada1d5",
+    "d99b4b1287f534ec252e71ff161521bf6ffb72128fac48aca945f58ba82c041d",
+    "b87f1a46cdd6a95b96d195bd61f67d56d0b302588e3e4fa58ef5c4172f91d34a",
+    "2ccfff5ec31038bc2f001a479cedaec46323a2946656210742f15b137b3866d2",
+    "49a0dd31fe76e2e947271bfe159ddedf30e531f03d0a73836db9c3e677db48a8",
+    "d3896c2fe54a5515abf652835349bfc49c3f021147edc7dd2fae5089548229b1",
+    "1fc0b0d3c61baa88a805450a08fb19c7500dc739ef8d22c7649dfb01b3d236a7",
+    "3518c51e5ab820574f0d652d8df4b657ad6fe9d884286fe976a3bfdf9f120e3e",
+    "86efde314c9f51c338a0d34c60a59baa1deffa82a7d2d6a1e991f666e89508a7",
+    "dfb02cc846eebe3b6830bc4052fffbb368a67534a5bbb7bd38edd6f37edf474e",
+    "06574701d208aba4917c996e0b6dd6d602d36bf677175f321b59a020c7a7120e",
+    "cd98788adf4debf5984949e0bad9186caa090f02b518e7600b07d31bfcc3b272"
+  ],
+  "token_matches": true
+}
