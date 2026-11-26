@@ -7,12 +7,16 @@ matches the saved model identity. Using it, I generated the combined 32-layer
 fixture for the paired K/V, paired FFN, fused RMS/save image: 425 prompt steps
 or 428 decode steps, with 2,740,473,856 staged weight bytes. The simulator
 runner's length guard recognizes this stream and its focused marker/count
-test passes. The full decode simulation is active at poll 9,300. Boundaries
-for layers 0–28 match the earlier simulator capture byte for byte, including
+test passes. The full decode simulation is active at poll 10,600. Boundaries
+for layers 0–30 match the earlier simulator capture byte for byte, including
 dense-attention layers 3, 7, 11, and 15. The latest hashes are layer 26
 `1fc0b0d3c61baa88a805450a08fb19c7500dc739ef8d22c7649dfb01b3d236a7`,
-27 `3518c51e5ab820574f0d652d8df4b657ad6fe9d884286fe976a3bfdf9f120e3e`, and
-28 `86efde314c9f51c338a0d34c60a59baa1deffa82a7d2d6a1e991f666e89508a7`.
+28 `86efde314c9f51c338a0d34c60a59baa1deffa82a7d2d6a1e991f666e89508a7`,
+29 `dfb02cc846eebe3b6830bc4052fffbb368a67534a5bbb7bd38edd6f37edf474e`, and
+30 `06574701d208aba4917c996e0b6dd6d602d36bf677175f321b59a020c7a7120e`.
+The simulator process is still active at about 99% host CPU with the graph
+progress word unchanged after layer 30; this is emulator work, not board
+execution.
 
 A provisional same-input CPU audit used the pinned model and authenticated
 oracle. Initial layer 0 and 14 of 15 transitions through layer 15 passed; the

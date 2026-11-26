@@ -503,13 +503,18 @@ The guard now computes the supported step count from the graph markers, and
 the focused rejection/count test passes.
 
 The first full numerical simulation of this combined graph is active in
-session 31294. At poll 9,300 it had captured layers 0–28. Each 2,560-element
-F32 boundary through layer 28 is byte-identical to the earlier full simulator
+session 31294. At poll 10,600 it had captured layers 0–30. Each 2,560-element
+F32 boundary through layer 30 is byte-identical to the earlier full simulator
 capture. Latest layer hashes:
 
-- Layer 26: `1fc0b0d3c61baa88a805450a08fb19c7500dc739ef8d22c7649dfb01b3d236a7`
-- Layer 27: `3518c51e5ab820574f0d652d8df4b657ad6fe9d884286fe976a3bfdf9f120e3e`
 - Layer 28: `86efde314c9f51c338a0d34c60a59baa1deffa82a7d2d6a1e991f666e89508a7`
+- Layer 29: `dfb02cc846eebe3b6830bc4052fffbb368a67534a5bbb7bd38edd6f37edf474e`
+- Layer 30: `06574701d208aba4917c996e0b6dd6d602d36bf677175f321b59a020c7a7120e`
+
+A host process snapshot showed the simulator consuming about 99% CPU while
+its graph progress word remained at `0x51350d53` after the layer-30 boundary.
+That is CPU-side emulator work, not P100A execution or a model throughput
+measurement.
 
 A provisional same-input CPU audit used the pinned model SHA-256
 `00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4` and
