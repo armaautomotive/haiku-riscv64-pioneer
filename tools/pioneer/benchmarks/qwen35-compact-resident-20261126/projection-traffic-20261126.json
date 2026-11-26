@@ -1,0 +1,25 @@
+{
+  "scope": "Offline audit of recorded 436-step compact graph projection assignments only; no hardware execution, bandwidth measurement or inference result. Includes neither embeddings, normalization, activation/state traffic nor protocol overhead.",
+  "fixture_templates_sha256": "3a1e8119c9a8f247ec3d638f3c1fae0ce8fea40ce34e3ec666ecbb52ffc43183",
+  "fixture_records_sha256": "456b4d67a22922b7f3ae64b079440d9ad0fbd34f0bbd9e8d4c6ff5970e807523",
+  "fixture_layout_sha256": "deb4a0f04a0bb48bf2cbc21838a27f6ce59f40df9811ff2746dba1d7f982f717",
+  "tool_source_sha256": "d6b731314298f6cc0d98dfd9f2f6e83295b216c24ffa1d5938bb80eb5256a0ae",
+  "log_sha256": "6d65ca62c2433d657dfff6da7f5e385e95eb78fa8b3b41cc799b8c0585ef89e9",
+  "model_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+  "projection_steps": 169,
+  "active_worker_histogram": {
+    "64": 16,
+    "120": 153
+  },
+  "projection_weight_bytes": 2734387200,
+  "bank_weight_bytes": [
+    390670336,
+    390758912,
+    390368768,
+    390665216,
+    390564864,
+    390769664,
+    390589440
+  ],
+  "sum_of_largest_bank_per_step_bytes": 405715968
+}

@@ -1,5 +1,38 @@
 # Compact resident simulator image, 2026-11-26
 
+## Recorded projection traffic and worker use (2026-11-26)
+
+The auditor reads the actual 436-step compact decode fixture, validates all
+120 installed descriptors and every recorded worker command, checks each
+projection invocation and rejects overlapping weight segments in the same
+step. Its 169 projection steps request `2,734,387,200` weight bytes in total.
+The seven banks receive 390,368,768 to 390,769,664 bytes each over the decode.
+Of those projection steps, 153 assign weight work to all 120 workers; the
+other 16 assign it to 64 workers. These are the key and value projections in
+eight dense layers, which currently share an output scratch region and run in
+separate steps. The other workers participate in the fleet protocol, but do
+not execute the matrix projection on those steps. This does not yet meet the
+user's request to use all cores for those projections.
+
+For planning only, 100 tokens/sec would require `273.44 GB/s` of projection
+weight requests alone if all recorded weights are fetched for each token.
+Tenstorrent specifies 448 GB/s peak memory bandwidth for P100A:
+https://docs.tenstorrent.com/aibs/blackhole/installation.html . An idealized
+calculation assuming seven equal independent 64 GB/s banks and no overlap
+between graph steps gives `405,715,968 / 64e9 = 6.34 ms` per token for these
+weight reads, leaving 3.66 ms of the 10 ms target for everything else. This
+assumption is not a measured bank capability, and the calculation omits
+embeddings, activations, state, non-projection work, barriers and overhead;
+it is neither a throughput measurement nor a guarantee of attainability.
+
+The evidence log and fixture/tool hashes are `projection-traffic-20261126.log`
+and `projection-traffic-20261126.json`. The overlap checker passed ASan/UBSan;
+corrupt template and truncated record controls were rejected. No card was
+accessed. A direct next rewrite opportunity is to give the independent key
+and value projections disjoint scratch and schedule them together across the
+fleet, then prove state ordering and numerical equivalence before using it.
+
+
 ## Resident compiler stack-chain evidence (2026-11-26)
 
 The compact builder can optionally emit GCC stack call graphs. Enabling this

@@ -1,5 +1,14 @@
 # Latest offline checks, 2026-11-26
 
+An audit of the recorded compact 436-step decode found 153 projection steps
+with 120 active matrix workers and 16 with 64; the latter are separate dense
+key and value projections that currently share scratch. The weight requests
+total 2,734,387,200 bytes per decode under this schedule. This is a fixture
+analysis, not measured bandwidth or throughput. Pairing K/V with disjoint
+scratch is a direct rewrite opportunity to use all cores on those steps;
+state ordering and correctness must be established. See
+`benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
 The exact normal-counter resident image rebuilt byte-for-byte with compiler
 stack call-graph output. The merged compilation graphs show a longest known
 static chain of 4,656 bytes from the resident entry, with no unresolved,
