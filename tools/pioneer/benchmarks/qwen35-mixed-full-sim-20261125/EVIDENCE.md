@@ -159,3 +159,27 @@ maximum scaled error `1.55971315e-06`. Logs and retained actual outputs are
 corresponding `*-actual-20261126.bin` files. These are isolated layers with
 independent inputs, not a successful sequential full-model run. The 8-/16-
 layer prefix and hybrid full-model simulations are still active.
+### Offline intermediate sensitivity experiment (2026-11-26)
+
+The standalone CPU oracle, used only offline and never as a Work fallback, can
+now insert a finite 2,560-float replacement at a selected layer boundary. It
+reads back the written tensor and rejects short, long, non-finite, symlink and
+out-of-range replacement inputs. The authenticated model and the output files
+are unchanged by the injection mechanism. Replacing layer 15 with the oracle's
+own layer-15 output produced all 32 layers, logits and token byte-for-byte
+identical to the original reference. Injecting the retained isolated simulator
+layer-15 output twice gave byte-identical results across both runs.
+
+For that one injection, maximum absolute differences versus the independent
+baseline were `2.68220901e-07` at layer 15, `9.53674316e-07` at layer 24,
+`0.00655296445` at layer 25 and `0.198349595` at layer 31. Both selected token
+`261`. Optional layer-25 tracing left both complete runs byte-identical to
+their untraced equivalents. The trace found max absolute differences of
+`2.39908695e-06` at attention normalization and `0.000956450822` at the
+recurrent attention output, followed by `0.00655030459` at FFN output.
+The experiment demonstrates sensitivity to this particular perturbation; it
+does not explain the full simulator mismatch, validate a full device result,
+justify relaxed tolerances, or demonstrate throughput or recovery. The oracle
+logs and outputs are in `/private/tmp/q35-oracle-layer15-*-verified-20261126*`
+and `/private/tmp/q35-oracle-layer25-trace-*-20261126*`. Continue the running
+prefix and hybrid comparisons and investigate the numerical cause.
