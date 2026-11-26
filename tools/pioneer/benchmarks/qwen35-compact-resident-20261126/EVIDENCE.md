@@ -503,13 +503,13 @@ The guard now computes the supported step count from the graph markers, and
 the focused rejection/count test passes.
 
 The first full numerical simulation of this combined graph is active in
-session 31294. At poll 5,800 it had captured layers 0–17. Each 2,560-element
-F32 boundary through layer 17 is byte-identical to the earlier full simulator
+session 31294. At poll 6,600 it had captured layers 0–19. Each 2,560-element
+F32 boundary through layer 19 is byte-identical to the earlier full simulator
 capture. Latest layer hashes:
 
-- Layer 15: `295ced56a09274f27cf6dee83274c7f3fbcd0b27c5c00937e3ac36e71e24b3c3`
-- Layer 16: `7f277d20e17b23429fd00a1ee5839f3aeacfcf539dc688efaa0910caadb0455d`
 - Layer 17: `6e41a05fcf7bd29c7117faeb5aaef85d3fddbf0478aaa8a99d1cb1bdfc5d8f1e`
+- Layer 18: `64521480ee03eff062410c1a70d2c9aaf1052596c64eaa2ea02d494d4fad2d42`
+- Layer 19: `8326c237f037f1dabfad626ed80d8701e66888247821f1c3a50dc9909091e659`
 
 A provisional same-input CPU audit used the pinned model SHA-256
 `00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4` and
@@ -522,6 +522,17 @@ CPU continuation runs selected token 261. The captured boundaries remain
 provisional until the 32-layer simulator completes, and the CPU mismatch
 means this is not a numerical full-model pass. Machine-readable results are
 in `provisional-same-input-audit-20261126.json`.
+
+A targeted CPU replay used the current capture's exact layer-17 activation
+(SHA-256 `6e41a05fcf7bd29c7117faeb5aaef85d3fddbf0478aaa8a99d1cb1bdfc5d8f1e`).
+It reproduced the layer 17→18 discrepancy on 2,469/2,560 values, maximum
+absolute error `0.00355863571` and maximum scaled error `0.00186395645` at row
+1. The CPU continuation still chose token 261. Candidate layer 18 is byte-
+identical to the earlier simulator capture. This agrees with the prior
+isolated layer-18 investigation, which localized sensitivity to a one-value
+Q8_K quantization threshold in the recurrent-attention output projection;
+the strict numerical discrepancy remains. See
+`provisional-layer18-audit-20261126.json`.
 
 No second position or full-model final output has been verified. This remains
 simulator evidence, not physical P100A execution. No model load time, prompt

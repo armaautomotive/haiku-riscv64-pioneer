@@ -7,20 +7,23 @@ matches the saved model identity. Using it, I generated the combined 32-layer
 fixture for the paired K/V, paired FFN, fused RMS/save image: 425 prompt steps
 or 428 decode steps, with 2,740,473,856 staged weight bytes. The simulator
 runner's length guard recognizes this stream and its focused marker/count
-test passes. The full decode simulation is active at poll 5,800. Boundaries
-for layers 0–17 match the earlier simulator capture byte for byte, including
-dense-attention layers 3, 7, 11, and 15. The latest hashes are layer 15
-`295ced56a09274f27cf6dee83274c7f3fbcd0b27c5c00937e3ac36e71e24b3c3`, layer
-16 `7f277d20e17b23429fd00a1ee5839f3aeacfcf539dc688efaa0910caadb0455d`, and
-layer 17 `6e41a05fcf7bd29c7117faeb5aaef85d3fddbf0478aaa8a99d1cb1bdfc5d8f1e`.
+test passes. The full decode simulation is active at poll 6,600. Boundaries
+for layers 0–19 match the earlier simulator capture byte for byte, including
+dense-attention layers 3, 7, 11, and 15. The latest hashes are layer 17
+`6e41a05fcf7bd29c7117faeb5aaef85d3fddbf0478aaa8a99d1cb1bdfc5d8f1e`,
+18 `64521480ee03eff062410c1a70d2c9aaf1052596c64eaa2ea02d494d4fad2d42`, and
+19 `8326c237f037f1dabfad626ed80d8701e66888247821f1c3a50dc9909091e659`.
 
 A provisional same-input CPU audit used the pinned model and authenticated
 oracle. Initial layer 0 and 14 of 15 transitions through layer 15 passed; the
 layer 8→9 transition repeated the existing 36/2,560-value mismatch (maximum
 absolute error `2.74516642e-05`). All 15 CPU continuation runs selected token
-261. The mismatch remains a numerical audit failure, not a full-model pass;
-the report is
-`benchmarks/qwen35-compact-resident-20261126/provisional-same-input-audit-20261126.json`.
+261. A targeted same-input replay from layer 17 reproduced the existing layer
+17→18 failure: 2,469/2,560 values differ, maximum absolute error
+`0.00355863571`; CPU token remains 261. Both mismatches remain numerical audit
+failures, not full-model passes. Reports are
+`benchmarks/qwen35-compact-resident-20261126/provisional-same-input-audit-20261126.json`
+and `benchmarks/qwen35-compact-resident-20261126/provisional-layer18-audit-20261126.json`.
 See the benchmark evidence for the existing quantization-threshold
 investigation.
 
