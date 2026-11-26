@@ -1,5 +1,26 @@
 # Latest offline checks, 2026-11-26
 
+## Current checkpoint
+
+The Tenstorrent-style dense K/V rewrite passes a four-layer, 120-simulated-
+worker graph run: all 2,560 final values match the previously CPU-validated
+four-layer reference bit-for-bit. The paired graph is still a non-loadable
+simulator candidate; no full 32-layer output, two valid warm runs, hardware
+rate, or clean physical unload has been established. A separate full paired-
+FFN diagnostic selected token 261, then failed its final-hidden-vector
+comparison at row 0 (`-2.2534914` versus `-2.3027868`); this is not a valid
+warm run. Its log is
+`/private/tmp/q35-ffn-pair-two-decodes-sim-20261126.log`.
+
+A fresh strict Haiku SSH preflight timed out before connecting. The last
+successful same-day read-only check reported no 27B/4B inference process, no
+exclusive lock, and stable driver55 generation 2 `cold0 active_owner0`; do
+not treat that earlier observation as current. No accelerator access or
+power action occurred. Repeat the process, lock, and driver-idle preflight
+before any future device access. See
+`benchmarks/qwen35-haiku-idle-20261126/EVIDENCE.md` and
+`benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
 The paired dense K/V graph now has a passing four-layer simulator result. A
 matched marker ties the 54-step fixture to its stream-version-7 image; the
 full worker audit completed, and all 2,560 final values were bit-identical to

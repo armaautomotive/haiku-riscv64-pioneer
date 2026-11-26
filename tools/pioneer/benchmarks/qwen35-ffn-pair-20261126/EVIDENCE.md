@@ -78,9 +78,26 @@ llama.cpp reference, with maximum absolute error `5.00679016e-06`
 simulator is exploratory and unqualified; the CPU reference is offline
 validation, not Work inference.
 
-The full 500-record paired decode fixture has started a two-consecutive-token
-run on one simulated fleet with separate first- and second-position reference
-files (`/private/tmp/q35-ffn-pair-two-decodes-sim-20261126.log`, session
-`88296`). It has not produced a result at this checkpoint. This result does
-not establish physical execution, firmware/NoC ownership, no-reboot recovery,
-clean unload or any hardware throughput.
+At the time this checkpoint was first recorded, the full 500-record paired
+decode fixture had started a two-consecutive-token run on one simulated fleet
+with separate first- and second-position reference files
+(`/private/tmp/q35-ffn-pair-two-decodes-sim-20261126.log`, session `88296`).
+The final outcome is recorded below. This simulation does not establish
+physical execution, firmware/NoC ownership, no-reboot recovery, clean unload
+or hardware throughput.
+
+## Full paired-FFN simulator outcome
+
+The simulator completed its first 500-record decode graph and selected token
+261, matching the supplied token reference. It then failed the final-hidden-
+vector comparison at row 0: simulated `-2.2534914016723633` versus reference
+`-2.3027868270874023`. The run stopped there; it does not show that a second
+decode position ran, and it is not a valid warm run. The simulator's reported
+9,038 seconds are simulated clock time, not P100A timing. Full log:
+`/private/tmp/q35-ffn-pair-two-decodes-sim-20261126.log`.
+
+This failure belongs to the paired-FFN variant and does not change the
+separate dense K/V paired four-layer pass recorded in
+`benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`. Full dense K/V
+simulation, physical ownership/recovery, warm outputs and hardware throughput
+remain unverified.
