@@ -503,7 +503,7 @@ The guard now computes the supported step count from the graph markers, and
 the focused rejection/count test passes.
 
 The first full numerical simulation of this combined graph is active in
-session 31294. At poll 11,300 it had captured layers 0–30. Each 2,560-element
+session 31294. At poll 11,750 it had captured layers 0–30. Each 2,560-element
 F32 boundary through layer 30 is byte-identical to the earlier full simulator
 capture. Latest layer hashes:
 
@@ -548,6 +548,15 @@ with maximum absolute error `1.90734863e-06` and selected token 261. The
 captured simulator layer 24 and 25 tensors each match the previous full-run
 snapshots byte for byte. Machine-readable result:
 `provisional-layer25-audit-20261126.json`.
+
+A targeted same-input CPU continuation from the candidate's exact layer-30
+activation (SHA-256
+`06574701d208aba4917c996e0b6dd6d602d36bf677175f321b59a020c7a7120e`)
+matched the earlier layer-31 simulator reference within the existing
+tolerance, maximum absolute error `1.90734863e-05`, and selected token 261.
+The live simulator has not yet captured layer 31; this validates the CPU
+continuation from the candidate activation, not the simulator's final stage.
+Machine-readable result: `provisional-layer31-cpu-audit-20261126.json`.
 
 No second position or full-model final output has been verified. This remains
 simulator evidence, not physical P100A execution. No model load time, prompt

@@ -7,7 +7,7 @@ matches the saved model identity. Using it, I generated the combined 32-layer
 fixture for the paired K/V, paired FFN, fused RMS/save image: 425 prompt steps
 or 428 decode steps, with 2,740,473,856 staged weight bytes. The simulator
 runner's length guard recognizes this stream and its focused marker/count
-test passes. The full decode simulation is active at poll 11,300. Boundaries
+test passes. The full decode simulation is active at poll 11,750. Boundaries
 for layers 0–30 match the earlier simulator capture byte for byte, including
 dense-attention layers 3, 7, 11, and 15. The latest hashes are layer 26
 `1fc0b0d3c61baa88a805450a08fb19c7500dc739ef8d22c7649dfb01b3d236a7`,
@@ -30,11 +30,15 @@ absolute error `2.74516642e-05`). All 15 CPU continuation runs selected token
 17→18 failure: 2,469/2,560 values differ, maximum absolute error
 `0.00355863571`; CPU token remains 261. A targeted layer 24→25 CPU replay
 passed with maximum absolute error `1.90734863e-06`, also selecting token
-261. The layer 9 and 18 mismatches remain numerical audit failures, not
-full-model passes. Reports are
-`benchmarks/qwen35-compact-resident-20261126/provisional-same-input-audit-20261126.json`
+261. A CPU continuation from the candidate layer-30 activation also passed
+the final-layer reference with maximum absolute error `1.90734863e-05` and
+selected token 261; the simulator has not yet captured layer 31. The layer 9
+and 18 mismatches remain numerical audit failures, not full-model passes.
+Reports are
+`benchmarks/qwen35-compact-resident-20261126/provisional-same-input-audit-20261126.json`,
 `benchmarks/qwen35-compact-resident-20261126/provisional-layer18-audit-20261126.json`,
-and `benchmarks/qwen35-compact-resident-20261126/provisional-layer25-audit-20261126.json`.
+`benchmarks/qwen35-compact-resident-20261126/provisional-layer25-audit-20261126.json`,
+and `benchmarks/qwen35-compact-resident-20261126/provisional-layer31-cpu-audit-20261126.json`.
 See the benchmark evidence for the existing quantization-threshold
 investigation.
 
