@@ -432,12 +432,15 @@ def main():
             weights = (directory / 'weights.bin').read_bytes()
             norm = (directory / 'norm.bin').read_bytes()
             projection = (directory / 'projection.bin').read_bytes()
-            if (len(command) != 128 or len(records) != 120 * 5 * 2048 or len(weights) != 33920
+            gate = (directory / 'gate.bin').read_bytes()
+            if (len(command) != 128 or len(records) != 120 * 6 * 2048 or len(weights) != 33920
                     or hashlib.sha256(weights).hexdigest()
                     != 'd784c0b7fe8df8aab8d4797a8ea5a2c25b5db49a84c60a3ad93819086355871d'
                     or len(norm) != 10240 or hashlib.sha256(norm).hexdigest()
                     != 'fd26aeb9265ba4588eca258e4c7fb27d2b82198eef72bbca4d8d46136b90c104'
-                    or len(projection) != 14604288):
+                    or len(projection) != 14604288 or len(gate) != 5898240
+                    or hashlib.sha256(gate).hexdigest()
+                    != '9e3596cdad68531922f9a5e8775e576d4254ba45f66281c203c3baa64d0cadbb'):
                 raise ValueError('unexpected authenticated resident sequence fixture')
             tensors = ((0, 14417920, 'e45da19dfd2000f2c4b40f456a5663dc6677f7990a1626c897e7219387d9ca91'),
                        (14417920, 92160, 'c66aaea468bd19d584e6259ab39ef7770ed29a93d59ebe0dcdb9dd04d1f1d16d'),
@@ -474,18 +477,25 @@ def main():
                 count = min(0x10000, len(projection) - offset, 0x200000 - (address & 0x1fffff))
                 write(bar + 0x400000 + (address & 0x1fffff), projection[offset:offset + count])
                 offset += count
+            offset = 0
+            while offset < len(gate):
+                address = 0x29000000 + offset
+                select(2, address, 18, 12)
+                count = min(0x10000, len(gate) - offset, 0x200000 - (address & 0x1fffff))
+                write(bar + 0x400000 + (address & 0x1fffff), gate[offset:offset + count])
+                offset += count
             for address in (0x20000000, 0x20010000, 0x20020000):
                 select(2, address, 18, 12)
                 write(bar + 0x400000 + (address & 0x1fffff),
                       struct.pack('<2560I', *([0x7fc00000] * 2560)))
-            for address, rows in ((0x21000000, 8192), (0x21010000, 32), (0x21020000, 32)):
+            for address, rows in ((0x21000000, 8192), (0x21010000, 32), (0x21020000, 32), (0x21030000, 4096)):
                 select(2, address, 18, 12)
                 write(bar + 0x400000 + (address & 0x1fffff),
                       struct.pack(f'<{rows}I', *([0x7fc00000] * rows)))
             for core in range(120):
                 address = 0x04000000 + core * 0x100000
                 select(2, address, 18, 12)
-                write(bar + 0x400000 + (address & 0x1fffff), records[core * 10240:(core + 1) * 10240])
+                write(bar + 0x400000 + (address & 0x1fffff), records[core * 12288:(core + 1) * 12288])
             select_worker(0)
             write(bar + 0xab080, command[:64])
             write(bar + 0xab0c0, command[64:])
@@ -503,9 +513,9 @@ def main():
                 raise RuntimeError('resident sequence did not reach its intentional terminal fault')
             for core, words in enumerate(snapshots):
                 if (words[2:8] != (1, 0, 1, 4, 4, 5)
-                        or words[9:15] != (0x31464735, 1, 4, 120, 0x80000004, 0)
+                        or words[9:15] != (0x31464735, 1, 5, 120, 0x80000004, 0)
                         or words[15] != core):
-                    raise RuntimeError(f'core {core}: sequence failed before all four barriers: {words}')
+                    raise RuntimeError(f'core {core}: sequence failed before all five barriers: {words}')
             for name, address in (('embedding', 0x20000000), ('residual save', 0x20010000)):
                 select(2, address, 18, 12)
                 actual = struct.unpack('<2560f', read(bar + 0x400000 + (address & 0x1fffff), 2560 * 4))
@@ -530,6 +540,7 @@ def main():
             print(f'RMS: 2,560 values match independent reference; maximum absolute error {maximum:.9g}', flush=True)
             # The RMS output has already been independently checked above.
             # Projections quantize it to Q8_K or Q8_0 before the dot product.
+            actual_rms = actual
             reference_fixtures = {quant: projection + struct.pack('<2560f',
                 *quantized_activation_reference(actual, quant)) for quant in ('q5', 'q8')}
             specs = (('QKV', 8192, 0x21000000, 'q5', 2816, 0),
@@ -550,11 +561,25 @@ def main():
                         raise RuntimeError(f'{name} row {row}: {got} differs from {want}; normalized error {ratio}')
                 print(f'{name}: {rows} values match independent reference; maximum absolute error '
                       f'{maximum:.9g}; maximum normalized error {worst:.9g}', flush=True)
+            gate_input = struct.pack('<2560f', *quantized_activation_reference(actual_rms, 'q4'))
+            values, norms = projection_reference(gate + gate_input, 'q4', len(gate), 2304, 4096)
+            address = 0x21030000
+            select(2, address, 18, 12)
+            gate_actual = struct.unpack('<4096f', read(bar + 0x400000 + (address & 0x1fffff), 4096 * 4))
+            maximum = worst = 0.0
+            for row, (got, want, norm_value) in enumerate(zip(gate_actual, values, norms)):
+                error = abs(got - want)
+                ratio = error / max(1.0, norm_value)
+                maximum, worst = max(maximum, error), max(worst, ratio)
+                if not math.isfinite(got) or ratio > 2e-6:
+                    raise RuntimeError(f'gate row {row}: {got} differs from {want}; normalized error {ratio}')
+            print(f'gate: 4096 values match independent reference; maximum absolute error '
+                  f'{maximum:.9g}; maximum normalized error {worst:.9g}', flush=True)
             select_worker(0)
             if struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
                 raise RuntimeError('intentionally faulted sequence published a candidate')
-            print('PASS resident graph completed embedding, residual, RMS and fused projection barriers '
-                  'on 120 simulated workers; fifth record intentionally faults; NO HARDWARE')
+            print('PASS resident graph completed embedding, residual, RMS, fused and gate projection barriers '
+                  'on 120 simulated workers; sixth record intentionally faults; NO HARDWARE')
             return
 
         if args.resident_fault_command:

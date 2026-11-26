@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-// Build four dependent resident stream records using pinned 4B weights.
+// Build five dependent resident stream records using pinned 4B weights.
 // This synthetic layout is for simulator testing only and grants no authority.
 #define PIONEER_QWEN35_DEVICE_DISPATCH 1
 #define PIONEER_QWEN35_RECOVERY_COMPILE_ONLY 1
@@ -93,6 +93,19 @@ int main(int argc,char** argv)
             std::memcpy(projection.data()+offsets[n]+p*page.size(),page.data(),count);
         }
     }
+    const auto* gateTensor=sourceModel.Find("blk.0.attn_gate.weight");
+    std::vector<uint8_t> gate(5898240);
+    if (!gateTensor || gateTensor->type!=12 || gateTensor->inputs!=Hidden || gateTensor->outputs!=4096) {
+        fclose(source);return 1;
+    }
+    const unsigned gateIndex=unsigned(gateTensor-sourceModel.Tensors().data());
+    for (unsigned p=0;p*page.size()<gate.size();p++) {
+        if (!reader.ReadPage(sourceModel,gateIndex,0,4096,p,page.data(),page.size())) {
+            fclose(source);return 1;
+        }
+        const size_t count=std::min(page.size(),gate.size()-p*page.size());
+        std::memcpy(gate.data()+p*page.size(),page.data(),count);
+    }
     if (!sourceModel.Stable() || fstat(fd,&after) || !SameFile(before,after)) { fclose(source);return 1; }
     fclose(source);
 
@@ -136,8 +149,22 @@ int main(int argc,char** argv)
     if (!sharing->Seal() || sharing->Groups()!=2) return 1;
     for (unsigned core=0;core<DataflowCoreCount;core++)
         if (!sharing->Get(core,projections[core].sharing) || !projections[core].Valid()) return 1;
+    TensorSpace gateWeight{};gateWeight.type=12;gateWeight.inputs=Hidden;
+    gateWeight.place={4096,1440,1,16,{{0,0x29000000,0,4096}}};
+    RowSpace gateOutput{4096,4,1,16,{{0,0x21030000,0,4096}}};
+    DataflowProjectionProgram gateProgram{};PioneerQ35ProjectionProgram gateSchedule{};
+    if (!DataflowProgramBuilder::Build(gateWeight,model.activation[1],Hidden,gateOutput,routes,
+            gateProgram,gateSchedule) || gateProgram.activeCores!=DataflowCoreCount) return 1;
+    auto gateInvocations=std::make_unique<DataflowCoreInvocation[]>(DataflowCoreCount);
+    auto gateSharing=std::make_unique<DataflowActivationSharePlan>();
+    for (unsigned core=0;core<DataflowCoreCount;core++)
+        if (!DataflowProgramBuilder::BindCore(gateProgram,core,gateInvocations[core])
+            || !gateInvocations[core].assignment.active || !gateSharing->Add(gateInvocations[core])) return 1;
+    if (!gateSharing->Seal() || gateSharing->Groups()!=1) return 1;
+    for (unsigned core=0;core<DataflowCoreCount;core++)
+        if (!gateSharing->Get(core,gateInvocations[core].sharing) || !gateInvocations[core].Valid()) return 1;
     std::vector<DataflowGraphRunDescriptor> descriptors(DataflowCoreCount);
-    std::vector<DataflowStreamRecord> records(DataflowCoreCount*5);
+    std::vector<DataflowStreamRecord> records(DataflowCoreCount*6);
     std::array<DataflowBarrierPacket,2> command{};
     for (unsigned core=0;core<DataflowCoreCount;core++) {
         const unsigned base=0x04000000+core*0x100000;
@@ -145,7 +172,7 @@ int main(int argc,char** argv)
             99,core,0,routes[0][0],base,DataflowGraphDecodeSteps};
         const Range lease={0,base,DataflowGraphDecodeSteps*DataflowStreamRecordBytes};
         auto& descriptor=descriptors[core];
-        if (!DataflowGraphRunBuild(binding,lease,routes,token,{5,1,DataflowGraphPromptSteps},
+        if (!DataflowGraphRunBuild(binding,lease,routes,token,{6,1,DataflowGraphPromptSteps},
                 1,1000000,0,descriptor)) return 1;
         if (!core) {
             DataflowResidentCommand dynamic{};
@@ -154,26 +181,27 @@ int main(int argc,char** argv)
         }
         DataflowEmbeddingInvocation e{};DataflowResidualInvocation r{};DataflowRmsInvocation n{};
         if (!DataflowEmbeddingProgramBuilder::BindCore(embedding,core,e)
-            || !DataflowStreamEncode(e,99,1,records[core*5])
+            || !DataflowStreamEncode(e,99,1,records[core*6])
             || !DataflowResidualProgramBuilder::BindCore(residual,core,r)
-            || !DataflowStreamEncode(r,99,2,records[core*5+1])
+            || !DataflowStreamEncode(r,99,2,records[core*6+1])
             || !DataflowRmsProgramBuilder::BindCore(rms,core,n)
-            || !DataflowStreamEncode(n,99,3,records[core*5+2])
-            || !DataflowStreamEncode(projections[core],99,4,records[core*5+3])) return 1;
-        // The final zero record deliberately terminates after four barriers.
+            || !DataflowStreamEncode(n,99,3,records[core*6+2])
+            || !DataflowStreamEncode(projections[core],99,4,records[core*6+3])
+            || !DataflowStreamEncode(gateInvocations[core],99,5,records[core*6+4])) return 1;
+        // The final zero record deliberately terminates after five barriers.
     }
     const std::string directory=argv[2];
-    const std::array<std::string,6> paths={directory+"/templates.bin",directory+"/command.bin",
-        directory+"/records.bin",directory+"/weights.bin",directory+"/norm.bin",directory+"/projection.bin"};
-    const std::array<const void*,6> data={descriptors.data(),command.data(),records.data(),weights.data(),norm.data(),projection.data()};
-    const std::array<size_t,6> size={descriptors.size()*sizeof(descriptors[0]),sizeof(command),
-        records.size()*sizeof(records[0]),weights.size(),norm.size(),projection.size()};
+    const std::array<std::string,7> paths={directory+"/templates.bin",directory+"/command.bin",
+        directory+"/records.bin",directory+"/weights.bin",directory+"/norm.bin",directory+"/projection.bin",directory+"/gate.bin"};
+    const std::array<const void*,7> data={descriptors.data(),command.data(),records.data(),weights.data(),norm.data(),projection.data(),gate.data()};
+    const std::array<size_t,7> size={descriptors.size()*sizeof(descriptors[0]),sizeof(command),
+        records.size()*sizeof(records[0]),weights.size(),norm.size(),projection.size(),gate.size()};
     unsigned written=0;
     for (;written<paths.size();written++) if (!WriteNew(paths[written],data[written],size[written])) break;
     if (written!=paths.size()) {
         for (unsigned i=0;i<written;i++) std::remove(paths[i].c_str());
         return 1;
     }
-    std::puts("prepared authenticated 4B weights and four synthetic resident graph steps; NO HARDWARE");
+    std::puts("prepared authenticated 4B weights and five synthetic resident graph steps; NO HARDWARE");
     return 0;
 }
