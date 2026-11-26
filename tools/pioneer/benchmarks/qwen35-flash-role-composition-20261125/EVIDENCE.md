@@ -62,3 +62,15 @@ passed. The combined fake-platform test also cross-compiled for Haiku/RV64
 with warnings as errors. Neither test supplies real shared-session ownership,
 NoC or firmware/DMA exclusion, release authority or physical recovery proof.
 No card was accessed, and no throughput was measured.
+
+## Held owner through both actual PCI adapters — 2026-11-26
+
+This extends the previous routing-only fake-MMIO test. A per-core role window
+model and separate flash window model now run the actual held recovery owner,
+role PCI adapter, flash role scope and flash PCI view together. All 120
+workers' role images, boot words and flash windows are captured, staged and
+restored, then compared with the modeled original memory. The owner's release
+attempt is rejected. The authorization and MMIO devices are fake, including
+the held-image permission; no physical fleet, NoC, firmware, DMA or session
+proof is supplied. The ASan/UBSan flash suite passed, and the combined test
+cross-compiled for Haiku/RV64 with warnings as errors.
