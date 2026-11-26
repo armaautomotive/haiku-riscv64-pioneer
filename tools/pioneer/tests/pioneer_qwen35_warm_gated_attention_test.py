@@ -19,6 +19,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('oracle', 'model', 'cpu_trace', 'sim_gated', 'sim_layer', 'sim_residual'):
         parser.add_argument(name, type=Path)
+    parser.add_argument('--float-gated', type=Path,
+                        help='also check an independently calculated gated attention tensor')
     args = parser.parse_args()
     cpu_files = sorted(p for p in args.cpu_trace.iterdir() if p.is_file())
     if len(cpu_files) < 68:
@@ -56,6 +58,22 @@ def main():
                                              (simulated_dir / 'position1-layer3.bin').read_bytes())
         residual_error = compare_recorded_layer(args.sim_residual.read_bytes(),
                                                 (simulated_dir / 'trace-attn_residual-3.bin').read_bytes())
+        float_errors = None
+        if args.float_gated:
+            float_gated = args.float_gated.read_bytes()
+            if len(float_gated) != len(gated) or any(not math.isfinite(value)
+                    for (value,) in struct.iter_unpack('<f', float_gated)):
+                raise ValueError('invalid independent float attention')
+            float_result, float_dir = run('float', args.float_gated)
+            if float_result.returncode:
+                raise RuntimeError('float injection failed: ' + float_result.stderr[-1000:])
+            if (float_dir / 'trace-attn_gated-3.bin').read_bytes() != float_gated:
+                raise AssertionError('independent attention was not read back exactly')
+            float_errors = (compare_recorded_layer(gated, float_gated, 4096),
+                            compare_recorded_layer(args.sim_residual.read_bytes(),
+                                                   (float_dir / 'trace-attn_residual-3.bin').read_bytes()),
+                            compare_recorded_layer(args.sim_layer.read_bytes(),
+                                                   (float_dir / 'position1-layer3.bin').read_bytes()))
         short = root / 'short.bin'; short.write_bytes(gated[:-4])
         nonfinite = root / 'nonfinite.bin'; nonfinite.write_bytes(struct.pack('<f', float('nan')) + gated[4:])
         link = root / 'link.bin'; link.symlink_to(args.sim_gated.resolve())
@@ -65,7 +83,8 @@ def main():
             if result.returncode == 0:
                 raise AssertionError(f'{name} injection was accepted')
     print(f'PASS {len(cpu_files)} control artifacts; gated attention read back exactly; '
-          f'layer max abs {layer_error:.9g}, residual max abs {residual_error:.9g}; NO HARDWARE')
+          f'layer max abs {layer_error:.9g}, residual max abs {residual_error:.9g}; '
+          f'independent float errors {float_errors}; NO HARDWARE')
 
 
 if __name__ == '__main__':
