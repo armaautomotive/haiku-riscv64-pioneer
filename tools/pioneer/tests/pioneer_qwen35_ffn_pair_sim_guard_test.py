@@ -75,4 +75,17 @@ with tempfile.TemporaryDirectory() as tmp:
     (fixture / 'layer-slice.marker').unlink()
     result = subprocess.run(base + ['--recorded-layer-input', str(root / 'input')], capture_output=True, text=True)
     assert result.returncode and 'requires a marked fixture and its input' in result.stderr
+    output_flags = ('--recorded-wide-output', '--recorded-qkv-output',
+                    '--recorded-z-output', '--recorded-scalar-output')
+    for flag in output_flags:
+        result = subprocess.run(base + [flag], capture_output=True, text=True)
+        assert result.returncode and 'requires an isolated simulator-only layer slice' in result.stderr
+        assert 'no-library' not in result.stderr
+    (fixture / 'layer-slice.marker').touch()
+    for left in range(len(output_flags)):
+        for right in range(left + 1, len(output_flags)):
+            result = subprocess.run(base + ['--recorded-layer-input', str(root / 'input'),
+                                           output_flags[left], output_flags[right]], capture_output=True, text=True)
+            assert result.returncode and 'only one isolated output width may be selected' in result.stderr
+            assert 'no-library' not in result.stderr
 print('PASS paired FFN image/fixture mismatch rejected before simulator load; NO HARDWARE')

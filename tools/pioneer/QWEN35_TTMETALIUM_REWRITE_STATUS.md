@@ -16,8 +16,8 @@ within `5.00679016e-06` and were byte-identical to the size-optimized image.
 The layer-18 same-input replay reproduced the captured discrepancy: attention
 normalization passed bit-for-bit, but the attention residual and final layer
 failed the existing numerical tolerance. The QKV projection slice passed all
-8,192 rows with maximum error `5.00679016e-06`; the cause remains under
-investigation. These checks do not establish full-model correctness,
+8,192 rows with maximum error `5.00679016e-06`; see the newer counterfactual
+above. These checks do not establish full-model correctness,
 physical recovery or throughput. No card was accessed. Continue only the
 resident rewrite and recovery before benchmarking and Assistant integration.
 See `benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md` and
