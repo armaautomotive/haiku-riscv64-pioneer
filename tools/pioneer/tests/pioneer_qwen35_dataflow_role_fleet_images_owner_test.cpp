@@ -114,6 +114,7 @@ struct ImagesIO {
         return true;
     }
 };
+#ifndef PIONEER_Q35_IMAGES_FIXTURE_ONLY
 int main()
 {
     std::vector<uint32_t> storage(DataflowRoleFleetImagesOwner::RequiredWords());
@@ -282,3 +283,4 @@ int main()
     }
     std::puts("PASS 120-core composed code/boot/shim ownership and cross-region faults; SIMULATED ONLY");
 }
+#endif

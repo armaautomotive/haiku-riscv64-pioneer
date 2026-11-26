@@ -240,6 +240,7 @@ struct RecoveryIO {
         return true;
     }
 };
+#ifndef PIONEER_Q35_RECOVERY_FIXTURE_ONLY
 int main()
 {
     std::vector<uint32_t> codeSnapshot(DataflowRoleFleetRecoveryOwner::CodeWords());
@@ -794,3 +795,4 @@ int main()
     std::puts("PASS 120-core composed image/private-RAM recovery and cross-region faults; SIMULATED ONLY");
     return 0;
 }
+#endif

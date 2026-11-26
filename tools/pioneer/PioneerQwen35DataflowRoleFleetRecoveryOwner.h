@@ -24,6 +24,21 @@ class DataflowRoleFleetRecoveryOwner {
     Phase fPhase=Empty;
     DataflowRoleFleetImagesOwner fImages;
     DataflowRoleFleetLocalRamOwner fRam;
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+    uint32_t* fFlashRamSnapshot=nullptr;uint32_t* fFlashExtraSnapshot=nullptr;
+    static bool FlashHostDisjoint(const uint32_t* a,unsigned aw,const uint32_t* b,unsigned bw) {
+        const uintptr_t x=reinterpret_cast<uintptr_t>(a),y=reinterpret_cast<uintptr_t>(b);
+        if (!a || !b || (x&3) || (y&3) || !aw || !bw || uintptr_t(aw)>UINTPTR_MAX/4
+            || uintptr_t(bw)>UINTPTR_MAX/4 || x>UINTPTR_MAX-uintptr_t(aw)*4
+            || y>UINTPTR_MAX-uintptr_t(bw)*4) return false;
+        return x+uintptr_t(aw)*4<=y || y+uintptr_t(bw)*4<=x;
+    }
+    template<class IO> bool FlashRamScope(IO& io,bool frozen) const {
+        return fFlashRamSnapshot && fFlashExtraSnapshot
+            && io.FlashRoleRamSnapshotSafe(fFlashRamSnapshot,RamWords(),fFlashExtraSnapshot,
+                DataflowRoleFleetImagesOwner::FlashRequiredWords(),frozen);
+    }
+#endif
     uint32_t fResetDisable[DataflowBarrierWorkers]{};
     bool fResetDisableCaptured=false,fResetDisableTouched=false;
     uint32_t fPreserveResetMask=DataflowRolePreserveResetMask;
@@ -195,7 +210,11 @@ public:
     bool ReleaseLedgerPrepared() const { return fPhase==Armed
         && (fStackless?fRam.StacklessCapturePrepared():fRam.MarkedForPossibleRelease()); }
     bool RestorationRequired() const {
-        return fPhase==Faulted || fPhase==Staged || fPhase==Armed || fPhase==ReleaseAttempted;
+        return fPhase==Faulted || fPhase==Staged || fPhase==Armed || fPhase==ReleaseAttempted
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+            || (fPhase==Captured && fImages.RestorationRequired())
+#endif
+            ;
     }
     bool CoveredStateRestored() const { return fPhase==Restored; }
     // Metadata for the fixed qualification's pre-release image transaction.
@@ -318,9 +337,16 @@ public:
         reader=r;writer=w;captured=has;return true;
     }
     // Capture is read-only; these states have not performed any role write.
-    bool Untouched() const { return fPhase==Empty || fPhase==Captured || fPhase==Unavailable; }
+    bool Untouched() const { return fPhase==Empty || fPhase==Unavailable || (fPhase==Captured
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+        && !fImages.RestorationRequired()
+#endif
+        ); }
     template<class IO> bool CaptureAll(uint32_t* code,unsigned codeWords,uint32_t* ram,
         unsigned ramWords,IO& io) {
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+        if (!FlashHostDisjoint(code,codeWords,ram,ramWords)) return false;
+#endif
         if (fPhase!=Empty || fCoreLocalRestoreMode || !AllSafe(io)) return false;
         for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
             uint32_t first=0,second=0;
@@ -335,6 +361,9 @@ public:
         if (!fRam.CaptureAll(ram,ramWords,io)) {
             fPhase=fRam.RestorationRequired()?Faulted:Unavailable; return false;
         }
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+        fFlashRamSnapshot=ram;
+#endif
         if (!AllSafe(io)) {
             (void)fRam.MarkMayRunAll(io); // conservatively retain all complete RAM snapshots
             fPhase=Faulted; return false;
@@ -346,6 +375,9 @@ public:
     // requires the stronger fleet-preparation proof independently.
     template<class IO> bool CaptureAllStacklessHeldImages(uint32_t* code,unsigned codeWords,uint32_t* ram,
         unsigned ramWords,IO& io) {
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+        if (!FlashHostDisjoint(code,codeWords,ram,ramWords)) return false;
+#endif
         if (fPhase!=Empty || !AllHeldAndRouted(io)) return false;
         for (unsigned core=0;core<DataflowBarrierWorkers;core++) {
             uint32_t first=0,second=0;
@@ -359,6 +391,9 @@ public:
         if (!fImages.CaptureAll(code,codeWords,io) || !fRam.PrepareStackless(ram,ramWords)) {
             fPhase=Unavailable; return false;
         }
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+        fFlashRamSnapshot=ram;
+#endif
         if (!AllHeldAndRouted(io)) { fPhase=Unavailable; return false; }
         fStackless=true;
         fPhase=Captured; return true;
@@ -366,6 +401,47 @@ public:
     bool StacklessHeldImagesCaptured() const {
         return fPhase==Captured && fStackless && fRam.StacklessCapturePrepared();
     }
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+    // Held-only path: RAM storage, role images and the flash snapshot must be
+    // disjoint and bound to the same retained session. This does not enable a
+    // release or provide the physical scope.
+    template<class IO> bool CaptureFlashAll(uint32_t* storage,unsigned words,IO& io) {
+        if (fPhase!=Captured || !fStackless || fFlashExtraSnapshot
+            || words!=DataflowRoleFleetImagesOwner::FlashRequiredWords()
+            || !FlashHostDisjoint(fFlashRamSnapshot,RamWords(),storage,words)) return false;
+        fFlashExtraSnapshot=storage;
+        if (!FlashRamScope(io,false)) {fFlashExtraSnapshot=nullptr;return false;}
+        if (!fImages.CaptureFlashAll(storage,words,io)) {
+            if (fImages.RestorationRequired()) fPhase=Faulted;
+            else fFlashExtraSnapshot=nullptr; // preflight refused before capture or writes
+            return false;
+        }
+        if (!FlashRamScope(io,true)) {fPhase=Faulted;return false;}
+        return true;
+    }
+    template<class IO> bool StageFlashAll(const uint32_t* image,unsigned words,IO& io) {
+        if (fPhase!=Captured || !fStackless || !FlashRamScope(io,true)
+            || !FlashHostDisjoint(fFlashRamSnapshot,RamWords(),image,words)) return false;
+        if (!fImages.StageFlashAll(image,words,io) || !FlashRamScope(io,true)) {
+            if (fImages.RestorationRequired()) fPhase=Faulted;
+            return false;
+        }
+        return true;
+    }
+    // Flash was staged (or partially staged), but role-image staging and any
+    // reset release have not begun. Retry safety remains an IO obligation.
+    template<class IO> bool RestoreFlashBeforeRoleStage(IO& io) {
+        if (!fStackless || (fPhase!=Captured && fPhase!=Faulted) || fHeldImageOnlyStage
+            || fCoreLocalReleaseLedger || fResetDisableTouched || !fImages.RestorationRequired()
+            || !fRam.StacklessCapturePrepared() || !FlashRamScope(io,true)
+            || !io.HeldImageWritesConfirmed() || !io.HeldImageRollbackAllowed()
+            || !AllHeldAndRouted(io)) return false;
+        fPhase=Faulted;
+        if (!fImages.RestoreAll(io) || !FlashRamScope(io,true) || !fImages.VerifyOriginalAll(io)
+            || !VerifyResetDisable(io,false) || !AllHeldAndRouted(io)) return false;
+        fHeldImageOnlyRestored=true;fPhase=Restored;return true;
+    }
+#endif
     // The legacy combined admission keeps the stronger pre/post checks.
     // They cover prior RAM preservation and recovery of partial releases.
     template<class IO> bool CaptureAllStackless(uint32_t* code,unsigned codeWords,uint32_t* ram,
@@ -531,6 +607,12 @@ public:
     template<class IO> bool StageImages(const uint32_t* reader,unsigned readerWords,
         const uint32_t* writer,unsigned writerWords,const uint32_t* readerShim,
         unsigned readerShimWords,const uint32_t* writerShim,unsigned writerShimWords,IO& io) {
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+        // Only the held-image qualification path is composed so far.
+        (void)reader;(void)readerWords;(void)writer;(void)writerWords;
+        (void)readerShim;(void)readerShimWords;(void)writerShim;(void)writerShimWords;(void)io;
+        return false;
+#else
         if (fPhase!=Captured) return false;
         if (fStackless) {
             fPhase=Faulted;
@@ -549,6 +631,7 @@ public:
                 readerShim,readerShimWords,writerShim,writerShimWords,io)
             || !fRam.VerifyOriginalAll(io) || !AllSafe(io)) return false;
         fPhase=Staged; return true;
+#endif
     }
     // Fixed qualification only: stage images while all workers remain held.
     // IO independently admits the exact retained owner and each write. This
@@ -560,10 +643,20 @@ public:
             || fHeldImageOnlyStage || fCoreLocalReleaseLedger || fResetDisableTouched
             || !io.HeldImageStageAllowed() || !AllHeldAndRouted(io)
             || !io.HeldImageStageAllowed()) return false;
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+        if (!FlashRamScope(io,true) || !FlashHostDisjoint(fFlashRamSnapshot,RamWords(),reader,readerWords)
+            || !FlashHostDisjoint(fFlashRamSnapshot,RamWords(),writer,writerWords)
+            || !FlashHostDisjoint(fFlashRamSnapshot,RamWords(),readerShim,readerShimWords)
+            || !FlashHostDisjoint(fFlashRamSnapshot,RamWords(),writerShim,writerShimWords)) return false;
+#endif
         fHeldImageOnlyStage=true;fPhase=Faulted;
         if (!fImages.StageAll(reader,readerWords,writer,writerWords,
                 readerShim,readerShimWords,writerShim,writerShimWords,io)
-            || !AllHeldAndRouted(io) || !io.HeldImageStageAllowed()) return false;
+            || !AllHeldAndRouted(io) || !io.HeldImageStageAllowed()
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+            || !FlashRamScope(io,true)
+#endif
+            ) return false;
         fPhase=Staged;return true;
     }
     // No release/reset-preservation attempt may have begun. Restoring these
@@ -571,14 +664,22 @@ public:
     // failed proof retains the snapshots; callers must not retry blindly.
     template<class IO> bool RestoreHeldImagesBeforeRelease(IO& io) {
         if (!HeldImageRollbackReady() || !io.HeldImageWritesConfirmed()
-            || !io.HeldImageRollbackAllowed() || !AllHeldAndRouted(io)) return false;
+            || !io.HeldImageRollbackAllowed() || !AllHeldAndRouted(io)
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+            || !FlashRamScope(io,true)
+#endif
+            ) return false;
         fPhase=Faulted;
         if (fImages.RestorationRequired()) {
             if (!fImages.RestoreAll(io)) return false;
         } else if (!fImages.VerifyOriginalAll(io)) return false;
         if (!io.HeldImageWritesConfirmed() || !io.HeldImageRollbackAllowed()
             || !fImages.VerifyOriginalAll(io) || !VerifyResetDisable(io,false)
-            || !AllHeldAndRouted(io)) return false;
+            || !AllHeldAndRouted(io)
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+            || !FlashRamScope(io,true)
+#endif
+            ) return false;
         fHeldImageOnlyRestored=true;fPhase=Restored;return true;
     }
     // Restore the saved preservation controls while all processors remain
@@ -597,6 +698,9 @@ public:
     // separately gated BeginReleaseAttempt still checks the stronger fleet
     // and retained-copy conditions before a processor can be released.
     template<class IO> bool PrepareHeldPreservation(IO& io) {
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+        (void)io;return false; // release integration and private-RAM proof are not implemented
+#else
         if (fPhase!=Staged || !HeldPreservationStageActive() || fResetDisableTouched
             || !io.HeldPreservationWritesConfirmed() || !io.HeldPreservationStageAllowed()) return false;
         fPhase=Faulted;
@@ -605,11 +709,15 @@ public:
             || !io.HeldPreservationWritesConfirmed() || !fImages.VerifyStagedAll(io)
             || !AllHeldAndRouted(io) || !io.HeldPreservationStageAllowed()) return false;
         fPhase=Armed;return true;
+#endif
     }
     // Ledger only: no processor is released. In deferred mode snapshots are
     // captured per tile before stack release, and uncaptured tiles require
     // independent protection throughout recovery.
     template<class IO> bool PreparePossibleRelease(IO& io) {
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+        (void)io;return false;
+#else
         if (fPhase!=Staged) return false;
         fPhase=Faulted;
         if (fStackless) {
@@ -623,10 +731,14 @@ public:
             || !fImages.VerifyStagedAll(io) || !AllSafe(io))
             return false;
         fPhase=Armed; return true;
+#endif
     }
     // Consume the one-shot ledger BEFORE the physical release attempt. A
     // partial or uncertain release must never be retried by this owner.
     template<class IO> bool BeginReleaseAttempt(IO& io) {
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+        (void)io;return false;
+#else
         if (fPhase!=Armed) return false;
         fPhase=Faulted;
         if (fStackless) {
@@ -644,8 +756,12 @@ public:
         if (!AllSafe(io) || !fRam.MarkedForPossibleRelease() || !VerifyResetDisable(io,true)
             || !fImages.VerifyStagedAll(io) || !AllSafe(io)) return false;
         fPhase=ReleaseAttempted; return true;
+#endif
     }
     template<class IO> bool RestoreAll(IO& io) {
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+        (void)io;return false; // use the explicitly guarded held-only rollback
+#else
         if (fPhase!=Faulted && fPhase!=Staged && fPhase!=Armed && fPhase!=ReleaseAttempted) return false;
         fPhase=Faulted;
         // Copy-aware image retirement is not implemented. The old cleanup
@@ -677,6 +793,7 @@ public:
             || !fRam.VerifyOriginalAll(io) || !AllSafe(io))
             return false;
         fPhase=Restored; return true;
+#endif
     }
     // Separately gated core-local cleanup. IO must prove restored RAM and
     // unmodified uncaptured cores across all image writes, including after
@@ -755,6 +872,9 @@ public:
             if (fCoreLocalReleaseLedger || fResetDisableTouched || !fRam.StacklessCapturePrepared()
                 || !io.HeldImageRollbackAllowed() || !AllHeldAndRouted(io)
                 || !fImages.VerifyOriginalAll(io) || !VerifyResetDisable(io,false)
+#ifdef PIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS
+                || !FlashRamScope(io,true)
+#endif
                 || !AllHeldAndRouted(io)) return false;
             fPhase=Restored;return true;
         }

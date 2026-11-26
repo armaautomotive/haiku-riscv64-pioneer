@@ -20,6 +20,12 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  "$directory/pioneer_qwen35_flash_code_pci_view_test.cpp" -o "$temporary/code-view-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/code-view-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_qwen35_flash_role_images_composition_test.cpp" -o "$temporary/role-images-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-images-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_qwen35_flash_role_recovery_composition_test.cpp" -o "$temporary/role-recovery-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/role-recovery-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_qwen35_flash_hybrid_graph_test.cpp" -o "$temporary/graph-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/graph-test"
 for header in PioneerQwen35DataflowDenseAttentionPartial.h PioneerQwen35DataflowDenseAttentionHybrid.h \
