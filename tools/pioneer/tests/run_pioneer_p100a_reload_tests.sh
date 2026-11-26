@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eu
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+sh "$directory/run_pioneer_device_manager_register_race_tests.sh"
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-p100a-reload.XXXXXXXX")
 source=$directory/../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp
 awk '/PIONEER_Q35_PCI_RESERVATION_RELEASE_BEGIN/ {copying=1;next} /PIONEER_Q35_PCI_RESERVATION_RELEASE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \

@@ -757,11 +757,14 @@ rescan_node(device_node* node)
 }
 
 
+// PIONEER_DM_REGISTER_NODE_BEGIN
 static status_t
 register_node(device_node* parent, const char* moduleName,
 	const device_attr* attrs, const io_resource* ioResources,
 	device_node** _node)
 {
+	RecursiveLocker _(sLock);
+
 	if ((parent == NULL && sRootNode != NULL) || moduleName == NULL)
 		return B_BAD_VALUE;
 
@@ -769,8 +772,6 @@ register_node(device_node* parent, const char* moduleName,
 		// A node like this one already exists for this parent
 		return B_NAME_IN_USE;
 	}
-
-	RecursiveLocker _(sLock);
 
 	device_node* newNode = new(std::nothrow) device_node(moduleName, attrs);
 	if (newNode == NULL)
@@ -795,6 +796,7 @@ register_node(device_node* parent, const char* moduleName,
 
 	return B_OK;
 }
+// PIONEER_DM_REGISTER_NODE_END
 
 
 /*!	Unregisters the device \a node.
@@ -1109,6 +1111,7 @@ get_next_attr(device_node* node, device_attr** _attr)
 }
 
 
+// PIONEER_DM_FIND_CHILD_BEGIN
 static status_t
 find_child_node(device_node* parent, const device_attr* attributes,
 	device_node** _node, bool *_lastFound)
@@ -1147,6 +1150,8 @@ static status_t
 find_child_node(device_node* parent, const device_attr* attributes,
 	device_node** _node)
 {
+	RecursiveLocker _(sLock);
+
 	device_node* last = *_node;
 	bool lastFound = last == NULL;
 	status_t status = find_child_node(parent, attributes, _node, &lastFound);
@@ -1154,6 +1159,7 @@ find_child_node(device_node* parent, const device_attr* attributes,
 		last->Release();
 	return status;
 }
+// PIONEER_DM_FIND_CHILD_END
 
 
 struct device_manager_info gDeviceManagerModule = {

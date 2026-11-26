@@ -33,17 +33,49 @@ def checked_sources(mirror):
     if hashlib.sha256(dm[start:end].encode()).hexdigest() != PIN_BLOCK_SHA256:
         raise RuntimeError('device-manager pin witness block differs from the verified source')
     dm = dm[:start] + '\n' + dm[end:]
-    dm = dm.replace('// PIONEER_DM_INIT_LIFETIME_BEGIN\n', '').replace('// PIONEER_DM_INIT_LIFETIME_END\n', '')
+    for marker in ('PIONEER_DM_INIT_LIFETIME_BEGIN', 'PIONEER_DM_INIT_LIFETIME_END',
+                   'PIONEER_DM_REGISTER_NODE_BEGIN', 'PIONEER_DM_REGISTER_NODE_END',
+                   'PIONEER_DM_FIND_CHILD_BEGIN', 'PIONEER_DM_FIND_CHILD_END'):
+        line = '// ' + marker + '\n'
+        if dm.count(line) != 1:
+            raise RuntimeError('missing or duplicate device-manager marker: ' + marker)
+        dm = dm.replace(line, '', 1)
+    # Verify and reverse only the deliberate lock move before comparing with
+    # the saved source mirror. The candidate still compiles the fixed source.
+    locked = ('\tdevice_node** _node)\n{\n\tRecursiveLocker _(sLock);\n\n'
+              '\tif ((parent == NULL && sRootNode != NULL) || moduleName == NULL)\n'
+              '\t\treturn B_BAD_VALUE;\n\n'
+              '\tif (parent != NULL && parent->FindChild(attrs) != NULL) {\n'
+              '\t\t// A node like this one already exists for this parent\n'
+              '\t\treturn B_NAME_IN_USE;\n\t}\n\n'
+              '\tdevice_node* newNode = new(std::nothrow) device_node(moduleName, attrs);')
+    original = locked.replace('\n\tRecursiveLocker _(sLock);\n\n\tif (', '\n\tif (', 1)
+    original = original.replace('\n\tdevice_node* newNode =', '\n\tRecursiveLocker _(sLock);\n\n\tdevice_node* newNode =', 1)
+    if dm.count(locked) != 1:
+        raise RuntimeError('device-manager registration lock move differs from the verified change')
+    dm = dm.replace(locked, original, 1)
+    locked_find = ('find_child_node(device_node* parent, const device_attr* attributes,\n'
+                   '\tdevice_node** _node)\n{\n\tRecursiveLocker _(sLock);\n\n'
+                   '\tdevice_node* last = *_node;')
+    if dm.count(locked_find) != 1:
+        raise RuntimeError('device-manager lookup lock differs from the verified change')
+    dm = dm.replace(locked_find, locked_find.replace('\tRecursiveLocker _(sLock);\n\n', '', 1), 1)
     dm = dm.replace('static const char* sGenericContextPath;\n\n\n\n',
                     'static const char* sGenericContextPath;\n\n\n', 1)
     mod = (REPO / MODULE).read_text()
-    mod = mod.replace('#ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS\nextern module_info gPioneerDeviceManagerPinModule;\n#endif\n', '')
-    mod = mod.replace('#ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS\n\t&gPioneerDeviceManagerPinModule,\n#endif\n', '')
-    mod = mod.replace('#ifdef PIONEER_DEVICE_MANAGER_RETAINED_PIN_SERVICE\nextern module_info gPioneerDeviceManagerRetainedPinModule;\n#endif\n', '')
-    mod = mod.replace('#ifdef PIONEER_DEVICE_MANAGER_RETAINED_PIN_SERVICE\n\t&gPioneerDeviceManagerRetainedPinModule,\n#endif\n', '')
+    additions = (
+        '#ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS\nextern module_info gPioneerDeviceManagerPinModule;\n#endif\n',
+        '#ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS\n\t&gPioneerDeviceManagerPinModule,\n#endif\n',
+        '#ifdef PIONEER_DEVICE_MANAGER_RETAINED_PIN_SERVICE\nextern module_info gPioneerDeviceManagerRetainedPinModule;\n#endif\n',
+        '#ifdef PIONEER_DEVICE_MANAGER_RETAINED_PIN_SERVICE\n\t&gPioneerDeviceManagerRetainedPinModule,\n#endif\n',
+    )
+    for addition in additions:
+        if mod.count(addition) != 1:
+            raise RuntimeError('missing or duplicate pin module registration')
+        mod = mod.replace(addition, '', 1)
     if (dm != (mirror / DM).read_text() or mod != (mirror / MODULE).read_text()
             or (REPO / CPU).read_bytes() != (mirror / CPU).read_bytes()):
-        raise RuntimeError('kernel source differs from the saved build beyond the pin-service changes')
+        raise RuntimeError('kernel source differs from the saved build beyond the verified device-manager changes')
 
 
 def main():

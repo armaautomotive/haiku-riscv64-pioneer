@@ -1,5 +1,30 @@
 # Latest offline checks, 2026-11-26
 
+The device-manager `find_child_node` wrapper now also holds the recursive
+manager lock while releasing the last iteration cursor. The saved code
+released it after the lock was dropped, allowing final destruction to mutate
+a parent's child list without that lock. The extracted methods reproduce the
+old unlocked release on simulated nodes and pass with the fix. With both
+tree fixes, two retained-pin Haiku/RISC-V builds produced the same kernel;
+the saved ordinary and spin-idle controls reproduced byte-for-byte. Neither
+new kernel candidate was installed or booted. This is not physical-removal,
+firmware or DMA exclusion. See `benchmarks/qwen35-pin-kernel-20261125/EVIDENCE.md`.
+
+Haiku's device-manager registration checked for duplicate children before
+taking its lock, allowing concurrent PCI reservation attempts to pass the
+check together. The check and insertion now share the existing recursive
+manager lock. A deterministic 16-thread simulated-node test reproduced 16
+accepted duplicates with the saved baseline and one acceptance with the fix;
+it also checked root registration and a reentrant caller. A second test
+using the actual PCI reservation function reproduced the 16-way baseline
+failure and admitted one claimant with the fix. The saved ordinary
+and spin-idle control kernels reproduced byte-for-byte, and Haiku/RISC-V
+pin-service kernels linked with and without the retained service. These
+kernel candidates were not installed or booted. The fix makes software
+reservation admission atomic; it does not prove device presence or exclude
+firmware, DMA or raw MMIO writers. See
+`benchmarks/qwen35-pin-kernel-20261125/EVIDENCE.md`.
+
 The compile-only retained recovery sequence now keeps the persistent guard
 cold and the PCI reservation held while the controller lease, pins and
 physical-retirement proof are pending. Only after lease and pin retirement

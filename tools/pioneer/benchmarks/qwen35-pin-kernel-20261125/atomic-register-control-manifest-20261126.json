@@ -1,0 +1,15 @@
+{
+  "saved_ordinary_kernel_sha256": "90d6a7f5ccb2a93f42bb0256b050dbd1363ed05bdb3169820676fa45b08e5de8",
+  "reproduced_ordinary_kernel_sha256": "90d6a7f5ccb2a93f42bb0256b050dbd1363ed05bdb3169820676fa45b08e5de8",
+  "saved_spin_idle_kernel_sha256": "92310628bed8e5a030789b7886a347571cd26c992423d13c085c4ea197362c21",
+  "reproduced_spin_idle_kernel_sha256": "92310628bed8e5a030789b7886a347571cd26c992423d13c085c4ea197362c21",
+  "candidate_kernel_sha256": "363656db9c5311ade5e1f1139d5cf93cb882f165659d16b546367bd9247a0951",
+  "device_manager_source_sha256": "3acd338fb66ef0316f69347d2e61f5f7f098b17fc9787af7985a42e60b8c02e5",
+  "module_source_sha256": "d5d36314a5dd5737c5fe57e93ada77f157fe11108ed43bc7f704a26acc887ef6",
+  "spin_cpu_source_sha256": "afcf9097e9b03ed09fcb4bab2c053a035c8a99cb6ef9558400b6c818db64a52d",
+  "spin_cpu_object_sha256": "202cd466fea1b19d19ce7086f6f8fb6a3e32ff0ea392f062cca95a57d8004da2",
+  "pin_header_sha256": "e36fd3ce503545c09d10113d36738cd8c4e219f3973995a9d808227de00aba28",
+  "jam_actions_sha256": "09db624d6083d0f34567a698ca1e3c0c12ef76d575f117175b5f8814f0876d1e",
+  "installed_or_booted": false,
+  "retained_pin_service": false
+}

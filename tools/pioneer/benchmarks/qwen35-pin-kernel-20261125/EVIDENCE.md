@@ -1,5 +1,71 @@
 # Offline Pioneer pin-service kernel candidate
 
+## Tree-lookup cleanup and final candidates (2026-11-26)
+
+The public `find_child_node` wrapper also released its final iteration cursor
+after the recursive lookup had dropped the device-manager lock. If that was
+the last reference, node destruction could remove it from its parent's child
+list without the lock, racing registration or traversal. The wrapper now
+holds the existing recursive lock through traversal and cursor cleanup. The
+actual extracted methods on simulated nodes reproduced the unlocked release
+with the saved code and pass with the fix, including nested lock use. This is
+software lifetime coverage, not a physical-removal guarantee.
+
+With both tree fixes present, the saved ordinary and spin-idle controls again
+reproduced byte-for-byte. Two independent retained-pin Haiku/RISC-V builds
+produced SHA-256 `0a9937f75c74daa5b3a94dfa6f89d70ebd84aa2a08718a92a7f3b5e5a0080b22`;
+the non-retained pin-service build is
+`fa92437ef4ae431a959d23febe99e353f50178199f0a62d99b48eac6d6843707`.
+The final manifests are `atomic-tree-retained-manifest-20261126.json` and
+`atomic-tree-control-manifest-20261126.json`. The earlier registration-only
+candidate hashes below remain historical. Neither final candidate was
+installed or booted; no card was accessed.
+The final offline recovery suite, including all three device-manager and PCI
+tests, exited zero; log `/private/tmp/q35-atomic-tree-reload-20261126.log`.
+The isolated source-check regression also rejected removal of either lock.
+
+## Atomic device-manager reservation registration (2026-11-26)
+
+`pci_reserve_device` creates a fixed-attribute child node to exclude another
+legacy driver. In the saved device-manager source, `register_node` called
+`FindChild` before acquiring the manager lock, then created the child under
+the lock. Two callers could therefore both observe no reservation and both
+register one. The root-node existence check had the same check-before-lock
+pattern. The generic registration method now takes the existing recursive
+lock before both checks and holds it through registration.
+
+The test extracts the actual method and drives it on simulated nodes with a
+controlled 16-thread schedule. The saved baseline accepted all 16 duplicate
+registrations; the fixed source accepted one and rejected 15. The fixed test
+also checks concurrent root registration and calling while the recursive
+manager lock is already held. This reproduces the software race; it does not
+show that a competing process actually raced the Pioneer.
+
+A second test composes the actual `pci_reserve_device` function with the
+actual device-manager registration method and simulated nodes. Under the same
+controlled schedule, the saved baseline returned success to all 16 PCI
+claimants; the fixed method returned success to exactly one. This covers the
+two-stage legacy-reservation path, while still excluding physical hardware.
+
+The saved ordinary and spin-idle control kernels reproduced byte-for-byte.
+The offline Haiku/RISC-V retained-pin candidate with the registration fix is
+SHA-256 `2b75f646d3120b355bdffa6d918f0f55426514e59e93a4f58581c6d61b225e61`;
+the separate non-retained pin-service candidate is
+`363656db9c5311ade5e1f1139d5cf93cb882f165659d16b546367bd9247a0951`.
+Their manifests are `atomic-register-retained-manifest-20261126.json` and
+`atomic-register-control-manifest-20261126.json`. A second retained build
+produced the same kernel hash. The builder's saved-source check also rejected
+altered lock placement, missing markers or module registration, modified pin
+code and unrelated device-manager or CPU changes. Neither candidate was installed or
+booted, and no card was accessed. This change makes competing software
+registration atomic but does not itself exclude raw MMIO, firmware, DMA,
+physical removal, or establish no-reboot recovery.
+The source-check regression is `tests/pioneer_qwen35_pin_kernel_source_test.py`
+with the saved source mirror supplied as its argument.
+The broad offline recovery suite exited zero. It began before the additional
+PCI-reservation integration case and final source-check regression were added;
+both were run separately on the final files.
+
 ## Persistent guard and reservation ordering (2026-11-26)
 
 The earlier non-loadable retained gateway cleared the shared guard and
