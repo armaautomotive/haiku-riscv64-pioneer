@@ -1,0 +1,17 @@
+{
+  "scope": "Offline CPU oracle with self-generated or separately audited simulator KV, and self-injected warm activation. No full-model simulator pass, physical inference, recovery or throughput.",
+  "model_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+  "oracle_sha256": "48c6664ef7274890cde06cb3d3830a2f8c7e37d236835e88b27b7cf2537e7d4e",
+  "oracle_source_sha256": "1a7e0eb383e8f7583e88d31850a829c8396225535c75edda4a4b8e5e3939b23f",
+  "cpu_kv_sha256": "f401700c40454137910c2baffa0c82335da54109eeb370933bac2dd1d3f78a40",
+  "simulator_kv_sha256": "c11f952c84848877d4308a99b6660cbaa6acbf32251b1ca973530639ef900263",
+  "cpu_kv_self_injection_artifacts_identical": 68,
+  "simulator_kv_self_injection_artifacts_identical": 68,
+  "changed_boundary_first_position_artifacts_identical": 34,
+  "changed_boundary_readback_exact": true,
+  "changed_boundary_changes_layer3_and_layer31": true,
+  "first_token_with_simulator_kv": 261,
+  "second_token_with_simulator_kv": 89598,
+  "simulator_kv_warm_layer2_sha256": "59a9f046c9193fc0beea3b8d5f4584bc638b2eb4cc16024d335a6a8fee57de23",
+  "simulator_kv_warm_layer3_sha256": "daba38fcdb592afea2ab47443d74ee8689ef6adc6c5b0d8f1f4bd0c9bce5f6a5"
+}

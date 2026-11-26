@@ -13,7 +13,7 @@ import struct
 import subprocess
 
 from pioneer_qwen35_ttsim_service_test import (RecordedNumericalMismatch, compare_recorded_layer,
-                                                recorded_prefix_snapshot_points)
+                                                recorded_prefix_snapshot_points, validate_captured_state)
 
 
 def read_finite(path):
@@ -52,6 +52,26 @@ def read_recurrent_state(directory, layers):
     return pairs
 
 
+def read_dense_state(directory, layers):
+    """Read available audited position-zero dense KV; caller proves provenance."""
+    marker = directory / 'worker-audit-complete.marker'
+    if marker.is_symlink() or not marker.is_file():
+        raise ValueError('dense state lacks its worker-audit marker')
+    states = {}
+    for layer in range(3, layers, 4):
+        path = directory / f'K-layer{layer}.bin'
+        if not path.exists() and not path.is_symlink():
+            continue
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(f'invalid dense state file: {path}')
+        payload = path.read_bytes()
+        validate_captured_state('K', payload)
+        states[layer] = payload
+    if not states:
+        raise ValueError('no dense state found')
+    return states
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('oracle', type=Path)
@@ -67,6 +87,8 @@ def main():
                         help='audit position one; file contains the audited position-zero simulator token')
     parser.add_argument('--warm-recurrent-state', type=Path,
                         help='inject available audited recurrent state pairs during warm checks')
+    parser.add_argument('--warm-dense-state', type=Path,
+                        help='inject available audited position-zero KV during warm dense checks')
     args = parser.parse_args()
     if not 2 <= args.layers <= 32:
         parser.error('layer count must be between 2 and 32')
@@ -77,9 +99,10 @@ def main():
     if args.warm_first_token_file and args.layers != 32:
         parser.error('warm comparison requires a full two-position decode')
     warm = args.warm_first_token_file is not None
-    if args.warm_recurrent_state and not warm:
-        parser.error('recurrent-state injection requires a warm comparison')
+    if (args.warm_recurrent_state or args.warm_dense_state) and not warm:
+        parser.error('state injection requires a warm comparison')
     states = read_recurrent_state(args.warm_recurrent_state, args.layers) if args.warm_recurrent_state else {}
+    dense_states = read_dense_state(args.warm_dense_state, args.layers) if args.warm_dense_state else {}
     prefix = 'position1-' if warm else ''
     if warm:
         first_token_bytes = args.warm_first_token_file.read_bytes()
@@ -131,6 +154,12 @@ def main():
         report['scope'] = ('offline warm comparison; marked recurrent layers use supplied simulator state, '
                            'other layers use CPU prior state; caller must verify state provenance; '
                            'no hardware or Work inference')
+    if dense_states:
+        report['dense_state_sha256'] = {
+            str(layer): hashlib.sha256(payload).hexdigest() for layer, payload in dense_states.items()}
+        report['scope'] = ('offline warm comparison; marked recurrent and dense layers use supplied simulator state, '
+                           'other layers use CPU prior state; caller must verify state provenance; '
+                           'no hardware or Work inference')
 
     def compare(label, actual, expected, state_layer=None):
         try:
@@ -139,8 +168,9 @@ def main():
         except RecordedNumericalMismatch as error:
             result = {'label': label, 'passed': False, 'detail': str(error)}
         if warm:
-            result['prior_state'] = ('supplied simulator recurrent state' if state_layer in states
-                                     else 'CPU prior state')
+            result['prior_state'] = ('supplied simulator recurrent state' if state_layer in states else
+                                     'supplied simulator dense KV' if state_layer in dense_states else
+                                     'CPU prior state')
         report['checks'].append(result)
         print(f"{label}: {'PASS' if result['passed'] else 'FAIL'}; "
               f"{result.get('max_absolute_error', result.get('detail'))}", flush=True)
@@ -173,6 +203,9 @@ def main():
             target = boundary + 1
             if target in states:
                 command_line.extend(['--replace-warm-state', str(target), str(args.warm_recurrent_state)])
+            elif target in dense_states:
+                command_line.extend(['--replace-first-kv', str(target),
+                                     str(args.warm_dense_state / f'K-layer{target}.bin')])
             command_line.extend(['--replace-layer', str(boundary),
                                  str(args.snapshots / f'layer{boundary}.bin')])
             completed = subprocess.run(command_line,
@@ -202,6 +235,8 @@ def main():
         raise RuntimeError('first-token evidence changed during warm comparison')
     if states and read_recurrent_state(args.warm_recurrent_state, args.layers) != states:
         raise RuntimeError('simulator recurrent state changed during oracle comparison')
+    if dense_states and read_dense_state(args.warm_dense_state, args.layers) != dense_states:
+        raise RuntimeError('simulator dense state changed during oracle comparison')
     report['passed'] = all(check['passed'] for check in report['checks']) and report['token_matches'] is not False
     with (args.output / 'summary.json').open('x') as output:
         json.dump(report, output, indent=2, sort_keys=True)

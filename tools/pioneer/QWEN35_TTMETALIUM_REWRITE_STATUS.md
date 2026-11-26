@@ -1,5 +1,13 @@
 # Latest offline checks, 2026-11-26
 
+The warm same-input auditor can now inject both prior simulated KV and the
+preceding activation for dense layers, as well as recurrent state for other
+layers. Real 4B CPU self-injection controls with CPU and separately captured
+simulator KV each reproduced all 68 artifacts. This prepares a stronger
+comparison for the running capture; it does not make that capture or any
+hardware execution a pass. See
+`benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
 A second full simulator diagnostic now requests first- and second-position
 layer boundaries plus all first-position state, using the validated full-graph
 state map; session `46629` is running alongside the earlier capture. The

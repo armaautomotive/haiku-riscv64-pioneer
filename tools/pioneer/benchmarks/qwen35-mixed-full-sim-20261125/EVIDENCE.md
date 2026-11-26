@@ -11,6 +11,24 @@ position-zero state snapshots and is not a valid warm run or a hardware result.
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+The offline warm boundary auditor can now inject a dense layer's captured
+position-zero KV **and** its exact preceding warm activation in the same
+CPU reference execution. It accepts marked, finite, correctly sized KV files,
+records their hashes and labels dense and recurrent state sources separately;
+the caller still proves that the files belong to the compared execution.
+
+The real authenticated 4B CPU oracle was built with warnings as errors.
+For layer 3, combining a self-generated KV input with self-injection of the
+warm layer-2 boundary reproduced all 68 prior output artifacts byte-for-byte.
+A changed layer-2 boundary was read back exactly, changed layers 3 and 31,
+and left all 34 position-zero artifacts unchanged. A second self-injection
+with KV from the separately audited four-layer simulator capture also
+reproduced all 68 CPU artifacts; its tokens remained 261 and 89598. Tests
+covered malformed/non-finite/symlink KV and labeled simulated-state use.
+Hashes are in `combined-warm-dense-state-reference-20261126.json`. This
+validates the offline comparison mechanism, not the running full diagnostic,
+its numerical correctness, physical inference, recovery or throughput.
+
 A second, separate full two-position diagnostic is now running as session
 `46629` (log `/private/tmp/q35-paired-state-two-position-20261126.log`). It
 requests both sets of layer boundaries and all first-position recurrent and

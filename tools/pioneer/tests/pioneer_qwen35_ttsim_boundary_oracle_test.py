@@ -39,12 +39,16 @@ with tempfile.TemporaryDirectory() as temporary:
         'out=pathlib.Path(sys.argv[2]); warm=sys.argv[3]=="two"\n'
         'prefix="position1-" if warm else ""\n'
         'args=sys.argv[4:] if warm else sys.argv[3:]\n'
-        'if args[0]=="--replace-warm-state":\n'
+        'if args and args[0]=="--replace-warm-state":\n'
         ' layer=int(args[1]); source=pathlib.Path(args[2]); args=args[3:]\n'
         ' for code,name in (("H","conv"),("D","delta")):\n'
         '  data=(source/("%s-layer%d.bin" % (code,layer))).read_bytes()\n'
         '  if os.environ.get("FAKE_BAD_STATE") and code=="H": data=bytes(len(data))\n'
         '  (out/("position1-%s-state-%d.bin" % (name,layer))).write_bytes(data)\n'
+        'if args and args[0]=="--replace-first-kv":\n'
+        ' layer=int(args[1]); source=pathlib.Path(args[2]); args=args[3:]\n'
+        ' assert layer % 4 == 3 and len(source.read_bytes()) == 4096\n'
+        ' (out/("dense-kv-%d.marker" % layer)).touch()\n'
         'data=bytes(2560*4)\n'
         'if args:\n'
         ' boundary=int(args[1]); source=args[2]\n'
@@ -121,6 +125,32 @@ with tempfile.TemporaryDirectory() as temporary:
     assert [c['prior_state'] for c in report['checks'][:3]] == [
         'supplied simulator recurrent state', 'supplied simulator recurrent state', 'CPU prior state']
     assert 'caller must verify state provenance' in report['scope']
+    (state / 'K-layer3.bin').write_bytes(bytes(4096))
+    warm[8] = str(root / 'warm-state-and-kv')
+    warm.extend(['--warm-dense-state', str(state)])
+    result = subprocess.run(warm, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    report = json.loads((root / 'warm-state-and-kv' / 'summary.json').read_text())
+    assert report['passed'] and set(report['dense_state_sha256']) == {'3'}
+    assert report['checks'][3]['prior_state'] == 'supplied simulator dense KV'
+    assert (root / 'warm-state-and-kv' / 'boundary-02' / 'dense-kv-3.marker').is_file()
+    bad_kv = bytearray(4096); struct.pack_into('<e', bad_kv, 4094, float('nan'))
+    (state / 'K-layer3.bin').write_bytes(bad_kv)
+    warm[8] = str(root / 'warm-nonfinite-kv')
+    result = subprocess.run(warm, capture_output=True, text=True)
+    assert result.returncode != 0 and not (root / 'warm-nonfinite-kv').exists()
+    (state / 'K-layer3.bin').write_bytes(bytes(4095))
+    warm[8] = str(root / 'warm-short-kv')
+    result = subprocess.run(warm, capture_output=True, text=True)
+    assert result.returncode != 0 and not (root / 'warm-short-kv').exists()
+    (state / 'K-layer3.bin').unlink()
+    (state / 'K-layer3.bin').symlink_to(state / 'H-layer0.bin')
+    warm[8] = str(root / 'warm-symlink-kv')
+    result = subprocess.run(warm, capture_output=True, text=True)
+    assert result.returncode != 0 and not (root / 'warm-symlink-kv').exists()
+    (state / 'K-layer3.bin').unlink()
+    (state / 'K-layer3.bin').write_bytes(bytes(4096))
+    warm = warm[:-2]
     warm[8] = str(root / 'warm-bad-state')
     env = os.environ.copy(); env['FAKE_BAD_STATE'] = '1'
     result = subprocess.run(warm, capture_output=True, text=True, env=env)

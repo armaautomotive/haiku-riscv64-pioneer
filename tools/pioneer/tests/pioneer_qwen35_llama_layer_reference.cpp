@@ -344,15 +344,17 @@ static bool LoadWarmState(const std::string& dir,Capture& capture,unsigned layer
 }
 int main(int argc,char** argv) {
     if (argc<3) {
-        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two] [(--replace-layer | --replace-attn-residual | --replace-attn-gated | --replace-ffn-swiglu) N tensor.bin [--trace-layer N | --trace-layer25 | --export-first-kv] | two --replace-first-layers snapshot-directory | two --replace-first-kv layer packed.bin | two --replace-warm-qkv layer directory | two --replace-warm-state layer directory [--replace-layer N tensor.bin] | two --export-warm-state | two --export-first-kv | two --attention-mode f32|f16]\n",argv[0]);return 2;
+        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two] [(--replace-layer | --replace-attn-residual | --replace-attn-gated | --replace-ffn-swiglu) N tensor.bin [--trace-layer N | --trace-layer25 | --export-first-kv] | two --replace-first-layers snapshot-directory | two --replace-first-kv layer packed.bin [--replace-layer N tensor.bin] | two --replace-warm-qkv layer directory | two --replace-warm-state layer directory [--replace-layer N tensor.bin] | two --export-warm-state | two --export-first-kv | two --attention-mode f32|f16]\n",argv[0]);return 2;
     }
     const bool two=argc>3 && !std::strcmp(argv[3],"two");
     const bool forceWarmState=two && (argc==7 || argc==10) && !std::strcmp(argv[4],"--replace-warm-state");
     const bool combinedWarmState=forceWarmState && argc==10 && !std::strcmp(argv[7],"--replace-layer");
     if (forceWarmState && argc==10 && !combinedWarmState) return 2;
-    const int option=combinedWarmState?7:two?4:3;
     const bool forceFirst=two && argc==6 && !std::strcmp(argv[4],"--replace-first-layers");
-    const bool forceFirstKv=two && argc==7 && !std::strcmp(argv[4],"--replace-first-kv");
+    const bool forceFirstKv=two && (argc==7 || argc==10) && !std::strcmp(argv[4],"--replace-first-kv");
+    const bool combinedFirstKv=forceFirstKv && argc==10 && !std::strcmp(argv[7],"--replace-layer");
+    if (forceFirstKv && argc==10 && !combinedFirstKv) return 2;
+    const int option=(combinedWarmState || combinedFirstKv)?7:two?4:3;
     const bool forceWarmQkv=two && (argc==7 || argc==9) && !std::strcmp(argv[4],"--replace-warm-qkv");
     const bool combinedAttention=forceWarmQkv && argc==9 && !std::strcmp(argv[7],"--attention-mode")
         && (!std::strcmp(argv[8],"f32") || !std::strcmp(argv[8],"f16"));
@@ -382,7 +384,7 @@ int main(int argc,char** argv) {
         if (!argv[5][0] || *end || layer>=32) return 2;
         if (!LoadWarmState(argv[6],replacement,unsigned(layer))) return 1;
     }
-    if (!forceFirst && !forceFirstKv && !forceWarmQkv && (!forceWarmState || combinedWarmState)
+    if (!forceFirst && (!forceFirstKv || combinedFirstKv) && !forceWarmQkv && (!forceWarmState || combinedWarmState)
         && !alternateAttention && !traceWarmState && !traceFirstKv && argc>option) {
         if (std::strcmp(argv[option],"--replace-layer") && std::strcmp(argv[option],"--replace-attn-residual")
             && std::strcmp(argv[option],"--replace-attn-gated")
