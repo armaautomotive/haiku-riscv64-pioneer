@@ -209,3 +209,31 @@ The audit source is `tools/pioneer/tests/pioneer_qwen35_q8k_projection_sensitivi
 the input files and model must come from the separately authenticated oracle
 run. It does not establish the cause of the full simulator mismatch, which
 still needs investigation with the sequential prefix results.
+
+### Sequential eight-layer result (2026-11-26)
+
+The baseline eight-layer run completed 131 recorded graph steps on 120
+simulated workers, then failed its numerical comparison: 2,455 of 2,560
+values exceeded the existing tolerance, with maximum absolute error
+`0.00240516663` (row 0 `0.6176795959472656` versus reference
+`0.6200847625732422`). The actual row was retained at
+`/private/tmp/q35-baseline-8-layer-observed-20261126.bin`; the log is
+`/private/tmp/q35-baseline-8-layer-sim-20261126.log`. This is not a pass.
+The earlier four-layer boundary passed, while the eight-layer boundary fails;
+this does not prove that every intervening boundary passed. A newly
+authenticated six-layer prefix is running in session `80390` to narrow it.
+An independently initialized position-zero layer-5 slice is also running in
+session `47385`; all 120 relocated record sequences, input/output boundaries,
+and zero-state ranges passed the independent slice audit before launch.
+
+As a separate offline sensitivity experiment, replacing layer 7 in the CPU
+oracle with the simulator's complete observed output produced a layer-31
+maximum difference `0.55916214` and row 0 `-2.617931365966797`, versus
+`-2.3027868270874023` for the independent reference. Both CPU runs selected
+token `261`; replacing the layer with the original reference yielded all
+layers, logits and token byte-for-byte unchanged. This confirms that this
+specific early deviation can be amplified, but does not reproduce the
+baseline full-simulation row 0 (`-2.2534914016723633`), establish its cause,
+or validate the model. Files and logs are under
+`/private/tmp/q35-oracle-layer7-prefix-{actual,control}-20261126*`. The CPU
+is strictly an offline oracle, not a Work inference path or fallback.
