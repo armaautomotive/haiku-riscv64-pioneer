@@ -40,6 +40,8 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/ffn
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_qwen35_ffn_pair_graph_test.cpp" -o "$temporary/ffn-pair-graph"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/ffn-pair-graph"
+python3 -B "$directory/pioneer_qwen35_ffn_pair_sim_guard_test.py"
+python3 -B "$directory/pioneer_qwen35_ttsim_state_handoff_test.py"
 ffn_flags='-DPIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_PAIRED_RECURRENCE -DPIONEER_QWEN35_FUSED_RECURRENCE -DPIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY -DPIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS'
 for header in PioneerQwen35DataflowFfnSequence.h PioneerQwen35DataflowGraphRunProtocol.h; do
  printf '#include "%s"\n' "$directory/../$header" > "$temporary/ffn-guard.cpp"

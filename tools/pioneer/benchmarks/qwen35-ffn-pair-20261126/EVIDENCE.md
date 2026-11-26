@@ -25,3 +25,25 @@ fixture generation, compiled resident execution, physical ownership and
 recovery, and hardware performance remain unverified. Existing running
 simulations use their earlier images and do not test this change. No card was
 accessed, and no decode tokens/sec was measured.
+
+## Compiled paired simulator image and authenticated fixture
+
+The service and resident-image builders accept the paired flag only with the
+existing simulator-only hybrid prerequisites and carry a distinct
+`ffn-pair.marker`. Both driver-header packagers independently reject that
+marker. The simulator runner refuses mismatched paired image/fixture markers
+before loading its library, and its fresh decode-ticket helper recognizes
+the paired graph length. Negative marker and handoff tests passed. The
+ordinary unpaired hybrid resident boot, text, dispatch and flash binaries
+rebuilt byte-for-byte against the earlier image.
+
+The paired RV32 device and resident images built without unresolved imports.
+A new authenticated 4B four-layer fixture stages 289,628,160 bytes and
+contains 63 completed records plus the intentional fault record. A simulator
+process is running that fixture against an independently produced 2,560-value
+layer-three reference (`/private/tmp/q35-ffn-pair-recorded-four-layer-sim-20261126.log`).
+The process has not completed at this checkpoint; do not infer numerical
+correctness or speed. The flash suite, header-packaging guards, Python syntax,
+state-handoff and image/fixture mismatch tests passed. Physical authority,
+processor release, no-reboot recovery, full-model output and throughput
+remain unverified.

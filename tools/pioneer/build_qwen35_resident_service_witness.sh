@@ -56,6 +56,13 @@ case "${PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY:-0}" in
        : > "$output/flash-hybrid.marker" ;;
     *) exit 2 ;;
 esac
+case "${PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY:-0}" in
+    0) [ ! -e "$graph/ffn-pair.marker" ] || exit 2; ffn_flags= ;;
+    1) [ -f "$graph/ffn-pair.marker" ] && [ "${PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY:-0}" = 1 ] || exit 2
+       ffn_flags=-DPIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY
+       : > "$output/ffn-pair.marker" ;;
+    *) exit 2 ;;
+esac
 case "${PIONEER_QWEN35_TTSIM_UNPROFILED_COMPILE_ONLY:-0}" in
     0) [ ! -e "$graph/ttsim-unprofiled.marker" ] || exit 2; sim_flags= ;;
     1) [ -f "$graph/ttsim-unprofiled.marker" ] && [ "${PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY:-0}" = 1 ] || exit 2
@@ -65,7 +72,7 @@ case "${PIONEER_QWEN35_TTSIM_UNPROFILED_COMPILE_ONLY:-0}" in
 esac
 flags='-std=c++17 -Os -fno-inline-functions-called-once -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin -ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables -fno-asynchronous-unwind-tables -fstack-usage -msmall-data-limit=0 -mno-relax -march=rv32imf_zicsr -mabi=ilp32'
 "$cross-g++" $flags -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
-    -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE $tree_flags $fused_flags $sharing_flags $delta_flags $dense_flags $flash_flags $sim_flags \
+    -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_PAIRED_RECURRENCE $tree_flags $fused_flags $sharing_flags $delta_flags $dense_flags $flash_flags $ffn_flags $sim_flags \
     -I"$directory" -I"$sdk/headers" -idirafter "$sdk/headers/posix" \
     -c "$directory/PioneerQwen35DataflowResidentServiceEntry.cpp" -o "$output/resident-service-entry.o"
 "$cross-as" -march=rv32imf_zicsr -mabi=ilp32 -mno-relax \

@@ -73,7 +73,7 @@ def resident_next_decode_command(initial, token):
     for word in words[:10]:
         checksum = ((checksum ^ word) * 16777619) & 0xffffffff
     if (words[:2] != [0x31444335, 1] or not trigger or not epoch or not first
-            or count not in (524, 532) or words[9] != 0 or any(words[11:16])
+            or count not in (500, 524, 532) or words[9] != 0 or any(words[11:16])
             or words[10] != checksum or not words[6] or words[8] >= 248320
             or words[16:] != [epoch, (~epoch) & 0xffffffff, marker, (~marker) & 0xffffffff] * 4
             or trigger >= 0x0fffffff or epoch == 0xffffffff
@@ -321,6 +321,11 @@ def main():
         raise ValueError('unprofiled simulator flag and image marker do not match')
     if args.flash_hybrid != (image / 'flash-hybrid.marker').is_file():
         raise ValueError('flash hybrid simulator flag and image marker do not match')
+    ffn_paired = (image / 'ffn-pair.marker').is_file()
+    if ffn_paired and (not args.flash_hybrid or not args.recorded_layer_fixture):
+        raise ValueError('paired FFN image requires the matching hybrid recorded fixture')
+    if args.recorded_layer_fixture and ffn_paired != (args.recorded_layer_fixture / 'ffn-pair.marker').is_file():
+        raise ValueError('paired FFN fixture and image markers do not match')
     if not (image / 'activation-sharing.marker').is_file():
         raise ValueError('expected sharing-enabled standalone service image')
     resident_shards = (args.resident_sequence_fixture is not None
@@ -632,7 +637,7 @@ def main():
             if len(config) == 4 and config[3] not in (0, 1):
                 raise ValueError('invalid recorded decode flag')
             full_prompt = layers == 32
-            prompt_steps = 529 if args.flash_hybrid else 521
+            prompt_steps = 497 if ffn_paired else 529 if args.flash_hybrid else 521
             decode_steps = prompt_steps + 3
             if (not 1 <= layers <= 32 or not 1 <= executed <= prompt_steps
                     or (decode and not full_prompt)

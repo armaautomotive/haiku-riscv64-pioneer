@@ -63,6 +63,13 @@ case "${PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY:-0}" in
 	: > "$output/flash-hybrid.marker" ;;
 *) exit 2 ;;
 esac
+case "${PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY:-0}" in
+0) ;;
+1) [ "${PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY:-0}:${PIONEER_QWEN35_ACTIVATION_SHARING_COMPILE_ONLY:-0}" = 1:1 ] || exit 2
+	service_flags="$service_flags -DPIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY"
+	: > "$output/ffn-pair.marker" ;;
+*) exit 2 ;;
+esac
 case "${PIONEER_QWEN35_TTSIM_UNPROFILED_COMPILE_ONLY:-0}" in
 0) ;;
 1) [ "$role_graph:${PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY:-0}" = 1:1 ] || exit 2
