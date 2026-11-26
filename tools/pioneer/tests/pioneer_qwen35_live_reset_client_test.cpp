@@ -11,7 +11,8 @@ static unsigned mode=0,statusCalls=0,resetCalls=0,delays=0;
 static bool forceMode=false,qualificationMode=false;
 static unsigned firmwareQualification=0;
 static uint64_t ExpectedTag() {
-    return qualificationMode?(firmwareQualification==2?UINT64_C(0x2026112400030022)
+    return qualificationMode?(firmwareQualification==3?UINT64_C(0x2026112500030024)
+        :firmwareQualification==2?UINT64_C(0x2026112400030022)
         :firmwareQualification?UINT64_C(0x2026112300030002):UINT64_C(0x2026112300030001)):0x123;
 }
 static bool Call(int fd,uint32_t operation,void* output,size_t bytes) {
@@ -85,7 +86,7 @@ int main() {
         if (mode==18) assert(resetCalls==1 && !delays);
     }
     forceMode=qualificationMode=true;
-    for (unsigned fw=0;fw<3;fw++) for (mode=16;mode<=19;mode++) {
+    for (unsigned fw=0;fw<4;fw++) for (mode=16;mode<=19;mode++) {
 		firmwareQualification=fw;
         statusCalls=resetCalls=delays=0;
         const bool success=ResetStoppedRewrite(10,true,true);

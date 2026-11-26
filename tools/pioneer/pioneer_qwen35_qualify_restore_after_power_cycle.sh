@@ -68,6 +68,9 @@ case "$stage" in
 		candidateSHA=034d147f06c2192371e00c447e5e340844ccd92683a054c370eb3a716aa03c27 ;;
 	/boot/home/pioneer-q35-recovery-qualify-20261123-j)
 		candidateSHA=f3b8951e9d6c47a94d298a004a9fbb8833870ee42013fcfd4632ce0817123aa8 ;;
+	/boot/home/pioneer-q35-asic-root-20261125-a)
+		candidateTag=2026112500030024
+		candidateSHA=b660bb61458cf566c574c1bc4c3c2cd96606b4f16bd8e373e05cb16f14db5fcd ;;
 	/boot/home/pioneer-q35-recovery-qualify-20261123-k)
 		candidateTag=2026112300030002
 		candidateSHA=638b3a74449e0574ccfe11e0ba078632f1c7f19c3e61d0ef64326ab04a2b5c15 ;;
@@ -140,16 +143,21 @@ test -d "$stage" && test ! -L "$stage" && [ "$(stat -c '%u:%a' "$stage")" = 0:70
 test -d "$lock" && test ! -L "$lock" && [ "$(stat -c '%u:%a' "$lock")" = 0:700 ] || fail lock
 test -d "$stage/.qualification-once" && test ! -L "$stage/.qualification-once" || fail trial_marker
 [ "$(cat "$lock/owner")" = "$stage" ] || fail lock_owner
+if [ "$stage" = /boot/home/pioneer-q35-asic-root-20261125-a ]; then
+	fleetLock=/boot/home/.pioneer-q38-head-csr-exclusive
+	test -d "$fleetLock" && test ! -L "$fleetLock" && [ "$(stat -c '%u:%a' "$fleetLock")" = 0:700 ] \
+		&& [ "$(cat "$fleetLock/owner")" = "$stage" ] || fail fleet_lock
+fi
 case "$(cat "$stage/state")" in
 	QUALIFICATION_FAILED_RETAIN_FOR_INSPECTION) ;;
 	# A hung client cannot write the retained marker. The trace and fleet
 	# trials admit their running marker only after the candidate-generation
 	# and host-health checks below establish a fresh post-power-cycle boot.
-	QUALIFICATION_RUNNING) [ "$stage" = /boot/home/pioneer-q35-recovery-qualify-20261123-trace ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ab ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ac ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ad ] || [ "$stage" = /boot/home/pioneer-q35-risc-sample-20261124-af ] || fail state ;;
+	QUALIFICATION_RUNNING) [ "$stage" = /boot/home/pioneer-q35-asic-root-20261125-a ] || [ "$stage" = /boot/home/pioneer-q35-recovery-qualify-20261123-trace ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ab ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ac ] || [ "$stage" = /boot/home/pioneer-q35-role-fleet-20261124-ad ] || [ "$stage" = /boot/home/pioneer-q35-risc-sample-20261124-af ] || fail state ;;
 	# The trace trial records this before swapping drivers. A power loss
 	# between the swap and client start may leave the candidate installed.
 	# The candidate hash and fresh-boot generation checks below still apply.
-	RESTORE_REQUIRED) [ "$stage" = /boot/home/pioneer-q35-recovery-qualify-20261123-trace ] || [ "$stage" = /boot/home/pioneer-q35-risc-sample-20261124-af ] || fail state ;;
+	RESTORE_REQUIRED) [ "$stage" = /boot/home/pioneer-q35-asic-root-20261125-a ] || [ "$stage" = /boot/home/pioneer-q35-recovery-qualify-20261123-trace ] || [ "$stage" = /boot/home/pioneer-q35-risc-sample-20261124-af ] || fail state ;;
 	*) fail state ;;
 esac
 test -L "$device" && [ "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe ] || fail device_link
@@ -171,6 +179,10 @@ metadata 55 "$stableTag" 2 || fail stable_generation
 
 printf '%s\n' STABLE041_RESTORED > "$stage/state"
 sync
+if [ "$stage" = /boot/home/pioneer-q35-asic-root-20261125-a ]; then
+	rm "$fleetLock/owner"
+	rmdir "$fleetLock" || fail fleet_lock_release
+fi
 rm "$lock/owner"
 rmdir "$lock" || fail lock_release
 sync

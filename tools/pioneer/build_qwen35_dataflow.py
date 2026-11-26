@@ -12,6 +12,7 @@ ROOT = HERE.parents[1]
 TAG = '2026112100010168'
 GRAPH_TRIAL_TAG = '2026112100020168'
 RECOVERY_QUALIFICATION_TAG = '2026112300030001'
+ASIC_ROOT_QUALIFICATION_TAG = '2026112500030024'
 FIRMWARE_RECOVERY_QUALIFICATION_TAG = '2026112400030022'
 FLEET_INSPECTION_QUALIFICATION_TAG = '2026112300030004'
 RISC_RESET_SAMPLE_QUALIFICATION_TAG = '2026112400030023'
@@ -570,6 +571,8 @@ def main():
                         help='build the dedicated graph qualification driver without ASIC reset')
     parser.add_argument('--build-recovery-qualification', action='store_true',
                         help='build the restricted idle-session ASIC recovery qualification driver')
+    parser.add_argument('--build-asic-root-qualification', action='store_true',
+                        help='build the separately tagged root-first ASIC reset qualification driver')
     parser.add_argument('--build-span-qualification', action='store_true',
                         help='build the restricted supported-counter preload qualification driver')
     parser.add_argument('--build-model-preload-qualification', action='store_true',
@@ -643,6 +646,10 @@ def main():
         if args.build_recovery_qualification:
             parser.error('select only one recovery qualification')
         args.build_recovery_qualification = True
+    if args.build_asic_root_qualification:
+        if args.build_recovery_qualification:
+            parser.error('root-first qualification selects its own recovery qualification')
+        args.build_recovery_qualification = True
     if args.build_recovery_qualification:
         if (args.build_device_dispatch_trial or args.compile_recovery_prototype
                 or args.compile_device_dispatch_prototype or args.compile_role_write_prototype
@@ -707,6 +714,7 @@ def main():
                                                else RISC_RESET_SAMPLE_QUALIFICATION_TAG if args.build_risc_reset_sample_qualification
                                                else FLEET_INSPECTION_QUALIFICATION_TAG if args.build_fleet_inspection_qualification
                                                else FIRMWARE_RECOVERY_QUALIFICATION_TAG if args.build_firmware_recovery_qualification
+                                               else ASIC_ROOT_QUALIFICATION_TAG if args.build_asic_root_qualification
                                                else RECOVERY_QUALIFICATION_TAG if args.build_recovery_qualification
                                                else GRAPH_TRIAL_TAG if args.build_device_dispatch_trial else TAG),
                       PIONEER_Q38_SPAN_PRELOAD='1',
