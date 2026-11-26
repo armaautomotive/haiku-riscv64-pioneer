@@ -15,6 +15,18 @@ static bool EmitSpace(FILE* output,char kind,const RowSpace& space) {
     }
     return true;
 }
+static bool EmitContext(FILE* output,const RowSpace& space) {
+    if (!space.Valid() || space.rows!=Ffn || space.rowBytes!=4 || space.unit!=16) return false;
+    unsigned emitted=0;
+    for (unsigned i=0;i<space.count && emitted<DeltaInner;i++) {
+        const auto& p=space.parts[i];
+        const unsigned rows=p.rows<DeltaInner-emitted?p.rows:DeltaInner-emitted;
+        if (p.firstRow!=emitted || !rows || (rows&15)
+            || std::fprintf(output,"O %u %u %u %u\n",p.bank,p.address,p.firstRow,rows)<0) return false;
+        emitted+=rows;
+    }
+    return emitted==DeltaInner;
+}
 static bool EmitZeroSpace(FILE* output,const RowSpace& space) {
     if (!space.Valid()) return false;
     for (unsigned i=0;i<space.count;i++) {
@@ -39,12 +51,19 @@ static bool Mark(const std::string& path) {
 }
 int main(int argc,char** argv) {
     (void)&q35_slice_handoff_fixture_main;
-    if (argc!=4 && argc!=5) {std::fprintf(stderr,"usage: %s full-fixture empty-output-directory layer [--warm-state]\n",argv[0]);return 2;}
-    const bool warm=argc==5 && !std::strcmp(argv[4],"--warm-state");
-    if (argc==5 && !warm) return 2;
+    if (argc<4 || argc>6) {std::fprintf(stderr,"usage: %s full-fixture empty-output-directory layer [--warm-state] [--attention-only|--attention-context]\n",argv[0]);return 2;}
+    bool warm=false,attentionOnly=false,attentionContext=false;
+    for (int i=4;i<argc;i++) {
+        if (!std::strcmp(argv[i],"--warm-state") && !warm) warm=true;
+        else if (!std::strcmp(argv[i],"--attention-only") && !attentionOnly) attentionOnly=true;
+        else if (!std::strcmp(argv[i],"--attention-context") && !attentionContext) attentionContext=true;
+        else return 2;
+    }
+    if (attentionOnly && attentionContext) return 2;
     char* end=nullptr;const unsigned long parsed=std::strtoul(argv[3],&end,10);
     if (!argv[3][0] || *end || parsed>=Layers) return 2;
     const unsigned layer=unsigned(parsed);const std::string source=argv[1],output=argv[2];
+    if (attentionContext && !Dense(layer)) return 2;
     std::vector<DataflowGraphRunDescriptor> descriptors(DataflowCoreCount);
     if (!ReadExact((source+"/templates.bin").c_str(),descriptors.data(),descriptors.size()*sizeof(descriptors[0]))) return 1;
     FILE* input=std::fopen((source+"/records.bin").c_str(),"rb");if (!input) return 1;
@@ -59,9 +78,16 @@ int main(int argc,char** argv) {
             if (invocation.mode==DataflowResidualAdd) {
                 ++adds;
                 if (layer && adds==2*layer) start=step+1;
-                if (adds==2*(layer+1)) {finish=step+1;break;}
+                if (!attentionContext && adds==2*layer+(attentionOnly?1U:2U)) {finish=step+1;break;}
             }
         }
+#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+        if (attentionContext && start<DataflowGraphDecodeSteps && record.header[5]==DataflowFlashHybridMagic) {
+            DataflowFlashHybridInvocation invocation{};DataflowDynamicRead(record,invocation);
+            if (!invocation.Valid() || invocation.program.layer!=layer) return 1;
+            if (invocation.phase==DataflowFlashHybridReducer) {finish=step+1;break;}
+        }
+#endif
     }
     if (start>=finish || finish>DataflowGraphDecodeSteps || finish-start>=DataflowGraphDecodeSteps) return 1;
     const unsigned executed=finish-start;
@@ -74,7 +100,7 @@ int main(int argc,char** argv) {
             DataflowStreamRecord record{};
             if (std::fread(&record,1,sizeof(record),input)!=sizeof(record)
                 || !DataflowStreamRecordStructureValid(record,descriptors[core].binding.epoch,start+step+1,core)) return 1;
-            if (!step || step+1==executed) {
+            if (!step || (step+1==executed && !attentionContext)) {
                 if (record.header[5]!=DataflowResidualMagic) return 1;
                 DataflowResidualInvocation invocation{};DataflowDynamicRead(record,invocation);
                 if (!invocation.Valid() || invocation.mode!=(!step?DataflowResidualSave:DataflowResidualAdd)) return 1;
@@ -82,6 +108,15 @@ int main(int argc,char** argv) {
                 if (!core) expected=invocation.activation;
                 else if (!DataflowRowSpaceMatches(expected,invocation.activation)) return 1;
             }
+#ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+            if (attentionContext && step+1==executed) {
+                DataflowFlashHybridInvocation invocation{};DataflowDynamicRead(record,invocation);
+                if (!invocation.Valid() || invocation.program.layer!=layer
+                    || invocation.phase!=DataflowFlashHybridReducer) return 1;
+                if (!core) expectedOutput=invocation.program.contextOutput;
+                else if (!DataflowRowSpaceMatches(expectedOutput,invocation.program.contextOutput)) return 1;
+            }
+#endif
             if (record.header[5]==DataflowConvMagic) {
                 DataflowConvInvocation invocation{};DataflowDynamicRead(record,invocation);
                 if (!invocation.Valid() || invocation.layer!=layer || invocation.position!=0) return 1;
@@ -122,7 +157,8 @@ int main(int argc,char** argv) {
         }
     }
     if (std::ferror(oldLayout) || !weights || streams!=DataflowCoreCount
-        || !EmitSpace(newLayout,'I',expectedInput) || !EmitSpace(newLayout,'O',expectedOutput)
+        || !EmitSpace(newLayout,'I',expectedInput)
+        || (attentionContext?!EmitContext(newLayout,expectedOutput):!EmitSpace(newLayout,'O',expectedOutput))
         || (!warm && (Dense(layer) ? (historyRead.count || stateRead.count)
                          : (!EmitZeroSpace(newLayout,historyRead) || !EmitZeroSpace(newLayout,stateRead)))
             )
@@ -137,6 +173,8 @@ int main(int argc,char** argv) {
     for (const char* file:{"weights.bin","templates.bin","command.bin"})
         if (link((source+"/"+file).c_str(),(output+"/"+file).c_str())) return 1;
     if (!Mark(output+"/layer-slice.marker")) return 1;
+    if (attentionOnly && !Mark(output+"/attention-only.marker")) return 1;
+    if (attentionContext && !Mark(output+"/attention-context.marker")) return 1;
 #ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
     if (!Mark(output+"/flash-hybrid.marker")) return 1;
 #endif

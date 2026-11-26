@@ -1,10 +1,26 @@
 # Latest offline checks, 2026-11-26
 
+The focused nine-step warm dense-attention replay failed its context check on
+171/4,096 values, maximum absolute error `0.000502943993`, after its
+120-worker terminal audit. The discrepancy is present before the output
+projection and FFN. The full two-position capture remains session `45891`.
+No hardware output or throughput was measured.
+
+The isolated warm dense layer-3 replay failed on 2,489/2,560 output values,
+maximum error `0.00480294228`; its attention-residual slice also failed.
+Injecting its exact prior simulated KV into the CPU reference left the CPU
+layer output unchanged, so that earlier KV difference does not explain this
+isolated failure. A host same-input position-one rotary check matched CPU
+queries and keys bit-for-bit, without establishing device execution. The
+focused hybrid-attention-context result is recorded above; the full
+two-position capture remains session `45891`. No hardware result.
+See `benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
 Isolated warm replays for layers 1 and 2 each completed the 120-worker audit
 and matched all 2,560 CPU output values, maximum absolute error
 `7.15255737e-07`. They used captured position-zero simulator state and fresh
-simulator fleets. The analogous dense layer-3 warm replay is running as
-session `26229`; its captured prior KV had two strict comparison failures.
+simulator fleets. The analogous dense layer-3 warm replay failed as described
+above; its captured prior KV had two strict comparison failures.
 The full two-position capture remains session `45891`.
 See `benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
 

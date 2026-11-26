@@ -2,6 +2,36 @@
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+The nine-step isolated warm hybrid-attention-context replay reached its
+120-worker terminal audit but failed the independent CPU context comparison
+on 171/4,096 values, maximum absolute error `0.000502943993`; log
+`/private/tmp/q35-warm-layer3-context-sim-20261126d.log`. The discrepancy is
+therefore present before the attention output projection and FFN in this
+isolated simulator case. The prior KV injection control and host rotary check
+are described below. This does not by itself identify which current-position
+projection or attention operation differs, or prove the full-model cause.
+
+The isolated warm dense layer-3 replay completed all 18 barriers and its
+120-worker audit but failed the final-hidden comparison on 2,489/2,560 values,
+maximum absolute error `0.00480294228`. The CPU oracle was then given the
+exact captured position-zero simulator KV before its second position. A
+self-injection control reproduced all 68 CPU artifacts byte-for-byte, and
+the simulated-KV injection left the CPU position-one layer-3 output
+byte-identical to the original. The isolated simulator discrepancy therefore
+remains with identical prior KV and the same CPU layer input in this test;
+see `warm-layer3-kv-control-20261126.json`. This does not prove the cause of
+the full-model failure.
+
+An 11-step attention-only warm replay reached its 120-worker audit but failed
+the CPU attention-residual reference on 1,998/2,560 values, maximum absolute
+error `0.000288227573`; log
+`/private/tmp/q35-warm-layer3-attn-sim-20261126d.log`. A host same-input
+check of the actual preload RoPE table and rotary function against traced
+CPU position-one queries and keys matched all 5,120 values bit-for-bit; it
+does not establish device rotary behavior. The nine-step context replay
+result is recorded above. The full two-token capture remains session `45891`.
+No card access or throughput result.
+
 The isolated position-one replays for recurrent layers 1 and 2 each
 completed their 120-worker, 16-barrier audit and matched all 2,560 CPU
 reference outputs, maximum absolute error `7.15255737e-07` for both. Each
@@ -14,8 +44,7 @@ The same isolated replay now supports the dense layer's prior F16 KV state.
 The layer-3 records, ranges and KV map were independently checked against
 the full graph and completed four-layer capture; optimized and ASan/UBSan
 builders produced identical nine fixture files. The warm layer-3 simulator
-is running in session `26229`, log
-`/private/tmp/q35-warm-layer3-sim-20261126d.log`, with no result yet. The
+result is recorded above (log `/private/tmp/q35-warm-layer3-sim-20261126d.log`). The
 prior KV comparison still failed two values at the existing strict tolerance.
 None of these isolated tests establishes full-model warm output, physical
 ownership, recovery or speed.

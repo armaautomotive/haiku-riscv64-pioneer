@@ -23,6 +23,7 @@ executed, records = new_config[0][1:3]
 assert 1 <= executed < count and records == executed + 1 and start + executed <= count
 assert (sliced / 'layer-slice.marker').is_file()
 assert (sliced / 'warm-layer.marker').is_file() == warm
+context_only = (sliced / 'attention-context.marker').is_file()
 for name in ('weights.bin', 'templates.bin', 'command.bin'):
     assert os.path.samefile(source / name, sliced / name)
 for kind in ('W', 'S'):
@@ -35,7 +36,7 @@ for kind in ('I', 'O'):
         assert 0 <= bank < 7 and bank not in banks and first == next_row
         assert address % 4096 == 0 and rows > 0 and rows % 16 == 0
         banks.add(bank); next_row += rows
-    assert next_row == 9216
+    assert next_row == (4096 if context_only and kind == 'O' else 9216)
     layouts[kind] = parts
 
 def row_space(record, word_offset):
@@ -68,7 +69,20 @@ with (source / 'records.bin').open('rb') as original, (sliced / 'records.bin').o
             if step == 0:
                 assert residual_space(after, 1, core) == layouts['I']
             if step + 1 == executed:
-                assert residual_space(after, 2, core) == layouts['O']
+                if context_only:
+                    header = struct.unpack_from('<16I', after)
+                    magic, version, actual_core, phase = struct.unpack_from('<4I', after, 64)
+                    assert (header[5], magic, version, actual_core, phase) == (0x31484635, 0x31484635, 1, core, 2)
+                    rows, row_bytes, unit, parts = row_space(after, 86)
+                    assert (rows, row_bytes, unit) == (9216, 4, 16)
+                    cropped = []
+                    for bank, address, first, count_rows in parts:
+                        if first >= 4096:
+                            break
+                        cropped.append((bank, address, first, min(count_rows, 4096 - first)))
+                    assert cropped == layouts['O']
+                else:
+                    assert residual_space(after, 2, core) == layouts['O']
             magic = struct.unpack_from('<I', after, 20)[0]
             if magic in (0x31435635, 0x31534435) or (warm and magic == 0x31414435):
                 if magic == 0x31435635:

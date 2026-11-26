@@ -1,0 +1,12 @@
+{
+  "position": 1,
+  "layer": 3,
+  "mismatches": 2489,
+  "max_absolute_error": 0.0048029422760009766,
+  "simulator_sha256": "7aeda0751859e91e5bf68d324dd64ec0b07051843e128d60ac21c78171286423",
+  "reference_sha256": "daba38fcdb592afea2ab47443d74ee8689ef6adc6c5b0d8f1f4bd0c9bce5f6a5",
+  "prior_simulated_kv_sha256": "c11f952c84848877d4308a99b6660cbaa6acbf32251b1ca973530639ef900263",
+  "cpu_prior_kv_injection_layer3_identical_to_control": true,
+  "cpu_control_artifacts_identical": 68,
+  "scope": "Isolated warm dense layer with captured simulated prior KV and CPU input; CPU control injected identical prior KV; simulator only."
+}
