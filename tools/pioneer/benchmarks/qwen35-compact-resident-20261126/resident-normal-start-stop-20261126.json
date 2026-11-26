@@ -1,0 +1,18 @@
+{
+  "clean_log_sha256": "6aaf4d4e503ef91c0077c9801b869518b164bf261fbc1bb158e9b3a7ee535e19",
+  "corrupt_log_sha256": "270c1fffb573b212c675b894150d605cbb49ebd36cf9d29dfed88e1c67d0cab8",
+  "exploratory_simulator_sha256": "1dbc4a6b269aa743870dcb7be5d89e9c6db142f27140296ea68bc00e41ec6d67",
+  "image_sha256": {
+    "boot.bin": "e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b",
+    "dispatch.bin": "4deb2c1466880fcf9045832d0702933239b90f18bcdd4a0cc31f21e614471ad2",
+    "text.bin": "c15d1ed9048d92cf1d0d7b077b0550176e10f52213e615a70c2ca047cb2df9d6"
+  },
+  "role_sha256": {
+    "reader-code.bin": "58adee1e53441f5a0adf275fb8ee5776d534279bd23e7188da4ad1e3d1fe15d7",
+    "reader-shim.bin": "94457371ed8a2e2985db8fdd664741597f2f740b85aede7ce72933ab9486f0d1",
+    "writer-code.bin": "6fbbd6435aa4b55e97312b4e5740d9f73bd2fa264c46cf2605cd5a698f30678d",
+    "writer-shim.bin": "066ef535345f43e98794b1d64a9f20f2d6a5f753491b5db95c40c3070c15fbb6"
+  },
+  "scope": "exact normal-counter resident image, startup/stop and corrupt-template fault only, exploratory patched simulator; no graph execution, physical hardware, recovery or throughput",
+  "templates_sha256": "3a1e8119c9a8f247ec3d638f3c1fae0ce8fea40ce34e3ec666ecbb52ffc43183"
+}

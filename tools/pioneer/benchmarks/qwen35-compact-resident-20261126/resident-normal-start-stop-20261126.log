@@ -1,0 +1,2 @@
+PASS compiled resident graph service starts and stops on 120 simulator cores; NO HARDWARE
+[130000] 0.3 seconds (405.9 KHz)

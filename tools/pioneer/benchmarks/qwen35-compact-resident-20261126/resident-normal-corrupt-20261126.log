@@ -1,0 +1,2 @@
+PASS corrupt resident template faults core 73; other cores stop; SIMULATED ONLY
+[130000] 0.3 seconds (406.0 KHz)

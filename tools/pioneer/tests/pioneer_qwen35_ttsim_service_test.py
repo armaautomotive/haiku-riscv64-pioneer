@@ -518,6 +518,44 @@ def validate_compact_qualification(image, enabled, unprofiled, flash, compact, p
         raise ValueError('qualification simulator requires a standalone compact projection fixture')
 
 
+def validate_resident_normal_probe(image, enabled, qualification, unprofiled, flash, compact,
+                                   resident_templates, graph_command):
+    """Only probe startup/stop of the exact normal-counter resident image."""
+    if not enabled:
+        return
+    profile = image / 'profiled-compile-only.marker'
+    qualification_markers = (image / 'compact-qualification.marker', image / 'ttsim-qualification.marker')
+    if (qualification or unprofiled or not flash or not compact or not resident_templates or graph_command
+            or profile.is_symlink() or not profile.is_file()
+            or any(marker.exists() or marker.is_symlink() for marker in qualification_markers)):
+        raise ValueError('resident normal-counter probe requires only compact resident startup and stop')
+
+
+def validate_resident_normal_prefix(image, enabled, qualification, unprofiled, flash, compact,
+                                    fixture, warm, other_probe):
+    """Permit only the known 55-step four-layer graph, which cannot enable profiling."""
+    if not enabled:
+        return
+    profile = image / 'profiled-compile-only.marker'
+    forbidden = (image / 'compact-qualification.marker', image / 'ttsim-qualification.marker')
+    if (qualification or unprofiled or not flash or not compact or not fixture or warm or other_probe
+            or profile.is_symlink() or not profile.is_file()
+            or any(marker.exists() or marker.is_symlink() for marker in forbidden)):
+        raise ValueError('normal-counter graph probe requires the isolated compact four-layer fixture')
+    configs = [line.split() for line in (fixture / 'layout.txt').read_text().splitlines()
+               if line.startswith('C ')]
+    if configs != [['C', '4', '55', '56', '0']]:
+        raise ValueError('normal-counter graph probe requires the fixed four-layer layout')
+    command = (fixture / 'command.bin').read_bytes()
+    if (len(command) != 128 or struct.unpack_from('<I', command, 20)[0] != 433
+            or struct.unpack_from('<2I', command, 32) != (42, 0)):
+        raise ValueError('normal-counter graph probe requires the fixed prompt command')
+    templates = (fixture / 'templates.bin').read_bytes()
+    if len(templates) != 120 * 512 or any(struct.unpack_from('<I', templates, core * 512 + 32)[0] != 433
+                                          for core in range(120)):
+        raise ValueError('normal-counter graph probe requires 433-step prompt tickets')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('library', type=Path)
@@ -606,6 +644,10 @@ def main():
                         help='run the marked standalone qualification projection in ttsim only')
     parser.add_argument('--qualification-normal-counter-probe', action='store_true',
                         help='probe normal-counter standalone projection only; ttsim may reject CSR reads')
+    parser.add_argument('--resident-normal-counter-probe', action='store_true',
+                        help='probe exact normal-counter resident startup/stop only; no graph command')
+    parser.add_argument('--resident-normal-counter-graph-probe', action='store_true',
+                        help='probe the exact normal-counter resident image on the fixed four-layer prefix')
     args = parser.parse_args()
     if ((args.resident_export_state or args.resident_import_state or args.resident_position_one_command)
             and not args.resident_sequence_fixture):
@@ -677,8 +719,16 @@ def main():
     if resident_templates is not None and len(resident_templates) != 120 * 512:
         raise ValueError('unexpected resident-template fixture size')
     image = args.image
+    validate_resident_normal_probe(image, args.resident_normal_counter_probe, args.compact_qualification,
+                                   args.ttsim_unprofiled, args.flash_hybrid, args.compact_two_region,
+                                   args.resident_templates is not None, args.resident_fault_command is not None)
+    validate_resident_normal_prefix(image, args.resident_normal_counter_graph_probe, args.compact_qualification,
+                                    args.ttsim_unprofiled, args.flash_hybrid, args.compact_two_region,
+                                    args.recorded_layer_fixture, bool(args.recorded_warm_layer_reference),
+                                    args.resident_normal_counter_probe or args.qualification_normal_counter_probe)
     if ((image / 'profiled-compile-only.marker').exists()
-            and not args.qualification_normal_counter_probe):
+            and not (args.qualification_normal_counter_probe or args.resident_normal_counter_probe
+                     or args.resident_normal_counter_graph_probe)):
         raise ValueError('profiled compact image is compile-only and cannot run in ttsim')
     if args.qualification_normal_counter_probe and not (image / 'profiled-compile-only.marker').is_file():
         raise ValueError('normal-counter probe requires the profiled compile-only image marker')
@@ -693,12 +743,14 @@ def main():
                                    bool(args.projection_fixture or args.model_projection_fixture or args.fused_model_fixture),
                                    resident_templates is not None, args.qualification_normal_counter_probe)
     ffn_paired = (image / 'ffn-pair.marker').is_file()
-    if ffn_paired and (not args.flash_hybrid or not (args.recorded_layer_fixture or args.compact_qualification)):
+    if ffn_paired and (not args.flash_hybrid or not (args.recorded_layer_fixture or args.compact_qualification
+                                                     or args.resident_normal_counter_probe)):
         raise ValueError('paired FFN image requires the matching hybrid recorded fixture')
     if args.recorded_layer_fixture and ffn_paired != (args.recorded_layer_fixture / 'ffn-pair.marker').is_file():
         raise ValueError('paired FFN fixture and image markers do not match')
     rms_save_fused = (image / 'fused-rms-save.marker').is_file()
-    if rms_save_fused and (not ffn_paired or not (args.recorded_layer_fixture or args.compact_qualification)):
+    if rms_save_fused and (not ffn_paired or not (args.recorded_layer_fixture or args.compact_qualification
+                                                  or args.resident_normal_counter_probe)):
         raise ValueError('fused RMS/save image requires the paired recorded fixture')
     if args.recorded_layer_fixture and rms_save_fused != (args.recorded_layer_fixture / 'fused-rms-save.marker').is_file():
         raise ValueError('fused RMS/save fixture and image markers do not match')
@@ -709,7 +761,7 @@ def main():
         raise ValueError('expected sharing-enabled standalone service image')
     resident_shards = (args.resident_sequence_fixture is not None
                        and (args.resident_sequence_fixture / 'delta-params.bin').is_file())
-    if bool(args.delta_shards_fixture or args.dense_attention_fixture or args.recorded_layer_fixture or resident_shards or args.resident_delta_sharded or args.compact_qualification) != (image / 'delta-shard.marker').is_file():
+    if bool(args.delta_shards_fixture or args.dense_attention_fixture or args.recorded_layer_fixture or resident_shards or args.resident_delta_sharded or args.compact_qualification or args.resident_normal_counter_probe) != (image / 'delta-shard.marker').is_file():
         raise ValueError('delta shard fixture and service image do not match')
     dense_sharded = False
     dense_hybrid = False
@@ -726,7 +778,7 @@ def main():
         raise ValueError('dense shard fixture and service image do not match')
     recorded_hybrid = bool(args.recorded_layer_fixture
                            and (args.recorded_layer_fixture / 'flash-hybrid.marker').is_file())
-    if (dense_hybrid or recorded_hybrid or args.compact_qualification) != args.flash_hybrid:
+    if (dense_hybrid or recorded_hybrid or args.compact_qualification or args.resident_normal_counter_probe) != args.flash_hybrid:
         raise ValueError('hybrid dense fixture and service image do not match')
     boot = (image / 'boot.bin').read_bytes()
     text = (image / 'text.bin').read_bytes()

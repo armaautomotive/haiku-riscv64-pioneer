@@ -1,5 +1,27 @@
 # Compact resident simulator image, 2026-11-26
 
+## Exact resident-image startup and bounded graph probe, 2026-11-26
+
+The exact normal-counter compact resident image linked into the non-loadable
+Haiku driver started and stopped on all 120 simulated workers with the
+matching current-source reader and writer roles. Corrupting one template
+produced the expected retained fault on worker 73 while the other workers
+stopped. This used the exploratory patched simulator and executed no model
+graph or profiling CSR. Image, role, template and log hashes are in
+`resident-normal-start-stop-20261126.json`; the two logs are saved alongside
+it. This is not physical launch, no-reboot recovery, or throughput evidence.
+
+A separately guarded normal-counter graph probe admits only the fixed
+four-layer, 55-executed-step fixture and verifies each of the 120 template
+tickets and the command have count 433, which does not enable the image's full-decode
+profiling path. Tests reject profiling-enabling tickets, warm mode, mixed
+probe modes and missing guards. The actual four-layer simulation is running
+as session `52825`, log `/private/tmp/q35-resident-normal-four-layer-20261126i.log`;
+it started before the additional command-count guard, and its saved command
+was independently checked to have count 433, token 42 and position zero.
+No outcome is available yet. Its intentionally faulted next record is not a
+clean driver unload or physical recovery test.
+
 ## Exact qualification-image projection probe, 2026-11-26
 
 An explicit standalone-only simulator probe ran the exact normal-counter
