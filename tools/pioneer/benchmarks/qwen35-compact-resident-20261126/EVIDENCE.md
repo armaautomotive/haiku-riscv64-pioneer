@@ -26,6 +26,17 @@ whole-program stack proof. The rebuilt boot, text and dispatch are byte-for-
 byte identical to the independently linked feasibility candidate. Build log:
 `/private/tmp/q35-fused-compact-builder-final-20261126.log`.
 
+The actual service owner was also exercised with a 37,608-byte synthetic
+dispatch image in simulated IO. Both ordinary and shared-role configurations
+staged and read back every word on 120 simulated workers, closed cleanly, and
+retained the owner when a high-offset write or readback was faulty. Separate
+ASan/UBSan tests of the actual PCI-memory adapter wrote both the first word
+beyond the old `0x7000` limit and the last word of the declared dispatch
+range, rejected writes past the limit and while running, and verified the
+simulated snapshot restoration. These checks establish software bounds and
+failure handling in fake memory only; no physical writer exclusion or device
+restoration is implied.
+
 An authenticated four-layer simulation using the byte-identical candidate is
 active in session `28725`; its log is
 `/private/tmp/q35-fused-compact-four-layer-sim-20261126.log`. No numerical

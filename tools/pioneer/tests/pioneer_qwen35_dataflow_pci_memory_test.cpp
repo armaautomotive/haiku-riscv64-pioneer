@@ -218,8 +218,13 @@ int main()
 	assert(!DataflowPciMailboxMatchesReadySnapshot(readyMailbox,7,readySnapshot));
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(DataflowServiceDispatchAddress,64));
+	// Compact resident dispatch extends past the old 0x7000-byte link cap,
+	// but must stay inside the already-declared 0x9c00-byte saved region.
+	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(DataflowServiceDispatchAddress+0x7000,4));
+	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(DataflowServiceDispatchLimit-4,4));
 	assert(!PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(DataflowServiceDispatchLimit-4,8));
 	assert(!DataflowPciRunningWriteRange(DataflowServiceDispatchAddress,64));
+	assert(!DataflowPciRunningWriteRange(DataflowServiceDispatchLimit-4,4));
 	assert(PioneerQwen35DataflowPciMemory<MockPciRaw>::RangeAllowed(DataflowGraphRunAddress,DataflowGraphRunBytes));
 	assert(DataflowPciRunningWriteRange(DataflowGraphRunAddress,DataflowGraphRunBytes));
 	assert(!DataflowPciRunningWriteRange(DataflowGraphRunAddress+DataflowGraphRunBytes-4,8));
@@ -275,12 +280,17 @@ int main()
 	assert(memory.WriteCoreMemory(3,DataflowServiceEntryAddress,&text,sizeof(text)));
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
 	assert(memory.WriteCoreMemory(3,DataflowServiceDispatchAddress,&text,sizeof(text)));
+	assert(memory.WriteCoreMemory(3,DataflowServiceDispatchAddress+0x7000,&text,sizeof(text)));
+	assert(memory.WriteCoreMemory(3,DataflowServiceDispatchLimit-4,&text,sizeof(text)));
 #endif
 	assert(!memory.WriteCoreMemory(3,0x7000,&text,sizeof(text)));
 	assert(!memory.WriteCoreMemory(3,DataflowServiceTextLimit-4,&text,8));
 	assert(memory.StartCore(3)); // valid boot word starts the core
 	assert(raw.reset[3]==0x46800);
 	assert(!memory.WriteCoreMemory(3,DataflowServiceDispatchAddress,&text,sizeof(text)));
+#ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+	assert(!memory.WriteCoreMemory(3,DataflowServiceDispatchLimit-4,&text,sizeof(text)));
+#endif
 	assert(!DataflowBarrierPrepareHeldCore(memory,3));
 #ifdef PIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS
 	assert(!memory.WriteCoreMemory(3,DataflowProgramAddress,&text,sizeof(text)));
