@@ -14,6 +14,10 @@
 #include <AutoDeleterOS.h>
 #include <lock.h>
 #include <util/Vector.h>
+#if defined(PIONEER_SG2042_RECOVERY_QUALIFICATION) \
+	&& (!defined(PIONEER_SG2042_RECOVERY_WITNESS) || defined(PIONEER_SG2042_RECOVERY_GATEWAY_WITNESS))
+#error Qualification requires the witness and excludes the general recovery gateway
+#endif
 #ifdef PIONEER_SG2042_RECOVERY_WITNESS
 #include "Sg2042RecoveryLease.h"
 #include <condition_variable.h>

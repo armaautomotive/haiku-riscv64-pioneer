@@ -10,7 +10,7 @@
 using uint8=uint8_t;using uint16=uint16_t;using uint32=uint32_t;using uint64=uint64_t;
 using vuint8=volatile uint8;using vuint16=volatile uint16;using vuint32=volatile uint32;
 using addr_t=uintptr_t;using thread_id=int;using status_t=int;
-enum {B_OK=0,B_BAD_VALUE=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,B_ENTRY_NOT_FOUND=-4,B_ERROR=-5};
+enum {B_OK=0,B_BAD_VALUE=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,B_ENTRY_NOT_FOUND=-4,B_ERROR=-5,B_CANCELED=-6};
 enum {PCI_command=0x04,PCI_header_type=0x0e,PCI_header_type_mask=0x7f,PCI_header_type_PCI_to_PCI_bridge=1};
 static constexpr uint32 kSg2042AtPciAddress0=0,kSg2042AtDescriptor0=8;
 #define ROUNDDOWN(value,alignment) ((value)&~((alignment)-1))
@@ -48,6 +48,7 @@ public:
 };
 #include "sg2042_recovery_controller.inc"
 #include "sg2042_config_access.inc"
+#include "pioneer_sg2042_lease_probe.inc"
 
 struct CallbackContext {ECAMPCIController* controller; int calls;};
 static status_t FailingOperation(void* arg) {
@@ -132,5 +133,13 @@ int main()
 	*reinterpret_cast<uint32*>(other.root+4)=0xf9100402;
 	assert(other.WriteSg2042Config(0,0,0,PCI_command,2,0x403)==B_OK
 		&& *reinterpret_cast<uint32*>(other.root+4)==0xf9100403);
+	uint32 callbacks=99;status_t callbackStatus=B_OK;
+	assert(pioneer_sg2042_lease_probe(nullptr,&callbacks,&callbackStatus)==B_BAD_VALUE);
+	assert(pioneer_sg2042_lease_probe(&controller,nullptr,&callbackStatus)==B_BAD_VALUE);
+	assert(pioneer_sg2042_lease_probe(&controller,&callbacks,nullptr)==B_BAD_VALUE);
+	assert(pioneer_sg2042_lease_probe(&other,&callbacks,&callbackStatus)==B_NOT_ALLOWED);
+	assert(callbacks==0 && callbackStatus==B_ERROR);
+	assert(pioneer_sg2042_lease_probe(&controller,&callbacks,&callbackStatus)==B_OK);
+	assert(callbacks==1 && callbackStatus==B_CANCELED && !controller.fPioneerRecoveryLease.Active());
 	std::puts("PASS actual SG2042 controller lease and config methods: private-root admission, owner access, blocked read/write and wake; SIMULATED ONLY");
 }

@@ -9,6 +9,8 @@ awk '/PIONEER_SG2042_RECOVERY_LEASE_BEGIN/ {copying=1;next} /PIONEER_SG2042_RECO
  "$directory/../../../src/add-ons/kernel/busses/pci/ecam/ECAMPCIController.cpp" > "$temporary/sg2042_recovery_controller.inc"
 awk '/PIONEER_SG2042_CONFIG_ACCESS_BEGIN/ {copying=1;next} /PIONEER_SG2042_CONFIG_ACCESS_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
  "$directory/../../../src/add-ons/kernel/busses/pci/ecam/ECAMPCIController.cpp" > "$temporary/sg2042_config_access.inc"
+awk '/PIONEER_SG2042_LEASE_PROBE_BEGIN/ {copying=1;next} /PIONEER_SG2042_LEASE_PROBE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+ "$directory/../../../src/add-ons/kernel/busses/pci/ecam/kernel_interface.cpp" > "$temporary/pioneer_sg2042_lease_probe.inc"
 awk '/PIONEER_Q35_ROOT_RECOVERY_GATEWAY_BEGIN/ {copying=1;next} /PIONEER_Q35_ROOT_RECOVERY_GATEWAY_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
  "$source" > "$temporary/pioneer_q35_root_recovery_gateway.inc"
 awk 'BEGIN {copying=0} /^namespace \{/ {copying=1} copying {print} END {if(!copying)exit 1}' \
@@ -65,6 +67,9 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sg2
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined -pthread \
  -DPIONEER_SG2042_RECOVERY_WITNESS -I"$temporary" "$directory/sg2042_recovery_controller_test.cpp" -o "$temporary/sg2042-recovery-controller-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sg2042-recovery-controller-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_ecam_lease_probe_logic_test.cpp" -o "$temporary/pioneer-ecam-lease-probe-logic-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pioneer-ecam-lease-probe-logic-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_pci_root_lease_scope_test.cpp" -o "$temporary/pioneer-pci-root-lease-scope-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pioneer-pci-root-lease-scope-test"

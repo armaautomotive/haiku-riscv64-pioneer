@@ -119,7 +119,7 @@ ECAMPCIController::RegisterDevice(device_node* parent)
 status_t
 ECAMPCIController::InitDriver(device_node* node, ECAMPCIController*& outDriver)
 {
-#ifdef PIONEER_SG2042_RECOVERY_WITNESS
+#if defined(PIONEER_SG2042_RECOVERY_WITNESS) && !defined(PIONEER_SG2042_RECOVERY_QUALIFICATION)
 	// Never let this unqualified witness replace an active host controller.
 	(void)node;(void)outDriver;
 	return B_NOT_ALLOWED;

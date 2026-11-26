@@ -13,12 +13,16 @@ BASE = '8e85463e4de06fc8b35d0970e697c310f9532df30747c58cc892a1e9fdd9adff'
 OLD = 'memory128-spin-idle7-top-page-nosd-control|memory128-spin-idle7-top-page-nosd-journal-control'
 PROFILE = 'memory128-spin-idle7-pin-nosd-qualification'
 IMAGE = '3bc902182084edd40b8b98032a57e2f86f44b362be144117e08d0373763d30bf'
+ECAM_PROFILE = 'memory128-spin-idle7-ecam-nosd-qualification'
+ECAM_IMAGE = 'ed37c2b13f940dad5561553b88c5acdaf3bdda60cb83c87d7e5557fb042cf79f'
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('recorded_helper', type=Path)
     parser.add_argument('new_absolute_output', type=Path)
+    parser.add_argument('--ecam-qualification', action='store_true',
+                        help='select the separate fixed-probe ECAM qualification bundle')
     args = parser.parse_args()
     source = args.recorded_helper.read_bytes()
     if hashlib.sha256(source).hexdigest() != BASE:
@@ -28,17 +32,20 @@ def main():
     text = source.decode('utf-8')
     if text.count(OLD) != 4:
         raise ValueError('unexpected recovery profile layout')
+    profile = ECAM_PROFILE if args.ecam_qualification else PROFILE
+    image = ECAM_IMAGE if args.ecam_qualification else IMAGE
+    bundle_dir = 'q35-ecam-service-20261125' if args.ecam_qualification else 'q35-pin-service-20261125'
     # Admit the qualification profile, enforce no-SD and require 64 CPUs.
-    text = text.replace(OLD, OLD + '|' + PROFILE, 3)
+    text = text.replace(OLD, OLD + '|' + profile, 3)
     needle = ' ' + OLD + ')\n'
     if text.count(needle) != 1:
         raise ValueError('cannot uniquely locate the recorded artifact branch')
-    candidate = (' ' + PROFILE + ')\n'
+    candidate = (' ' + profile + ')\n'
                  '  # Separate candidate only; the recorded control is unchanged.\n'
                  '  image=$base/memory-2/HaikuPioneerKexecProbe.Image\n'
                  '  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98\n'
-                 '  bundle=$base/q35-pin-service-20261125/candidate-ram.bfs\n'
-                 '  bundle_hash=' + IMAGE + '\n'
+                 '  bundle=$base/' + bundle_dir + '/candidate-ram.bfs\n'
+                 '  bundle_hash=' + image + '\n'
                  '  memory_gib=128\n'
                  '  ;;\n')
     text = text.replace(needle, candidate + needle)

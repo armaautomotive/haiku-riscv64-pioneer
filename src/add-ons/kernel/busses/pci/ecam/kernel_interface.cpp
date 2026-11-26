@@ -8,6 +8,9 @@
 #ifdef PIONEER_SG2042_RECOVERY_WITNESS
 #include "PioneerSg2042RecoveryModule.h"
 #endif
+#ifdef PIONEER_SG2042_RECOVERY_QUALIFICATION
+#include "PioneerSg2042LeaseProbeModule.h"
+#endif
 
 
 device_manager_info* gDeviceManager;
@@ -79,6 +82,29 @@ pioneer_sg2042_recovery_module_info gPioneerRecovery = {
 };
 #endif
 
+#ifdef PIONEER_SG2042_RECOVERY_QUALIFICATION
+// PIONEER_SG2042_LEASE_PROBE_BEGIN
+static status_t
+pioneer_sg2042_lease_probe(void* cookie, uint32* callbacks, status_t* callbackStatus)
+{
+	if (cookie == NULL || callbacks == NULL || callbackStatus == NULL)
+		return B_BAD_VALUE;
+	*callbacks = 0;
+	*callbackStatus = B_ERROR;
+	return static_cast<ECAMPCIController*>(cookie)->RunPioneerRecovery(
+		[](void* argument) -> status_t {
+			++*static_cast<uint32*>(argument);
+			return B_CANCELED;
+		}, callbacks, callbackStatus);
+}
+// PIONEER_SG2042_LEASE_PROBE_END
+
+pioneer_sg2042_lease_probe_module_info gPioneerLeaseProbe = {
+	.info = { .name = PIONEER_SG2042_LEASE_PROBE_MODULE },
+	.probe = pioneer_sg2042_lease_probe
+};
+#endif
+
 
 _EXPORT module_dependency module_dependencies[] = {
 	{ B_DEVICE_MANAGER_MODULE_NAME, (module_info**)&gDeviceManager },
@@ -90,6 +116,9 @@ _EXPORT module_info *modules[] = {
 	(module_info *)&gPciControllerDriver,
 	#ifdef PIONEER_SG2042_RECOVERY_WITNESS
 	(module_info *)&gPioneerRecovery,
+	#endif
+	#ifdef PIONEER_SG2042_RECOVERY_QUALIFICATION
+	(module_info *)&gPioneerLeaseProbe,
 	#endif
 	NULL
 };

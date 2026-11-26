@@ -27,6 +27,14 @@ done
  -c "$project/src/add-ons/kernel/drivers/misc/pioneer_pci_pin_probe.cpp" -o "$output/pci-probe.o"
 "$cxx" -shared -nostdlib -Wl,--no-undefined,-soname=pioneer_pci_pin_probe \
  -o "$output/pioneer_pci_pin_probe" "$output/pci-probe.o" "$release/system/kernel/kernel.so"
+for source in PioneerPciProfile pioneer_ecam_lease_probe; do
+ "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -Wno-missing-field-initializers \
+  -fno-exceptions -fno-rtti -ffreestanding -fno-use-cxa-atexit -mcmodel=medany -fpic -D_KERNEL_MODE "$@" \
+  -c "$project/src/add-ons/kernel/drivers/misc/$source.cpp" -o "$output/$source.o"
+done
+"$cxx" -shared -nostdlib -Wl,--no-undefined,-soname=pioneer_ecam_lease_probe \
+ -o "$output/pioneer_ecam_lease_probe" "$output/pioneer_ecam_lease_probe.o" "$output/PioneerPciProfile.o" \
+ "$release/system/kernel/kernel.so"
 for lib in "$build"/build_packages/gcc_syslibs-*/lib; do
  [ ! -d "$lib" ] || set -- "$@" -L"$lib"
 done
@@ -36,6 +44,10 @@ done
 "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror "$@" -B"$release/system/glue/" \
  -L"$release/system/libroot" "$project/tools/pioneer/pioneer_pci_pin_probe.cpp" \
  -o "$output/pci_pin_probe_client"
+"$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror "$@" -B"$release/system/glue/" \
+ -L"$release/system/libroot" "$project/tools/pioneer/pioneer_ecam_lease_probe.cpp" \
+ -o "$output/ecam_lease_probe_client"
 shasum -a 256 "$output/pioneer_device_manager_pin_probe" "$output/pin_probe_client" \
- "$output/pioneer_pci_pin_probe" "$output/pci_pin_probe_client"
+ "$output/pioneer_pci_pin_probe" "$output/pci_pin_probe_client" \
+ "$output/pioneer_ecam_lease_probe" "$output/ecam_lease_probe_client"
 echo 'PASS cross-build; not installed, booted, loaded or run'

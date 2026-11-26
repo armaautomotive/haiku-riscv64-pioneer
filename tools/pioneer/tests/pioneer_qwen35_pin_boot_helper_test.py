@@ -49,4 +49,25 @@ profile=memory128-spin-idle7-top-page-nosd-control
     altered = path / 'altered.sh'
     altered.write_bytes(source.read_bytes() + b'\n')
     assert subprocess.run(['python3', str(builder), str(altered), str(path / 'bad')], capture_output=True).returncode != 0
+    ecam = path / 'ecam-helper.sh'
+    subprocess.run(['python3', str(builder), str(source), str(ecam), '--ecam-qualification'], check=True)
+    generated = ecam.read_text()
+    profile = 'memory128-spin-idle7-ecam-nosd-qualification'
+    reverted = generated.replace(control + '|' + profile, control, 3)
+    begin = reverted.index(' ' + profile + ')\n')
+    end = reverted.index(' ' + control + ')\n', begin)
+    assert reverted[:begin] + reverted[end:] == source.read_text()
+    start = generated.index('# PIONEER_PRIVATE_PROFILE_FLAGS_BEGIN')
+    end = generated.index('# PIONEER_PRIVATE_PROFILE_FLAGS_END')
+    (path / 'flags').write_text(generated[start:end])
+    start = generated.index('base=/mnt/ssd/pioneer-haiku-kexec-20261013\n')
+    end = generated.index('\nloader=', start)
+    (path / 'artifacts').write_text(generated[start:end] + '\n')
+    ecam_script = script.replace('memory128-spin-idle7-pin-nosd-qualification', profile)
+    ecam_script = ecam_script.replace('q35-pin-service-20261125', 'q35-ecam-service-20261125')
+    ecam_script = ecam_script.replace('3bc902182084edd40b8b98032a57e2f86f44b362be144117e08d0373763d30bf',
+                                      'ed37c2b13f940dad5561553b88c5acdaf3bdda60cb83c87d7e5557fb042cf79f')
+    subprocess.run(['sh', '-c', ecam_script, 'test', str(path)], check=True)
+    rejected = subprocess.run(['sh', str(ecam), 'prepare', 'test', '2', profile], capture_output=True)
+    assert rejected.returncode != 0 and b'requires 64 CPUs' in rejected.stderr
 print('PASS separate candidate boot profile, pinned control and refusal checks; no target access')
