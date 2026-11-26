@@ -126,8 +126,8 @@ driver, exclusive lock and staged files, and the two model files had their
 recorded sizes. This proves a bounded software-reference operation only, not
 device presence throughout hot removal, PCI reset, physical writer exclusion,
 no-reboot recovery, inference or throughput. The focused shared-profile
-simulation and Haiku cross-compiles passed. The full reload suite overlapped a
-test edit and was rerun from the final tree.
+simulation and Haiku cross-compiles passed. The first full reload suite overlapped a
+test edit; the final-tree rerun completed with exit 0 (`/private/tmp/q35-pinned-nodes-final-reload-20261125.log`).
 
 The full fused/tree/link-reset resident witness cross-build also passed, with
 load refusal checks and driver SHA-256
