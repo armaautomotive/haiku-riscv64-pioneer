@@ -14,6 +14,32 @@ from pathlib import Path
 import struct
 
 
+def resident_handoff_payload(raw):
+    """Decode a simulator-only state snapshot; its hash detects corruption."""
+    if (len(raw) != 40 + 24576 * 4 + 524288 * 4 or raw[:8] != b'Q35SIMW1'
+            or raw[8:40] != hashlib.sha256(raw[40:]).digest()):
+        raise ValueError('corrupt simulator state handoff')
+    return raw[40:40 + 24576 * 4], raw[40 + 24576 * 4:]
+
+
+def resident_position_one_command(initial, candidate):
+    """Check that the second command changes only position and checksum."""
+    if (len(initial) != 128 or len(candidate) != 128 or initial[:36] != candidate[:36]
+            or initial[44:] != candidate[44:]):
+        raise ValueError('unexpected position-one command')
+    old = struct.unpack('<32I', initial)
+    new = struct.unpack('<32I', candidate)
+    if old[9] != 0 or new[9] != 1:
+        raise ValueError('unexpected resident command position')
+    for words in (old, new):
+        checksum = 2166136261
+        for word in words[:10]:
+            checksum = ((checksum ^ word) * 16777619) & 0xffffffff
+        if checksum != words[10]:
+            raise ValueError('invalid resident command checksum')
+    return candidate
+
+
 def projection_reference(fixture, quant, input_offset, tile, rows=1920, weight_offset=0, input_rows=2560):
     """Independently decode byte-major Q4_K, Q5_K, Q6_K or Q8_0 on the host.
 
@@ -141,7 +167,23 @@ def main():
                         help='corrupt one resident template to exercise its startup fault')
     parser.add_argument('--resident-fault-command', type=Path,
                         help='submit a resident command against deliberately invalid stream records')
+    parser.add_argument('--resident-export-state', type=Path,
+                        help='save verified position-zero simulator state to a new file')
+    parser.add_argument('--resident-import-state', type=Path,
+                        help='use exported simulator state with position-zero templates')
+    parser.add_argument('--resident-position-one-command', type=Path,
+                        help='position-one command for a second simulator run with the same templates')
     args = parser.parse_args()
+    if ((args.resident_export_state or args.resident_import_state or args.resident_position_one_command)
+            and not args.resident_sequence_fixture):
+        parser.error('resident state options require --resident-sequence-fixture')
+    if bool(args.resident_import_state) != bool(args.resident_position_one_command):
+        parser.error('resident state import requires a position-one command, and vice versa')
+    if args.resident_export_state and args.resident_import_state:
+        parser.error('export and import must run in separate simulator processes')
+    if args.resident_export_state and (args.resident_export_state.exists()
+                                       or args.resident_export_state.is_symlink()):
+        parser.error('resident state output already exists')
     if args.resident_corrupt_core is not None and (not args.resident_templates
             or not 0 <= args.resident_corrupt_core < 120):
         parser.error('--resident-corrupt-core requires resident templates and a core in 0..119')
@@ -444,6 +486,8 @@ def main():
             if delta_params_path.exists() != delta_state_path.exists():
                 raise ValueError('incomplete sharded recurrence fixture')
             sharded = delta_params_path.exists()
+            if (args.resident_import_state or args.resident_export_state) and not sharded:
+                raise ValueError('state handoff requires the complete sharded layer fixture')
             record_count = 22 if sharded else 7
             if (len(command) != 128 or len(records) != 120 * record_count * 2048 or len(weights) != 33920
                     or hashlib.sha256(weights).hexdigest()
@@ -459,12 +503,23 @@ def main():
                     or len(history_input) != 24576 * 4):
                 raise ValueError('unexpected authenticated resident sequence fixture')
             position = position_bytes[0]
+            warm = bool(args.resident_import_state)
+            if args.resident_export_state and position != 0:
+                raise ValueError('only position-zero results may be exported')
+            if warm:
+                if position != 0:
+                    raise ValueError('state handoff must reuse position-zero templates and records')
+                command = resident_position_one_command(command, args.resident_position_one_command.read_bytes())
+                history_input, warm_delta_state = resident_handoff_payload(args.resident_import_state.read_bytes())
+                position = 1
             history_prior = struct.unpack('<24576f', history_input)
             expected_history = tuple(((i * 7) % 29 - 14) * 0.0625 for i in range(24576))
-            if history_prior != expected_history:
+            if not warm and history_prior != expected_history:
                 raise ValueError('unexpected synthetic convolution history')
             if sharded:
                 delta_params, delta_state = delta_params_path.read_bytes(), delta_state_path.read_bytes()
+                if warm:
+                    delta_state = warm_delta_state
                 output_weight = (directory / 'recurrent-output-weight.bin').read_bytes()
                 ffn_norm = (directory / 'ffn-norm.bin').read_bytes()
                 ffn_weights = (directory / 'ffn-weights.bin').read_bytes()
@@ -487,7 +542,7 @@ def main():
                     if hashlib.sha256(ffn_weights[first:first + size]).hexdigest() != digest:
                         raise ValueError('feed-forward weights do not match pinned model')
                 old_state = struct.unpack('<524288f', delta_state)
-                if any(value != ((i * 11) % 97 - 48) / 1024.0 for i, value in enumerate(old_state)):
+                if not warm and any(value != ((i * 11) % 97 - 48) / 1024.0 for i, value in enumerate(old_state)):
                     raise ValueError('unexpected synthetic recurrent state')
             tensors = ((0, 14417920, 'e45da19dfd2000f2c4b40f456a5663dc6677f7990a1626c897e7219387d9ca91'),
                        (14417920, 92160, 'c66aaea468bd19d584e6259ab39ef7770ed29a93d59ebe0dcdb9dd04d1f1d16d'),
@@ -531,17 +586,19 @@ def main():
                 count = min(0x10000, len(gate) - offset, 0x200000 - (address & 0x1fffff))
                 write(bar + 0x400000 + (address & 0x1fffff), gate[offset:offset + count])
                 offset += count
+            history_read, history_write = (0x22060000, 0x22040000) if warm else (0x22040000, 0x22060000)
+            state_read, state_write = (0x25000000, 0x24000000) if warm else (0x24000000, 0x25000000)
             for address, payload in ((0x22000000, conv),
-                                     (0x22040000, history_input),
-                                     (0x22060000, struct.pack('<24576I', *([0x7fc00000] * 24576)))):
+                                     (history_read, history_input),
+                                     (history_write, struct.pack('<24576I', *([0x7fc00000] * 24576)))):
                 select(2, address, 18, 12)
                 write(bar + 0x400000 + (address & 0x1fffff), payload)
             if sharded:
                 for address, payload in ((0x23000000, delta_params[:128]),
                                          (0x23001000, delta_params[128:256]),
                                          (0x23002000, delta_params[256:]),
-                                         (0x24000000, delta_state),
-                                         (0x25000000, struct.pack('<524288I', *([0x7fc00000] * 524288))),
+                                         (state_read, delta_state),
+                                         (state_write, struct.pack('<524288I', *([0x7fc00000] * 524288))),
                                          (0x2a000000, output_weight),
                                          (0x20050000, ffn_norm),
                                          (0x30000000, ffn_weights[:13271040]),
@@ -620,8 +677,9 @@ def main():
                 *quantized_activation_reference(actual, quant)) for quant in ('q5', 'q8')}
             # Each convolution history row ends with the original QKV input;
             # QKV itself is overwritten by the convolution output.
-            select(2, 0x22060000, 18, 12)
-            history = struct.unpack('<24576f', read(bar + 0x400000 + (0x22060000 & 0x1fffff), 24576 * 4))
+            select(2, history_write, 18, 12)
+            history_bytes = read(bar + 0x400000 + (history_write & 0x1fffff), 24576 * 4)
+            history = struct.unpack('<24576f', history_bytes)
             for i in range(8192):
                 old1 = history_prior[3 * i + 1] if position else 0.0
                 old2 = history_prior[3 * i + 2] if position else 0.0
@@ -691,7 +749,7 @@ def main():
                 beta_logit = struct.unpack('<32f', read(bar + 0x400000 + (0x21020000 & 0x1fffff), 128))
                 state_bytes = bytearray()
                 for offset in range(0, len(delta_state), 0x10000):
-                    current = 0x25000000 + offset
+                    current = state_write + offset
                     select(2, current, 18, 12)
                     state_bytes.extend(read(bar + 0x400000 + (current & 0x1fffff),
                                             min(0x10000, len(delta_state) - offset)))
@@ -807,6 +865,15 @@ def main():
             select_worker(0)
             if struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
                 raise RuntimeError('intentionally faulted sequence published a candidate')
+            if warm:
+                if history_bytes == history_input or bytes(state_bytes) == delta_state:
+                    raise RuntimeError('second position did not change the imported state')
+                print('position-one graph reused the same templates and updated the imported simulator state', flush=True)
+            if args.resident_export_state:
+                payload = history_bytes + bytes(state_bytes)
+                with args.resident_export_state.open('xb') as stream:
+                    stream.write(b'Q35SIMW1' + hashlib.sha256(payload).digest() + payload)
+                print(f'exported verified position-zero simulator state: sha256={hashlib.sha256(payload).hexdigest()}', flush=True)
             print(f'PASS resident graph completed {record_count - 1} barriers on 120 simulated workers; '
                   f'record {record_count} intentionally faults; NO HARDWARE')
             return

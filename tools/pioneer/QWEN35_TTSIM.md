@@ -147,6 +147,41 @@ and `55e2ae86fd22717cf5ea55866dd77ebb48cdf579df3eddfc4c98a3edafca6881`.
 These are separate simulations using the unqualified exploratory simulator,
 not sequential warm model runs, full model output or hardware performance.
 
+The fixture also supports a two-process state handoff. The first run exports
+the verified position-zero convolution history and recurrent state to a new
+file with `--resident-export-state`. The second reuses the same position-zero
+`--resident-sequence-fixture` and adds `--resident-import-state` and
+`--resident-position-one-command` pointing to the position-one fixture's
+`command.bin`. The latter must differ from the original command only in
+position and its checksum. The second run places the saved data in the
+position-one read buffers and checks the opposite write buffers against the
+independent references. `pioneer_qwen35_ttsim_state_handoff_test.py` checks
+framing, corruption rejection and command validation. The snapshot hash is
+an accidental-corruption check, not an authentication mechanism.
+
+For example, with separately generated position-zero and position-one fixture
+directories, a sharing-enabled sharded image, compatible role images and the
+experimental simulator build:
+
+```sh
+python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py LIBTTSIM RESIDENT_IMAGE ROLE_IMAGES \
+  --resident-sequence-fixture POSITION0_DIR --resident-export-state /tmp/q35-sim-state.bin
+python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py LIBTTSIM RESIDENT_IMAGE ROLE_IMAGES \
+  --resident-sequence-fixture POSITION0_DIR --resident-import-state /tmp/q35-sim-state.bin \
+  --resident-position-one-command POSITION1_DIR/command.bin
+```
+
+On 2026-11-25 both simulations passed: all 120 workers completed 21 barriers,
+the second run checked all 524,288 state values and its final 2,560 layer
+outputs, and both intentionally faulted at the next record. See
+`benchmarks/qwen35-state-handoff-sim-20261125/EVIDENCE.md` for hashes, error
+bounds and limitations.
+
+Each run starts a separate simulator and intentionally faults at record 22;
+this is a state-handoff and template-patching check, not proof that a service
+remains resident across tokens, a complete model, a hardware warm run or a
+throughput measurement.
+
 The separate sharded-delta witness tests a proposed two-stage recurrent
 update. The helper builds the fused, sharing-enabled service and its
 non-loadable driver with `--compile-delta-shard-prototype`, alongside the

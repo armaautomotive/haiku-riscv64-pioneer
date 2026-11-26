@@ -1,0 +1,16 @@
+embedding checkpoint: 2,560 values match independent Q6_K reference; maximum absolute error 0
+RMS: 2,560 values match independent reference; maximum absolute error 5.13276699e-07
+QKV: 8192 values match independent reference; maximum absolute error 7.35568716e-06; maximum normalized error 1.21892859e-07
+Alpha: 32 values match independent reference; maximum absolute error 1.77383481e-06; maximum normalized error 3.59753916e-08
+Beta: 32 values match independent reference; maximum absolute error 1.46577986e-06; maximum normalized error 7.88327125e-08
+gate: 4096 values match independent reference; maximum absolute error 3.91504518e-06; maximum normalized error 9.03413085e-08
+convolution: 4096 retained values and 24576 history entries match independent position-1 reference; maximum absolute error 3.41569085e-07
+sharded recurrence: 524288 state values and 4096 outputs match independent position-1 reference; max absolute errors 3.30248383e-07, 2.20862447e-07
+recurrent output projection: 2560 values match independent Q5_K reference; maximum absolute error 1.59536939e-07, normalized error 4.38789695e-08
+attention residual: 2560 values match independent sum
+post-attention RMS: 2560 values match independent reference; maximum error 3.05643297e-07
+FFN up and gated SiLU: 9216 values match independent references; maximum normalized errors 8.92113959e-08, 6.46479934e-08
+FFN down and final residual: 2560 values match independent Q6_K reference; maximum absolute error 9.4990531e-08, normalized error 9.4990531e-08
+position-one graph reused the same templates and updated the imported simulator state
+PASS resident graph completed 21 barriers on 120 simulated workers; record 22 intentionally faults; NO HARDWARE
+[34300000] 285.8 seconds (120.0 KHz)
