@@ -1,5 +1,43 @@
 # Offline Pioneer pin-service kernel candidate
 
+## Persistent guard and reservation ordering (2026-11-26)
+
+The earlier non-loadable retained gateway cleared the shared guard and
+unreserved PCI before waiting for physical retirement proof. That left a
+window in which the persistent guard could report clean and a competing
+driver could claim the card while the retained controller lease remained.
+The compile-only recovery path now keeps the guard ticket cold and the PCI
+reservation held through the wait. After independent retirement proof and
+successful controller-lease and pin retirement, it validates the original
+ticket, attempts PCI unreserve once, and only then completes the guard. A
+failure retains quarantine and never automatically repeats unreserve. If
+context destruction publishes a new fault after guard completion, the cookie
+remains quarantined and no successful recovery is reported.
+
+The retained path requires the rewrite's PCI-reservation ledger and checks it
+before each retry, before accepting post-reset readiness and before final
+unreserve. An injected lost reservation leaves the gateway faulted, its
+controller lease parked and its pins retained; restoring the test ledger does
+not make it retry. This is a software ownership check, not proof against
+physical removal or other writers. Builds without reservation tracking or
+the retained recovery prerequisites are rejected.
+
+Tests exercised the actual recovery sequence with simulated resources and the
+actual persistent guard implementation with simulated PCI, including guard
+validation failure, unreserve failure, guard-completion failure, a fault
+between validation and completion, attempted replay, success and a destructor
+fault. Ordinary and live-takeover recovery
+controls passed. The compact Haiku/RISC-V driver linked with the changes and
+still denies initialization. These tests establish software ordering only;
+the hardware-retirement proof still always refuses, and no card was accessed.
+
+A separate integrated simulation now follows the actual retained gateway,
+binding, pin service, controller lease and deferred finalizer together. Its
+reset operation, guard, PCI device and final physical proof are simulated;
+the test asserts the lease and pins are retired while the guard is still cold
+before unreserve and guard completion. It also exercises a pending retry on a
+different simulated thread. The separate test above uses the actual guard.
+
 ## Compile-only retained recovery gateway (2026-11-26)
 
 The retained recovery ioctl now uses a persistent gateway in the non-loadable
@@ -9,8 +47,9 @@ are held, and uses the binding for each retry. The normal recovery-owner
 admission is checked before those resources are acquired. A pending operation must have
 exactly one valid guard ticket, and subsequent calls must retain that same
 reset ticket. An already-started reset cannot be adopted after a lease gap.
-Once the guard completes, the gateway keeps the owner, pins and parked lease
-and returns an incomplete status until a separate retirement proof is supplied.
+Before completing the guard, the gateway keeps the owner, PCI reservation,
+pins and parked lease and returns an incomplete status until a separate
+retirement proof is supplied.
 
 The current driver proof function unconditionally denies retirement: physical
 writer, firmware, DMA and device-removal exclusion are not established. The
@@ -64,6 +103,10 @@ The offline reload suite exited zero. Its source extraction preceded the final
 incomplete-status change and some fixture edits; the changed recovery sequence,
 profile/pin handoff and binding were rerun separately under ASan/UBSan, and the
 final driver was linked again against the actual compact resident image.
+
+The later reload suite for the guard-ordering change also exited zero; the
+final guard-race, reservation-ledger and gateway cases were run separately
+afterward, and the guarded driver was rebuilt.
 
 ## Retained lifetime service (2026-11-26)
 

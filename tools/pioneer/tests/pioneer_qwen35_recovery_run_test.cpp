@@ -348,8 +348,8 @@ struct PioneerStoreContext {
 	PioneerDriverRecoveryProof recoveryFinishProof{};uint64 recoveryFinishTicket=0;bool recoveryFinishPending=false;
 	PioneerPciePayloadSnapshot recoveryPayload{};bool recoveryFinishNeedsAudit=false;
 #ifdef TEST_RETAINED_GATEWAY
-	uint64 recoveryFinishCompletedGeneration=0;
-	bool recoveryFinishCompleted=false,recoveryFinishKeepOwnerCookie=false;
+	bool recoveryFinishReady=false,recoveryFinishKeepOwnerCookie=false,recoveryFinishUnreserveAttempted=false;
+	bool q35PciReservationHeld=true,q35PciReleaseAttempted=false;
 #endif
 	uint64 recoveryPrepareTicket=0;bool recoveryPreparePending=false;
 	BlackholeAsicResetResult recoveryResetResult{};uint64 recoveryResetTicket=0;bool recoveryResetPending=false;
@@ -462,15 +462,17 @@ int main(){
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY);
 	assert(r.stage==PIONEER_RECOVERY_STAGE_GUARD_COMPLETE && !r.new_generation
 		&& sRuntimeOwner==owner && owner->context==context && sColdRecoveryRequired
-		&& sReloadGeneration==3 && context->recoveryFinishCompleted
-		&& context->recoveryFinishCompletedGeneration==4 && completeCount==1
+		&& sReloadGeneration==3 && context->recoveryFinishReady
+		&& completeCount==0 && ticketPending
 		&& !contextDeleted && !cookieDeleted);
+	assert(std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_UNRESERVE)==0);
 	assert(Qwen35FinalizeRetainedRecoveryLocked(owner,context,r,false)==B_NOT_ALLOWED);
 	assert(sRuntimeOwner==owner && sColdRecoveryRequired && !contextDeleted && !cookieDeleted);
 	assert(Qwen35FinalizeRetainedRecoveryLocked(owner,context,r,true)==B_OK);
 	assert(!sRuntimeOwner && !sColdRecoveryRequired && sReloadGeneration==4
 		&& r.stage==PIONEER_RECOVERY_STAGE_COMPLETE && r.new_generation==4
-		&& contextDeleted==1 && cookieDeleted==1);
+		&& contextDeleted==1 && cookieDeleted==1 && completeCount==1 && !ticketPending);
+	assert(std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_UNRESERVE)==1);
 	Cleanup();puts("PASS actual recovery defers completion until lease retirement; SIMULATED HARDWARE ONLY");
 }
 #elif defined(TEST_LINK_RESET)

@@ -1,0 +1,170 @@
+{
+  "scope": "offline simulator only; no hardware or throughput",
+  "compact_full_execution_audited": true,
+  "reference_token": 261,
+  "strict_final_comparison": "FAIL 2558/2560, max absolute error 0.370739102",
+  "fused_full_execution_audited": true,
+  "all_layer_outputs_byte_identical": true,
+  "layers": [
+    {
+      "layer": 0,
+      "bytes": 10240,
+      "sha256": "2031cf9624a9f3b3295668f93319b0a3aba0f650786affb119cb85db1de1d2be"
+    },
+    {
+      "layer": 1,
+      "bytes": 10240,
+      "sha256": "58cdf9a312ec0468dc1593a0e9a952bf24c6ac061c9d48619e4c2dae8ef7c755"
+    },
+    {
+      "layer": 2,
+      "bytes": 10240,
+      "sha256": "33c18c995b0cae841c09b0d96baceb152fc8cb043f4628eaf6a1de2186cd1a06"
+    },
+    {
+      "layer": 3,
+      "bytes": 10240,
+      "sha256": "23e2d5d9e1753671df264bea4a50fbd1eed1dd53d9af5ca836612f7ae952d563"
+    },
+    {
+      "layer": 4,
+      "bytes": 10240,
+      "sha256": "267668063ac177002c2fb6c9cee3f29215a0229bdd2d9a154885195435e92309"
+    },
+    {
+      "layer": 5,
+      "bytes": 10240,
+      "sha256": "e5b10b1c1c93fd806b8e5be9d47a21b0e5c7c2c05ae3ab5251ee6b40a41265b3"
+    },
+    {
+      "layer": 6,
+      "bytes": 10240,
+      "sha256": "e8b0a9cba3f7e12ea9d692a57fd3360c335c883045d9d67cf001f7c70968fe4b"
+    },
+    {
+      "layer": 7,
+      "bytes": 10240,
+      "sha256": "84647096a90db77bafe61c06c8877789afdd78d8ab1a73d79b037c98d013bd6a"
+    },
+    {
+      "layer": 8,
+      "bytes": 10240,
+      "sha256": "7e972e2a8fd9dd23ef9961e7a4407209176ce68cd590b6ad8a73e20eb1e83e38"
+    },
+    {
+      "layer": 9,
+      "bytes": 10240,
+      "sha256": "9884bea0a5b5222b7cd02ca2804a3c3b811733ba744010dfc1f938b5b0284513"
+    },
+    {
+      "layer": 10,
+      "bytes": 10240,
+      "sha256": "1ba1c031d3cf81146fc9437d9d4fc1f51d447cf57e1672dab408064b4aa6e129"
+    },
+    {
+      "layer": 11,
+      "bytes": 10240,
+      "sha256": "d4bed668be7c7e27e4d7897a51087e72a4e56d43db6a86aea4237662a4ba43ea"
+    },
+    {
+      "layer": 12,
+      "bytes": 10240,
+      "sha256": "3071fbacfe1253ce39f868b663e9500c695886e772127d4c906d4117384bb8f2"
+    },
+    {
+      "layer": 13,
+      "bytes": 10240,
+      "sha256": "f47033068ee55cea18435e908dcbab57c8ee104f6486bbffb40a8b3bfc485903"
+    },
+    {
+      "layer": 14,
+      "bytes": 10240,
+      "sha256": "5e5946968b883bf3641126651e1a6294561abd97879ddf5556abbc31e0c52f12"
+    },
+    {
+      "layer": 15,
+      "bytes": 10240,
+      "sha256": "295ced56a09274f27cf6dee83274c7f3fbcd0b27c5c00937e3ac36e71e24b3c3"
+    },
+    {
+      "layer": 16,
+      "bytes": 10240,
+      "sha256": "7f277d20e17b23429fd00a1ee5839f3aeacfcf539dc688efaa0910caadb0455d"
+    },
+    {
+      "layer": 17,
+      "bytes": 10240,
+      "sha256": "6e41a05fcf7bd29c7117faeb5aaef85d3fddbf0478aaa8a99d1cb1bdfc5d8f1e"
+    },
+    {
+      "layer": 18,
+      "bytes": 10240,
+      "sha256": "64521480ee03eff062410c1a70d2c9aaf1052596c64eaa2ea02d494d4fad2d42"
+    },
+    {
+      "layer": 19,
+      "bytes": 10240,
+      "sha256": "8326c237f037f1dabfad626ed80d8701e66888247821f1c3a50dc9909091e659"
+    },
+    {
+      "layer": 20,
+      "bytes": 10240,
+      "sha256": "492d50e438c06a3f92281567f4b411917b490077ec33cd0196022dfc63ada1d5"
+    },
+    {
+      "layer": 21,
+      "bytes": 10240,
+      "sha256": "d99b4b1287f534ec252e71ff161521bf6ffb72128fac48aca945f58ba82c041d"
+    },
+    {
+      "layer": 22,
+      "bytes": 10240,
+      "sha256": "b87f1a46cdd6a95b96d195bd61f67d56d0b302588e3e4fa58ef5c4172f91d34a"
+    },
+    {
+      "layer": 23,
+      "bytes": 10240,
+      "sha256": "2ccfff5ec31038bc2f001a479cedaec46323a2946656210742f15b137b3866d2"
+    },
+    {
+      "layer": 24,
+      "bytes": 10240,
+      "sha256": "49a0dd31fe76e2e947271bfe159ddedf30e531f03d0a73836db9c3e677db48a8"
+    },
+    {
+      "layer": 25,
+      "bytes": 10240,
+      "sha256": "d3896c2fe54a5515abf652835349bfc49c3f021147edc7dd2fae5089548229b1"
+    },
+    {
+      "layer": 26,
+      "bytes": 10240,
+      "sha256": "1fc0b0d3c61baa88a805450a08fb19c7500dc739ef8d22c7649dfb01b3d236a7"
+    },
+    {
+      "layer": 27,
+      "bytes": 10240,
+      "sha256": "3518c51e5ab820574f0d652d8df4b657ad6fe9d884286fe976a3bfdf9f120e3e"
+    },
+    {
+      "layer": 28,
+      "bytes": 10240,
+      "sha256": "86efde314c9f51c338a0d34c60a59baa1deffa82a7d2d6a1e991f666e89508a7"
+    },
+    {
+      "layer": 29,
+      "bytes": 10240,
+      "sha256": "dfb02cc846eebe3b6830bc4052fffbb368a67534a5bbb7bd38edd6f37edf474e"
+    },
+    {
+      "layer": 30,
+      "bytes": 10240,
+      "sha256": "06574701d208aba4917c996e0b6dd6d602d36bf677175f321b59a020c7a7120e"
+    },
+    {
+      "layer": 31,
+      "bytes": 10240,
+      "sha256": "cd98788adf4debf5984949e0bad9186caa090f02b518e7600b07d31bfcc3b272"
+    }
+  ]
+}

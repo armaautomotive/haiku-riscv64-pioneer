@@ -13,7 +13,9 @@ same token 261. The machine-readable record is
 `fused-same-input-audit-20261126.json`. The baseline investigation reports
 input-specific quantization-threshold effects for those layers; it does not
 turn this full run into a numerical pass. No card or hardware benchmark was
-used. The compact full-model and two-token simulator runs remain active.
+used. The compact full-model run has since finished with the same strict
+failure and byte-identical captured layer outputs; the two-token diagnostic
+remains active. See `../qwen35-compact-resident-20261126/EVIDENCE.md`.
 
 ## Latest: fused four-layer result and full run
 

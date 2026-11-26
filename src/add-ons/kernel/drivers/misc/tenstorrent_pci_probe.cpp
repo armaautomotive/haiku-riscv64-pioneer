@@ -4105,6 +4105,8 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 #if defined(PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS) \
 	&& (!defined(PIONEER_QWEN35_RETAINED_SCOPE_WITNESS) \
 		|| !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY) \
+		|| !defined(PIONEER_QWEN35_RECOVERY_RUN_ENABLE) \
+		|| !defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS) \
 		|| defined(PIONEER_QWEN35_ROOT_RECOVERY_GATEWAY_WITNESS))
 #error Retained recovery completion requires the non-loadable retained scope
 #endif
@@ -4294,10 +4296,10 @@ struct PioneerStoreContext {
 	bool recoveryFinishPending=false;
 	bool recoveryFinishNeedsAudit=false;
 #ifdef PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS
-	// Guard completion precedes controller-lease retirement. Keep the owner
-	// and cold latch intact until the gateway has retired that lease and pins.
-	uint64 recoveryFinishCompletedGeneration=0;
-	bool recoveryFinishCompleted=false,recoveryFinishKeepOwnerCookie=false;
+	// The guard ticket and cold latch remain active until the gateway has
+	// retired its controller lease and pins.
+	bool recoveryFinishReady=false,recoveryFinishKeepOwnerCookie=false;
+	bool recoveryFinishUnreserveAttempted=false;
 #endif
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
 	// The original retained context owns this separate post-reset transfer
@@ -12374,6 +12376,16 @@ Qwen35RecoveryReauditLocked(PioneerStoreContext* context,tt_pioneer_recovery_run
 	return B_OK;
 }
 
+#ifdef PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS
+// PIONEER_Q35_RETAINED_RESERVATION_BEGIN
+static bool
+Qwen35RetainedReservationReady(const PioneerStoreContext& context)
+{
+	return context.q35PciReservationHeld && !context.q35PciReleaseAttempted;
+}
+// PIONEER_Q35_RETAINED_RESERVATION_END
+#endif
+
 // The only retryable phase is host-side retirement after a completed reset,
 // firmware/fleet/DMA audit, PCI-idle transition and session-area disposal.
 // Keep the same pinned ticket and owner while cleanup is incomplete. Never
@@ -12383,7 +12395,7 @@ Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* contex
 	pioneer_driver_recovery_guard_v2_info* guard,tt_pioneer_recovery_run& r,bool keepOwnerCookie)
 {
 #ifdef PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS
-	if (context->recoveryFinishCompleted) return B_NOT_ALLOWED;
+	if (context->recoveryFinishReady) return B_NOT_ALLOWED;
 #endif
 	const uint64 ticket=context->recoveryFinishTicket;
 	const PioneerDriverRecoveryProof proof=context->recoveryFinishProof;
@@ -12444,6 +12456,15 @@ Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* contex
 		status=guard->validate(ticket);
 		if (status!=B_OK) return retain(status);
 	}
+#ifdef PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS
+	// Keep both the persistent guard cold and the PCI reservation held while
+	// the controller lease, pins and physical-retirement proof are pending.
+	if (!Qwen35RetainedReservationReady(*context)) return retain(B_NOT_ALLOWED);
+	r.stage=PIONEER_RECOVERY_STAGE_GUARD_COMPLETE;
+	context->recoveryFinishReady=true;
+	context->recoveryFinishKeepOwnerCookie=keepOwnerCookie;
+	put_module(PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE);return B_OK;
+#else
 	r.stage=PIONEER_RECOVERY_STAGE_UNRESERVE;
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
 	status=Qwen35ReleasePciReservation(*context);
@@ -12454,23 +12475,15 @@ Qwen35RecoveryFinishLocked(PioneerProbeCookie* owner,PioneerStoreContext* contex
 	// All device/host mappings, retained graph resources and the PCI
 	// reservation are gone. Keep the inert context and cookie until the
 	// guard accepts the final epoch check, so a raced fault retains them.
+	r.stage=PIONEER_RECOVERY_STAGE_GUARD_COMPLETE;
 	PioneerDriverRecoveryProof complete=proof;
 	complete.flags|=PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;complete.retained_owners=0;
-	r.stage=PIONEER_RECOVERY_STAGE_GUARD_COMPLETE;
 	uint64 nextGeneration=0;
 	status=guard->complete(ticket,&complete,&nextGeneration);
 	if (status!=B_OK || !nextGeneration) {
 		if (status==B_OK) sColdRecoveryRequired=true;
 		return abandon(status!=B_OK?status:B_DEV_NOT_READY);
 	}
-#ifdef PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS
-	// The gateway still owns the parked controller lease and node pins. A
-	// postcheck or lease release can fail, so success is not published here.
-	context->recoveryFinishCompleted=true;
-	context->recoveryFinishCompletedGeneration=nextGeneration;
-	context->recoveryFinishKeepOwnerCookie=keepOwnerCookie;
-	put_module(PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE);return B_OK;
-#else
 	sReloadGeneration=nextGeneration;
 	owner->context=NULL;sRuntimeOwner=NULL;sBankStorageOnly=false;
 	delete context;
@@ -12491,16 +12504,52 @@ Qwen35FinalizeRetainedRecoveryLocked(PioneerProbeCookie* owner,PioneerStoreConte
 	tt_pioneer_recovery_run& r,bool leaseAndPinsRetired)
 {
 	if (!leaseAndPinsRetired || !owner || !context || owner!=sRuntimeOwner
-		|| owner->context!=context || !context->recoveryFinishCompleted
-		|| !context->recoveryFinishCompletedGeneration || !sColdRecoveryRequired
+		|| owner->context!=context || !context->recoveryFinishReady
+		|| !context->recoveryFinishPending || !context->recoveryFinishTicket
+		|| context->recoveryFinishUnreserveAttempted || !Qwen35RetainedReservationReady(*context)
+		|| !sColdRecoveryRequired
 		|| r.stage!=PIONEER_RECOVERY_STAGE_GUARD_COMPLETE) return B_NOT_ALLOWED;
-	const uint64 nextGeneration=context->recoveryFinishCompletedGeneration;
+	const uint64 ticket=context->recoveryFinishTicket;
+	PioneerDriverRecoveryProof proof=context->recoveryFinishProof;
+	if (!proof.ReadyToRetireOneOwner() || proof.reset_generation!=ticket
+		|| proof.firmware_generation!=ticket) return B_NOT_ALLOWED;
+	pioneer_driver_recovery_guard_v2_info* guard=NULL;
+	status_t status=get_module(PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE,(module_info**)&guard);
+	if (status!=B_OK) return status;
+	uint64 nextGeneration=0;
+	if (!guard || guard->version!=2 || !guard->validate || !guard->complete)
+		status=B_BAD_VALUE;
+	else if ((status=guard->validate(ticket))==B_OK) {
+		// Once attempted, unreserve is never replayed: its failure may be
+		// partial, and its API can mask deferred node removal.
+		context->recoveryFinishUnreserveAttempted=true;
+		r.stage=PIONEER_RECOVERY_STAGE_UNRESERVE;
+#if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS)
+		status=Qwen35ReleasePciReservation(*context);
+#else
+		status=sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+#endif
+		if (status==B_OK) {
+			r.stage=PIONEER_RECOVERY_STAGE_GUARD_COMPLETE;
+			proof.flags|=PIONEER_RECOVERY_PROOF_RETAINED_OWNERS_RELEASED;proof.retained_owners=0;
+			status=guard->complete(ticket,&proof,&nextGeneration);
+		}
+	}
+	put_module(PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE);
+	if (status!=B_OK || !nextGeneration) {
+		sColdRecoveryRequired=true;
+		return status!=B_OK?status:B_DEV_NOT_READY;
+	}
 	const bool keepOwnerCookie=context->recoveryFinishKeepOwnerCookie;
 	sReloadGeneration=nextGeneration;
-	owner->context=NULL;sRuntimeOwner=NULL;sBankStorageOnly=false;
+	owner->context=NULL;
 	delete context;
-	if (!keepOwnerCookie) { owner->magic=0;delete owner; }
 	sColdRecoveryRequired.ClearAfterVerifiedRecovery();
+	// A destructor may publish a fault after guard completion. Keep the cookie
+	// as the quarantined owner and do not report success if that occurred.
+	if (sColdRecoveryRequired) { sColdRecoveryRequired=true;return B_DEV_NOT_READY; }
+	sRuntimeOwner=NULL;sBankStorageOnly=false;
+	if (!keepOwnerCookie) { owner->magic=0;delete owner; }
 	r.new_generation=nextGeneration;r.stage=PIONEER_RECOVERY_STAGE_COMPLETE;
 	return B_OK;
 }
@@ -12955,7 +13004,7 @@ Qwen35RetainedRetryable(PioneerStoreContext* context)
 	const uint64 tickets[]={context->recoveryPrepareTicket,context->recoveryResetTicket,
 		context->recoveryFirmwareTicket,context->recoveryMappingTicket,context->recoveryFinishTicket};
 	for (unsigned i=0;i<5;i++) if (pending[i]) { ++count;ticket=tickets[i]; }
-	if (count!=1 || !ticket || context->recoveryFinishCompleted) return 0;
+	if (count!=1 || !ticket || context->recoveryFinishReady) return 0;
 	pioneer_driver_recovery_guard_v2_info* guard=NULL;
 	if (get_module(PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE,(module_info**)&guard)!=B_OK) return 0;
 	const bool valid=guard && guard->version==2 && guard->validate && guard->validate(ticket)==B_OK;
@@ -13046,6 +13095,9 @@ public:
 	status_t Run(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& request) {
 		if (!fBinding || fFaulted || !fOwner || sRuntimeOwner!=fOwner
 			|| fOwner->context!=fContext || request.expected_generation!=fSession) return B_NOT_ALLOWED;
+		if (!Qwen35RetainedReservationReady(*fContext)) {
+			fFaulted=true;sColdRecoveryRequired=true;return B_NOT_ALLOWED;
+		}
 		if (!fAwaitingProof) {
 			Invocation call{*this,inspector,request};status_t operationStatus=B_ERROR;
 			const auto result=fBinding->Step(Invocation::Run,&call,operationStatus);
@@ -13057,7 +13109,7 @@ public:
 			fAwaitingProof=true;
 		}
 		request.stage=PIONEER_RECOVERY_STAGE_GUARD_COMPLETE;
-		if (!fContext->recoveryFinishCompleted || !fContext->recoveryFinishCompletedGeneration
+		if (!fContext->recoveryFinishReady || !Qwen35RetainedReservationReady(*fContext)
 			|| !Qwen35RetainedTicketContinuity(fResetTicket,fContext->recoveryFinishTicket)) {
 			fFaulted=true;sColdRecoveryRequired=true;return B_NOT_ALLOWED;
 		}
@@ -13088,7 +13140,7 @@ Qwen35RecoveryWithRetainedRootLease(PioneerProbeCookie* inspector,tt_pioneer_rec
 		if (context->recoveryAttempted || context->recoveryPreparePending
 			|| context->recoveryResetPending || context->recoveryFirmwarePending
 			|| context->recoveryMappingPending || context->recoveryFinishPending
-			|| context->recoveryFinishCompleted) return B_NOT_ALLOWED;
+			|| context->recoveryFinishReady || !Qwen35RetainedReservationReady(*context)) return B_NOT_ALLOWED;
 		sQwen35RetainedGateway=new(std::nothrow) Qwen35RetainedRecoveryGateway(
 			owner,context,sReloadGeneration);
 		if (!sQwen35RetainedGateway) return B_NO_MEMORY;

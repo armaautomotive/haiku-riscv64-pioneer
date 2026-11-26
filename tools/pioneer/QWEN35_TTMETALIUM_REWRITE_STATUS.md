@@ -1,11 +1,29 @@
 # Latest offline checks, 2026-11-26
 
+The compile-only retained recovery sequence now keeps the persistent guard
+cold and the PCI reservation held while the controller lease, pins and
+physical-retirement proof are pending. Only after lease and pin retirement
+does it attempt unreserve once and complete the guard. Failed unreserve or
+guard completion stays cold; a fault raised during context destruction also
+keeps the cookie quarantined and prevents a success report. Focused tests
+exercised the actual guard and recovery code against simulated resources;
+the gateway checks its reservation ledger before every retry and refuses to
+resume after a simulated loss. The physical proof still denies retirement and
+no hardware was accessed.
+
+The compact two-region simulator completed its 436-step worker and candidate
+audit and selected reference token 261. All 32 captured layer outputs are
+byte-identical to the previously audited three-region fused run. Its strict
+final hidden-state comparison still failed on 2558/2560 values, maximum
+absolute error 0.370739102. This is not a valid hardware or warm-run result
+and gives no decode rate. See `benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
 The compile-only recovery ioctl now routes through a persistent gateway that
 holds the pin and controller modules, validated node pins and controller lease
 across calls. It checks the ordinary recovery-owner admission before acquiring
 them, refuses to adopt an already-started reset, and accepts retries only for
 the same validated guard ticket. It retains ownership on uncertain
-failure and waits after the guard-complete stage without reporting success.
+failure and waits before completing the guard without reporting success.
 The production hardware-retirement proof currently always returns false;
 there is no physical recovery or reusable hardware path yet. The actual
 gateway passed simulated retry, missing-module, topology-mismatch,

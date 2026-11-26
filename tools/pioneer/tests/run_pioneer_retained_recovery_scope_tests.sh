@@ -22,6 +22,10 @@ awk '/PIONEER_Q35_RETAINED_GATEWAY_BEGIN/ {copying=1;next} /PIONEER_Q35_RETAINED
  "$source" > "$temporary/pioneer_q35_retained_gateway.inc"
 awk '/PIONEER_Q35_RETAINED_RETIREMENT_PROOF_BEGIN/ {copying=1;next} /PIONEER_Q35_RETAINED_RETIREMENT_PROOF_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
  "$source" > "$temporary/pioneer_q35_retained_retirement_proof.inc"
+awk '/PIONEER_Q35_RETAINED_FINISH_BEGIN/ {copying=1;next} /PIONEER_Q35_RETAINED_FINISH_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+ "$source" > "$temporary/pioneer_q35_retained_finish.inc"
+awk '/PIONEER_Q35_RETAINED_RESERVATION_BEGIN/ {copying=1;next} /PIONEER_Q35_RETAINED_RESERVATION_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+ "$source" > "$temporary/pioneer_q35_retained_reservation.inc"
 header=$directory/../../../src/add-ons/kernel/drivers/misc/PioneerRetainedRecoveryScope.h
 printf 'using status_t=int; enum { B_OK=0, B_ERROR=-1, B_DEV_NOT_READY=-2 };\n#include "%s"\n' "$header" > "$temporary/guard.cpp"
 for flags in '' '-DPIONEER_QWEN35_RETAINED_SCOPE_WITNESS' '-DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY' \
@@ -37,6 +41,7 @@ ${CXX:-c++} -std=c++20 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  -DPIONEER_QWEN35_RETAINED_SCOPE_WITNESS -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
  -I"$temporary" "$directory/pioneer_qwen35_retained_gateway_test.cpp" -o "$temporary/gateway-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/gateway-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/gateway-test" lost-reservation
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I"$temporary" "$directory/pioneer_qwen35_retained_retirement_proof_test.cpp" -o "$temporary/proof-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/proof-test"

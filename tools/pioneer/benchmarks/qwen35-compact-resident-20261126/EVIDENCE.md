@@ -1,5 +1,19 @@
 # Compact resident simulator image, 2026-11-26
 
+## Full compact simulator result, 2026-11-26
+
+The unprofiled, size-optimized two-region image completed all 436 recorded
+steps and the 120-worker and candidate audits. It selected reference token
+261, but failed the strict fixed-reference final hidden-state comparison on
+2558 of 2560 values, maximum absolute error `0.370739102`; the process exited
+with failure. All 32 audited snapshots were byte-identical to the previously
+completed three-region fused run; their per-layer hashes are in
+`compact-full-layer-comparison-20261126.json`. The earlier same-input audit
+of those identical boundaries passed 30/32 checks. This does not validate
+warm decode, physical inference, recovery, or throughput. The normal-counter
+image used for the guarded driver link is a separate image and was not this
+simulator run. Log: `/private/tmp/q35-fused-compact-full-layer-snapshots-20261126.log`.
+
 ## Non-loadable compact driver link, 2026-11-26
 
 The complete fused tree driver and PCI profile compiled and linked against

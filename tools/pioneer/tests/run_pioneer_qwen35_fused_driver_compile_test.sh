@@ -56,9 +56,11 @@ for include in "$sdk/headers/os" "$sdk"/headers/os/*; do
  [ ! -d "$include" ] || set -- "$@" -isystem "$include"
 done
 source="$project/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp"
-for invalid in no-scope synchronous-gateway test-only-flag; do
+for invalid in no-scope no-recovery-run no-reservation-tracking synchronous-gateway test-only-flag; do
  case "$invalid" in
   no-scope) invalid_flag=-UPIONEER_QWEN35_RETAINED_SCOPE_WITNESS; expected='Retained recovery completion requires the non-loadable retained scope';;
+  no-recovery-run) invalid_flag=-UPIONEER_QWEN35_RECOVERY_RUN_ENABLE; expected='Retained recovery completion requires the non-loadable retained scope';;
+  no-reservation-tracking) invalid_flag=-UPIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS; expected='Retained recovery completion requires the non-loadable retained scope';;
   synchronous-gateway) invalid_flag=-DPIONEER_QWEN35_ROOT_RECOVERY_GATEWAY_WITNESS; expected='Retained recovery completion requires the non-loadable retained scope';;
   test-only-flag) invalid_flag=-DPIONEER_QWEN35_RETAINED_FINISH_TEST_ONLY; expected='Retained finish test flag cannot build a driver';;
  esac
