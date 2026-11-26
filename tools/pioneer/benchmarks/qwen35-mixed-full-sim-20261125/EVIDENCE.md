@@ -80,7 +80,35 @@ slice. An independently audited 14-step layer-9 SwiGLU replay uses the same
 simulated layer-8 input and the CPU continuation from its exact attention
 residual. It is running as session `82534`; log
 `/private/tmp/q35-baseline-layer9-swiglu-sim-20261126.log`. The result is not
-yet available and no physical card was accessed.
+yet available at that point and no physical card was accessed.
+
+The 14-step SwiGLU replay subsequently passed all 9,216 values on 120
+simulated workers, maximum absolute error `2.38418579e-07`; the next record
+intentionally faulted. Comparing its actual activation to the same-residual
+CPU activation with the GGML Q8_K quantizer found 34 different block scales,
+one different quantized integer and one different block sum. Applying the
+real layer-9 Q6_K down weights gave maximum dot-product difference
+`2.74332124e-05`; keeping the original quantized integers and sums while
+using the changed scales gave only `1.19209290e-07`. This closely matches
+the previously observed final-layer discrepancy.
+
+As an independent same-input check, the offline CPU oracle can now replace
+the full 9,216-value SwiGLU tensor. Self-injection preserved all 32 layers,
+logits, token and 16 trace tensors byte for byte. It rejected short, long,
+non-finite and symlink inputs and an out-of-range layer. When injected with
+the exact simulated SwiGLU, the CPU down projection plus the exact simulated
+attention residual matched the isolated simulator's final layer to maximum
+absolute error `1.19209290e-07`. The injected trace was read back and matched
+the original simulator bytes. This supports a quantization-threshold cause
+for this particular input; the existing strict comparison is not weakened,
+and hardware and other layers or positions remain unqualified.
+
+The still-active baseline full-model capture has also produced provisional
+position-zero transitions 10→11 through 14→15. All five passed the original
+same-input tolerance; the largest absolute error was `1.54972076e-05`.
+Hashes and individual outcomes are in
+`/private/tmp/q35-provisional-boundaries-10-14-20261126/provisional.json`.
+These captures remain provisional until the complete fleet audit succeeds.
 
 The paired FFN hybrid full-decode simulation completed its first decode and
 selected the independently expected token `261`, but exited with failure on

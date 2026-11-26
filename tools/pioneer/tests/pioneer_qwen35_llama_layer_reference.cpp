@@ -26,8 +26,8 @@ static const char* TraceName(unsigned layer,size_t index) {
     return layer%4==3?denseTraceNames[index]:traceNames[index];
 }
 struct Capture {std::array<std::array<float,2560>,32> layers{};std::array<bool,32> gotLayer{};
-    std::array<float,2560> replacement{};unsigned replaceLayer=32,traceLayer=32;
-    bool replaceAttentionResidual=false;
+    std::array<float,9216> replacement{};unsigned replaceLayer=32,traceLayer=32,replacementCount=2560;
+    bool replaceAttentionResidual=false,replaceFfnSwiglu=false;
     std::array<std::vector<float>,traceNames.size()> trace{};std::array<bool,traceNames.size()> gotTrace{};
     std::vector<float> logits;bool gotLogits=false,replaced=false;};
 static bool SameFile(const struct stat& a,const struct stat& b) {
@@ -48,6 +48,11 @@ static bool Callback(ggml_tensor* tensor,bool ask,void* opaque) {
         && residualLayer<32;
     const bool replaceResidual=capture.replaceAttentionResidual && isAttentionResidual
         && residualLayer==capture.replaceLayer;
+    unsigned swigluLayer=0;char swigluTrailing=0;
+    const bool isSwiglu=std::sscanf(tensor->name,"ffn_swiglu-%u%c",&swigluLayer,&swigluTrailing)==1
+        && swigluLayer<32;
+    const bool replaceSwiglu=capture.replaceFfnSwiglu && isSwiglu && swigluLayer==capture.replaceLayer;
+    const bool replaceIntermediate=replaceResidual || replaceSwiglu;
     const bool logits=std::strcmp(tensor->name,"result_output")==0;
     size_t traceIndex=traceNames.size();
     if (capture.traceLayer<32) for (size_t i=0;i<traceNames.size();i++) {
@@ -55,15 +60,16 @@ static bool Callback(ggml_tensor* tensor,bool ask,void* opaque) {
         char name[64];std::snprintf(name,sizeof(name),"%s-%u",prefix,capture.traceLayer);
         if (!std::strcmp(tensor->name,name)) {traceIndex=i;break;}
     }
-    if (ask) return isLayer || logits || replaceResidual || traceIndex<traceNames.size();
+    if (ask) return isLayer || logits || replaceIntermediate || traceIndex<traceNames.size();
     if (tensor->type!=GGML_TYPE_F32 || !ggml_is_contiguous(tensor)) return false;
-    if (replaceResidual) {
-        if (capture.replaced || ggml_nelements(tensor)!=2560
-            || ggml_nbytes(tensor)!=capture.replacement.size()*sizeof(float)) return false;
-        ggml_backend_tensor_set(tensor,capture.replacement.data(),0,capture.replacement.size()*sizeof(float));
-        std::array<float,2560> readback{};
-        ggml_backend_tensor_get(tensor,readback.data(),0,readback.size()*sizeof(float));
-        if (std::memcmp(readback.data(),capture.replacement.data(),readback.size()*sizeof(float))) return false;
+    if (replaceIntermediate) {
+        const size_t bytes=capture.replacementCount*sizeof(float);
+        if (capture.replaced || ggml_nelements(tensor)!=capture.replacementCount
+            || ggml_nbytes(tensor)!=bytes) return false;
+        ggml_backend_tensor_set(tensor,capture.replacement.data(),0,bytes);
+        std::array<float,9216> readback{};
+        ggml_backend_tensor_get(tensor,readback.data(),0,bytes);
+        if (std::memcmp(readback.data(),capture.replacement.data(),bytes)) return false;
         capture.replaced=true;
     }
     if (traceIndex<traceNames.size()) {
@@ -78,14 +84,14 @@ static bool Callback(ggml_tensor* tensor,bool ask,void* opaque) {
         capture.logits.resize(248320);ggml_backend_tensor_get(tensor,capture.logits.data(),0,ggml_nbytes(tensor));
         capture.gotLogits=true;return true;
     }
-    if (replaceResidual) return true;
+    if (replaceIntermediate) return true;
     if (!isLayer || ggml_nelements(tensor)!=2560
         || ggml_nbytes(tensor)!=2560*sizeof(float)) return false;
     auto& target=capture.layers[layer];
     ggml_backend_tensor_get(tensor,target.data(),0,target.size()*sizeof(float));
-    if (!capture.replaceAttentionResidual && capture.replaceLayer==layer) {
+    if (!capture.replaceAttentionResidual && !capture.replaceFfnSwiglu && capture.replaceLayer==layer) {
         if (capture.replaced) return false;
-        ggml_backend_tensor_set(tensor,capture.replacement.data(),0,capture.replacement.size()*sizeof(float));
+        ggml_backend_tensor_set(tensor,capture.replacement.data(),0,capture.replacementCount*sizeof(float));
         ggml_backend_tensor_get(tensor,target.data(),0,target.size()*sizeof(float));
         if (std::memcmp(target.data(),capture.replacement.data(),target.size()*sizeof(float))) return false;
         capture.replaced=true;
@@ -127,13 +133,16 @@ static bool Save(const std::string& dir,const std::string& prefix,const Capture&
 }
 int main(int argc,char** argv) {
     if (argc!=3 && argc!=4 && argc!=6 && argc!=7 && argc!=8) {
-        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two | (--replace-layer | --replace-attn-residual) N tensor.bin [--trace-layer N | --trace-layer25]]\n",argv[0]);return 2;
+        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two | (--replace-layer | --replace-attn-residual | --replace-ffn-swiglu) N tensor.bin [--trace-layer N | --trace-layer25]]\n",argv[0]);return 2;
     }
     const bool two=argc==4 && !std::strcmp(argv[3],"two");if (argc==4 && !two) return 2;
     Capture capture{};
     if (argc>=6) {
-        if (std::strcmp(argv[3],"--replace-layer") && std::strcmp(argv[3],"--replace-attn-residual")) return 2;
+        if (std::strcmp(argv[3],"--replace-layer") && std::strcmp(argv[3],"--replace-attn-residual")
+            && std::strcmp(argv[3],"--replace-ffn-swiglu")) return 2;
         capture.replaceAttentionResidual=!std::strcmp(argv[3],"--replace-attn-residual");
+        capture.replaceFfnSwiglu=!std::strcmp(argv[3],"--replace-ffn-swiglu");
+        if (capture.replaceFfnSwiglu) capture.replacementCount=9216;
         if (argc==7 && std::strcmp(argv[6],"--trace-layer25")) return 2;
         if (argc==7) capture.traceLayer=25;
         if (argc==8) {
@@ -147,15 +156,15 @@ int main(int argc,char** argv) {
         const int replacementFd=open(argv[5],O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if (replacementFd<0) return 1;
         struct stat replacementBefore{},replacementAfter{};
         if (fstat(replacementFd,&replacementBefore) || !S_ISREG(replacementBefore.st_mode)
-            || replacementBefore.st_size!=static_cast<off_t>(capture.replacement.size()*sizeof(float))) {
+            || replacementBefore.st_size!=static_cast<off_t>(capture.replacementCount*sizeof(float))) {
             close(replacementFd);return 1;
         }
         FILE* replacement=fdopen(replacementFd,"rb");if (!replacement) {close(replacementFd);return 1;}
-        const bool okay=std::fread(capture.replacement.data(),sizeof(float),capture.replacement.size(),replacement)==capture.replacement.size()
+        const bool okay=std::fread(capture.replacement.data(),sizeof(float),capture.replacementCount,replacement)==capture.replacementCount
             && std::fgetc(replacement)==EOF && !std::ferror(replacement)
             && !fstat(replacementFd,&replacementAfter) && SameFile(replacementBefore,replacementAfter);
         if (std::fclose(replacement) || !okay) return 1;
-        for (float value:capture.replacement) if (!std::isfinite(value)) return 1;
+        for (unsigned i=0;i<capture.replacementCount;i++) if (!std::isfinite(capture.replacement[i])) return 1;
         capture.replaceLayer=unsigned(layer);
     }
     const int fd=open(argv[1],O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if (fd<0) return 1;
