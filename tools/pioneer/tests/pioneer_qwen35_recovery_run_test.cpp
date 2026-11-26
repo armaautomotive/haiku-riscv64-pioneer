@@ -418,7 +418,12 @@ struct FakeCard {int bus=0,device=0,function=0;} sCard;[[maybe_unused]] static i
 struct FakePci {status_t unreserve_device(int,int,int,const char*,void*) {
 	return Step(PIONEER_RECOVERY_STAGE_UNRESERVE)?B_OK:B_DEV_NOT_READY;
 }} pci;[[maybe_unused]] static FakePci* sPCI=&pci;
+#ifdef TEST_RETAINED_GATEWAY
+static std::vector<int> sleepDurations;static bool failSleep=false;
+static int snooze(int duration){sleepDurations.push_back(duration);return failSleep?B_DEV_NOT_READY:B_OK;}
+#else
 static int snooze(int){return B_OK;}
+#endif
 struct thread_info {int team;};static int activeTeam=17,sLock=1,held=0;
 static int find_thread(void*){return 1;}static int get_thread_info(int,thread_info* t){t->team=activeTeam;return B_OK;}
 static status_t acquire_sem(int){assert(!held);held=1;return B_OK;}static void release_sem(int){assert(held);held=0;}
@@ -458,6 +463,19 @@ static void Cleanup(){if(sRuntimeOwner){delete sRuntimeOwner->context;delete sRu
 #ifdef TEST_RETAINED_GATEWAY
 int main(){
 	PioneerProbeCookie inspector;Setup();auto* owner=sRuntimeOwner;auto* context=owner->context;
+	// Exercise the actual adapter's initial and resumed delays. A failed
+	// wait denies every subsequent root and endpoint read.
+	sleepDurations.clear();failSleep=false;
+	Qwen35RecoveryResetIO delayed(context->io,context);
+	delayed.RecoveryDelay();delayed.RecoveryDelay();
+	assert((sleepDurations==std::vector<int>{2000000,100000}) && !delayed.delayFailed);
+	Qwen35RecoveryResetIO resumed(context->io,context);resumed.RecoveryDelay();
+	assert(sleepDurations.back()==2000000);
+	failSleep=true;Qwen35RecoveryResetIO failed(context->io,context);failed.RecoveryDelay();
+	const size_t sleeps=sleepDurations.size();failed.RecoveryDelay();
+	assert(failed.delayFailed && sleepDurations.size()==sleeps
+		&& failed.RootRead(0,4)==UINT32_MAX && failed.CardRead(0,4)==UINT32_MAX && !failed.RootReady());
+	failSleep=false;sleepDurations.clear();
 	auto r=Request();
 	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY);
 	assert(r.stage==PIONEER_RECOVERY_STAGE_GUARD_COMPLETE && !r.new_generation

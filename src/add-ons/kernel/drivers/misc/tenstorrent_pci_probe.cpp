@@ -12269,6 +12269,11 @@ Qwen35FirmwareResetPollTrace(void* context,PioneerFirmwareResetPollTrace event)
 struct Qwen35RecoveryResetIO {
 	PioneerSessionIO& io;
 	bool delayFailed=false;
+	#ifdef PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS
+	// Give an issued ASIC reset time to settle before any poll. Each
+	// resumed invocation conservatively waits again, without reissuing it.
+	bool firstRecoveryDelay=true;
+	#endif
 	#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
 	PioneerStoreContext* traceContext;
 	explicit Qwen35RecoveryResetIO(PioneerSessionIO& owned,PioneerStoreContext* context)
@@ -12301,7 +12306,14 @@ struct Qwen35RecoveryResetIO {
 		#endif
 	}
 	void RecoveryDelay() {
+		#ifdef PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS
+		if (delayFailed) return;
+		const int duration=firstRecoveryDelay?2000000:100000;
+		firstRecoveryDelay=false;
+		if (snooze(duration)!=B_OK) delayFailed=true;
+		#else
 		if (snooze(100000)!=B_OK) delayFailed=true;
+		#endif
 		#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
 		if (traceContext && traceContext->qualificationResetTriggered && !traceContext->qualificationFirstDelay && !delayFailed) {
 			traceContext->qualificationFirstDelay=true;Qwen35QualificationTrace(traceContext,PIONEER_PCIE_TRACE_BEFORE_FIRST_POLL);

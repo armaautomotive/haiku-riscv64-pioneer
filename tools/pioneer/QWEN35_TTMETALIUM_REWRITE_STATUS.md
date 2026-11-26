@@ -1,5 +1,13 @@
 # Latest offline checks, 2026-11-26
 
+The compile-only retained recovery adapter now waits two seconds before its
+first ASIC-reset PCI poll, including after a resumed pending operation, then
+polls at 100 ms. Simulations using the actual reset routine and adapter cover
+an interrupted wait and resume without a repeated trigger; the fused Haiku
+build still rejects loading. The earlier root AER appeared before endpoint
+polling, so this timing change is not proof of a fix or physical recovery.
+See `benchmarks/qwen35-pin-kernel-20261125/EVIDENCE.md`.
+
 The warm same-input auditor can now inject both prior simulated KV and the
 preceding activation for dense layers, as well as recurrent state for other
 layers. Real 4B CPU self-injection controls with CPU and separately captured

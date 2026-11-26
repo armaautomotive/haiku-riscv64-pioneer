@@ -1,5 +1,28 @@
 # Offline Pioneer pin-service kernel candidate
 
+## Retained reset settle interval (2026-11-26)
+
+The retained-gateway-only ASIC reset adapter now waits two seconds before
+its first PCI poll, then uses 100 ms between subsequent polls. A fresh
+adapter for a resumed pending reset waits again and never reissues the timer.
+If the delay is interrupted, it denies all following config reads on that
+adapter and retains the pending reset. Tenstorrent's current arch-agnostic
+warm-reset flow uses a minimum two-second post-reset wait before looking for
+the device: https://github.com/tenstorrent/tt-umd/blob/main/device/warm_reset.cpp .
+This is a conservative timing alignment, not a demonstrated cure for the
+previous SG2042 AER error, which occurred before endpoint polling.
+
+The actual ASIC reset routine and extracted retained adapter passed a
+simulated test checking wait-before-read ordering, interrupted wait, resume,
+and exactly three original reset writes. The actual adapter and recovery
+orchestration also passed the retained/link tests under ASan/UBSan. A fused
+Haiku/RISC-V compile with retained link reset succeeded and retained the
+no-I/O `B_NOT_ALLOWED` init guard; log
+`/private/tmp/q35-retained-settle-fused-compile-20261126.log`. The physical
+retirement proof remains false; no card was accessed and no recovery without
+reboot is established.
+
+
 ## Retained lease with link-reset witness (2026-11-26)
 
 The compile-only link-reset witness now accepts exactly one recovery gateway,
