@@ -12205,8 +12205,10 @@ DriverReloadControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_
 #include "PioneerPcieRootAerSnapshot.h"
 #include "PioneerPcieRootResetReady.h"
 #ifdef PIONEER_QWEN35_LINK_RESET_WITNESS
-#if !defined(PIONEER_QWEN35_ROOT_RECOVERY_GATEWAY_WITNESS) || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY)
-#error The link-reset sequence requires the non-loadable root recovery gateway
+#if (!defined(PIONEER_QWEN35_ROOT_RECOVERY_GATEWAY_WITNESS) && !defined(PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS)) \
+    || (defined(PIONEER_QWEN35_ROOT_RECOVERY_GATEWAY_WITNESS) && defined(PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS)) \
+    || !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY)
+#error The link-reset sequence requires a non-loadable root or retained recovery gateway
 #endif
 #include "PioneerPcieLinkReset.h"
 #include "PioneerQ35PcieIdleAudit.h"

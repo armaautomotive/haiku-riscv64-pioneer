@@ -1,5 +1,21 @@
 # Offline Pioneer pin-service kernel candidate
 
+## Retained lease with link-reset witness (2026-11-26)
+
+The compile-only link-reset witness now accepts exactly one recovery gateway,
+including the retained gateway, while rejecting qualification and unsafe
+configurations. The actual extracted recovery orchestration passed simulated
+link-reset, timeout/retry and failure checks without repeating the pulse. A
+separate test exercised the actual retained gateway and actual link-reset
+algorithm with a stubbed recovery operation and simulated lease and pinned
+nodes: the lease and pins remained held during link access and failure stayed
+parked without replay. The sanitizer suites passed. A Haiku/RISC-V fused-driver
+compile with both witnesses also passed and retained its no-I/O init guard;
+log `/private/tmp/q35-retained-link-fused-compile-20261126j.log`. These are
+software simulations and a compile-only build, not a physical recovery proof.
+The physical retirement proof still denies; nothing was installed or run on
+the card.
+
 ## Tree-lookup cleanup and final candidates (2026-11-26)
 
 The public `find_child_node` wrapper also released its final iteration cursor

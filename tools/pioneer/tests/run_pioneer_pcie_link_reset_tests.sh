@@ -21,3 +21,7 @@ for mode in asic firmware; do
   -DTEST_LINK_RESET $flag -I"$temporary" "$directory/pioneer_qwen35_recovery_run_test.cpp" -o "$temporary/$mode"
  ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/$mode"
 done
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DTEST_LINK_RESET -DTEST_RETAINED_GATEWAY -I"$temporary" \
+ "$directory/pioneer_qwen35_recovery_run_test.cpp" -o "$temporary/retained-link"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/retained-link"

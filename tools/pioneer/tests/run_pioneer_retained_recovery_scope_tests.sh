@@ -42,6 +42,7 @@ ${CXX:-c++} -std=c++20 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  -I"$temporary" "$directory/pioneer_qwen35_retained_gateway_test.cpp" -o "$temporary/gateway-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/gateway-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/gateway-test" lost-reservation
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/gateway-test" link-fault
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I"$temporary" "$directory/pioneer_qwen35_retained_retirement_proof_test.cpp" -o "$temporary/proof-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/proof-test"

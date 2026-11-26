@@ -1,5 +1,14 @@
 # Recorded mixed-layer and full-decode simulator work, 2026-11-25
 
+The current two-position capture (session `45891`, log
+`/private/tmp/q35-two-position-warm-boundaries-20261126b.log`) selected
+reference token 261 at position zero but failed the strict hidden-state check:
+2,558 of 2,560 values differed, maximum absolute error `0.370739102`. An
+explicit diagnostic acknowledgment allowed it to continue with retained
+model, fleet and state. Position one is in progress; its layer-0 snapshot is
+provisional until full fleet and candidate audit. This capture did not request
+position-zero state snapshots and is not a valid warm run or a hardware result.
+
 ## Two-position diagnostic result and new capture, 2026-11-26
 
 The warm boundary auditor now accepts available position-zero simulator

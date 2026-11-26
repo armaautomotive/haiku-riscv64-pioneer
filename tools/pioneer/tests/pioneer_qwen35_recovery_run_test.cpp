@@ -465,6 +465,13 @@ int main(){
 		&& sReloadGeneration==3 && context->recoveryFinishReady
 		&& completeCount==0 && ticketPending
 		&& !contextDeleted && !cookieDeleted);
+#ifdef TEST_LINK_RESET
+	assert(linkWrites==2);
+	const auto asserted=std::find(trace.begin(),trace.end(),9001);
+	const auto released=std::find(trace.begin(),trace.end(),9002);
+	const auto asic=std::find(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_ASIC_RESET);
+	assert(asserted<released && released<asic && asic!=trace.end());
+#endif
 	assert(std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_UNRESERVE)==0);
 	assert(Qwen35FinalizeRetainedRecoveryLocked(owner,context,r,false)==B_NOT_ALLOWED);
 	assert(sRuntimeOwner==owner && sColdRecoveryRequired && !contextDeleted && !cookieDeleted);
@@ -473,7 +480,32 @@ int main(){
 		&& r.stage==PIONEER_RECOVERY_STAGE_COMPLETE && r.new_generation==4
 		&& contextDeleted==1 && cookieDeleted==1 && completeCount==1 && !ticketPending);
 	assert(std::count(trace.begin(),trace.end(),PIONEER_RECOVERY_STAGE_UNRESERVE)==1);
-	Cleanup();puts("PASS actual recovery defers completion until lease retirement; SIMULATED HARDWARE ONLY");
+	Cleanup();
+#ifdef TEST_LINK_RESET
+	Setup();owner=sRuntimeOwner;context=owner->context;resetTimeout=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& context->recoveryResetPending && linkWrites==2 && ticketPending);
+	resumeResetTimeout=true;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& context->recoveryResetPending && linkWrites==2 && ticketPending);
+	resumeResetTimeout=false;r=Request();
+	assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_DEV_NOT_READY
+		&& context->recoveryFinishReady && linkWrites==2 && ticketPending && !completeCount);
+	assert(Qwen35FinalizeRetainedRecoveryLocked(owner,context,r,true)==B_OK);
+	assert(!sRuntimeOwner && !sColdRecoveryRequired && linkWrites==2 && completeCount==1);
+	Cleanup();
+	for(unsigned fault=0;fault<3;fault++) {
+		Setup();failLinkAssert=fault==0;failLinkRestore=fault==1;fakeLinkReady=fault!=2;
+		r=Request();assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK
+			&& r.operation_status==B_DEV_NOT_READY && sRuntimeOwner && sColdRecoveryRequired
+			&& linkWrites==2 && abortCount==1 && !completeCount);
+		const auto previous=trace;r=Request();
+		assert(Qwen35RecoveryRun(&inspector,&r,sizeof(r))==B_OK && r.operation_status==B_NOT_ALLOWED
+			&& linkWrites==2 && trace==previous);
+		Cleanup();
+	}
+#endif
+	puts("PASS actual recovery defers completion until lease retirement; SIMULATED HARDWARE ONLY");
 }
 #elif defined(TEST_LINK_RESET)
 int main(){

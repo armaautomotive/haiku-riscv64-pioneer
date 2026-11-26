@@ -1,5 +1,19 @@
 # Latest offline checks, 2026-11-26
 
+The compile-only retained recovery gateway and link-reset witness now build
+together. Simulated tests cover the actual recovery orchestration and, in a
+separate composition with a stubbed recovery operation, the retained lease,
+pins and link-reset algorithm across retries and faults. No link pulse was
+replayed. The physical retirement proof still denies; this is not evidence of
+physical recovery. See `benchmarks/qwen35-pin-kernel-20261125/EVIDENCE.md`.
+
+The ongoing full two-position diagnostic selected reference token 261 at its
+first position, but failed the strict hidden-state comparison for 2,558 of
+2,560 values. It proceeded only under explicit diagnostic acknowledgment;
+position one is running and its first layer snapshot is provisional until the
+fleet and candidate audit. It is not a valid warm run. See
+`benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
 The exact normal-counter compact resident image started and stopped on all
 120 simulated workers; a corrupt template faulted its designated worker
 while the others stopped. A separately guarded four-layer graph check using
