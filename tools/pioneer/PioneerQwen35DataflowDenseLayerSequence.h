@@ -67,6 +67,36 @@ public:
 			return static_cast<DataflowDenseLayerSequenceResult>(
 				stage=DataflowDenseNormRunFailed);
 
+#ifdef PIONEER_QWEN35_DENSE_KV_PAIR_COMPILE_ONLY
+		// K and V share the normalized input. Give each half the fleet and
+		// separate scratch, then pack both before attention consumes them.
+		DataflowProjectionProgram& query=projectionScratch;
+		if (!authority.BuildDenseProjection(layer,QueryAndGate,normalizedSlot,query))
+			return static_cast<DataflowDenseLayerSequenceResult>(stage=DataflowDenseQueryBuildFailed);
+		if (service.RunProjection(query,io)!=0)
+			return static_cast<DataflowDenseLayerSequenceResult>(stage=DataflowDenseQueryRunFailed);
+		auto* value=new(std::nothrow) DataflowProjectionProgram;
+		if (!value) return static_cast<DataflowDenseLayerSequenceResult>(stage=DataflowDenseValueBuildFailed);
+		DataflowProjectionProgram& key=projectionScratch;
+		if (!authority.BuildDenseProjection(layer,Key,normalizedSlot,key,DataflowCoreCount/2)) {
+			delete value;return static_cast<DataflowDenseLayerSequenceResult>(stage=DataflowDenseKeyBuildFailed);
+		}
+		if (!authority.BuildDenseProjection(layer,Value,normalizedSlot,*value,DataflowCoreCount/2)) {
+			delete value;return static_cast<DataflowDenseLayerSequenceResult>(stage=DataflowDenseValueBuildFailed);
+		}
+		const bool pairOkay=service.RunIndependentProjectionPair(key,*value,io)==0;
+		delete value;
+		if (!pairOkay) return static_cast<DataflowDenseLayerSequenceResult>(stage=DataflowDenseKeyRunFailed);
+		for (unsigned mode=DataflowDenseAttentionPackKey;mode<=DataflowDenseAttentionPackValue;mode++) {
+			DataflowDenseAttentionProgram pack{};
+			if (!authority.BuildDenseAttention(layer,position,mode,pack))
+				return static_cast<DataflowDenseLayerSequenceResult>(stage=mode==DataflowDenseAttentionPackKey
+					?DataflowDensePackKeyBuildFailed:DataflowDensePackValueBuildFailed);
+			if (service.RunDenseAttention(pack,io)!=0)
+				return static_cast<DataflowDenseLayerSequenceResult>(stage=mode==DataflowDenseAttentionPackKey
+					?DataflowDensePackKeyRunFailed:DataflowDensePackValueRunFailed);
+		}
+#else
 		const unsigned roles[3]={QueryAndGate,Key,Value};
 		const unsigned buildStages[3]={DataflowDenseQueryBuildFailed,
 			DataflowDenseKeyBuildFailed,DataflowDenseValueBuildFailed};
@@ -95,6 +125,7 @@ public:
 							:DataflowDensePackValueRunFailed);
 			}
 		}
+#endif
 
 		DataflowDenseAttentionProgram attention{};
 		if (!authority.BuildDenseAttention(layer,position,

@@ -21,6 +21,8 @@ def main():
                         help='compile the stream and graph dispatch objects with -O2')
     parser.add_argument('--profiled-compile-only', action='store_true',
                         help='compile normal cycle-counter profiling; do not execute in ttsim')
+    parser.add_argument('--dense-kv-pair', action='store_true',
+                        help='compile the recorder-only K/V projection pairing variant')
     parser.add_argument('--qualification', action='store_true',
                         help='build the matching standalone qualification service, compile-only')
     parser.add_argument('--ttsim-qualification', action='store_true',
@@ -32,6 +34,8 @@ def main():
         parser.error('ttsim qualification requires an unprofiled qualification build')
     if args.qualification and not (args.profiled_compile_only or args.ttsim_qualification):
         parser.error('qualification is restricted to the normal-counter compile-only image unless explicitly simulator-only')
+    if args.dense_kv_pair and args.qualification:
+        parser.error('dense K/V pairing is restricted to the resident rewrite witness')
     if not args.output.is_absolute() or args.output.exists() or args.output.is_symlink():
         parser.error('output must be a new absolute directory')
     root = Path(__file__).resolve().parent
@@ -52,6 +56,8 @@ def main():
         (args.output / 'compact-qualification.marker').touch(exist_ok=False)
     if args.ttsim_qualification:
         (args.output / 'ttsim-qualification.marker').touch(exist_ok=False)
+    if args.dense_kv_pair:
+        (args.output / 'dense-kv-pair.marker').touch(exist_ok=False)
 
     flags = ('-std=c++17 -Oz -Wall -Wextra -Werror -ffreestanding -fno-exceptions '
              '-fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin '
@@ -65,6 +71,8 @@ def main():
                'PIONEER_QWEN35_FUSED_RECURRENCE PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS '
                'PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY '
                'PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY').split()
+    if args.dense_kv_pair:
+        defines.append('PIONEER_QWEN35_DENSE_KV_PAIR_COMPILE_ONLY')
     if not args.profiled_compile_only:
         defines.append('PIONEER_QWEN35_TTSIM_UNPROFILED_COMPILE_ONLY')
     includes = ['-I' + str(root), '-I' + str(sdk / 'headers'), '-idirafter', str(sdk / 'headers/posix')]

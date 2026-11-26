@@ -5,6 +5,16 @@
 #include "PioneerQwen35ActivationPlan.h"
 #include "PioneerQwen35DeviceLayout.h"
 
+#if defined(PIONEER_QWEN35_DENSE_KV_PAIR_COMPILE_ONLY) \
+    && (!defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) \
+        || !defined(PIONEER_QWEN35_DEVICE_DISPATCH) \
+        || !defined(PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY) \
+        || !defined(PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY) \
+        || defined(PIONEER_QWEN35_RECOVERY_QUALIFY) \
+        || defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL))
+#error Dense KV pairing is restricted to the non-loadable fused graph rewrite
+#endif
+
 namespace PioneerQwen35 {
 
 enum : unsigned {
@@ -41,6 +51,9 @@ inline bool DataflowDenseProjectionTarget(unsigned role,unsigned& workspaceIndex
 		return true;
 	}
 	if (role==Key || role==Value) {
+#ifdef PIONEER_QWEN35_DENSE_KV_PAIR_COMPILE_ONLY
+		if (role==Value) { workspaceIndex=DataflowGraphUpWorkspaceIndex; return true; }
+#endif
 		workspaceIndex=DataflowGraphRecurrentGateWorkspaceIndex;
 		return true;
 	}

@@ -661,6 +661,8 @@ def main():
     parser.add_argument('--resident-normal-counter-graph-probe', action='store_true',
                         help='probe the exact normal-counter resident image on the fixed four-layer prefix')
     args = parser.parse_args()
+    if (args.image / 'dense-kv-pair.marker').exists():
+        parser.error('dense K/V pair image has no matching numerical simulator fixture')
     if ((args.resident_export_state or args.resident_import_state or args.resident_position_one_command)
             and not args.resident_sequence_fixture):
         parser.error('resident state options require --resident-sequence-fixture')

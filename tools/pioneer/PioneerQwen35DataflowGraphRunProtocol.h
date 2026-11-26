@@ -41,8 +41,13 @@ enum : unsigned {
 #ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
 #ifdef PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY
 #ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+#ifdef PIONEER_QWEN35_DENSE_KV_PAIR_COMPILE_ONLY
+	DataflowGraphDecodeSteps=428,
+	DataflowGraphPromptSteps=425
+#else
 	DataflowGraphDecodeSteps=436,
 	DataflowGraphPromptSteps=433
+#endif
 #else
 	DataflowGraphDecodeSteps=500,
 	DataflowGraphPromptSteps=497

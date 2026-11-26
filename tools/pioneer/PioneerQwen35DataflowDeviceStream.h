@@ -27,7 +27,9 @@ namespace PioneerQwen35 {
 enum : unsigned {
 	DataflowStreamBindingMagic=0x31425335,
 	DataflowStreamRecordMagic=0x31525335,
-#ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
+#ifdef PIONEER_QWEN35_DENSE_KV_PAIR_COMPILE_ONLY
+	DataflowStreamVersion=7,
+#elif defined(PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY)
 	DataflowStreamVersion=6,
 #elif defined(PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY)
 	DataflowStreamVersion=5,

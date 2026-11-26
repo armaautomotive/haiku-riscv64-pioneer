@@ -509,7 +509,12 @@ inline bool DataflowProjectionMatchesDenseGraphWorkspace(
 		|| !DataflowBankRoutesValid(auditedRoutes) || program.inputBase!=0
 		|| program.inputs!=Hidden || program.inputRows!=Hidden) return false;
 	unsigned foundWorkspace=DataflowGraphWorkspaceBufferCount;
-	for (unsigned index=DataflowGraphRecurrentQkvWorkspaceIndex;
+	for (unsigned index=
+#ifdef PIONEER_QWEN35_DENSE_KV_PAIR_COMPILE_ONLY
+		DataflowGraphUpWorkspaceIndex;
+#else
+		DataflowGraphRecurrentQkvWorkspaceIndex;
+#endif
 		index<=DataflowGraphRecurrentGateWorkspaceIndex;index++)
 		if (DataflowRowSpaceMatches(workspace.space[index],program.output))
 			foundWorkspace=index;

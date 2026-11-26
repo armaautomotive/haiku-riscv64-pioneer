@@ -1,5 +1,23 @@
 # Compact resident simulator image, 2026-11-26
 
+## Paired dense key/value recorder schedule, 2026-11-26
+
+The compile-only rewrite adds a distinct stream version 7. Its recorded graph
+uses 428 decode steps and 425 prompt steps, saving one step for each of the
+eight dense layers. The actual graph recorder test builds prompt and decode
+schedules and checks that every dense key/value pair writes to disjoint
+scratch, with 60 active projection workers for each matrix, before separate
+KV packing records. It also checks all 120 stream tickets through the dynamic
+patcher, warm-position recording, preservation of the original candidate
+state, and rollback after a partial stream write. The ASan/UBSan test passes.
+
+This is a schedule/metadata test, not numerical projection or attention
+execution. The generic simulator runner and both service-header packagers
+explicitly reject the `dense-kv-pair.marker` until a numerical fixture for
+this stream version is available. The compact Haiku target toolchain is not
+present in the current workspace, so the variant has not been cross-compiled.
+No hardware was accessed and no decode speed was measured.
+
 ## Recorded projection traffic and worker use (2026-11-26)
 
 The auditor reads the actual 436-step compact decode fixture, validates all

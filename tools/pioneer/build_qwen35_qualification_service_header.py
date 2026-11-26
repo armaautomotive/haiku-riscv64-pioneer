@@ -25,6 +25,8 @@ def generate(directory: Path) -> str:
         raise ValueError('unprofiled simulator image cannot be packaged')
     if (directory / 'dense-shard.marker').exists():
         raise ValueError('dense shard image is an isolated simulator witness and cannot be packaged')
+    if (directory / 'dense-kv-pair.marker').exists():
+        raise ValueError('dense K/V pair image is not a recovery qualification image')
     for marker in ('activation-sharing.marker', 'fused-recurrence.marker'):
         if not (directory / marker).is_file():
             raise ValueError('missing qualification image marker: ' + marker)

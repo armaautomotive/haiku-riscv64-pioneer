@@ -21,6 +21,15 @@ enum : unsigned {
 	DataflowDenseAttentionHeadBytes=DenseHeadWidth*sizeof(uint16_t)
 };
 
+inline unsigned DataflowDenseAttentionPackedWorkspace(unsigned mode) {
+#ifdef PIONEER_QWEN35_DENSE_KV_PAIR_COMPILE_ONLY
+	if (mode==DataflowDenseAttentionPackValue) return DataflowGraphUpWorkspaceIndex;
+#else
+	(void)mode;
+#endif
+	return DataflowGraphRecurrentGateWorkspaceIndex;
+}
+
 struct DataflowDenseAttentionProgram {
 	unsigned layer,position,context,mode;
 	unsigned bankRoute[2][Banks];
@@ -47,7 +56,12 @@ struct DataflowDenseAttentionProgram {
 			|| !DataflowBankRoutesValid(bankRoute)
 			|| !qkv.Valid() || qkv.rows!=ConvChannels
 			|| qkv.rowBytes!=sizeof(float) || qkv.unit!=16
-			|| !gate.Valid() || gate.rows!=DeltaInner
+			|| !gate.Valid() || gate.rows!=
+#ifdef PIONEER_QWEN35_DENSE_KV_PAIR_COMPILE_ONLY
+				(mode==DataflowDenseAttentionPackValue?Ffn:DeltaInner)
+#else
+				DeltaInner
+#endif
 			|| gate.rowBytes!=sizeof(float) || gate.unit!=16
 			|| !contextOutput.Valid() || contextOutput.rows!=Ffn
 			|| contextOutput.rowBytes!=sizeof(float) || contextOutput.unit!=16
@@ -65,7 +79,12 @@ struct DataflowDenseAttentionProgram {
 			|| rope.bytes>BankLimit-rope.address || (rope.address&63)
 			|| !DataflowGraphWorkspace::Disjoint(qkv,gate)
 			|| !DataflowGraphWorkspace::Disjoint(qkv,contextOutput)
-			|| !DataflowGraphWorkspace::Disjoint(gate,contextOutput)
+			|| !(
+#ifdef PIONEER_QWEN35_DENSE_KV_PAIR_COMPILE_ONLY
+				mode==DataflowDenseAttentionPackValue
+					?DataflowRowSpaceMatches(gate,contextOutput):
+#endif
+				DataflowGraphWorkspace::Disjoint(gate,contextOutput))
 			|| !DataflowGraphWorkspace::Disjoint(contextOutput,kv)
 			|| !DataflowGraphWorkspace::Disjoint(qkv,kv)
 			|| !DataflowGraphWorkspace::Disjoint(gate,kv)
@@ -158,6 +177,11 @@ public:
 		candidate.qkv=workspace.space[DataflowGraphRecurrentQkvWorkspaceIndex];
 		candidate.gate=workspace.space[DataflowGraphRecurrentGateWorkspaceIndex];
 		candidate.contextOutput=workspace.space[DataflowGraphUpWorkspaceIndex];
+#ifdef PIONEER_QWEN35_DENSE_KV_PAIR_COMPILE_ONLY
+		// PackValue reads the paired value projection from otherwise idle Up
+		// scratch; this mode never writes the attention context output.
+		if (mode==DataflowDenseAttentionPackValue) candidate.gate=candidate.contextOutput;
+#endif
 		candidate.kv=manifest.layers[layer].kv;
 		candidate.queryNorm=*queryNorm;
 		candidate.keyNorm=*keyNorm;

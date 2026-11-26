@@ -57,7 +57,8 @@ with tempfile.TemporaryDirectory() as temporary:
         assert subprocess.run(compiler + flags + [f'-D{flag}'], capture_output=True).returncode != 0, flag
     for marker in markers:
         (image / marker).unlink(); must_reject(image); (image / marker).touch()
-    for name in ('ttsim-unprofiled.marker', 'ttsim-qualification.marker', 'dense-shard.marker', 'flash.bin'):
+    for name in ('ttsim-unprofiled.marker', 'ttsim-qualification.marker', 'dense-shard.marker',
+                 'dense-kv-pair.marker', 'flash.bin'):
         (image / name).touch(); must_reject(image); (image / name).unlink()
     (image / 'dispatch.bin').write_bytes(bytes(0x9c00))
     generate(image)
@@ -116,4 +117,10 @@ with tempfile.TemporaryDirectory() as temporary:
                                  str(rejected), *invalid], capture_output=True, text=True)
         assert result.returncode != 0 and not rejected.exists()
         assert 'ttsim qualification requires an unprofiled qualification build' in result.stderr
+    rejected = root / 'dense-kv-pair-qualification'
+    result = subprocess.run([sys.executable, '-B', str(builder), str(root / 'unused-build'),
+                             str(rejected), '--qualification', '--profiled-compile-only',
+                             '--dense-kv-pair'], capture_output=True, text=True)
+    assert result.returncode != 0 and not rejected.exists()
+    assert 'dense K/V pairing is restricted to the resident rewrite witness' in result.stderr
 print('PASS compact compile header guards, image boundaries and simulator rejection; NO HARDWARE')
