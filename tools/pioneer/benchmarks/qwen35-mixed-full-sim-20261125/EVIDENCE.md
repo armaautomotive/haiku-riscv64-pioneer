@@ -246,6 +246,16 @@ tests passed. A four-layer control run using this option is active in session
 captured values have not yet been validated. This is simulator instrumentation
 only and establishes no hardware completion or inference result.
 
+The first four-layer capture control exited 1 after missing the layer-0 safe
+window (`/private/tmp/q35-baseline-four-layer-snapshots-20261126.log`); it
+produced no snapshot and no completion marker. The runner now shortens the
+simulator clock chunks approaching a boundary, while preserving the same
+overall simulated-cycle deadline and rejecting any missed window. Synthetic
+checks cover the clock transitions and malformed boundaries. A new control
+is running as session `96447` with log
+`/private/tmp/q35-baseline-four-layer-snapshots-fine-20261126.log`. The
+revised method is not yet validated against the layer references.
+
 As a separate offline sensitivity experiment, replacing layer 7 in the CPU
 oracle with the simulator's complete observed output produced a layer-31
 maximum difference `0.55916214` and row 0 `-2.617931365966797`, versus

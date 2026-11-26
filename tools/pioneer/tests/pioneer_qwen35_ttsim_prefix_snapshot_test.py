@@ -33,6 +33,8 @@ assert points == [(2, [(0, 0x05000000, 0, 9216)])]
 for step, phase, result in ((1, 5, 'waiting'), (2, 1, 'safe'), (2, 2, 'safe'),
                             (2, 3, 'safe'), (2, 4, 'missed'), (3, 1, 'missed')):
     assert service.recorded_snapshot_progress(0x51350000 | (step << 3) | phase, 2) == result
+for step, expected in ((10, 100000), (15, 1000), (16, 50), (17, 50)):
+    assert service.recorded_snapshot_clock(0x51350000 | (step << 3) | 1, 17) == expected
 
 for progress in (0, 0x51350000 | (2 << 3), 0x51350000 | (2 << 3) | 6):
     try:

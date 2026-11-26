@@ -124,6 +124,15 @@ def recorded_snapshot_progress(word, target_step):
     return 'missed'
 
 
+def recorded_snapshot_clock(word, target_step):
+    """Shorten emulator clock chunks before the narrow post-barrier window."""
+    state = recorded_snapshot_progress(word, target_step)
+    if state != 'waiting':
+        return 50
+    step = (word & 0xffff) >> 3
+    return 100000 if step < target_step - 2 else 1000 if step == target_step - 2 else 50
+
+
 def validate_isolated_zero_ranges(zeros, weights, streams, inputs, outputs, decode_steps):
     """Admit simulator state clears only when disjoint from retained ranges."""
     if not 1 <= decode_steps <= 1024:
@@ -911,8 +920,11 @@ def main():
                 steps = record_count if full_prompt else executed
                 print(f'starting recorded {layers}-layer simulation ({steps} graph steps)', flush=True)
                 snapshot_index = 0
-                for attempt in range(20000):
-                    lib.libttsim_clock(100000)
+                clock_ticks, elapsed, fine_polls, last_report = 100000, 0, 0, 0
+                while elapsed < 2000000000:
+                    lib.libttsim_clock(clock_ticks)
+                    elapsed += clock_ticks
+                    captured = False
                     if snapshot_index < len(snapshot_points):
                         select_worker(0)
                         progress = struct.unpack('<I', read(bar + 0xab300, 4))[0]
@@ -929,8 +941,16 @@ def main():
                                         result[first * 4:(first + count) * 4] = read_bank(bank, address, count * 4)
                                 with (args.recorded_prefix_snapshots / f'layer{snapshot_index}.bin').open('xb') as output_file:
                                     output_file.write(result)
-                                print(f'captured provisional simulated layer {snapshot_index} after barrier', flush=True)
+                                print(f'captured provisional simulated layer {snapshot_index} after barrier '
+                                      f'at progress 0x{progress:08x}', flush=True)
                                 snapshot_index += 1
+                                captured = True
+                            clock_ticks = (recorded_snapshot_clock(progress, target)
+                                           if snapshot_index < len(snapshot_points) and not captured else 100000)
+                    if clock_ticks < 100000 and not captured:
+                        fine_polls += 1
+                        if fine_polls % 128:
+                            continue
                     snapshots = []
                     for core in range(120):
                         select_worker(core)
@@ -952,7 +972,9 @@ def main():
                         break
                     if not full_prompt and any(words[5] not in (1, 2, 4) for words in snapshots):
                         raise RuntimeError('unexpected worker state during recorded layer')
-                    if attempt and attempt % 50 == 0:
+                    attempt = elapsed // 100000
+                    if attempt // 50 > last_report:
+                        last_report = attempt // 50
                         select_worker(0)
                         progress = struct.unpack('<I', read(bar + 0xab300, 4))[0]
                         print(f'recorded graph: polling attempt {attempt}, progress=0x{progress:08x}', flush=True)
