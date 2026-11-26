@@ -62,6 +62,34 @@ def validate_resident_prompt_commands(first, second):
         raise ValueError('full-prompt commands do not have fresh disjoint tickets')
 
 
+def resident_next_decode_command(initial, token):
+    """Create one fresh position-one decode ticket after an audited result."""
+    if len(initial) != 128 or not 0 <= token < 248320:
+        raise ValueError('invalid decode handoff input')
+    words = list(struct.unpack('<32I', initial))
+    trigger, epoch, first, count = words[2:6]
+    marker = 0x40000000 | trigger
+    checksum = 2166136261
+    for word in words[:10]:
+        checksum = ((checksum ^ word) * 16777619) & 0xffffffff
+    if (words[:2] != [0x31444335, 1] or not trigger or not epoch or not first
+            or count != 524 or words[9] != 0 or any(words[11:16])
+            or words[10] != checksum or not words[6] or words[8] >= 248320
+            or words[16:] != [epoch, (~epoch) & 0xffffffff, marker, (~marker) & 0xffffffff] * 4
+            or trigger >= 0x0fffffff or epoch == 0xffffffff
+            or first + 2 * count - 1 > 0x0fffffff):
+        raise ValueError('invalid or exhausted initial decode ticket')
+    words[2:5] = [trigger + 1, epoch + 1, first + count]
+    words[8:10] = [token, 1]
+    checksum = 2166136261
+    for word in words[:10]:
+        checksum = ((checksum ^ word) * 16777619) & 0xffffffff
+    words[10] = checksum
+    marker = 0x40000000 | words[2]
+    words[16:] = [words[3], (~words[3]) & 0xffffffff, marker, (~marker) & 0xffffffff] * 4
+    return struct.pack('<32I', *words)
+
+
 def audit_resident_candidate(receipt, command, snapshots, select_worker, read, bar, decode=False):
     """Audit the simulated root candidate and each local sender receipt."""
     words = struct.unpack('<32I', command)
@@ -246,6 +274,10 @@ def main():
                         help='compare the recorded model layer with a previously verified output')
     parser.add_argument('--recorded-token-reference', type=Path,
                         help='compare a full recorded decode token with an offline reference')
+    parser.add_argument('--recorded-warm-layer-reference', type=Path,
+                        help='compare a second resident decode layer output with an offline reference')
+    parser.add_argument('--recorded-warm-token-reference', type=Path,
+                        help='compare the second resident decode token with an offline reference')
     parser.add_argument('--ttsim-unprofiled', action='store_true',
                         help='explicitly allow the non-packageable simulator image without cycle profiling')
     args = parser.parse_args()
@@ -256,6 +288,9 @@ def main():
         parser.error('recorded layer requires both fixture and reference')
     if args.recorded_token_reference and not args.recorded_layer_fixture:
         parser.error('recorded token reference requires a recorded layer fixture')
+    if (bool(args.recorded_warm_layer_reference) != bool(args.recorded_warm_token_reference)
+            or (args.recorded_warm_layer_reference and not args.recorded_token_reference)):
+        parser.error('warm recorded decode requires both warm references and a full decode fixture')
     if args.resident_export_layer_output and (not args.resident_sequence_fixture
             or args.resident_export_layer_output.exists() or args.resident_export_layer_output.is_symlink()):
         parser.error('layer output export requires a resident sequence and a new path')
@@ -641,72 +676,90 @@ def main():
                 if core != expected_core:
                     raise ValueError('recorded stream core order mismatch')
                 write_bank(bank, address, records[core * record_count * 2048:(core + 1) * record_count * 2048])
-            select_worker(0)
-            write(bar + 0xab080, command[:64])
-            write(bar + 0xab0c0, command[64:])
-            steps = record_count if full_prompt else executed
-            print(f'starting recorded {layers}-layer simulation ({steps} graph steps)', flush=True)
-            for attempt in range(20000):
-                lib.libttsim_clock(100000)
-                snapshots = []
-                for core in range(120):
-                    select_worker(core)
-                    snapshots.append(struct.unpack('<16I', read(mailbox_address, 64)))
-                if full_prompt:
-                    if any(words[5] in (4, 5) for words in snapshots):
-                        raise RuntimeError('full recorded prompt retained a worker fault')
-                    select_worker(0)
-                    receipt = struct.unpack('<8I', read(bar + 0xab310, 32))
-                    if receipt[7] == 1:
-                        token = audit_resident_candidate(receipt, command, snapshots, select_worker, read, bar, decode=decode)
-                        if decode:
-                            expected_token = int(args.recorded_token_reference.read_text().strip())
-                            if token != expected_token:
-                                raise RuntimeError(f'recorded decode token {token} differs from reference {expected_token}')
-                            print(f'recorded decode token {token} matches reference', flush=True)
+            runs = 2 if args.recorded_warm_layer_reference else 1
+            for run_number in range(runs):
+                trigger, epoch = struct.unpack_from('<II', command, 8)
+                layer_reference = (args.recorded_warm_layer_reference if run_number
+                                   else args.recorded_layer_reference)
+                token_reference = (args.recorded_warm_token_reference if run_number
+                                   else args.recorded_token_reference)
+                select_worker(0)
+                write(bar + 0xab080, command[:64])
+                write(bar + 0xab0c0, command[64:])
+                steps = record_count if full_prompt else executed
+                print(f'starting recorded {layers}-layer simulation ({steps} graph steps)', flush=True)
+                for attempt in range(20000):
+                    lib.libttsim_clock(100000)
+                    snapshots = []
+                    for core in range(120):
+                        select_worker(core)
+                        snapshots.append(struct.unpack('<16I', read(mailbox_address, 64)))
+                    if full_prompt:
+                        if any(words[5] in (4, 5) for words in snapshots):
+                            raise RuntimeError('full recorded prompt retained a worker fault')
+                        select_worker(0)
+                        receipt = struct.unpack('<8I', read(bar + 0xab310, 32))
+                        if receipt[7] == trigger:
+                            token = audit_resident_candidate(receipt, command, snapshots, select_worker, read, bar, decode=decode)
+                            if decode:
+                                expected_token = int(token_reference.read_text().strip())
+                                if token != expected_token:
+                                    raise RuntimeError(f'recorded decode token {token} differs from reference {expected_token}')
+                                print(f'recorded decode token {token} matches reference', flush=True)
+                            break
+                    elif all(words[5] == 4 for words in snapshots):
                         break
-                elif all(words[5] == 4 for words in snapshots):
-                    break
-                if not full_prompt and any(words[5] not in (1, 2, 4) for words in snapshots):
-                    raise RuntimeError('unexpected worker state during recorded layer')
-                if attempt and attempt % 50 == 0:
+                    if not full_prompt and any(words[5] not in (1, 2, 4) for words in snapshots):
+                        raise RuntimeError('unexpected worker state during recorded layer')
+                    if attempt and attempt % 50 == 0:
+                        select_worker(0)
+                        progress = struct.unpack('<I', read(bar + 0xab300, 4))[0]
+                        print(f'recorded graph: polling attempt {attempt}, progress=0x{progress:08x}', flush=True)
+                else:
+                    raise RuntimeError('recorded layer did not reach its expected terminal state')
+                if not full_prompt:
+                    for core, words in enumerate(snapshots):
+                        if (words[2:8] != (1, 0, 1, 4, 4, 5)
+                                or words[9:15] != (0x31464735, 1, executed, 120, 0x80000004, 0)
+                                or words[15] != core):
+                            raise RuntimeError(f'core {core}: recorded layer failed before {executed} barriers: {words}')
+                result = bytearray(2560 * 4)
+                next_row = 0
+                for bank, address, first, rows in outputs:
+                    if first != next_row or not rows:
+                        raise ValueError('recorded output fragments not contiguous')
+                    count = min(rows, max(0, 2560 - first))
+                    if count:
+                        result[first * 4:(first + count) * 4] = read_bank(bank, address, count * 4)
+                    next_row += rows
+                if next_row != 9216:
+                    raise ValueError('incomplete recorded output layout')
+                reference = layer_reference.read_bytes()
+                if len(reference) != 2560 * 4:
+                    raise ValueError('unexpected verified layer reference size')
+                maximum = 0.0
+                for row, ((got,), (want,)) in enumerate(zip(struct.iter_unpack('<f', result), struct.iter_unpack('<f', reference))):
+                    error = abs(got - want)
+                    if not math.isfinite(got) or not math.isfinite(want) or error > 2e-5 * max(1.0, abs(want)):
+                        raise RuntimeError(f'recorded final row {row}: {got} differs from verified reference {want}')
+                    maximum = max(maximum, error)
+                select_worker(0)
+                if not full_prompt and struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
+                    raise RuntimeError('intentionally faulted recorded layer published a candidate')
+                terminal = 'candidate audited' if full_prompt else f'record {record_count} intentionally faults'
+                print(f'PASS actual recorded {layers}-layer prefix: 2560 values match verified reference; '
+                      f'maximum absolute error {maximum:.9g}; {terminal}; NO HARDWARE', flush=True)
+                if run_number == 0 and runs == 2:
+                    # The result and all sender receipts have been audited above.
+                    # Acknowledge only after comparing the layer and token, then
+                    # publish a fresh ticket using the actual selected token.
+                    command = resident_next_decode_command(command, token)
                     select_worker(0)
-                    progress = struct.unpack('<I', read(bar + 0xab300, 4))[0]
-                    print(f'recorded graph: polling attempt {attempt}, progress=0x{progress:08x}', flush=True)
-            else:
-                raise RuntimeError('recorded layer did not reach its expected terminal state')
-            if not full_prompt:
-                for core, words in enumerate(snapshots):
-                    if (words[2:8] != (1, 0, 1, 4, 4, 5)
-                            or words[9:15] != (0x31464735, 1, executed, 120, 0x80000004, 0)
-                            or words[15] != core):
-                        raise RuntimeError(f'core {core}: recorded layer failed before {executed} barriers: {words}')
-            result = bytearray(2560 * 4)
-            next_row = 0
-            for bank, address, first, rows in outputs:
-                if first != next_row or not rows:
-                    raise ValueError('recorded output fragments not contiguous')
-                count = min(rows, max(0, 2560 - first))
-                if count:
-                    result[first * 4:(first + count) * 4] = read_bank(bank, address, count * 4)
-                next_row += rows
-            if next_row != 9216:
-                raise ValueError('incomplete recorded output layout')
-            reference = args.recorded_layer_reference.read_bytes()
-            if len(reference) != 2560 * 4:
-                raise ValueError('unexpected verified layer reference size')
-            maximum = 0.0
-            for row, ((got,), (want,)) in enumerate(zip(struct.iter_unpack('<f', result), struct.iter_unpack('<f', reference))):
-                error = abs(got - want)
-                if not math.isfinite(got) or not math.isfinite(want) or error > 2e-5 * max(1.0, abs(want)):
-                    raise RuntimeError(f'recorded final row {row}: {got} differs from verified reference {want}')
-                maximum = max(maximum, error)
-            select_worker(0)
-            if not full_prompt and struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
-                raise RuntimeError('intentionally faulted recorded layer published a candidate')
-            terminal = 'candidate audited' if full_prompt else f'record {record_count} intentionally faults'
-            print(f'PASS actual recorded {layers}-layer prefix: 2560 values match verified reference; '
-                  f'maximum absolute error {maximum:.9g}; {terminal}; NO HARDWARE', flush=True)
+                    write(bar + 0xab330, struct.pack('<4I', trigger, (~trigger) & 0xffffffff,
+                                                    epoch, (~epoch) & 0xffffffff))
+                    print('acknowledged first decode; retaining model, fleet and state for position one', flush=True)
+            if runs == 2:
+                print('PASS two consecutive recorded full decodes on one simulated resident fleet; NO HARDWARE', flush=True)
             return
 
         if args.dense_attention_fixture:

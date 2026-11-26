@@ -46,3 +46,11 @@ staged weights
 `591910f9cb91abd0392ac0efbb86c0b4c09f12e32a7bb4315b48972d23752be6`.
 The simulator-only image text SHA-256 is
 `60cbf8f5946a960a809acf2bf91160de586711e67e646215dc9258d61ea23a09`.
+
+The simulator runner now supports a second full decode after auditing and
+acknowledging the first result, preserving the same simulator fleet and
+model state. Its fresh ticket uses the actual first token. A sanitizer-built
+verifier checked the generated command using the actual resident reader and
+all 120 recorded descriptors, and rejected a corrupted command and stale
+sequence or epoch. Framing tests also checked corruption and exhaustion. The
+two-token full-model path has not been run and remains unverified.

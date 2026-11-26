@@ -4,7 +4,7 @@ import hashlib
 import struct
 
 from pioneer_qwen35_ttsim_service_test import (audit_resident_candidate, resident_handoff_payload,
-    resident_position_one_command, validate_resident_prompt_commands)
+    resident_next_decode_command, resident_position_one_command, validate_resident_prompt_commands)
 
 
 def command(position):
@@ -100,6 +100,25 @@ def main():
         checksum = ((checksum ^ word) * 16777619) & 0xffffffff
     decode_words[10] = checksum
     decode = struct.pack('<32I', *decode_words)
+    next_decode = resident_next_decode_command(decode, 261)
+    next_words = struct.unpack('<32I', next_decode)
+    assert next_words[2:10] == (2, 23, 525, 524, 1000000, 0, 261, 1)
+    rejected(resident_next_decode_command, decode, -1)
+    rejected(resident_next_decode_command, decode, 248320)
+    rejected(resident_next_decode_command, decode[:-1], 261)
+    for offset in (0, 8, 20, 36, 40, 44, 64, 124):
+        changed = bytearray(decode); changed[offset] ^= 1
+        rejected(resident_next_decode_command, changed, 261)
+    for index, value in ((2, 0x0fffffff), (3, 0xffffffff), (4, 0x0fffffff - 524)):
+        exhausted = decode_words.copy(); exhausted[index] = value
+        checksum = 2166136261
+        for word in exhausted[:10]:
+            checksum = ((checksum ^ word) * 16777619) & 0xffffffff
+        exhausted[10] = checksum
+        marker = 0x40000000 | exhausted[2]
+        exhausted[16:] = [exhausted[3], (~exhausted[3]) & 0xffffffff,
+                          marker, (~marker) & 0xffffffff] * 4
+        rejected(resident_next_decode_command, struct.pack('<32I', *exhausted), 261)
     receipt[5] = 524
     checksum = 2166136261
     for word in receipt[:6]:
