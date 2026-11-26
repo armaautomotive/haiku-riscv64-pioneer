@@ -34,8 +34,8 @@ struct device_attr { const char* name; int type; union {const char* string;uint1
 struct pci_info { uint16 vendor_id,device_id;uint8 bus,device,function; };
 struct pci_device {int id;}; struct fdt_device {};
 struct pci_resource_range {uint64 host_address,pci_address,size;uint32 type,address_type;};
-struct driver_module_info {};
 struct module_name { const char* name; };struct nested {module_name info;};
+struct driver_module_info {module_name info;};
 struct pci_device_module_info {nested info;void (*get_pci_info)(pci_device*,pci_info*);
  uint32 (*read_pci_config)(pci_device*,uint16,uint8);uint64 (*ram_address)(pci_device*,uint64);};
 struct pci_controller_module_info {nested info;status_t (*get_range)(void*,uint32,pci_resource_range*);};
@@ -87,16 +87,21 @@ static bool reg(fdt_device*,int i,uint64* address,uint64* size){*address=i?0x480
 static const void* prop(fdt_device*,const char* name,int* length){static uint32 buses[]={0x80,0xbf};static uint8 tag[]={0x1e,0x52,0xb1,0x40};
  if(!strcmp(name,"bus-range")){*length=8;return buses;}*length=badFdt?0:4;return tag;}
 static pci_device_module_info pci={{ {"bus_managers/pci/driver_v1"}},pciInfo,readConfig,ram};
+static pci_device_module_info wrongPci={{ {"wrong/driver"}},pciInfo,readConfig,ram};
+static bool wrongMetadata=false;
 static pci_controller_module_info controller={{{"busses/pci/ecam/driver_v1"}},range};
 static fdt_device_module_info fdt={{{"bus_managers/fdt/driver_v1"}},reg,prop};
 static status_t driver(device_node* n,driver_module_info** m,void** cookie){
- if(n->id==1||n->id==5){*m=(driver_module_info*)&pci;*cookie=n->id==1?(void*)&cardDevice:(void*)&rootDevice;}
+ if(n->id==1||n->id==5){*m=(driver_module_info*)(wrongMetadata && n->id==5?&wrongPci:&pci);*cookie=n->id==1?(void*)&cardDevice:(void*)&rootDevice;}
  else if(n->id==3){*m=(driver_module_info*)&controller;*cookie=&hostCookie;}
  else {*m=(driver_module_info*)&fdt;*cookie=&fdtDevice;}return B_OK;
 }
 static status_t attr8(device_node*,const char* name,uint8* out,bool){*out=!strcmp(name,B_PCI_DEVICE_BUS)?1:0;return B_OK;}
 static status_t attrString(device_node*,const char*,const char** out,bool){*out="fdt";return B_OK;}
 static device_manager_info manager{tree,find,driver,attr8,parent,put,next,attrString};
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerPciPinnedNodes.h"
+struct pioneer_pci_pin_probe_result {uint32 version;status_t managerStatus,pinStatus,cardDriverStatus,portDriverStatus;uint32 callbacks,matchingDrivers;};
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerPciPinProbeLogic.h"
 #include "pioneer_pci_profile_actual.inc"
 static status_t callback(void* cookie,void*){
  assert(pinDepth==2 && nodes[1].pins==1 && port.pins==1 && cookie==&hostCookie && nodes[0].refs && nodes[1].refs && nodes[2].refs && nodes[3].refs && nodes[4].refs && port.refs);
@@ -104,6 +109,13 @@ static status_t callback(void* cookie,void*){
 }
 static void released(){for(auto& n:nodes)assert(n.refs==0);assert(port.refs==0 && alternatePort.refs==0);}
 int main(){pci_info expected{0x1e52,0xb140,17,0,0};tt_pioneer_profile profile{};
+ pioneer_pci_pin_probe_result probe{};PioneerPciPinProbeCall call{&manager,&probe};
+ assert(PioneerWithPinnedPciNodes(&manager,PioneerPciPinProbeCall::Check,&call)==B_OK);
+ assert(probe.callbacks==1 && probe.matchingDrivers==1 && !pinDepth && !pinRefs);released();
+ wrongMetadata=true;probe={};
+ assert(PioneerWithPinnedPciNodes(&manager,PioneerPciPinProbeCall::Check,&call)==B_UNSUPPORTED);
+ assert(probe.callbacks==1 && !probe.matchingDrivers && !pinDepth && !pinRefs);released();
+ wrongMetadata=false;
  assert(WithPioneerPciController(&manager,expected,profile,callback,nullptr)==B_ERROR);
  assert(callbackCalls==1 && profile.ready && profile.stage==6);released();
  assert(GetPioneerPciProfile(&manager,expected,profile)==B_OK && callbackCalls==1);released();

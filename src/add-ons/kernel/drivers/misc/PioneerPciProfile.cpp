@@ -11,6 +11,7 @@
 #include <drivers/bus/PCI.h>
 #include <drivers/bus/FDT.h>
 #include <string.h>
+#include "PioneerPciPinnedNodes.h"
 
 namespace {
 
@@ -210,35 +211,10 @@ struct PinnedProfileCall {
 	tt_pioneer_profile& profile;
 	pioneer_pci_controller_operation operation;
 	void* argument;
-	device_node* card;
-	device_node* port = NULL;
-	pioneer_dm_driver_pin_module_info* service;
-	static status_t RunProfile(void* argument) {
+	static status_t RunProfile(device_node* card, device_node* port, void* argument) {
 		PinnedProfileCall& call = *static_cast<PinnedProfileCall*>(argument);
 		return InspectPioneerPciProfile(call.dm, call.expected, call.profile,
-			call.operation, call.argument, call.card, call.port);
-	}
-	static status_t RunCard(void* argument) {
-		PinnedProfileCall& call = *static_cast<PinnedProfileCall*>(argument);
-		NodeRef root(call.dm, call.dm->get_parent_node(call.card));
-		if (root.node == NULL)
-			return B_ENTRY_NOT_FOUND;
-		device_attr rootAttrs[] = {
-			{B_DEVICE_BUS, B_STRING_TYPE, {.string = "pci"}},
-			{B_PCI_DEVICE_BUS, B_UINT8_TYPE, {.ui8 = 0}},
-			{B_PCI_DEVICE_DEVICE, B_UINT8_TYPE, {.ui8 = 0}},
-			{B_PCI_DEVICE_FUNCTION, B_UINT8_TYPE, {.ui8 = 0}},
-			{}
-		};
-		device_node* portNode = NULL;
-		if (call.dm->get_next_child_node(root.node, rootAttrs, &portNode) != B_OK)
-			return B_ENTRY_NOT_FOUND;
-		NodeRef port(call.dm, portNode);
-		call.port = port.node;
-		status_t operationStatus = B_ERROR;
-		status_t status = call.service->run(port.node, RunProfile, &call, &operationStatus);
-		call.port = NULL;
-		return status == B_OK ? operationStatus : status;
+			call.operation, call.argument, card, port);
 	}
 };
 }
@@ -251,28 +227,6 @@ WithPioneerPciController(device_manager_info* dm, const pci_info& expected,
 	if (dm == NULL || operation == NULL)
 		return B_BAD_VALUE;
 	profile = {};
-	NodeRef tree(dm, dm->get_root_node());
-	if (tree.node == NULL)
-		return B_ENTRY_NOT_FOUND;
-	device_attr cardAttrs[] = {
-		{B_DEVICE_BUS, B_STRING_TYPE, {.string = "pci"}},
-		{B_DEVICE_VENDOR_ID, B_UINT16_TYPE, {.ui16 = 0x1e52}},
-		{B_DEVICE_ID, B_UINT16_TYPE, {.ui16 = 0xb140}},
-		{}
-	};
-	device_node* cardNode = NULL;
-	if (dm->find_child_node(tree.node, cardAttrs, &cardNode) != B_OK)
-		return B_ENTRY_NOT_FOUND;
-	NodeRef card(dm, cardNode);
-	pioneer_dm_driver_pin_module_info* service = NULL;
-	status_t status = get_module(PIONEER_DEVICE_MANAGER_PIN_MODULE, (module_info**)&service);
-	if (status != B_OK)
-		return status;
-	PinnedProfileCall call{dm, expected, profile, operation, argument, card.node, NULL, service};
-	status_t operationStatus = B_ERROR;
-	status = service != NULL && service->run != NULL
-		? service->run(card.node, PinnedProfileCall::RunCard, &call, &operationStatus)
-		: B_BAD_VALUE;
-	put_module(PIONEER_DEVICE_MANAGER_PIN_MODULE);
-	return status == B_OK ? operationStatus : status;
+	PinnedProfileCall call{dm, expected, profile, operation, argument};
+	return PioneerWithPinnedPciNodes(dm, PinnedProfileCall::RunProfile, &call);
 }

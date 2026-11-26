@@ -109,3 +109,27 @@ firmware, DMA or recovery. The probe stage was removed. Afterward the stable
 driver CPU-only status was `driver55`, generation 1, `cold0 active_owner0`;
 the 4B and 27B model files retained their recorded sizes, not freshly hashed.
 No card operation, model output, decode rate or no-reboot recovery was tested.
+
+## Live card and root-port software pin check
+
+The production recovery profile and temporary probe use the same nested
+card/root-port pinning helper. After the stable driver and process checks, the
+probe inspected the driver names and cookies while both references were held:
+
+```text
+PCI_PIN_PROBE version=1 manager=0 pin=0 card=0 port=0 callbacks=1 drivers=1
+PASS pinned card/root-port metadata and cleanup; no PCI config or accelerator IO
+```
+
+The trial checked idle before and after, removed its temporary registration,
+driver, exclusive lock and staged files, and the two model files had their
+recorded sizes. This proves a bounded software-reference operation only, not
+device presence throughout hot removal, PCI reset, physical writer exclusion,
+no-reboot recovery, inference or throughput. The focused shared-profile
+simulation and Haiku cross-compiles passed. The full reload suite overlapped a
+test edit and was rerun from the final tree.
+
+The full fused/tree/link-reset resident witness cross-build also passed, with
+load refusal checks and driver SHA-256
+`e9c3ed638cad6dd088235cace286c947066c35f3718817c42a722b5deca769e1`.
+It is not a loadable inference driver.

@@ -22,11 +22,20 @@ done
  -c "$project/src/add-ons/kernel/drivers/misc/pioneer_device_manager_pin_probe.cpp" -o "$output/probe.o"
 "$cxx" -shared -nostdlib -Wl,--no-undefined,-soname=pioneer_device_manager_pin_probe \
  -o "$output/pioneer_device_manager_pin_probe" "$output/probe.o" "$release/system/kernel/kernel.so"
+"$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -Wno-missing-field-initializers \
+ -fno-exceptions -ffreestanding -fno-use-cxa-atexit -mcmodel=medany -fpic -D_KERNEL_MODE "$@" \
+ -c "$project/src/add-ons/kernel/drivers/misc/pioneer_pci_pin_probe.cpp" -o "$output/pci-probe.o"
+"$cxx" -shared -nostdlib -Wl,--no-undefined,-soname=pioneer_pci_pin_probe \
+ -o "$output/pioneer_pci_pin_probe" "$output/pci-probe.o" "$release/system/kernel/kernel.so"
 for lib in "$build"/build_packages/gcc_syslibs-*/lib; do
  [ ! -d "$lib" ] || set -- "$@" -L"$lib"
 done
 "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror "$@" -B"$release/system/glue/" \
  -L"$release/system/libroot" "$project/tools/pioneer/pioneer_device_manager_pin_probe.cpp" \
  -o "$output/pin_probe_client"
-shasum -a 256 "$output/pioneer_device_manager_pin_probe" "$output/pin_probe_client"
+"$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror "$@" -B"$release/system/glue/" \
+ -L"$release/system/libroot" "$project/tools/pioneer/pioneer_pci_pin_probe.cpp" \
+ -o "$output/pci_pin_probe_client"
+shasum -a 256 "$output/pioneer_device_manager_pin_probe" "$output/pin_probe_client" \
+ "$output/pioneer_pci_pin_probe" "$output/pci_pin_probe_client"
 echo 'PASS cross-build; not installed, booted, loaded or run'

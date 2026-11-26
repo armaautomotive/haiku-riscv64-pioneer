@@ -1,0 +1,5 @@
+P100A_RELOAD driver55 tag2026102100010012 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+PCI_PIN_PROBE version=1 manager=0 pin=0 card=0 port=0 callbacks=1 drivers=1
+P100A_RELOAD driver55 tag2026102100010012 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+PASS pinned card/root-port metadata and cleanup; no PCI config or accelerator IO
