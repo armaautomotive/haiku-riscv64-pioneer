@@ -38,8 +38,18 @@ passed for all 120 workers. A same-input CPU trace produced an
 `attn_residual` reference and retained a layer-9 output byte-identical to its
 untraced counterpart. The attention-only simulator replay is running as
 session `29535`, with log
-`/private/tmp/q35-baseline-layer9-attention-sim-20261126.log`; it has no
-result yet.
+`/private/tmp/q35-baseline-layer9-attention-sim-20261126.log`. It completed
+all nine barriers on 120 workers, reached the intentional record-10 fault,
+and passed all 2,560 attention-residual values at the existing tolerance;
+maximum absolute error was `1.90734863e-06`. This narrows the strict
+whole-layer mismatch to behavior after that point, although a small prior
+difference could still affect subsequent quantization.
+
+An 11-record replay through post-attention normalization was also derived;
+an independent audit checked its bytes against the original full graph and
+the per-worker normalization output layout. This replay is active as session
+`84984`, log `/private/tmp/q35-baseline-layer9-postnorm-sim-20261126.log`,
+against the same-input oracle's `attn_post_norm` trace. Its result is pending.
 
 The paired FFN hybrid full-decode simulation completed its first decode and
 selected the independently expected token `261`, but exited with failure on
