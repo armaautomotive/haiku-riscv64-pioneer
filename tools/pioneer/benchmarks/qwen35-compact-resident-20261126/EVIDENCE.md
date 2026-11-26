@@ -1,5 +1,24 @@
 # Compact resident simulator image, 2026-11-26
 
+## Resident compiler stack-chain evidence (2026-11-26)
+
+The compact builder can optionally emit GCC stack call graphs. Enabling this
+option reproduced the exact prior normal-counter `service.elf`, boot, text
+and dispatch images byte-for-byte. Merging the seven compilation-unit graphs
+and checking the linked symbol table yields a longest known static chain of
+4,656 bytes from `qwen35_resident_graph_service_main`, with no unresolved,
+dynamic or cyclic nodes reported by the compiler-graph audit. Its detailed
+chain and hashes are `resident-compiler-stack-audit-20261126.json`. The
+existing broader stack-envelope check with its separate allowance also passed.
+
+This is compiler evidence, not a whole-device stack proof: assembly entry,
+interrupts, linker-selected weak definitions, actual L1 layout and physical
+stack high-water behavior are not established by the graph. It does not grant
+hardware ownership, recovery, clean unload or throughput. The merge regression
+rejects conflicting compiler definitions; the shared graph-auditor tests
+cover unresolved, dynamic and recursive cases.
+
+
 ## Exact resident-image startup and bounded graph probe, 2026-11-26
 
 The exact normal-counter compact resident image linked into the non-loadable

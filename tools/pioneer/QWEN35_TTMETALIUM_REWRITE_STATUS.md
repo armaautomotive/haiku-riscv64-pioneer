@@ -1,5 +1,12 @@
 # Latest offline checks, 2026-11-26
 
+The exact normal-counter resident image rebuilt byte-for-byte with compiler
+stack call-graph output. The merged compilation graphs show a longest known
+static chain of 4,656 bytes from the resident entry, with no unresolved,
+dynamic or cyclic nodes in that compiler audit. This is not a whole-device
+stack or physical-execution proof. See
+`benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
 The compile-only retained recovery adapter now waits two seconds before its
 first ASIC-reset PCI poll, including after a resumed pending operation, then
 polls at 100 ms. Simulations using the actual reset routine and adapter cover

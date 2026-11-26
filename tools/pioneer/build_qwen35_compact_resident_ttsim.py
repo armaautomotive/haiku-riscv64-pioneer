@@ -25,6 +25,8 @@ def main():
                         help='build the matching standalone qualification service, compile-only')
     parser.add_argument('--ttsim-qualification', action='store_true',
                         help='build a separately marked unprofiled standalone service for ttsim only')
+    parser.add_argument('--stack-callgraph', action='store_true',
+                        help='emit compiler callgraph evidence without granting hardware authority')
     args = parser.parse_args()
     if args.ttsim_qualification and (not args.qualification or args.profiled_compile_only):
         parser.error('ttsim qualification requires an unprofiled qualification build')
@@ -56,6 +58,8 @@ def main():
              '-ffp-contract=off -ffunction-sections -fdata-sections -fno-unwind-tables '
              '-fno-asynchronous-unwind-tables -fstack-usage -msmall-data-limit=0 '
              '-mno-relax -march=rv32imf_zicsr -mabi=ilp32').split()
+    if args.stack_callgraph:
+        flags.append('-fcallgraph-info=su')
     defines = ('PIONEER_QWEN35_DEVICE_DISPATCH PIONEER_QWEN35_RECOVERY_COMPILE_ONLY '
                'PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS PIONEER_QWEN35_PAIRED_RECURRENCE '
                'PIONEER_QWEN35_FUSED_RECURRENCE PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS '

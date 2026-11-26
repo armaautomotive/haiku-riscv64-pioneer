@@ -1,0 +1,86 @@
+{
+  "kind": "OFFLINE_RESIDENT_COMPILER_STACK_AUDIT",
+  "elf_sha256": "20895a905aadabe17d1f44ca52bf23f1dead96d5b43a6657d3b1f6b8dbef32d4",
+  "graphs_sha256": {
+    "service.ci": "2ec76a959b3deadc4bbc5900d780f493d4dc5c4300deb1f930f5dd5f864f250a",
+    "memory.ci": "8df1b77bf20c7f5f8e75aa5d6b3b9e9b529bbfaedbeb8c7de6e5b19ec1dff2c7",
+    "device-stream.ci": "7d515a49879467fd51c64cb2afb35144bd20cef73eb54b4ef05efe6fad6130f9",
+    "device-barrier.ci": "52db34b4f8745d8de5cd5c729313f769ad7523e6ef2cb7fa2fbbf824cacd2722",
+    "device-graph.ci": "c152682866439232e728a7b4c1b8ba217c7dbacbde06484b6573e78bedde2282",
+    "shared-roles.ci": "7b14993bd0451e09aeadd4dd0c28ae6e364848f2a839a425e1268816b025404a",
+    "resident-service-entry.ci": "8c44449ecd50c0e4b4911335aa5ba0aead002caf62e7d7febf5b04990d3ca323"
+  },
+  "root": {
+    "root": "qwen35_resident_graph_service_main",
+    "known_module_chain_bytes": 4656,
+    "known_chain": [
+      {
+        "function": "void qwen35_resident_graph_service_main()",
+        "frame": 1504
+      },
+      {
+        "function": "PioneerQwen35::DataflowResidentServiceResult PioneerQwen35::DataflowResidentServiceRun<IO, BarrierIO>::Tick() [with IO = PioneerQwen35::DataflowResidentServiceIO; BarrierIO = PioneerQwen35::DataflowBlackholeBarrierIO]",
+        "frame": 48
+      },
+      {
+        "function": "bool qwen35_graph_run_descriptor(const PioneerQwen35::DataflowGraphRunDescriptor*, PioneerQwen35::DataflowWorkerMailbox*)",
+        "frame": 16
+      },
+      {
+        "function": "unsigned int PioneerQwen35DeviceGraphRun(const PioneerQwen35::DataflowGraphRunDescriptor&, PioneerQwen35::DataflowWorkerMailbox*)",
+        "frame": 304
+      },
+      {
+        "function": "PioneerQwen35::DataflowDeviceGraphState PioneerQwen35::DataflowDeviceGraph<IO, BarrierIO>::Tick() [with IO = GraphWitnessExecution; BarrierIO = PioneerQwen35::DataflowBlackholeBarrierIO]",
+        "frame": 48
+      },
+      {
+        "function": "bool GraphWitnessExecution::Execute(unsigned int, unsigned int&, unsigned int&)",
+        "frame": 112
+      },
+      {
+        "function": "bool qwen35_graph_flash_execute(const PioneerQwen35::DataflowGraphRunDescriptor*, unsigned int, unsigned int, PioneerQwen35::DataflowWorkerMailbox*, unsigned int*)",
+        "frame": 1232
+      },
+      {
+        "function": "bool PioneerQwen35::DataflowFlashHybridProduce(const DataflowDenseAttentionProgram&, unsigned int, DataflowFlashHybridScratch, IO&) [with IO = DataflowBlackholeFlashHybridIO<Q35FlashGraphContext>]",
+        "frame": 256
+      },
+      {
+        "function": "bool PioneerQwen35::DataflowBlackholeFlashHybridIO<Context>::BindShardProgram(const PioneerQwen35::DataflowDenseAttentionProgram&) [with Context = Q35FlashGraphContext]",
+        "frame": 32
+      },
+      {
+        "function": "static bool PioneerQwen35::DataflowDenseAttentionProgramBuilder::BindCore(const PioneerQwen35::DataflowDenseAttentionProgram&, unsigned int, PioneerQwen35::DataflowDenseAttentionInvocation&)",
+        "frame": 928
+      },
+      {
+        "function": "bool PioneerQwen35::DataflowDenseAttentionInvocation::Valid() const",
+        "frame": 16
+      },
+      {
+        "function": "bool PioneerQwen35::DataflowDenseAttentionProgram::ShapeValid() const",
+        "frame": 96
+      },
+      {
+        "function": "static bool PioneerQwen35::DataflowGraphWorkspace::Disjoint(const PioneerQwen35::RowSpace&, const PioneerQwen35::RowSpace&)",
+        "frame": 16
+      },
+      {
+        "function": "bool PioneerQwen35::RowSpace::Valid() const",
+        "frame": 32
+      },
+      {
+        "function": "bool PioneerQwen35::RowSpace::Bounded() const",
+        "frame": 16
+      }
+    ],
+    "unresolved": [],
+    "dynamic": [],
+    "cycles": [],
+    "reached_nodes": 279,
+    "module_graph_closed": true,
+    "whole_kernel_stack_qualified": false
+  },
+  "limitations": "Compiler graph and static frames only; assembly, interrupts, linker-selected weak definitions, device memory and physical stack usage require independent verification. No hardware or speed claim."
+}
