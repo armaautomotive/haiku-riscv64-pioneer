@@ -226,6 +226,26 @@ An independently initialized position-zero layer-5 slice is also running in
 session `47385`; all 120 relocated record sequences, input/output boundaries,
 and zero-state ranges passed the independent slice audit before launch.
 
+That isolated layer-5 replay subsequently passed: all 120 simulated workers
+completed 16 records and intentionally faulted on record 17. All 2,560 values
+matched the independent layer-5 reference with maximum absolute error
+`7.15255737e-07` (`/private/tmp/q35-baseline-layer5-slice-sim-20261126.log`).
+This uses the reference layer-4 input and cleared position-zero state, so it
+does not establish that the sequential six-layer output will pass.
+
+The simulator runner now optionally captures intermediate prefix boundaries.
+It audits all 120 workers' residual-add and following residual-save records,
+checks disjoint activation/residual ranges, and captures only after root
+progress shows the previous barrier completed and before root can release
+the following save barrier. Reads occur with the simulator stopped. A missed
+observation fails closed; captures are provisional unless all recorded
+workers reach the expected terminal fault. The marker confirms execution,
+not numerical correctness. Synthetic malformed-boundary and progress-gate
+tests passed. A four-layer control run using this option is active in session
+`97638` (`/private/tmp/q35-baseline-four-layer-snapshots-20261126.log`); its
+captured values have not yet been validated. This is simulator instrumentation
+only and establishes no hardware completion or inference result.
+
 As a separate offline sensitivity experiment, replacing layer 7 in the CPU
 oracle with the simulator's complete observed output produced a layer-31
 maximum difference `0.55916214` and row 0 `-2.617931365966797`, versus

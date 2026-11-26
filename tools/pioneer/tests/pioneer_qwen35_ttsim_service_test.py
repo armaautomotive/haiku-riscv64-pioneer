@@ -41,6 +41,89 @@ def compare_recorded_layer(actual, reference):
     return maximum
 
 
+def recorded_prefix_snapshot_points(records, record_count, executed, layers):
+    """Find safe, simulator-only layer boundaries in a complete prefix stream.
+
+    A root progress sample in the *next* residual-save execution means the
+    previous barrier passed. The root cannot release the next barrier until
+    its save completes, so other workers cannot enter a later operation while
+    that sample remains in phases 1..3. Save reads the activation and writes
+    a disjoint residual. The emulator is frozen while the host reads DRAM.
+    This is an observation aid, not hardware completion or ownership proof.
+    """
+    if (not 2 <= layers <= 31 or not 1 <= executed < record_count
+            or len(records) != 120 * record_count * 2048):
+        raise ValueError('invalid snapshot fixture')
+
+    def record(core, step):
+        off = (core * record_count + step) * 2048
+        return memoryview(records)[off:off + 2048]
+
+    def space(raw, offset):
+        rows, row_bytes, count, unit = struct.unpack_from('<4I', raw, 64 + offset * 4)
+        if rows not in (2560, 9216) or row_bytes != 4 or not 1 <= count <= 7 or unit != 16:
+            raise ValueError('invalid snapshot row space')
+        parts = []
+        first = 0
+        banks = set()
+        for i in range(count):
+            bank, address, start, n = struct.unpack_from('<4I', raw, 64 + offset * 4 + 16 + i * 16)
+            if (bank >= 7 or bank in banks or start != first or not n or n % 16
+                    or address < 0x04000000 or address + n * 4 > 0xc4000000):
+                raise ValueError('invalid snapshot fragment')
+            parts.append((bank, address, start, n)); banks.add(bank); first += n
+        if first != rows:
+            raise ValueError('incomplete snapshot row space')
+        return parts
+
+    points = []
+    adds = 0
+    for step in range(executed):
+        root = record(0, step)
+        if struct.unpack_from('<I', root, 20)[0] != 0x31535235:
+            continue
+        mode = struct.unpack_from('<I', root, 64 + 3 * 4)[0]
+        if mode != 2:
+            continue
+        adds += 1
+        if adds % 2 or adds == 2 * layers:
+            continue
+        if step + 1 >= executed:
+            raise ValueError('missing post-layer save')
+        reference = space(root, 20)
+        for core in range(120):
+            before, after = record(core, step), record(core, step + 1)
+            for data, index, expected_mode in ((before, step, 2), (after, step + 1, 1)):
+                header = struct.unpack_from('<6I', data)
+                body = struct.unpack_from('<4I', data, 64)
+                if (header[3:6] != (index + 1, core, 0x31535235)
+                        or body != (0x31535235, 1, core, expected_mode)
+                        or space(data, 20) != reference):
+                    raise ValueError('snapshot boundary differs across recorded workers')
+            residual = space(after, 52)
+            if any(a[0] == b[0] and a[1] < b[1] + b[3] * 4
+                   and b[1] < a[1] + a[3] * 4 for a in reference for b in residual):
+                raise ValueError('snapshot save overlaps its activation')
+        points.append((step + 1, reference))
+    if adds != 2 * layers or len(points) != layers - 1:
+        raise ValueError('incomplete prefix snapshot boundaries')
+    return points
+
+
+def recorded_snapshot_progress(word, target_step):
+    """Return waiting, safe or missed for a root progress sample."""
+    if word & 0xffff0000 != 0x51350000:
+        raise ValueError('invalid root progress')
+    step, phase = (word & 0xffff) >> 3, word & 7
+    if not 1 <= phase <= 5:
+        raise ValueError('invalid root progress phase')
+    if step < target_step:
+        return 'waiting'
+    if step == target_step and phase <= 3:
+        return 'safe'
+    return 'missed'
+
+
 def validate_isolated_zero_ranges(zeros, weights, streams, inputs, outputs, decode_steps):
     """Admit simulator state clears only when disjoint from retained ranges."""
     if not 1 <= decode_steps <= 1024:
@@ -336,6 +419,8 @@ def main():
                         help='compare a full recorded decode token with an offline reference')
     parser.add_argument('--recorded-export-actual', type=Path,
                         help='save a single simulated layer output before its reference comparison')
+    parser.add_argument('--recorded-prefix-snapshots', type=Path,
+                        help='save simulator-only intermediate prefix boundaries to a new directory')
     parser.add_argument('--recorded-layer-input', type=Path,
                         help='inject the independent input for a marked, isolated layer replay')
     parser.add_argument('--recorded-warm-layer-reference', type=Path,
@@ -364,6 +449,10 @@ def main():
                                         or args.recorded_export_actual.exists()
                                         or args.recorded_export_actual.is_symlink()):
         parser.error('recorded output export requires one fixture run and a new output path')
+    if args.recorded_prefix_snapshots and (not args.recorded_layer_fixture or layer_slice
+            or args.recorded_token_reference or args.recorded_warm_layer_reference
+            or args.recorded_prefix_snapshots.exists() or args.recorded_prefix_snapshots.is_symlink()):
+        parser.error('prefix snapshots require one partial prefix and a new directory')
     if (bool(args.recorded_warm_layer_reference) != bool(args.recorded_warm_token_reference)
             or (args.recorded_warm_layer_reference and not args.recorded_token_reference)):
         parser.error('warm recorded decode requires both warm references and a full decode fixture')
@@ -720,6 +809,10 @@ def main():
                     or (full_prompt and executed != prompt_steps) or len(command) != 128
                     or len(records) != 120 * record_count * 2048):
                 raise ValueError('unexpected recorded layer fixture size')
+            snapshot_points = (recorded_prefix_snapshot_points(records, record_count, executed, layers)
+                               if args.recorded_prefix_snapshots else [])
+            if args.recorded_prefix_snapshots:
+                args.recorded_prefix_snapshots.mkdir()
             weights = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'W' and len(row) == 5]
             streams = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'S' and len(row) == 4]
             outputs = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'O' and len(row) == 5]
@@ -817,8 +910,27 @@ def main():
                 write(bar + 0xab0c0, command[64:])
                 steps = record_count if full_prompt else executed
                 print(f'starting recorded {layers}-layer simulation ({steps} graph steps)', flush=True)
+                snapshot_index = 0
                 for attempt in range(20000):
                     lib.libttsim_clock(100000)
+                    if snapshot_index < len(snapshot_points):
+                        select_worker(0)
+                        progress = struct.unpack('<I', read(bar + 0xab300, 4))[0]
+                        if progress:
+                            target, parts = snapshot_points[snapshot_index]
+                            state = recorded_snapshot_progress(progress, target)
+                            if state == 'missed':
+                                raise RuntimeError(f'missed safe simulated snapshot at layer {snapshot_index}')
+                            if state == 'safe':
+                                result = bytearray(2560 * 4)
+                                for bank, address, first, rows in parts:
+                                    count = min(rows, max(0, 2560 - first))
+                                    if count:
+                                        result[first * 4:(first + count) * 4] = read_bank(bank, address, count * 4)
+                                with (args.recorded_prefix_snapshots / f'layer{snapshot_index}.bin').open('xb') as output_file:
+                                    output_file.write(result)
+                                print(f'captured provisional simulated layer {snapshot_index} after barrier', flush=True)
+                                snapshot_index += 1
                     snapshots = []
                     for core in range(120):
                         select_worker(core)
@@ -863,6 +975,12 @@ def main():
                     next_row += rows
                 if next_row != 9216:
                     raise ValueError('incomplete recorded output layout')
+                if args.recorded_prefix_snapshots:
+                    if snapshot_index != len(snapshot_points):
+                        raise RuntimeError('not all prefix snapshots were captured')
+                    with (args.recorded_prefix_snapshots / f'layer{layers - 1}.bin').open('xb') as output_file:
+                        output_file.write(result)
+                    (args.recorded_prefix_snapshots / 'execution-complete.marker').touch(exist_ok=False)
                 reference = layer_reference.read_bytes()
                 if args.recorded_export_actual:
                     with args.recorded_export_actual.open('xb') as output_file:
