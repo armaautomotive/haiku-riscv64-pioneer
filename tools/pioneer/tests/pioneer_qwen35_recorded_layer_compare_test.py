@@ -1,9 +1,35 @@
 #!/usr/bin/env python3
 """Check full-layer error accounting used by the offline simulator runner."""
 import math
+from pathlib import Path
 import struct
+import subprocess
+import sys
+import tempfile
 from pioneer_qwen35_ttsim_service_test import (RecordedNumericalMismatch, compare_recorded_layer,
-                                               compare_recorded_layer_diagnostic, validate_isolated_zero_ranges)
+                                               compare_recorded_layer_diagnostic, compare_recorded_token,
+                                               validate_isolated_zero_ranges)
+
+assert compare_recorded_token(261, 261, False) is None
+assert compare_recorded_token(1850, 89598, True) == 'recorded decode token 1850 differs from reference 89598'
+try:
+    compare_recorded_token(1850, 89598, False)
+    raise AssertionError('ordinary or nonterminal token mismatch accepted')
+except RecordedNumericalMismatch:
+    pass
+
+with tempfile.TemporaryDirectory() as directory:
+    runner = Path(__file__).with_name('pioneer_qwen35_ttsim_service_test.py')
+    command = [sys.executable, '-B', str(runner), 'missing-library', 'missing-image', 'missing-roles',
+               '--recorded-layer-fixture', 'missing-fixture', '--recorded-layer-reference', 'missing-layer',
+               '--recorded-token-reference', 'missing-token']
+    missing_warm = subprocess.run(command + ['--recorded-warm-snapshots', str(Path(directory) / 'new')],
+                                  capture_output=True, text=True)
+    assert missing_warm.returncode != 0 and 'warm snapshots require two recorded decodes' in missing_warm.stderr
+    existing = subprocess.run(command + ['--recorded-warm-layer-reference', 'warm-layer',
+                              '--recorded-warm-token-reference', 'warm-token',
+                              '--recorded-warm-snapshots', directory], capture_output=True, text=True)
+    assert existing.returncode != 0 and 'warm snapshots require two recorded decodes' in existing.stderr
 
 reference = [1.0] * 2560
 actual = reference.copy(); actual[8] += 1e-6

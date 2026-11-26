@@ -55,6 +55,16 @@ def compare_recorded_layer_diagnostic(actual, reference, allow_mismatch, rows=25
         return None, str(mismatch)
 
 
+def compare_recorded_token(actual, reference, diagnostic_terminal):
+    """Allow collection after a terminal token mismatch, but never call it a pass."""
+    if actual == reference:
+        return None
+    mismatch = f'recorded decode token {actual} differs from reference {reference}'
+    if not diagnostic_terminal:
+        raise RecordedNumericalMismatch(mismatch)
+    return mismatch
+
+
 def recorded_prefix_snapshot_points(records, record_count, executed, layers):
     """Find safe, simulator-only layer boundaries in a complete prefix stream.
 
@@ -470,6 +480,8 @@ def main():
                         help='compare 32 scalar projection rows for an isolated simulator-only layer slice')
     parser.add_argument('--recorded-prefix-snapshots', type=Path,
                         help='save simulator-only model layer boundaries to a new directory')
+    parser.add_argument('--recorded-warm-snapshots', type=Path,
+                        help='save second-decode simulator layer boundaries to a new directory')
     parser.add_argument('--recorded-layer-input', type=Path,
                         help='inject the independent input for a marked, isolated layer replay')
     parser.add_argument('--recorded-warm-layer-reference', type=Path,
@@ -477,7 +489,7 @@ def main():
     parser.add_argument('--recorded-warm-token-reference', type=Path,
                         help='compare the second resident decode token with an offline reference')
     parser.add_argument('--recorded-diagnostic-continue', action='store_true',
-                        help='collect a second simulator decode after a finite first-layer mismatch; still fail')
+                        help='collect both simulator decodes after a finite first-layer or final-token mismatch; still fail')
     parser.add_argument('--recorded-diagnostic-output-dir', type=Path,
                         help='save both diagnostic hidden outputs and tokens to a new directory')
     parser.add_argument('--ttsim-unprofiled', action='store_true',
@@ -517,6 +529,9 @@ def main():
     if (bool(args.recorded_warm_layer_reference) != bool(args.recorded_warm_token_reference)
             or (args.recorded_warm_layer_reference and not args.recorded_token_reference)):
         parser.error('warm recorded decode requires both warm references and a full decode fixture')
+    if args.recorded_warm_snapshots and (not args.recorded_warm_layer_reference or layer_slice
+            or args.recorded_warm_snapshots.exists() or args.recorded_warm_snapshots.is_symlink()):
+        parser.error('warm snapshots require two recorded decodes and a new directory')
     if args.recorded_diagnostic_continue and not args.recorded_warm_layer_reference:
         parser.error('diagnostic continuation requires two recorded decodes')
     if args.recorded_diagnostic_output_dir and (not args.recorded_diagnostic_continue
@@ -887,14 +902,17 @@ def main():
                     or (full_prompt and executed != prompt_steps) or len(command) != 128
                     or len(records) != 120 * record_count * 2048):
                 raise ValueError('unexpected recorded layer fixture size')
-            if args.recorded_prefix_snapshots and full_prompt and not decode:
+            capture_boundaries = args.recorded_prefix_snapshots or args.recorded_warm_snapshots
+            if capture_boundaries and full_prompt and not decode:
                 raise ValueError('full-model layer snapshots require a complete decode')
-            if args.recorded_prefix_snapshots and struct.unpack_from('<2I', command, 32) != (42, 0):
+            if capture_boundaries and struct.unpack_from('<2I', command, 32) != (42, 0):
                 raise ValueError('layer snapshots require token 42 at position zero')
             snapshot_points = (recorded_prefix_snapshot_points(records, record_count, executed, layers)
-                               if args.recorded_prefix_snapshots else [])
+                               if capture_boundaries else [])
             if args.recorded_prefix_snapshots:
                 args.recorded_prefix_snapshots.mkdir()
+            if args.recorded_warm_snapshots:
+                args.recorded_warm_snapshots.mkdir()
             if args.recorded_diagnostic_output_dir:
                 args.recorded_diagnostic_output_dir.mkdir()
             weights = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'W' and len(row) == 5]
@@ -985,6 +1003,7 @@ def main():
             runs = 2 if args.recorded_warm_layer_reference else 1
             diagnostic_failed = False
             for run_number in range(runs):
+                snapshot_dir = args.recorded_warm_snapshots if run_number else args.recorded_prefix_snapshots
                 trigger, epoch = struct.unpack_from('<II', command, 8)
                 layer_reference = (args.recorded_warm_layer_reference if run_number
                                    else args.recorded_layer_reference)
@@ -1001,7 +1020,7 @@ def main():
                     lib.libttsim_clock(clock_ticks)
                     elapsed += clock_ticks
                     captured = False
-                    if snapshot_index < len(snapshot_points):
+                    if snapshot_dir and snapshot_index < len(snapshot_points):
                         select_worker(0)
                         progress = struct.unpack('<I', read(bar + 0xab300, 4))[0]
                         if progress:
@@ -1015,7 +1034,7 @@ def main():
                                     count = min(rows, max(0, 2560 - first))
                                     if count:
                                         result[first * 4:(first + count) * 4] = read_bank(bank, address, count * 4)
-                                with (args.recorded_prefix_snapshots / f'layer{snapshot_index}.bin').open('xb') as output_file:
+                                with (snapshot_dir / f'layer{snapshot_index}.bin').open('xb') as output_file:
                                     output_file.write(result)
                                 print(f'captured provisional simulated layer {snapshot_index} after barrier '
                                       f'at progress 0x{progress:08x}', flush=True)
@@ -1040,9 +1059,14 @@ def main():
                             token = audit_resident_candidate(receipt, command, snapshots, select_worker, read, bar, decode=decode)
                             if decode:
                                 expected_token = int(token_reference.read_text().strip())
-                                if token != expected_token:
-                                    raise RuntimeError(f'recorded decode token {token} differs from reference {expected_token}')
-                                print(f'recorded decode token {token} matches reference', flush=True)
+                                token_mismatch = compare_recorded_token(
+                                    token, expected_token,
+                                    args.recorded_diagnostic_continue and run_number == runs - 1)
+                                if token_mismatch is not None:
+                                    diagnostic_failed = True
+                                    print(f'DIAGNOSTIC ONLY position {run_number}: {token_mismatch}', flush=True)
+                                else:
+                                    print(f'recorded decode token {token} matches reference', flush=True)
                             break
                     elif all(words[5] == 4 for words in snapshots):
                         break
@@ -1077,12 +1101,12 @@ def main():
                 if next_row != (output_rows if args.recorded_z_output or args.recorded_qkv_output
                                 or args.recorded_scalar_output else 9216):
                     raise ValueError('incomplete recorded output layout')
-                if args.recorded_prefix_snapshots:
+                if snapshot_dir:
                     if snapshot_index != len(snapshot_points):
                         raise RuntimeError('not all prefix snapshots were captured')
-                    with (args.recorded_prefix_snapshots / f'layer{layers - 1}.bin').open('xb') as output_file:
+                    with (snapshot_dir / f'layer{layers - 1}.bin').open('xb') as output_file:
                         output_file.write(result)
-                    (args.recorded_prefix_snapshots / 'execution-complete.marker').touch(exist_ok=False)
+                    (snapshot_dir / 'execution-complete.marker').touch(exist_ok=False)
                 reference = layer_reference.read_bytes()
                 if args.recorded_export_actual:
                     with args.recorded_export_actual.open('xb') as output_file:

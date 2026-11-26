@@ -132,41 +132,46 @@ static bool Save(const std::string& dir,const std::string& prefix,const Capture&
     return std::fclose(tokenFile)==0 && tokenWrote;
 }
 int main(int argc,char** argv) {
-    if (argc!=3 && argc!=4 && argc!=6 && argc!=7 && argc!=8) {
-        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two | (--replace-layer | --replace-attn-residual | --replace-ffn-swiglu) N tensor.bin [--trace-layer N | --trace-layer25]]\n",argv[0]);return 2;
+    if (argc<3) {
+        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two] [(--replace-layer | --replace-attn-residual | --replace-ffn-swiglu) N tensor.bin [--trace-layer N | --trace-layer25]]\n",argv[0]);return 2;
     }
-    const bool two=argc==4 && !std::strcmp(argv[3],"two");if (argc==4 && !two) return 2;
-    Capture capture{};
-    if (argc>=6) {
-        if (std::strcmp(argv[3],"--replace-layer") && std::strcmp(argv[3],"--replace-attn-residual")
-            && std::strcmp(argv[3],"--replace-ffn-swiglu")) return 2;
-        capture.replaceAttentionResidual=!std::strcmp(argv[3],"--replace-attn-residual");
-        capture.replaceFfnSwiglu=!std::strcmp(argv[3],"--replace-ffn-swiglu");
-        if (capture.replaceFfnSwiglu) capture.replacementCount=9216;
-        if (argc==7 && std::strcmp(argv[6],"--trace-layer25")) return 2;
-        if (argc==7) capture.traceLayer=25;
-        if (argc==8) {
-            if (std::strcmp(argv[6],"--trace-layer")) return 2;
-            char* traceEnd=nullptr;const unsigned long trace=std::strtoul(argv[7],&traceEnd,10);
-            if (!argv[7][0] || *traceEnd || trace>=32) return 2;
-            capture.traceLayer=unsigned(trace);
+    const bool two=argc>3 && !std::strcmp(argv[3],"two");
+    const int option=two?4:3;
+    if (argc!=option && argc!=option+3 && argc!=option+4 && argc!=option+5) return 2;
+    Capture capture{},replacement{};
+    if (argc>option) {
+        if (std::strcmp(argv[option],"--replace-layer") && std::strcmp(argv[option],"--replace-attn-residual")
+            && std::strcmp(argv[option],"--replace-ffn-swiglu")) return 2;
+        replacement.replaceAttentionResidual=!std::strcmp(argv[option],"--replace-attn-residual");
+        replacement.replaceFfnSwiglu=!std::strcmp(argv[option],"--replace-ffn-swiglu");
+        if (replacement.replaceFfnSwiglu) replacement.replacementCount=9216;
+        if (argc==option+4 && std::strcmp(argv[option+3],"--trace-layer25")) return 2;
+        if (argc==option+4) replacement.traceLayer=25;
+        if (argc==option+5) {
+            if (std::strcmp(argv[option+3],"--trace-layer")) return 2;
+            char* traceEnd=nullptr;const unsigned long trace=std::strtoul(argv[option+4],&traceEnd,10);
+            if (!argv[option+4][0] || *traceEnd || trace>=32) return 2;
+            replacement.traceLayer=unsigned(trace);
         }
-        char* end=nullptr;const unsigned long layer=std::strtoul(argv[4],&end,10);
-        if (!argv[4][0] || *end || layer>=32) return 2;
-        const int replacementFd=open(argv[5],O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if (replacementFd<0) return 1;
+        char* end=nullptr;const unsigned long layer=std::strtoul(argv[option+1],&end,10);
+        if (!argv[option+1][0] || *end || layer>=32) return 2;
+        const int replacementFd=open(argv[option+2],O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if (replacementFd<0) return 1;
         struct stat replacementBefore{},replacementAfter{};
         if (fstat(replacementFd,&replacementBefore) || !S_ISREG(replacementBefore.st_mode)
-            || replacementBefore.st_size!=static_cast<off_t>(capture.replacementCount*sizeof(float))) {
+            || replacementBefore.st_size!=static_cast<off_t>(replacement.replacementCount*sizeof(float))) {
             close(replacementFd);return 1;
         }
-        FILE* replacement=fdopen(replacementFd,"rb");if (!replacement) {close(replacementFd);return 1;}
-        const bool okay=std::fread(capture.replacement.data(),sizeof(float),capture.replacementCount,replacement)==capture.replacementCount
-            && std::fgetc(replacement)==EOF && !std::ferror(replacement)
+        FILE* replacementFile=fdopen(replacementFd,"rb");if (!replacementFile) {close(replacementFd);return 1;}
+        const bool okay=std::fread(replacement.replacement.data(),sizeof(float),replacement.replacementCount,replacementFile)==replacement.replacementCount
+            && std::fgetc(replacementFile)==EOF && !std::ferror(replacementFile)
             && !fstat(replacementFd,&replacementAfter) && SameFile(replacementBefore,replacementAfter);
-        if (std::fclose(replacement) || !okay) return 1;
-        for (unsigned i=0;i<capture.replacementCount;i++) if (!std::isfinite(capture.replacement[i])) return 1;
-        capture.replaceLayer=unsigned(layer);
+        if (std::fclose(replacementFile) || !okay) return 1;
+        for (unsigned i=0;i<replacement.replacementCount;i++) if (!std::isfinite(replacement.replacement[i])) return 1;
+        replacement.replaceLayer=unsigned(layer);
     }
+    // Two-position diagnostics must leave position zero and its recurrent
+    // state untouched; apply an optional replacement only to position one.
+    if (!two) capture=std::move(replacement);
     const int fd=open(argv[1],O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if (fd<0) return 1;
     struct stat before{},after{};PioneerModelWeightCache::Digest digest{};std::string error;
     const bool valid=!fstat(fd,&before) && PioneerModelWeightCache::HashFile(fd,2740937888ULL,digest,error)
@@ -186,7 +191,7 @@ int main(int argc,char** argv) {
     if (!result && BestToken(capture,firstToken)) {
         first=std::move(capture);
         if (two) {
-            capture=Capture{};token=llama_token(firstToken);
+            capture=std::move(replacement);token=llama_token(firstToken);
             result=llama_decode(ctx,llama_batch_get_one(&token,1));
             if (!result && BestToken(capture,secondToken)) second=std::move(capture);
             else result=1;
@@ -199,5 +204,5 @@ int main(int argc,char** argv) {
     const std::string dir=argv[2];
     if (!Save(dir,"",first,firstToken) || (two && !Save(dir,"position1-",second,secondToken))) return 1;
     std::printf("wrote standalone CPU reference argmax %u%s%s; NO PIONEER HARDWARE\n",
-        firstToken,two?" and next position":"",argc>=6?" with tensor replacement":"");
+        firstToken,two?" and next position":"",argc>option?" with tensor replacement":"");
 }

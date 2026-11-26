@@ -1,5 +1,32 @@
 # Latest offline checks, 2026-11-26
 
+The offline reference now supports injecting a captured layer output into the
+second position while retaining its own first-position recurrent state. A
+self-injection reproduced all 68 two-position output artifacts byte-for-byte;
+a changed injection left the first 34 files unchanged and changed the second
+final layer. This prepares a same-input investigation of the pending simulator
+capture, but the CPU and simulator may have different recurrent state. See
+`benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
+The two-position unpaired simulator diagnostic failed: position zero selected
+reference token 261 but failed the strict hidden check, then position one
+selected 1850 instead of reference 89598. The runner audited the second
+candidate but rejected it before collecting that hidden state. An explicit
+diagnostic-only repeat now captures the second position's layer boundaries
+and terminal output even on a final-token mismatch, while still exiting with
+failure. It is running as session `45891`; no result is available. First-token
+mismatch, invalid fleet receipts and missed snapshot windows remain hard
+failures. The earlier mismatch alone does not distinguish numerical drift
+from incorrect state handoff. See `benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
+The Pioneer is again reachable through its pinned Haiku SSH identity. A
+read-only process listing found no inference process; the recorded stable
+driver, guard and administrative utility hashes matched, and its CPU-only
+status reported driver55 generation2, cold0, active_owner0 and guard1. Both
+project locks were absent; both model files had their recorded sizes and file
+metadata. Model contents were not freshly hashed and the card was not
+accessed. Repeat the complete preflight immediately before any card use.
+
 The device-manager `find_child_node` wrapper now also holds the recursive
 manager lock while releasing the last iteration cursor. The saved code
 released it after the lock was dropped, allowing final destruction to mutate

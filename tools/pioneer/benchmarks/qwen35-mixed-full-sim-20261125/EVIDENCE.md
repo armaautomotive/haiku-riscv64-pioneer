@@ -1,5 +1,47 @@
 # Recorded mixed-layer and full-decode simulator work, 2026-11-25
 
+## Two-position diagnostic result and new capture, 2026-11-26
+
+The offline CPU oracle now permits a tensor replacement on the second of two
+positions, after computing the first position normally and retaining its CPU
+recurrent state. An authenticated full two-position reference saved all 32
+layer outputs at each position; its second final layer was byte-identical to
+the earlier reference, and the tokens were again 261 and 89598. Injecting its
+own position-one layer-zero output reproduced all 68 first- and second-position
+layer, logits and token files byte-for-byte. Changing one value in that
+replacement left all 34 position-zero files unchanged, read the replacement
+back exactly at position one, and changed the position-one final layer. A
+first-position self-injection also reproduced all 34 original files. The
+oracle was compiled with warnings as errors; its use remains offline only.
+The CPU position-zero recurrent state is not the simulated recurrent state,
+so a same-input warm-layer comparison with this oracle alone cannot rule out
+state-handoff differences. Reference and control logs are in
+`/private/tmp/q35-llama-{two-all-layers,warm-self-inject,warm-changed-inject,first-self-inject}-20261126b.log`.
+
+The unpaired hybrid diagnostic completed both 532-step decodes in the same
+simulated resident fleet. The first candidate selected the reference token 261
+but failed the strict hidden-state comparison on 2,558/2,560 rows, maximum
+absolute error `0.370739102`. The simulator-only diagnostic explicitly
+acknowledged that mismatch to investigate the next position. The second
+candidate and its fleet receipts were audited, but its token was `1850` versus
+reference `89598`; the process exited 1. The runner rejected the second token
+before saving its hidden state, so that state was not captured. This is a
+failed diagnostic, not a valid warm run or a hardware result. The first
+position's divergent state also means the result alone cannot distinguish
+state-handoff defects from accumulated numerical differences. Log:
+`/private/tmp/q35-flash-two-decode-diagnostic-20261126.log`.
+
+The simulator runner can now retain second-position layer boundaries and the
+terminal hidden state even if the last token differs, but only in explicit
+diagnostic mode; it still fails the run and continues to reject a mismatching
+first token, non-finite data, invalid receipts or missed snapshot windows. The
+existing numerical-comparison and boundary-window tests passed. A repeat with
+the same unpaired image, fixture and reference is running as session `45891`,
+log `/private/tmp/q35-two-position-warm-boundaries-20261126b.log`, with new
+capture directories under `/private/tmp/q35-two-position-*20261126b`. Captures
+are provisional until the simulator completes the fleet audit. A repeat
+cannot by itself establish the cause or performance. No card was accessed.
+
 ## Completed baseline same-input audit, 2026-11-26
 
 The independent audit of the completed baseline run passed 30 of 32
