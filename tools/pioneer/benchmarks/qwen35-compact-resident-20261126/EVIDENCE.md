@@ -503,7 +503,7 @@ The guard now computes the supported step count from the graph markers, and
 the focused rejection/count test passes.
 
 The first full numerical simulation of this combined graph is active in
-session 31294. At poll 10,600 it had captured layers 0–30. Each 2,560-element
+session 31294. At poll 11,300 it had captured layers 0–30. Each 2,560-element
 F32 boundary through layer 30 is byte-identical to the earlier full simulator
 capture. Latest layer hashes:
 
@@ -511,10 +511,14 @@ capture. Latest layer hashes:
 - Layer 29: `dfb02cc846eebe3b6830bc4052fffbb368a67534a5bbb7bd38edd6f37edf474e`
 - Layer 30: `06574701d208aba4917c996e0b6dd6d602d36bf677175f321b59a020c7a7120e`
 
-A host process snapshot showed the simulator consuming about 99% CPU while
-its graph progress word remained at `0x51350d53` after the layer-30 boundary.
-That is CPU-side emulator work, not P100A execution or a model throughput
-measurement.
+A host process snapshot showed the simulator consuming 100% CPU while its
+graph progress word remained at `0x51350d53` after layer 30. A two-second
+sample repeatedly entered the RV32 load/ALU/branch handlers inside
+`libttsim_clock` and also captured Tensix MVMUL decode frames. The process is
+actively emulating instructions, not idle; this is not P100A execution or a
+model throughput measurement. Profile:
+`/private/tmp/q35-ttsim-layer31-profile-20261126.txt`, SHA-256
+`9a36dbd939729eae2fcc9828c1c27451b47eb9ecd5320d74d9e392fa281f8704`.
 
 A provisional same-input CPU audit used the pinned model SHA-256
 `00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4` and
