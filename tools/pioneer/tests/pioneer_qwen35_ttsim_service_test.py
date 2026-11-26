@@ -661,8 +661,13 @@ def main():
     parser.add_argument('--resident-normal-counter-graph-probe', action='store_true',
                         help='probe the exact normal-counter resident image on the fixed four-layer prefix')
     args = parser.parse_args()
-    if (args.image / 'dense-kv-pair.marker').exists():
-        parser.error('dense K/V pair image has no matching numerical simulator fixture')
+    dense_kv_marker = args.image / 'dense-kv-pair.marker'
+    if (dense_kv_marker.is_symlink()
+            or (dense_kv_marker.exists() and not dense_kv_marker.is_file())):
+        parser.error('invalid dense K/V pair image marker')
+    dense_kv_paired = dense_kv_marker.is_file()
+    if dense_kv_paired and not args.recorded_layer_fixture:
+        parser.error('dense K/V pair image requires a matching recorded numerical fixture')
     if ((args.resident_export_state or args.resident_import_state or args.resident_position_one_command)
             and not args.resident_sequence_fixture):
         parser.error('resident state options require --resident-sequence-fixture')
@@ -768,6 +773,12 @@ def main():
         raise ValueError('fused RMS/save image requires the paired recorded fixture')
     if args.recorded_layer_fixture and rms_save_fused != (args.recorded_layer_fixture / 'fused-rms-save.marker').is_file():
         raise ValueError('fused RMS/save fixture and image markers do not match')
+    if args.recorded_layer_fixture:
+        dense_fixture_marker = args.recorded_layer_fixture / 'dense-kv-pair.marker'
+        if (dense_fixture_marker.is_symlink()
+                or (dense_fixture_marker.exists() and not dense_fixture_marker.is_file())
+                or dense_kv_paired != dense_fixture_marker.is_file()):
+            raise ValueError('dense K/V pair fixture and image markers do not match')
     if args.compact_two_region and (not args.flash_hybrid or not rms_save_fused
                                     or (image / 'flash.bin').exists()):
         raise ValueError('compact image requires fused hybrid markers and no extra code image')

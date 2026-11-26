@@ -1,5 +1,13 @@
 # Latest offline checks, 2026-11-26
 
+The paired dense K/V graph now has a passing four-layer simulator result. A
+matched marker ties the 54-step fixture to its stream-version-7 image; the
+full worker audit completed, and all 2,560 final values were bit-identical to
+the previously CPU-validated four-layer output. Its 55th record faulted as
+designed. This does not establish full-model correctness, physical execution,
+recovery, or decode tokens/sec. See
+`benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
 The guarded paired dense K/V variant now compiles and links on the Pioneer
 with its installed Haiku RISC-V GCC/binutils. The output is a non-loadable
 RV32IMF/ILP32 compile-only witness from source commit `e154a69362`; section
@@ -17,8 +25,9 @@ eight dense layers pair 60 key and 60 value projection workers, then pack from
 their disjoint scratch regions. A worker-level mock confirms the PackValue
 path's 128 half-precision outputs and rejects workspace aliasing in other
 attention modes. Both driver-header packagers and the generic numerical
-simulator runner reject the marked image until a matching numerical fixture
-exists. No paired-image model execution or full-model output is established.
+simulator runner reject the marked image unless a matching numerical fixture
+is supplied. The four-layer simulator run now passes as recorded above; no
+full-model output is established.
 The target Haiku cross-toolchain is not present in the workspace; an on-board
 compile/link now passes as recorded above. See
 `benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.

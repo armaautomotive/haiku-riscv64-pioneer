@@ -28,6 +28,46 @@ simulator inference, or benchmark was run. The paired stream still lacks its
 matching numeric fixture, so full-model correctness and decode throughput
 remain unverified.
 
+## Paired dense K/V four-layer simulator pass (2026-11-26)
+
+The fixture recorder compiled on Haiku and hashed the pinned Qwen3.5-4B
+Q4_K_M file before constructing the version-7 four-layer fixture. Its layout
+is `C 4 54 55 0`: 54 model records execute, followed by the intentional fault
+record. It stages 289,628,160 model-weight bytes. The matching compile-only
+image and fixture both carry the `dense-kv-pair.marker`; the simulator runner
+now refuses a missing or mismatched marker and admits this matching pair.
+
+The exploratory matrix simulator (`libttsim.so` SHA-256
+`1dbc4a6b269aa743870dcb7be5d89e9c6db142f27140296ea68bc00e41ec6d67`) ran the
+54-step graph and completed the worker audit. All 2,560 final values matched
+the previously saved four-layer output bit-for-bit (maximum difference 0);
+the four layer snapshots were captured after their barriers. That prior
+output passed the independent llama.cpp four-layer comparison with maximum
+absolute error `5.00679016e-06`, as recorded below. The paired run log is
+`/private/tmp/q35-dense-kv-pair-four-layer-sim-patched-20261126.log`; its
+reference tensor SHA-256 is
+`23e2d5d9e1753671df264bea4a50fbd1eed1dd53d9af5ca836612f7ae952d563`.
+
+The image section hashes are boot `e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b`,
+text `829628b0991e9d86702da3645d5bd526b5ceb31009eaddfd7fd569dab6911f11`,
+and dispatch `58839e67c2992edbf138654ede2116f061a500bac446ee38aa6f5e43b51b872f`.
+The command/templates/records/weights hashes are respectively
+`d8cfef8d83fadcc178cb7e77be46bb5ca6779b56cd7fce2c749f287e3b41b33d`,
+`e052f18f9bdb7f3569fd0104bba14989487f55077bd182c5ec2b681d4f40c7d2`,
+`0048b5d25bbc503e49ac804614e092e8b560c287a7b3bffddfc71d13bde0c116`, and
+`e1a6c306c260268ba3164a91020a9c657ee8e254a6e59644653d8c47e1b87997`.
+The current reader/writer role image directory was
+`/private/tmp/q35-current-shared-roles-20261126h`. Reader shim/code hashes are
+`94457371ed8a2e2985db8fdd664741597f2f740b85aede7ce72933ab9486f0d1` and
+`58adee1e53441f5a0adf275fb8ee5776d534279bd23e7188da4ad1e3d1fe15d7`;
+writer shim/code hashes are
+`066ef535345f43e98794b1d64a9f20f2d6a5f753491b5db95c40c3070c15fbb6` and
+`6fbbd6435aa4b55e97312b4e5740d9f73bd2fa264c46cf2605cd5a698f30678d`.
+
+This is a four-layer simulator result only. The full 32-layer graph, warm
+outputs, physical ownership/recovery, clean unload and decode throughput
+remain unverified. The patched simulator clock is not P100A throughput.
+
 ## Paired dense key/value recorder schedule, 2026-11-26
 
 The compile-only rewrite adds a distinct stream version 7. Its recorded graph
@@ -45,12 +85,13 @@ run. This validates the worker's pack operation, not NoC access or projection
 results.
 
 This is a schedule/metadata test, not numerical projection or attention
-execution. The generic simulator runner and both service-header packagers
-explicitly reject the `dense-kv-pair.marker` until a numerical fixture for
-this stream version is available. The target compiler is not installed in the
-workspace; the Haiku-hosted RISC-V compiler has now built and linked the
-compile-only variant, as recorded above. No accelerator was accessed and no
-decode speed was measured.
+execution. Both service-header packagers reject the
+`dense-kv-pair.marker`. The generic simulator runner accepts the variant only
+when the matching recorded fixture carries the same marker; the four-layer
+numerical result is recorded above. The target compiler is not installed in
+the workspace; the Haiku-hosted RISC-V compiler built and linked the
+compile-only variant. No accelerator was accessed and no decode speed was
+measured.
 
 ## Recorded projection traffic and worker use (2026-11-26)
 

@@ -36,7 +36,8 @@ static bool WriteNew(const std::string& path,const void* data,size_t bytes) {
     FILE* file=std::fopen(path.c_str(),"wbx");if (!file) return false;
     bool okay=std::fwrite(data,1,bytes,file)==bytes;
     if (std::fclose(file)) okay=false;
-    if (!okay) std::remove(path.c_str());return okay;
+    if (!okay) std::remove(path.c_str());
+    return okay;
 }
 struct Sink {
     Sink(unsigned layers,bool decode):targetLayers(layers),planSteps(decode?DataflowGraphDecodeSteps:DataflowGraphPromptSteps),
@@ -115,6 +116,9 @@ int main(int argc,char** argv) {
 #endif
 #ifdef PIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY
     if (!WriteNew(dir+"/fused-rms-save.marker","",0)) return 1;
+#endif
+#ifdef PIONEER_QWEN35_DENSE_KV_PAIR_COMPILE_ONLY
+    if (!WriteNew(dir+"/dense-kv-pair.marker","",0)) return 1;
 #endif
     FILE* data=std::fopen((dir+"/weights.bin").c_str(),"wbx");
     FILE* index=std::fopen((dir+"/layout.txt").c_str(),"wx");

@@ -7,11 +7,30 @@ import tempfile
 
 runner = Path(__file__).with_name('pioneer_qwen35_ttsim_service_test.py')
 with tempfile.TemporaryDirectory() as temporary:
-    image = Path(temporary) / 'image'
+    root = Path(temporary)
+    image = root / 'image'
     image.mkdir()
     (image / 'dense-kv-pair.marker').touch()
     result = subprocess.run([sys.executable, '-B', str(runner), 'missing-library',
                              str(image), 'missing-roles'], capture_output=True, text=True)
     assert result.returncode != 0
-    assert 'dense K/V pair image has no matching numerical simulator fixture' in result.stderr
+    assert 'dense K/V pair image requires a matching recorded numerical fixture' in result.stderr
+    for marker in ('ffn-pair.marker', 'flash-hybrid.marker', 'fused-rms-save.marker',
+                   'compact-two-region.marker', 'activation-sharing.marker',
+                   'delta-shard.marker', 'ttsim-unprofiled.marker'):
+        (image / marker).touch()
+    fixture = root / 'unpaired-fixture'
+    fixture.mkdir()
+    (fixture / 'templates.bin').write_bytes(bytes(120 * 512))
+    for marker in ('ffn-pair.marker', 'flash-hybrid.marker', 'fused-rms-save.marker'):
+        (fixture / marker).touch()
+    reference = root / 'reference.bin'
+    reference.touch()
+    result = subprocess.run([
+        sys.executable, '-B', str(runner), 'missing-library', str(image), 'missing-roles',
+        '--ttsim-unprofiled', '--flash-hybrid', '--compact-two-region',
+        '--recorded-layer-fixture', str(fixture), '--recorded-layer-reference', str(reference)],
+        capture_output=True, text=True)
+    assert result.returncode != 0
+    assert 'dense K/V pair fixture and image markers do not match' in result.stderr
 print('PASS K/V pair image rejected before numerical simulator setup; OFFLINE ONLY')
