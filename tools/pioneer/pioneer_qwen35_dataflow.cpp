@@ -807,9 +807,18 @@ static bool QualifyRecovery()
 				&& current.build_tag==status.build_tag && current.generation==status.generation
 				&& !current.quiesced && current.active_owner) {
 				if (current.cold) {
-					tt_pioneer_pcie_evidence evidence{};evidence.version=1;
+					tt_pioneer_pcie_evidence evidence{};evidence.version=2;
 					evidence.expected_tag=status.build_tag;evidence.expected_generation=status.generation;
-					if (Call(fd,TT_PCI_PROBE_RECOVERY_PCIE_EVIDENCE,&evidence,sizeof(evidence))) {
+					bool gotEvidence=Call(fd,TT_PCI_PROBE_RECOVERY_PCIE_EVIDENCE,&evidence,sizeof(evidence));
+					if (!gotEvidence) {
+						// Older qualification drivers support only version 1.
+						evidence={};evidence.version=1;
+						evidence.expected_tag=status.build_tag;evidence.expected_generation=status.generation;
+						gotEvidence=Call(fd,TT_PCI_PROBE_RECOVERY_PCIE_EVIDENCE,&evidence,sizeof(evidence));
+					}
+					if (gotEvidence) {
+						if (evidence.version==2)
+							fprintf(stderr,"P100A_Q35_PCIE_TRACE attempted_mask=0x%08x\n",evidence.reserved[0]);
 						for (unsigned i=0;i<PIONEER_PCIE_TRACE_SAMPLES;i++) {
 							const auto& s=evidence.samples[i];
 							fprintf(stderr,"P100A_Q35_PCIE_TRACE sample=%u valid=%u dev=0x%04x link=0x%04x "

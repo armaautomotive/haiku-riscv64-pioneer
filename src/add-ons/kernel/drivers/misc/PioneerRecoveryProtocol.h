@@ -33,6 +33,10 @@ struct tt_pioneer_pcie_trace_sample {
 		severity,root_status,source,header[4];
 };
 struct tt_pioneer_pcie_evidence {
+	// Version 2 returns the sample-attempt bitmap in reserved[0]. A set bit
+	// with valid=0 means the sample was attempted but could not be read.
+	// Version 1 leaves every reserved word zero, as before. All reserved
+	// words must be zero on input for either version.
 	uint32_t version,reserved[3];
 	uint64_t expected_tag,expected_generation;
 	tt_pioneer_pcie_trace_sample samples[PIONEER_PCIE_TRACE_SAMPLES];
@@ -41,7 +45,7 @@ static_assert(sizeof(tt_pioneer_pcie_trace_sample)==48,"fixed trace sample ABI")
 static_assert(sizeof(tt_pioneer_pcie_evidence)==512,"fixed trace evidence ABI");
 static inline bool PioneerPcieEvidenceRequest(const tt_pioneer_pcie_evidence& r)
 {
-	if (r.version!=1 || r.reserved[0] || r.reserved[1] || r.reserved[2]
+	if ((r.version!=1 && r.version!=2) || r.reserved[0] || r.reserved[1] || r.reserved[2]
 		|| !r.expected_tag || !r.expected_generation) return false;
 	for (const auto& s:r.samples) {
 		if (s.valid || s.device_status || s.link_status || s.uncorrectable

@@ -331,6 +331,9 @@ struct FakeDataflowService { bool ready=true,faulted=true;bool StoppedResetReady
 struct PioneerStoreContext {
 #ifdef TEST_RECOVERY_QUALIFY
 	bool qualificationTraceActive=false;
+	bool qualificationResetTriggered=false,qualificationFirstDelay=false;
+	bool qualificationFirstVendor=false,qualificationFirstMarker=false;
+	uint32 qualificationTraceAttempted=0;
 	tt_pioneer_pcie_trace_sample qualificationTrace[PIONEER_PCIE_TRACE_SAMPLES]={};
 #endif
 	PioneerPostResetMapping* recoveryMapping=nullptr;bool recoveryAttempted=false,dispatchOwnerRetained=true;
@@ -781,11 +784,38 @@ int main(){
 	Qwen35RecoveryResetIO traceIo(traced->io,traced);
 	traceIo.CardRead(0,4);traceIo.RecoveryDelay();
 	assert(!traced->qualificationTrace[PIONEER_PCIE_TRACE_AFTER_TRIGGER].valid);
-	traceIo.CardWrite(0x930,4,0x11);traceIo.RecoveryDelay();traceIo.CardRead(0,4);traceIo.CardRead(4,2);
+	traceIo.CardWrite(0x930,4,0x11);traceIo.RecoveryDelay();
+	// Recovery retries create a new adapter but retain the same context. The
+	// first post-trigger endpoint observations must survive that boundary.
+	Qwen35RecoveryResetIO resumedIo(traced->io,traced);
+	const uint32 firstPollAer=traced->qualificationTrace[PIONEER_PCIE_TRACE_BEFORE_FIRST_POLL].uncorrectable;
+	fakeAerPost=0x40;resumedIo.RecoveryDelay();
+	assert(traced->qualificationTrace[PIONEER_PCIE_TRACE_BEFORE_FIRST_POLL].uncorrectable==firstPollAer);
+	resumedIo.CardRead(0,4);resumedIo.CardRead(4,2);
 	assert(traced->qualificationTrace[PIONEER_PCIE_TRACE_AFTER_TRIGGER].valid
 		&& traced->qualificationTrace[PIONEER_PCIE_TRACE_BEFORE_FIRST_POLL].valid
 		&& traced->qualificationTrace[PIONEER_PCIE_TRACE_AFTER_FIRST_VENDOR].valid
 		&& traced->qualificationTrace[PIONEER_PCIE_TRACE_AFTER_FIRST_MARKER].valid);
+	assert((traced->qualificationTraceAttempted & 0x3c0)==0x3c0);
+	Cleanup();
+	Setup();traced=sRuntimeOwner->context;traced->qualificationTraceActive=true;
+	fakeAerAvailable=false;
+	Qwen35QualificationTrace(traced,PIONEER_PCIE_TRACE_AFTER_FIRST_VENDOR);
+	assert((traced->qualificationTraceAttempted & (1U<<PIONEER_PCIE_TRACE_AFTER_FIRST_VENDOR))
+		&& !traced->qualificationTrace[PIONEER_PCIE_TRACE_AFTER_FIRST_VENDOR].valid
+		&& !(traced->qualificationTraceAttempted & (1U<<PIONEER_PCIE_TRACE_AFTER_FIRST_MARKER)));
+	sQwen35ExclusiveCookie=sRuntimeOwner;
+	tt_pioneer_pcie_evidence missingSample{};missingSample.version=2;
+	missingSample.expected_tag=PIONEER_DRIVER_BUILD_TAG;missingSample.expected_generation=3;
+	assert(Qwen35RecoveryPcieEvidence(sRuntimeOwner,&missingSample,sizeof(missingSample))==B_OK
+		&& (missingSample.reserved[0] & (1U<<PIONEER_PCIE_TRACE_AFTER_FIRST_VENDOR))
+		&& !missingSample.samples[PIONEER_PCIE_TRACE_AFTER_FIRST_VENDOR].valid
+		&& !(missingSample.reserved[0] & (1U<<PIONEER_PCIE_TRACE_AFTER_FIRST_MARKER)));
+	missingSample={};missingSample.version=1;
+	missingSample.expected_tag=PIONEER_DRIVER_BUILD_TAG;missingSample.expected_generation=3;
+	assert(Qwen35RecoveryPcieEvidence(sRuntimeOwner,&missingSample,sizeof(missingSample))==B_OK
+		&& missingSample.reserved[0]==0);
+	sQwen35ExclusiveCookie=nullptr;
 	Cleanup();
 	for (unsigned invalid=0;invalid<6;invalid++) {
 		Setup();auto* candidate=sRuntimeOwner;candidate->finalFreeRetained=false;sQwen35ExclusiveCookie=candidate;
@@ -844,6 +874,10 @@ int main(){
 		&& evidence.samples[PIONEER_PCIE_TRACE_AFTER_FIRST_MARKER].valid);
 	#endif
 	assert(Qwen35RecoveryPcieEvidence(candidate,&evidence,sizeof(evidence))==B_BAD_VALUE);
+	evidence={};evidence.version=2;evidence.expected_tag=PIONEER_DRIVER_BUILD_TAG;evidence.expected_generation=3;
+	assert(Qwen35RecoveryPcieEvidence(candidate,&evidence,sizeof(evidence))==B_OK
+		&& (evidence.reserved[0] & (1U<<PIONEER_PCIE_TRACE_BEFORE_RESET))
+		&& (evidence.reserved[0] & (1U<<PIONEER_PCIE_TRACE_ON_FAILURE)));
 	evidence={};evidence.version=1;evidence.expected_tag=PIONEER_DRIVER_BUILD_TAG;evidence.expected_generation=3;
 	activeTeam=18;assert(Qwen35RecoveryPcieEvidence(candidate,&evidence,sizeof(evidence))==B_NOT_ALLOWED);
 	activeTeam=17;sOpenCookies=2;assert(Qwen35RecoveryPcieEvidence(candidate,&evidence,sizeof(evidence))==B_NOT_ALLOWED);

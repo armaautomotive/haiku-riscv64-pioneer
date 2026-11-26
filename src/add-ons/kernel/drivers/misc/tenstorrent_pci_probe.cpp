@@ -4221,6 +4221,9 @@ class PioneerQ35FreshRecoverySession;
 struct PioneerStoreContext {
 #ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
 	bool qualificationTraceActive=false;
+	bool qualificationResetTriggered=false,qualificationFirstDelay=false;
+	bool qualificationFirstVendor=false,qualificationFirstMarker=false;
+	uint32 qualificationTraceAttempted=0;
 	tt_pioneer_pcie_trace_sample qualificationTrace[PIONEER_PCIE_TRACE_SAMPLES]={};
 #endif
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
@@ -12193,8 +12196,10 @@ Qwen35RecoveryStatus(PioneerProbeCookie* cookie,void* data,size_t length)
 static void
 Qwen35QualificationTrace(PioneerStoreContext* context,unsigned sample)
 {
-	if (context && context->qualificationTraceActive && sample<PIONEER_PCIE_TRACE_SAMPLES)
+	if (context && context->qualificationTraceActive && sample<PIONEER_PCIE_TRACE_SAMPLES) {
+		context->qualificationTraceAttempted|=1U<<sample;
 		(void)PioneerPcieRootTraceSample(context->io,context->qualificationTrace[sample]);
+	}
 }
 #ifdef PIONEER_QWEN35_FIRMWARE_RESET_WITNESS
 static void
@@ -12213,7 +12218,6 @@ struct Qwen35RecoveryResetIO {
 	bool delayFailed=false;
 	#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
 	PioneerStoreContext* traceContext;
-	bool triggered=false,firstDelay=false,firstVendor=false,firstMarker=false;
 	explicit Qwen35RecoveryResetIO(PioneerSessionIO& owned,PioneerStoreContext* context)
 		:io(owned),traceContext(context) {}
 	#else
@@ -12222,11 +12226,12 @@ struct Qwen35RecoveryResetIO {
 	uint32 CardRead(uint16 offset,uint8 size) {
 		const uint32 result=delayFailed?UINT32_MAX:io.CardRead(offset,size);
 		#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
-		if (triggered && firstDelay && !delayFailed) {
-			if (!firstVendor && offset==0 && size==4) {
-				firstVendor=true;Qwen35QualificationTrace(traceContext,PIONEER_PCIE_TRACE_AFTER_FIRST_VENDOR);
-			} else if (firstVendor && !firstMarker && offset==4 && size==2) {
-				firstMarker=true;Qwen35QualificationTrace(traceContext,PIONEER_PCIE_TRACE_AFTER_FIRST_MARKER);
+		if (traceContext && traceContext->qualificationResetTriggered
+			&& traceContext->qualificationFirstDelay && !delayFailed) {
+			if (!traceContext->qualificationFirstVendor && offset==0 && size==4) {
+				traceContext->qualificationFirstVendor=true;Qwen35QualificationTrace(traceContext,PIONEER_PCIE_TRACE_AFTER_FIRST_VENDOR);
+			} else if (traceContext->qualificationFirstVendor && !traceContext->qualificationFirstMarker && offset==4 && size==2) {
+				traceContext->qualificationFirstMarker=true;Qwen35QualificationTrace(traceContext,PIONEER_PCIE_TRACE_AFTER_FIRST_MARKER);
 			}
 		}
 		#endif
@@ -12237,16 +12242,16 @@ struct Qwen35RecoveryResetIO {
 	void CardWrite(uint16 offset,uint8 size,uint32 value) {
 		io.CardWrite(offset,size,value);
 		#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
-		if (!triggered && offset==0x930 && size==4 && value==0x11) {
-			triggered=true;Qwen35QualificationTrace(traceContext,PIONEER_PCIE_TRACE_AFTER_TRIGGER);
+		if (traceContext && !traceContext->qualificationResetTriggered && offset==0x930 && size==4 && value==0x11) {
+			traceContext->qualificationResetTriggered=true;Qwen35QualificationTrace(traceContext,PIONEER_PCIE_TRACE_AFTER_TRIGGER);
 		}
 		#endif
 	}
 	void RecoveryDelay() {
 		if (snooze(100000)!=B_OK) delayFailed=true;
 		#ifdef PIONEER_QWEN35_RECOVERY_QUALIFY
-		if (triggered && !firstDelay && !delayFailed) {
-			firstDelay=true;Qwen35QualificationTrace(traceContext,PIONEER_PCIE_TRACE_BEFORE_FIRST_POLL);
+		if (traceContext && traceContext->qualificationResetTriggered && !traceContext->qualificationFirstDelay && !delayFailed) {
+			traceContext->qualificationFirstDelay=true;Qwen35QualificationTrace(traceContext,PIONEER_PCIE_TRACE_BEFORE_FIRST_POLL);
 		}
 		#endif
 	}
@@ -13060,6 +13065,7 @@ Qwen35RecoveryPcieEvidence(PioneerProbeCookie* cookie,void* data,size_t length)
 		status=B_NOT_ALLOWED;
 	else {
 		memcpy(r.samples,cookie->context->qualificationTrace,sizeof(r.samples));
+		if (r.version==2) r.reserved[0]=cookie->context->qualificationTraceAttempted;
 		status=user_memcpy(data,&r,sizeof(r));
 	}
 	release_sem(sLock);return status;
