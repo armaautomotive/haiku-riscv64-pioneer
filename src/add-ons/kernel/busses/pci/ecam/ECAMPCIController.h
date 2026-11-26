@@ -18,6 +18,11 @@
 	&& (!defined(PIONEER_SG2042_RECOVERY_WITNESS) || defined(PIONEER_SG2042_RECOVERY_GATEWAY_WITNESS))
 #error Qualification requires the witness and excludes the general recovery gateway
 #endif
+#if defined(PIONEER_SG2042_RETAINED_LEASE_WITNESS) \
+	&& (!defined(PIONEER_SG2042_RECOVERY_WITNESS) || defined(PIONEER_SG2042_RECOVERY_QUALIFICATION) \
+		|| defined(PIONEER_SG2042_RECOVERY_GATEWAY_WITNESS))
+#error Retained lease is restricted to an isolated non-loadable controller witness
+#endif
 #ifdef PIONEER_SG2042_RECOVERY_WITNESS
 #include "Sg2042RecoveryLease.h"
 #include <condition_variable.h>
@@ -160,6 +165,12 @@ public:
 	status_t BeginPioneerRecovery(uint64& ticket);
 	status_t EndPioneerRecovery(uint64 ticket);
 	status_t WaitPioneerConfigAccess(); // fLock held on entry and return
+#ifdef PIONEER_SG2042_RETAINED_LEASE_WITNESS
+	status_t BeginPioneerRetainedRecovery(const void* owner, uint64 session, uint64& ticket);
+	status_t ParkPioneerRetainedRecovery(const void* owner, uint64 session, uint64 ticket);
+	status_t ResumePioneerRetainedRecovery(const void* owner, uint64 session, uint64 ticket);
+	status_t FinishPioneerRetainedRecovery(const void* owner, uint64 session, uint64 ticket, bool releaseAuthorized);
+#endif
 #endif
 #ifdef PIONEER_SG2042_RECOVERY_QUALIFICATION
 	status_t HoldPioneerQualification(sem_id ready, sem_id release, status_t* callbackStatus);

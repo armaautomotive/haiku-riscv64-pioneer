@@ -255,6 +255,12 @@ ECAMPCIController::WaitPioneerConfigAccess()
 	if (thread < B_OK)
 		return B_BAD_VALUE;
 	while (fPioneerRecoveryLease.Active() && !fPioneerRecoveryLease.Allows(thread)) {
+		#ifdef PIONEER_SG2042_RETAINED_LEASE_WITNESS
+		// A pending reset cannot safely wait for an arbitrary future retry.
+		// Wake existing waiters and fail new accesses while it is parked.
+		if (fPioneerRecoveryLease.Parked())
+			return B_DEV_NOT_READY;
+		#endif
 		#ifdef PIONEER_SG2042_RECOVERY_QUALIFICATION
 		fPioneerQualificationWaiter = thread;
 		#endif
@@ -264,6 +270,53 @@ ECAMPCIController::WaitPioneerConfigAccess()
 	}
 	return B_OK;
 }
+#ifdef PIONEER_SG2042_RETAINED_LEASE_WITNESS
+status_t
+ECAMPCIController::BeginPioneerRetainedRecovery(const void* owner, uint64 session, uint64& ticket)
+{
+	ticket=0;const thread_id thread=find_thread(NULL);
+	if (thread<B_OK || !owner || !session) return B_BAD_VALUE;
+	mutex_lock(&fLock);
+	const bool eligible=fIsSg2042 && fPrivatePioneerRoot && fStartBus==0x80
+		&& fEndBus==0xbf && fRegsPhysical==0x4800000000ULL;
+	const bool acquired=fPioneerRecoveryLease.BeginRetained(eligible,thread,owner,session,ticket);
+	mutex_unlock(&fLock);
+	return acquired?B_OK:eligible?B_BUSY:B_NOT_ALLOWED;
+}
+
+status_t
+ECAMPCIController::ParkPioneerRetainedRecovery(const void* owner, uint64 session, uint64 ticket)
+{
+	const thread_id thread=find_thread(NULL);if (thread<B_OK) return B_BAD_VALUE;
+	mutex_lock(&fLock);
+	const bool parked=fPioneerRecoveryLease.Park(thread,owner,session,ticket);
+	if (parked) fPioneerRecoveryCondition.NotifyAll();
+	mutex_unlock(&fLock);return parked?B_OK:B_BAD_VALUE;
+}
+
+status_t
+ECAMPCIController::ResumePioneerRetainedRecovery(const void* owner, uint64 session, uint64 ticket)
+{
+	const thread_id thread=find_thread(NULL);if (thread<B_OK) return B_BAD_VALUE;
+	mutex_lock(&fLock);
+	const bool eligible=fIsSg2042 && fPrivatePioneerRoot && fStartBus==0x80
+		&& fEndBus==0xbf && fRegsPhysical==0x4800000000ULL;
+	const bool resumed=fPioneerRecoveryLease.Resume(eligible,thread,owner,session,ticket);
+	mutex_unlock(&fLock);return resumed?B_OK:eligible?B_BAD_VALUE:B_NOT_ALLOWED;
+}
+
+status_t
+ECAMPCIController::FinishPioneerRetainedRecovery(const void* owner, uint64 session, uint64 ticket, bool releaseAuthorized)
+{
+	const thread_id thread=find_thread(NULL);if (thread<B_OK) return B_BAD_VALUE;
+	mutex_lock(&fLock);
+	const bool eligible=fIsSg2042 && fPrivatePioneerRoot && fStartBus==0x80
+		&& fEndBus==0xbf && fRegsPhysical==0x4800000000ULL;
+	const bool finished=eligible && fPioneerRecoveryLease.Finish(thread,owner,session,ticket,releaseAuthorized);
+	if (finished) fPioneerRecoveryCondition.NotifyAll();
+	mutex_unlock(&fLock);return finished?B_OK:eligible?B_BAD_VALUE:B_NOT_ALLOWED;
+}
+#endif
 // PIONEER_SG2042_RECOVERY_LEASE_END
 #endif
 

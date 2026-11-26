@@ -77,6 +77,11 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sg2
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined -pthread \
  -DPIONEER_SG2042_RECOVERY_WITNESS -DPIONEER_SG2042_RECOVERY_QUALIFICATION -I"$temporary" "$directory/sg2042_recovery_controller_test.cpp" -o "$temporary/sg2042-recovery-controller-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sg2042-recovery-controller-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined -pthread \
+ -DPIONEER_SG2042_RECOVERY_WITNESS -DPIONEER_SG2042_RETAINED_LEASE_WITNESS -I"$temporary" \
+ "$directory/sg2042_retained_recovery_controller_test.cpp" -o "$temporary/sg2042-retained-controller-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sg2042-retained-controller-test"
+PYTHONDONTWRITEBYTECODE=1 python3 "$directory/sg2042_retained_guard_test.py"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_ecam_lease_probe_logic_test.cpp" -o "$temporary/pioneer-ecam-lease-probe-logic-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/pioneer-ecam-lease-probe-logic-test"
