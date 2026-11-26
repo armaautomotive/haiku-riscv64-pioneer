@@ -17,6 +17,11 @@ awk '/PIONEER_SG2042_RECOVERY_LEASE_BEGIN/ {copying=1;next} /PIONEER_SG2042_RECO
 source=$directory/../../../src/add-ons/kernel/busses/pci/ecam/kernel_interface.cpp
 awk '/PIONEER_SG2042_RETAINED_LEASE_SERVICE_BEGIN/ {copying=1;next} /PIONEER_SG2042_RETAINED_LEASE_SERVICE_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
  "$source" > "$temporary/sg2042_retained_lease_service.inc"
+source=$directory/../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp
+awk '/PIONEER_Q35_RETAINED_GATEWAY_BEGIN/ {copying=1;next} /PIONEER_Q35_RETAINED_GATEWAY_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+ "$source" > "$temporary/pioneer_q35_retained_gateway.inc"
+awk '/PIONEER_Q35_RETAINED_RETIREMENT_PROOF_BEGIN/ {copying=1;next} /PIONEER_Q35_RETAINED_RETIREMENT_PROOF_END/ {found=1;exit} copying {print} END {if(!found)exit 1}' \
+ "$source" > "$temporary/pioneer_q35_retained_retirement_proof.inc"
 header=$directory/../../../src/add-ons/kernel/drivers/misc/PioneerRetainedRecoveryScope.h
 printf 'using status_t=int; enum { B_OK=0, B_ERROR=-1, B_DEV_NOT_READY=-2 };\n#include "%s"\n' "$header" > "$temporary/guard.cpp"
 for flags in '' '-DPIONEER_QWEN35_RETAINED_SCOPE_WITNESS' '-DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY' \
@@ -27,6 +32,14 @@ for flags in '' '-DPIONEER_QWEN35_RETAINED_SCOPE_WITNESS' '-DPIONEER_QWEN35_RECO
   exit 1
  fi
 done
+${CXX:-c++} -std=c++20 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined -pthread \
+ -DTEST_Q35_GATEWAY -DPIONEER_SG2042_RECOVERY_WITNESS -DPIONEER_SG2042_RETAINED_LEASE_SERVICE \
+ -DPIONEER_QWEN35_RETAINED_SCOPE_WITNESS -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
+ -I"$temporary" "$directory/pioneer_qwen35_retained_gateway_test.cpp" -o "$temporary/gateway-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/gateway-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -I"$temporary" "$directory/pioneer_qwen35_retained_retirement_proof_test.cpp" -o "$temporary/proof-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/proof-test"
 echo 'PASS retained scope rejects unguarded and qualification builds'
 for retained in PIONEER_SG2042_RETAINED_LEASE_WITNESS PIONEER_SG2042_RETAINED_LEASE_SERVICE; do
  ${CXX:-c++} -std=c++20 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined -pthread \

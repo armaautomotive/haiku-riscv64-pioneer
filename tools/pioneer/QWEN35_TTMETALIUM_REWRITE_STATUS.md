@@ -1,5 +1,20 @@
 # Latest offline checks, 2026-11-26
 
+The compile-only recovery ioctl now routes through a persistent gateway that
+holds the pin and controller modules, validated node pins and controller lease
+across calls. It checks the ordinary recovery-owner admission before acquiring
+them, refuses to adopt an already-started reset, and accepts retries only for
+the same validated guard ticket. It retains ownership on uncertain
+failure and waits after the guard-complete stage without reporting success.
+The production hardware-retirement proof currently always returns false;
+there is no physical recovery or reusable hardware path yet. The actual
+gateway passed simulated retry, missing-module, topology-mismatch,
+partial-acquisition and proof-gated retirement tests; simulated proof is
+injected only in the test. The full compact Haiku driver linked with the
+gateway and still refuses initialization; unsafe flag combinations failed
+to compile. Nothing was installed, booted or run on the card. See
+`benchmarks/qwen35-pin-kernel-20261125/EVIDENCE.md`.
+
 The retained ECAM service now exports begin, park, resume and finish to a
 driver adapter in an explicitly non-loadable configuration. Simulated tests
 compose the actual device-manager service, actual ECAM service and controller
@@ -16,8 +31,8 @@ No candidate was installed or booted. In the compile-only retained mode,
 recovery completion now keeps the owner and cold latch until the caller has
 retired the controller lease and both pins; it reports incomplete recovery to
 the caller until then. The actual recovery sequence and deferred finalizer
-passed simulated tests, but the live recovery ioctl still
-does not use this gateway and no physical release proof exists. Physical
+passed simulated tests. The ordinary loadable recovery ioctl does not use
+this non-loadable gateway and no physical release proof exists. Physical
 removal, firmware and DMA/MMIO exclusion remain unproven.
 
 An opt-in Haiku device-manager module now retains initialized card or root

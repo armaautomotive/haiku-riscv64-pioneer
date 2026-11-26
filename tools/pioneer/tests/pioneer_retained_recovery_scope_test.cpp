@@ -28,8 +28,26 @@ static int initialized=0,uninitialized=0,modules=0;
 static status_t Init(device_node* n,void** p){++initialized;*p=n;return B_OK;}
 static void Uninit(void* p){assert(p);++uninitialized;}
 static driver_module_info fakeDriver{{},Init,Uninit};
-static status_t get_module(const char*,module_info** out){*out=&fakeDriver;++modules;return B_OK;}
-static void put_module(const char*){assert(modules>0);--modules;}
+#ifdef TEST_Q35_GATEWAY
+static status_t GatewayGetModule(const char*,module_info**);
+static void GatewayPutModule(const char*);
+#endif
+static status_t get_module(const char* name,module_info** out){
+#ifdef TEST_Q35_GATEWAY
+    if (std::strcmp(name,"test")!=0) return GatewayGetModule(name,out);
+#else
+    (void)name;
+#endif
+    *out=&fakeDriver;++modules;return B_OK;
+}
+static void put_module(const char* name){
+#ifdef TEST_Q35_GATEWAY
+    if (std::strcmp(name,"test")!=0) {GatewayPutModule(name);return;}
+#else
+    (void)name;
+#endif
+    assert(modules>0);--modules;
+}
 struct device_node {
     device_node* parent=nullptr;int fInitialized=0,refs=1;bool removed=false,registered=true;
     driver_module_info* fDriver=nullptr;void* fDriverData=nullptr;
@@ -200,4 +218,5 @@ int main() {
     assert(pinService.release(cardId,&owner,10,true)==B_OK);
     assert(c4.UninitDriver() && modules==0);
     std::puts("PASS retained pin and controller module integration; SIMULATED ONLY");
+    return 0;
 }

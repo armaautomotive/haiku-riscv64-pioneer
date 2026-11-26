@@ -1,11 +1,40 @@
 # Offline Pioneer pin-service kernel candidate
 
+## Compile-only retained recovery gateway (2026-11-26)
+
+The retained recovery ioctl now uses a persistent gateway in the non-loadable
+rewrite. It acquires the retained pin and controller modules, checks the
+validated card/root profile, pins both nodes while the temporary profile pins
+are held, and uses the binding for each retry. The normal recovery-owner
+admission is checked before those resources are acquired. A pending operation must have
+exactly one valid guard ticket, and subsequent calls must retain that same
+reset ticket. An already-started reset cannot be adopted after a lease gap.
+Once the guard completes, the gateway keeps the owner, pins and parked lease
+and returns an incomplete status until a separate retirement proof is supplied.
+
+The current driver proof function unconditionally denies retirement: physical
+writer, firmware, DMA and device-removal exclusion are not established. The
+actual gateway was tested with actual retained pin/controller code and fake
+nodes, including a deliberately injected test-only proof, missing module,
+changed topology, partial pin-acquisition rollback, stale generation and
+ticket validation. The real proof function was separately tested to refuse.
+The complete compact resident Haiku/RISC-V driver linked with this gateway and
+retained its no-I/O `B_NOT_ALLOWED` initialization. Builds missing the scope,
+combining both gateways, or using the isolated finish-test flag were rejected.
+The ordinary loadable driver still has no qualified retained gateway; no
+candidate was installed, booted, or used for physical recovery.
+
+The broad offline reload suite exited zero after the gateway was added; its
+source extraction preceded the final same-ticket and admission refactor.
+Those changed gateway and ordinary/live recovery paths were rerun separately
+under ASan/UBSan, and the full compact driver was rebuilt with the final code.
+
 ## Retained controller module and topology handoff (2026-11-26)
 
 The non-loadable ECAM retained-lease module exports the controller's existing
 begin/park/resume/finish methods. The controller still refuses initialization
-in this configuration. The driver-side binding, adapters and retained scope exercise
-the actual device-manager and ECAM module entry points in simulation, including
+in this configuration. The driver-side binding, adapters and retained scope
+exercise the actual device-manager and ECAM module entry points in simulation, including
 a pending call, a retry from another thread, parked config refusal and gated
 release. An injected finish failure re-parks the lease and retains both pins.
 The PCI profile now provides validated card and root-port nodes to a
@@ -26,9 +55,10 @@ or booted. The compile-only retained mode now defers owner destruction and
 cold-latch clearing until the gateway has retired the controller lease and
 pins. Both the real recovery sequence and the finalizer passed focused
 simulation tests, including refusal before retirement and an incomplete status
-returned to the caller. The recovery ioctl
-does not yet use this retained scope; physical ownership and release proofs
-remain to be established before hardware qualification.
+returned to the caller. The recovery ioctl in the non-loadable configuration
+now uses the retained scope as described
+above; physical ownership and release proofs remain to be established before
+hardware qualification.
 
 The offline reload suite exited zero. Its source extraction preceded the final
 incomplete-status change and some fixture edits; the changed recovery sequence,
@@ -55,8 +85,8 @@ The builder also linked its existing non-retained configuration and checked
 the retained module was absent. Neither candidate was installed or booted.
 
 The service is a software lifetime reference, not physical-device ownership
-or removal exclusion. It has no recovery gateway consumer yet and does not
-establish DMA, MMIO or firmware exclusion, safe PCI reset, no-reboot recovery,
+or removal exclusion. The newer compile-only gateway consumes it as described
+above, but it does not establish DMA, MMIO or firmware exclusion, safe PCI reset, no-reboot recovery,
 model correctness or throughput. Repeat the 27B/idle preflight immediately
 before any accelerator access.
 

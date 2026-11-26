@@ -56,6 +56,18 @@ for include in "$sdk/headers/os" "$sdk"/headers/os/*; do
  [ ! -d "$include" ] || set -- "$@" -isystem "$include"
 done
 source="$project/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp"
+for invalid in no-scope synchronous-gateway test-only-flag; do
+ case "$invalid" in
+  no-scope) invalid_flag=-UPIONEER_QWEN35_RETAINED_SCOPE_WITNESS; expected='Retained recovery completion requires the non-loadable retained scope';;
+  synchronous-gateway) invalid_flag=-DPIONEER_QWEN35_ROOT_RECOVERY_GATEWAY_WITNESS; expected='Retained recovery completion requires the non-loadable retained scope';;
+  test-only-flag) invalid_flag=-DPIONEER_QWEN35_RETAINED_FINISH_TEST_ONLY; expected='Retained finish test flag cannot build a driver';;
+ esac
+ if "$cxx" "$@" "$invalid_flag" -fsyntax-only "$source" > "$temporary/$invalid.log" 2>&1; then
+  echo "FAIL retained gateway accepted $invalid" >&2; exit 1
+ fi
+ grep -q "$expected" "$temporary/$invalid.log"
+done
+echo 'PASS retained gateway rejects unsafe build combinations'
 "$cxx" "$@" -fsyntax-only "$source"
 "$cxx" -I"$temporary" "$@" -DPIONEER_QWEN35_COMPACT_DRIVER_COMPILE_ONLY \
  -DPIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY \

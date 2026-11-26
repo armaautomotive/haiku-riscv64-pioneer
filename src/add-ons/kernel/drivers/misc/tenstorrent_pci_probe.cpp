@@ -268,6 +268,9 @@
 #include "PioneerRecoveryDbi.h"
 #endif
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
+#ifdef PIONEER_QWEN35_RETAINED_FINISH_TEST_ONLY
+#error Retained finish test flag cannot build a driver
+#endif
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowAuthorization.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowConvProgram.h"
 #include "../../../../../tools/pioneer/PioneerQwen35DataflowFfnSequence.h"
@@ -4101,7 +4104,8 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 #ifdef PIONEER_QWEN35_DATAFLOW_REWRITE
 #if defined(PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS) \
 	&& (!defined(PIONEER_QWEN35_RETAINED_SCOPE_WITNESS) \
-		|| !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY))
+		|| !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY) \
+		|| defined(PIONEER_QWEN35_ROOT_RECOVERY_GATEWAY_WITNESS))
 #error Retained recovery completion requires the non-loadable retained scope
 #endif
 #include "PioneerPostResetPci.h"
@@ -12516,15 +12520,13 @@ Qwen35LiveRecoveryFaultPresent(const PioneerStoreContext* context)
 }
 #endif
 
-// sLock held for the complete operation. The only inputs from userspace are
-// the expected build and generation; every device fact and proof is produced
-// by this driver. A failed attempt retains the owner and cold latch.
 static status_t
-Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r)
+Qwen35RecoverySelectOwner(PioneerProbeCookie* inspector,const tt_pioneer_recovery_run& r,
+	PioneerProbeCookie*& owner,PioneerStoreContext*& context,bool& liveTakeoverOwner)
 {
+	owner=NULL;context=NULL;liveTakeoverOwner=false;
 	if (!sReloadGuard || !sReloadGeneration || r.expected_tag!=PIONEER_DRIVER_BUILD_TAG
 		|| r.expected_generation!=sReloadGeneration) return B_BAD_VALUE;
-	bool liveTakeoverOwner=false;
 #ifdef PIONEER_QWEN35_EXCLUSIVE_TAKEOVER_WITNESS
 	// A stopped or explicitly quarantined faulted takeover can reset through
 	// its own live fd. The borrowed ioctl scope must have detached first.
@@ -12540,8 +12542,18 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 		|| !sRuntimeOwner || !sRuntimeOwner->context || !sRuntimeOwner->context->dispatchOwnerRetained
 		|| (!liveTakeoverOwner && (sRuntimeOwner==inspector || inspector->context
 			|| !sRuntimeOwner->finalFreeRetained))) return B_BUSY;
-	PioneerProbeCookie* owner=sRuntimeOwner;
-	PioneerStoreContext* context=owner->context;
+	owner=sRuntimeOwner;context=owner->context;return B_OK;
+}
+
+// sLock held for the complete operation. The only inputs from userspace are
+// the expected build and generation; every device fact and proof is produced
+// by this driver. A failed attempt retains the owner and cold latch.
+static status_t
+Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r)
+{
+	PioneerProbeCookie* owner=NULL;PioneerStoreContext* context=NULL;bool liveTakeoverOwner=false;
+	const status_t admission=Qwen35RecoverySelectOwner(inspector,r,owner,context,liveTakeoverOwner);
+	if (admission!=B_OK) return admission;
 // PIONEER_Q35_PROJECTION_OWNER_RESET_GUARD_BEGIN
 #if defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) && defined(PIONEER_QWEN35_DEVICE_DISPATCH)
 	// A never-staged claim has not written scratch. Modified or uncertain
@@ -12905,7 +12917,200 @@ Qwen35RecoveryRunLocked(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& r
 #endif
 }
 
-#ifdef PIONEER_QWEN35_ROOT_RECOVERY_GATEWAY_WITNESS
+#if defined(PIONEER_QWEN35_RETAINED_GATEWAY_WITNESS) && !defined(PIONEER_QWEN35_RETAINED_FINISH_TEST_ONLY)
+// The existing reset audit does not yet prove physical writer, firmware,
+// DMA or device-removal exclusion. Do not retire a lease on its evidence.
+// PIONEER_Q35_RETAINED_RETIREMENT_PROOF_BEGIN
+static bool
+Qwen35RetainedHardwareRetirementProof(PioneerStoreContext*,uint64,uint64)
+{
+	return false;
+}
+// PIONEER_Q35_RETAINED_RETIREMENT_PROOF_END
+
+// PIONEER_Q35_RETAINED_GATEWAY_BEGIN
+using Qwen35RetainedBinding=PioneerRetainedRecoveryBinding<pioneer_dm_retained_pin_module_info,
+	pioneer_sg2042_retained_lease_module_info>;
+using Qwen35RetainedScope=PioneerRetainedRecoveryScope<PioneerQ35RetainedPinAdapter,
+	PioneerQ35RetainedControllerAdapter>;
+
+static bool
+Qwen35RetainedProfileMatches(const tt_pioneer_profile& a,const tt_pioneer_profile& b)
+{
+	return a.ready && b.ready && a.card_bus==b.card_bus && a.root_bus==b.root_bus
+		&& a.controller==b.controller && a.config==b.config && a.config_length==b.config_length
+		&& a.bar0_host_start==b.bar0_host_start && a.bar0_host_end==b.bar0_host_end
+		&& a.bar2_host_start==b.bar2_host_start && a.bar2_host_end==b.bar2_host_end;
+}
+
+// Only a retained, currently valid reset ticket permits a B_DEV_NOT_READY
+// operation to be resumed. Other failures keep the lease and pins faulted.
+static uint64
+Qwen35RetainedRetryable(PioneerStoreContext* context)
+{
+	if (!context || !context->recoveryAttempted) return 0;
+	unsigned count=0;uint64 ticket=0;
+	const bool pending[]={context->recoveryPreparePending,context->recoveryResetPending,
+		context->recoveryFirmwarePending,context->recoveryMappingPending,context->recoveryFinishPending};
+	const uint64 tickets[]={context->recoveryPrepareTicket,context->recoveryResetTicket,
+		context->recoveryFirmwareTicket,context->recoveryMappingTicket,context->recoveryFinishTicket};
+	for (unsigned i=0;i<5;i++) if (pending[i]) { ++count;ticket=tickets[i]; }
+	if (count!=1 || !ticket || context->recoveryFinishCompleted) return 0;
+	pioneer_driver_recovery_guard_v2_info* guard=NULL;
+	if (get_module(PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE,(module_info**)&guard)!=B_OK) return 0;
+	const bool valid=guard && guard->version==2 && guard->validate && guard->validate(ticket)==B_OK;
+	put_module(PIONEER_DRIVER_RECOVERY_GUARD_V2_MODULE);return valid?ticket:0;
+}
+
+static bool
+Qwen35RetainedTicketContinuity(uint64& retained,uint64 candidate)
+{
+	if (!candidate || (retained && retained!=candidate)) return false;
+	retained=candidate;return true;
+}
+
+class Qwen35RetainedRecoveryGateway {
+	PioneerProbeCookie* fOwner;
+	PioneerStoreContext* fContext;
+	uint64 fSession;
+	tt_pioneer_profile fExpected,fInspected{};
+	pioneer_dm_retained_pin_module_info* fPins=NULL;
+	pioneer_sg2042_retained_lease_module_info* fController=NULL;
+	uint64 fCardId=0,fRootId=0,fResetTicket=0;
+	Qwen35RetainedBinding* fBinding=NULL;
+	bool fAwaitingProof=false,fFaulted=false,fAmbiguous=false;
+	bool fPinModuleHeld=false,fControllerModuleHeld=false;
+	struct Invocation {
+		Qwen35RetainedRecoveryGateway& gateway;
+		PioneerProbeCookie* inspector;
+		tt_pioneer_recovery_run& request;
+		static status_t Run(void* opaque,bool* pending) {
+			auto& call=*static_cast<Invocation*>(opaque);auto& gateway=call.gateway;
+			*pending=false;
+			if (sRuntimeOwner!=gateway.fOwner || gateway.fOwner->context!=gateway.fContext)
+				return B_NOT_ALLOWED;
+			const status_t status=Qwen35RecoveryRunLocked(call.inspector,call.request);
+			if (status==B_DEV_NOT_READY && sRuntimeOwner==gateway.fOwner
+				&& gateway.fOwner->context==gateway.fContext) {
+				const uint64 ticket=Qwen35RetainedRetryable(gateway.fContext);
+				*pending=Qwen35RetainedTicketContinuity(gateway.fResetTicket,ticket);
+			}
+			return status;
+		}
+	};
+	static status_t Capture(void* cookie,device_node* card,device_node* root,void* opaque) {
+		auto& gateway=*static_cast<Qwen35RetainedRecoveryGateway*>(opaque);
+		if (!cookie || !card || !root || card==root
+			|| !Qwen35RetainedProfileMatches(gateway.fExpected,gateway.fInspected)) return B_NOT_ALLOWED;
+		status_t status=gateway.fPins->acquire(card,&gateway,gateway.fSession,&gateway.fCardId);
+		if (status!=B_OK) return status;
+		if (!gateway.fCardId) { gateway.fAmbiguous=true;return B_ERROR; }
+		status=gateway.fPins->acquire(root,&gateway,gateway.fSession,&gateway.fRootId);
+		if (status!=B_OK) return status;
+		if (!gateway.fRootId || gateway.fRootId==gateway.fCardId) {
+			gateway.fAmbiguous=true;return B_ERROR;
+		}
+		gateway.fBinding=new(std::nothrow) Qwen35RetainedBinding(gateway.fPins,gateway.fController,
+			cookie,&gateway,gateway.fSession,gateway.fCardId,gateway.fRootId);
+		return gateway.fBinding?B_OK:B_NO_MEMORY;
+	}
+	void RollbackUnenteredPins() {
+		if (fBinding || fAmbiguous) return;
+		if (fRootId && fPins->release(fRootId,this,fSession,true)==B_OK) fRootId=0;
+		if (fCardId && fPins->release(fCardId,this,fSession,true)==B_OK) fCardId=0;
+	}
+public:
+	Qwen35RetainedRecoveryGateway(PioneerProbeCookie* owner,PioneerStoreContext* context,uint64 session)
+		:fOwner(owner),fContext(context),fSession(session),fExpected(context->profile) {}
+	status_t Open() {
+		status_t status=get_module(PIONEER_DEVICE_MANAGER_RETAINED_PIN_MODULE,(module_info**)&fPins);
+		if (status!=B_OK) return status;
+		fPinModuleHeld=true;
+		if (!fPins || !fPins->acquire || !fPins->run || !fPins->release) return B_NOT_ALLOWED;
+		status=get_module(PIONEER_SG2042_RETAINED_LEASE_MODULE,(module_info**)&fController);
+		if (status!=B_OK) return status;
+		fControllerModuleHeld=true;
+		if (!fController || !fController->begin || !fController->park
+			|| !fController->resume || !fController->finish) return B_NOT_ALLOWED;
+		status=WithPioneerPciControllerNodes(sDeviceManager,sCard,fInspected,Capture,this);
+		if (status==B_OK && !fBinding) { fAmbiguous=true;status=B_ERROR; }
+		if (status!=B_OK) { RollbackUnenteredPins();fFaulted=true; }
+		return status;
+	}
+	bool Discardable() const { return !fBinding && !fCardId && !fRootId && !fAmbiguous; }
+	void ReleaseModules() {
+		if (fControllerModuleHeld) { put_module(PIONEER_SG2042_RETAINED_LEASE_MODULE);fControllerModuleHeld=false;fController=NULL; }
+		if (fPinModuleHeld) { put_module(PIONEER_DEVICE_MANAGER_RETAINED_PIN_MODULE);fPinModuleHeld=false;fPins=NULL; }
+	}
+	bool Done() const { return fBinding && fBinding->Retired() && !fOwner; }
+	status_t Run(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& request) {
+		if (!fBinding || fFaulted || !fOwner || sRuntimeOwner!=fOwner
+			|| fOwner->context!=fContext || request.expected_generation!=fSession) return B_NOT_ALLOWED;
+		if (!fAwaitingProof) {
+			Invocation call{*this,inspector,request};status_t operationStatus=B_ERROR;
+			const auto result=fBinding->Step(Invocation::Run,&call,operationStatus);
+			if (result==Qwen35RetainedScope::Pending) return B_DEV_NOT_READY;
+			if (result!=Qwen35RetainedScope::AwaitingProof) {
+				fFaulted=true;sColdRecoveryRequired=true;
+				return operationStatus!=B_OK?operationStatus:B_DEV_NOT_READY;
+			}
+			fAwaitingProof=true;
+		}
+		request.stage=PIONEER_RECOVERY_STAGE_GUARD_COMPLETE;
+		if (!fContext->recoveryFinishCompleted || !fContext->recoveryFinishCompletedGeneration
+			|| !Qwen35RetainedTicketContinuity(fResetTicket,fContext->recoveryFinishTicket)) {
+			fFaulted=true;sColdRecoveryRequired=true;return B_NOT_ALLOWED;
+		}
+		if (!Qwen35RetainedHardwareRetirementProof(fContext,fBinding->Ticket(),
+				fContext->recoveryFinishTicket)) return B_DEV_NOT_READY;
+		status_t status=fBinding->Retire(true);
+		if (status!=B_OK) { fFaulted=true;sColdRecoveryRequired=true;return status; }
+		status=Qwen35FinalizeRetainedRecoveryLocked(fOwner,fContext,request,true);
+		if (status!=B_OK) { fFaulted=true;sColdRecoveryRequired=true;return status; }
+		fOwner=NULL;fContext=NULL;fCardId=0;fRootId=0;return B_OK;
+	}
+	void DeleteRetiredBinding() { if (Done()) { delete fBinding;fBinding=NULL; } }
+};
+
+static Qwen35RetainedRecoveryGateway* sQwen35RetainedGateway=NULL;
+static status_t
+Qwen35RecoveryWithRetainedRootLease(PioneerProbeCookie* inspector,tt_pioneer_recovery_run& request)
+{
+	if (!sDeviceManager || !sRuntimeOwner || !sRuntimeOwner->context || !sColdRecoveryRequired
+		|| request.expected_tag!=PIONEER_DRIVER_BUILD_TAG || request.expected_generation!=sReloadGeneration)
+		return B_NOT_ALLOWED;
+	if (!sQwen35RetainedGateway) {
+		PioneerProbeCookie* owner=NULL;PioneerStoreContext* context=NULL;bool liveTakeoverOwner=false;
+		const status_t admission=Qwen35RecoverySelectOwner(inspector,request,owner,context,liveTakeoverOwner);
+		if (admission!=B_OK) return admission;
+		// A previously started reset may have run without this lease. Never
+		// adopt it after a gap in controller exclusion.
+		if (context->recoveryAttempted || context->recoveryPreparePending
+			|| context->recoveryResetPending || context->recoveryFirmwarePending
+			|| context->recoveryMappingPending || context->recoveryFinishPending
+			|| context->recoveryFinishCompleted) return B_NOT_ALLOWED;
+		sQwen35RetainedGateway=new(std::nothrow) Qwen35RetainedRecoveryGateway(
+			owner,context,sReloadGeneration);
+		if (!sQwen35RetainedGateway) return B_NO_MEMORY;
+		const status_t status=sQwen35RetainedGateway->Open();
+		if (status!=B_OK) {
+			if (sQwen35RetainedGateway->Discardable()) {
+				sQwen35RetainedGateway->ReleaseModules();delete sQwen35RetainedGateway;
+				sQwen35RetainedGateway=NULL;
+			}
+			return status;
+		}
+	}
+	const status_t status=sQwen35RetainedGateway->Run(inspector,request);
+	if (status==B_OK && sQwen35RetainedGateway->Done()) {
+		sQwen35RetainedGateway->DeleteRetiredBinding();sQwen35RetainedGateway->ReleaseModules();
+		delete sQwen35RetainedGateway;sQwen35RetainedGateway=NULL;
+	}
+	return status;
+}
+// PIONEER_Q35_RETAINED_GATEWAY_END
+#define Qwen35RecoveryRunSelected Qwen35RecoveryWithRetainedRootLease
+#elif defined(PIONEER_QWEN35_ROOT_RECOVERY_GATEWAY_WITNESS)
 #if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY)
 #error The root recovery gateway is restricted to the non-loadable witness
 #endif
