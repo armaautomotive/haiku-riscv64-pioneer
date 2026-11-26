@@ -5,6 +5,15 @@
 #include "PioneerQwen35DataflowDeviceGraph.h"
 #include "PioneerQwen35DataflowDynamicToken.h"
 #include "PioneerQwen35DataflowConvProgress.h"
+#ifdef PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY
+#if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_PAIRED_RECURRENCE) \
+    || !defined(PIONEER_QWEN35_FUSED_RECURRENCE) || !defined(PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY) \
+    || !defined(PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY) || !defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS) \
+    || !defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY) \
+    || defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL)
+#error Paired FFN graph is an isolated non-loadable hybrid graph experiment
+#endif
+#endif
 
 namespace PioneerQwen35 {
 enum : unsigned {
@@ -23,8 +32,13 @@ enum : unsigned {
 #error Sharded recurrence witness requires fused paired recurrence
 #endif
 #ifdef PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY
+#ifdef PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY
+	DataflowGraphDecodeSteps=500,
+	DataflowGraphPromptSteps=497
+#else
 	DataflowGraphDecodeSteps=532,
 	DataflowGraphPromptSteps=529
+#endif
 #else
 	DataflowGraphDecodeSteps=524,
 	DataflowGraphPromptSteps=521

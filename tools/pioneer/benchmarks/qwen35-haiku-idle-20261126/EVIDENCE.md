@@ -12,7 +12,8 @@ matched the recorded stable files. The trusted admin `--status` returned
 The 4B and 27B files had expected sizes 2,740,937,888 and 18,973,870,528
 bytes, respectively. The 4B full SHA-256 was
 `00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4`.
-A separate 27B full hash remains running at this checkpoint. These are
+The 27B full SHA-256 also matched
+`c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747`. These are
 point-in-time observations: repeat process, lock and stable-driver preflight
 immediately before any future card access. The check accessed no card and
 establishes no model execution, physical recovery, or throughput.

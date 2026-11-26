@@ -34,6 +34,24 @@ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/act
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_qwen35_flash_hybrid_graph_test.cpp" -o "$temporary/graph-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/graph-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_qwen35_ffn_pair_sequence_test.cpp" -o "$temporary/ffn-pair-sequence"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/ffn-pair-sequence"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_qwen35_ffn_pair_graph_test.cpp" -o "$temporary/ffn-pair-graph"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/ffn-pair-graph"
+ffn_flags='-DPIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY -DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_PAIRED_RECURRENCE -DPIONEER_QWEN35_FUSED_RECURRENCE -DPIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY -DPIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS -DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS'
+for header in PioneerQwen35DataflowFfnSequence.h PioneerQwen35DataflowGraphRunProtocol.h; do
+ printf '#include "%s"\n' "$directory/../$header" > "$temporary/ffn-guard.cpp"
+ # Deliberate splitting supplies the individual compiler flags.
+ ${CXX:-c++} -std=c++17 $ffn_flags -fsyntax-only "$temporary/ffn-guard.cpp"
+ for flags in '-DPIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY' \
+  "$ffn_flags -DPIONEER_QWEN35_RECOVERY_QUALIFY" "$ffn_flags -DPIONEER_QWEN35_DEVICE_DISPATCH_TRIAL"; do
+  if ${CXX:-c++} -std=c++17 $flags -fsyntax-only "$temporary/ffn-guard.cpp" > /dev/null 2>&1; then
+   echo 'FAIL paired FFN graph build guard' >&2;exit 1
+  fi
+ done
+done
 for header in PioneerQwen35DataflowDenseAttentionPartial.h PioneerQwen35DataflowDenseAttentionHybrid.h \
  PioneerQwen35DataflowFlashHybridProgram.h \
  PioneerQwen35DataflowFlashPartialProtocol.h PioneerQwen35DataflowBlackholeFlashHybridIO.h; do

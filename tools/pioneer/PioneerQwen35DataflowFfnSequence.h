@@ -3,6 +3,16 @@
 #define PIONEER_QWEN35_DATAFLOW_FFN_SEQUENCE_H
 
 #include "PioneerQwen35DataflowAuthorization.h"
+#ifdef PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY
+#if !defined(PIONEER_QWEN35_RECOVERY_COMPILE_ONLY) || !defined(PIONEER_QWEN35_PAIRED_RECURRENCE) \
+    || !defined(PIONEER_QWEN35_FUSED_RECURRENCE) || !defined(PIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY) \
+    || !defined(PIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY) || !defined(PIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS) \
+    || !defined(PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS) || defined(PIONEER_QWEN35_RECOVERY_QUALIFY) \
+    || defined(PIONEER_QWEN35_DEVICE_DISPATCH_TRIAL)
+#error Paired FFN is an isolated non-loadable hybrid graph experiment
+#endif
+#include <new>
+#endif
 
 namespace PioneerQwen35 {
 
@@ -57,6 +67,23 @@ public:
 			return DataflowFfnNormRunFailed;
 
 		DataflowProjectionProgram& gate=projectionScratch;
+#ifdef PIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY
+		// Both projections read the same normalized activation and write
+		// disjoint destinations. Partition the fleet instead of dispatching
+		// two whole-fleet steps; the graph retains one shared completion barrier.
+		auto* up=new(std::nothrow) DataflowProjectionProgram;
+		if (!up) return DataflowFfnUpBuildFailed;
+		if (!authority.BuildProjection(layer,Gate,normalizedSlot,inputSlot,gate,DataflowCoreCount/2)) {
+			delete up;return DataflowFfnGateBuildFailed;
+		}
+		if (!authority.BuildProjection(layer,Up,normalizedSlot,DataflowGraphUpOutputSlot,*up,
+			DataflowCoreCount-DataflowCoreCount/2)) {
+			delete up;return DataflowFfnUpBuildFailed;
+		}
+		const bool pairOkay=service.RunIndependentProjectionPair(gate,*up,io)==0;
+		delete up;
+		if (!pairOkay) return DataflowFfnGateRunFailed;
+#else
 		if (!authority.BuildProjection(layer,Gate,normalizedSlot,inputSlot,gate))
 			return DataflowFfnGateBuildFailed;
 		if (service.RunProjection(gate,io)!=0)
@@ -67,6 +94,7 @@ public:
 			DataflowGraphUpOutputSlot,up)) return DataflowFfnUpBuildFailed;
 		if (service.RunProjection(up,io)!=0)
 			return DataflowFfnUpRunFailed;
+#endif
 
 		DataflowSiluProgram silu{};
 		if (!authority.BuildSilu(inputSlot,silu)) return DataflowFfnSiluBuildFailed;
