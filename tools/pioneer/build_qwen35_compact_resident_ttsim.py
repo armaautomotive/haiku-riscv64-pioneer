@@ -16,6 +16,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('build', type=Path, help='configured Haiku RISC-V build directory')
     parser.add_argument('output', type=Path, help='new absolute output directory')
+    parser.add_argument('--mixed-optimization', action='store_true',
+                        help='compile the stream and graph dispatch objects with -O2')
     args = parser.parse_args()
     if not args.output.is_absolute() or args.output.exists() or args.output.is_symlink():
         parser.error('output must be a new absolute directory')
@@ -29,6 +31,8 @@ def main():
     for marker in ('activation-sharing', 'delta-shard', 'ffn-pair', 'flash-hybrid',
                    'fused-rms-save', 'ttsim-unprofiled', 'compact-two-region'):
         (args.output / (marker + '.marker')).touch(exist_ok=False)
+    if args.mixed_optimization:
+        (args.output / 'compact-mixed-optimization.marker').touch(exist_ok=False)
 
     flags = ('-std=c++17 -Oz -Wall -Wextra -Werror -ffreestanding -fno-exceptions '
              '-fno-rtti -fno-stack-protector -fno-pic -fno-pie -fno-builtin '
@@ -51,6 +55,8 @@ def main():
     for name, source in files:
         extra = (['-DPIONEER_QWEN35_TREE_SETTLEMENT', '-fno-inline-functions-called-once']
                  if name == 'resident-service-entry.o' else [])
+        if args.mixed_optimization and name in ('device-stream.o', 'device-graph.o'):
+            extra.append('-O2')
         subprocess.run([str(cross) + '-g++', *flags, *['-D' + item for item in defines],
                         *extra, *includes, '-c', str(root / source), '-o', str(args.output / name)], check=True)
     subprocess.run([str(cross) + '-g++', *flags, *includes, '-c',

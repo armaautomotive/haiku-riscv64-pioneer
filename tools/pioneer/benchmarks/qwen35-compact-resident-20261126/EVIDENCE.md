@@ -37,6 +37,22 @@ simulated snapshot restoration. These checks establish software bounds and
 failure handling in fake memory only; no physical writer exclusion or device
 restoration is implied.
 
+The builder also offers `--mixed-optimization`, keeping the stream and graph
+dispatch objects at their earlier `-O2` setting while the rest use `-Oz`.
+That image linked within the same two declared ranges: 56,152-byte text and
+38,988-byte dispatch. Its conservative graph stack envelope is
+7,920/8,192 bytes including a 1,024-byte allowance, not a whole-program
+proof. The service-owner fake-IO staging, readback, high-offset failure and
+close checks also passed at this larger dispatch size in ordinary and
+shared-role configurations. The mixed builder log is
+`/private/tmp/q35-fused-compact-mixed-build-20261126.log`.
+
+An authenticated four-layer simulation of the mixed image is active in
+session `99286`, log
+`/private/tmp/q35-fused-compact-mixed-four-layer-sim-20261126.log`. It has no
+result yet. Retaining an earlier compiler setting is not evidence of faster
+execution; both compact images remain non-packageable and hardware-unqualified.
+
 An authenticated four-layer simulation using the byte-identical candidate is
 active in session `28725`; its log is
 `/private/tmp/q35-fused-compact-four-layer-sim-20261126.log`. No numerical

@@ -10,7 +10,7 @@
 #endif
 
 struct CompactIO : MockDataflowIO {
-    static constexpr unsigned Words=37608/sizeof(uint32_t);
+    static constexpr unsigned Words=38988/sizeof(uint32_t);
     std::vector<uint32_t> dispatch=std::vector<uint32_t>(DataflowCoreCount*Words);
     unsigned failCore=UINT32_MAX,corruptCore=UINT32_MAX;
     bool WriteCoreMemory(unsigned core,unsigned address,const void* input,unsigned bytes) {
