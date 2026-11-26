@@ -28,7 +28,7 @@ static const char* TraceName(unsigned layer,size_t index) {
 }
 struct Capture {std::array<std::array<float,2560>,32> layers{};std::array<bool,32> gotLayer{};
     std::array<float,9216> replacement{};unsigned replaceLayer=32,traceLayer=32,replacementCount=2560;
-    bool replaceAttentionResidual=false,replaceFfnSwiglu=false;
+    bool replaceAttentionResidual=false,replaceFfnSwiglu=false,replaceAttentionGated=false;
     std::vector<std::array<float,2560>> forcedLayers;std::array<bool,32> forcedSeen{};
     bool traceRecurrentState=false;
     std::array<std::vector<float>,32> convState{},deltaState{};
@@ -91,7 +91,11 @@ static bool Callback(ggml_tensor* tensor,bool ask,void* opaque) {
     const bool isSwiglu=std::sscanf(tensor->name,"ffn_swiglu-%u%c",&swigluLayer,&swigluTrailing)==1
         && swigluLayer<32;
     const bool replaceSwiglu=capture.replaceFfnSwiglu && isSwiglu && swigluLayer==capture.replaceLayer;
-    const bool replaceIntermediate=replaceResidual || replaceSwiglu;
+    unsigned gatedLayer=0;char gatedTrailing=0;
+    const bool replaceGated=capture.replaceAttentionGated
+        && std::sscanf(tensor->name,"attn_gated-%u%c",&gatedLayer,&gatedTrailing)==1
+        && gatedLayer==capture.replaceLayer;
+    const bool replaceIntermediate=replaceResidual || replaceSwiglu || replaceGated;
     const bool logits=std::strcmp(tensor->name,"result_output")==0;
     size_t traceIndex=traceNames.size();
     if (capture.traceLayer<32) for (size_t i=0;i<traceNames.size();i++) {
@@ -192,7 +196,8 @@ static bool Callback(ggml_tensor* tensor,bool ask,void* opaque) {
         if (std::memcmp(target.data(),forced.data(),target.size()*sizeof(float))) return false;
         capture.forcedSeen[layer]=true;
     }
-    if (!capture.replaceAttentionResidual && !capture.replaceFfnSwiglu && capture.replaceLayer==layer) {
+    if (!capture.replaceAttentionResidual && !capture.replaceFfnSwiglu
+        && !capture.replaceAttentionGated && capture.replaceLayer==layer) {
         if (capture.replaced) return false;
         ggml_backend_tensor_set(tensor,capture.replacement.data(),0,capture.replacementCount*sizeof(float));
         ggml_backend_tensor_get(tensor,target.data(),0,target.size()*sizeof(float));
@@ -339,7 +344,7 @@ static bool LoadWarmState(const std::string& dir,Capture& capture,unsigned layer
 }
 int main(int argc,char** argv) {
     if (argc<3) {
-        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two] [(--replace-layer | --replace-attn-residual | --replace-ffn-swiglu) N tensor.bin [--trace-layer N | --trace-layer25 | --export-first-kv] | two --replace-first-layers snapshot-directory | two --replace-first-kv layer packed.bin | two --replace-warm-qkv layer directory | two --replace-warm-state layer directory [--replace-layer N tensor.bin] | two --export-warm-state | two --export-first-kv | two --attention-mode f32|f16]\n",argv[0]);return 2;
+        std::fprintf(stderr,"usage: %s pinned.gguf empty-output-directory [two] [(--replace-layer | --replace-attn-residual | --replace-attn-gated | --replace-ffn-swiglu) N tensor.bin [--trace-layer N | --trace-layer25 | --export-first-kv] | two --replace-first-layers snapshot-directory | two --replace-first-kv layer packed.bin | two --replace-warm-qkv layer directory | two --replace-warm-state layer directory [--replace-layer N tensor.bin] | two --export-warm-state | two --export-first-kv | two --attention-mode f32|f16]\n",argv[0]);return 2;
     }
     const bool two=argc>3 && !std::strcmp(argv[3],"two");
     const bool forceWarmState=two && (argc==7 || argc==10) && !std::strcmp(argv[4],"--replace-warm-state");
@@ -380,9 +385,12 @@ int main(int argc,char** argv) {
     if (!forceFirst && !forceFirstKv && !forceWarmQkv && (!forceWarmState || combinedWarmState)
         && !alternateAttention && !traceWarmState && !traceFirstKv && argc>option) {
         if (std::strcmp(argv[option],"--replace-layer") && std::strcmp(argv[option],"--replace-attn-residual")
+            && std::strcmp(argv[option],"--replace-attn-gated")
             && std::strcmp(argv[option],"--replace-ffn-swiglu")) return 2;
         replacement.replaceAttentionResidual=!std::strcmp(argv[option],"--replace-attn-residual");
+        replacement.replaceAttentionGated=!std::strcmp(argv[option],"--replace-attn-gated");
         replacement.replaceFfnSwiglu=!std::strcmp(argv[option],"--replace-ffn-swiglu");
+        if (replacement.replaceAttentionGated) replacement.replacementCount=4096;
         if (replacement.replaceFfnSwiglu) replacement.replacementCount=9216;
         if (argc==option+4) {
             if (!std::strcmp(argv[option+3],"--trace-layer25")) replacement.traceLayer=25;
@@ -396,7 +404,7 @@ int main(int argc,char** argv) {
             replacement.traceLayer=unsigned(trace);
         }
         char* end=nullptr;const unsigned long layer=std::strtoul(argv[option+1],&end,10);
-        if (!argv[option+1][0] || *end || layer>=32) return 2;
+        if (!argv[option+1][0] || *end || layer>=32 || (replacement.replaceAttentionGated && layer%4!=3)) return 2;
         const int replacementFd=open(argv[option+2],O_RDONLY|O_NOFOLLOW|O_CLOEXEC);if (replacementFd<0) return 1;
         struct stat replacementBefore{},replacementAfter{};
         if (fstat(replacementFd,&replacementBefore) || !S_ISREG(replacementBefore.st_mode)

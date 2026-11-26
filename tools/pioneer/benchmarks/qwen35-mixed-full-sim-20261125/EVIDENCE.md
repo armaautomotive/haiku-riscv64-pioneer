@@ -2,6 +2,29 @@
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+The warm dense layer-3 comparison was continued from the exact simulator
+attention output **after its gate**. A standalone offline CPU reference
+injected and read back that 4,096-value tensor. Its attention residual then
+matched the independently captured simulator residual within `1.04308128e-07`
+and its complete layer output matched the separate simulator replay within
+`2.38418579e-07`, across all 2,560 values in each. The separately simulated
+context and full-layer slices used the same CPU layer input and captured prior
+simulator KV; their record and state maps were audited as described below.
+Self-injecting the original CPU gated tensor preserved all 87 existing output
+and trace artifacts byte-for-byte. The reproducible offline check also rejected
+short, non-finite, symlink and non-dense-layer inputs. See
+`warm-layer3-gated-continuation-20261126.json`. Together with the independent
+float-attention check below, this narrows the isolated mismatch to the
+attention calculation or its inputs; it is not a full-model or hardware pass.
+The same continuation was also run with the independently calculated float
+gated-attention tensor rather than the simulator output. The independent tensor
+used CPU-normalized/rotated injected simulator Q/K, injected simulator V and
+gate, and captured simulator prior KV. Its gated output matched the simulator
+within `5.36441803e-07`; the resulting residual and full layer matched within
+`8.94069672e-08` and `2.38418579e-07`, respectively. This remains a partial
+same-input reference for the isolated replay; it does not independently
+validate the device Q/K normalization, all layers or physical execution.
+
 The offline reference can inject and read back one recurrent layer's exact
 warm convolution history and delta state, together with the preceding warm
 activation. With the previously audited position-zero simulator state and

@@ -1,5 +1,15 @@
 # Latest offline checks, 2026-11-26
 
+For the isolated warm dense layer-3 replay, the offline CPU continuation
+using the exact simulated gated attention matched all 2,560 simulator layer
+outputs within `2.38418579e-07`; its residual matched within `1.04308128e-07`.
+The attention and full-layer captures were separate audited simulator runs
+using the same input and prior KV. Self-injection and invalid-input tests
+passed. A continuation with independently calculated float attention also
+matched the layer within `2.38418579e-07`, using simulator projections and
+prior KV. This narrows the isolated mismatch; it is not a full-model or
+hardware pass. See `benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
 Warm recurrent layers 0, 1 and 2 each matched all 2,560 simulated outputs with
 maximum absolute error `4.76837158e-07` when the offline CPU reference was
 given the same input and previously audited simulator history and delta state.

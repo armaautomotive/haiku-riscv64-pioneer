@@ -1,0 +1,20 @@
+{
+  "independent_float_continuation": {
+    "gated_max_absolute_error": 5.364418029785156e-07,
+    "gated_reference_sha256": "12a2cadee9f7ca62cce179f5a9ed6dc0076e28cf0269407eae996fa2c1a2a207",
+    "layer_max_absolute_error": 2.384185791015625e-07,
+    "residual_max_absolute_error": 8.940696716308594e-08,
+    "scope": "independent double-precision softmax using CPU-normalized/rotated simulated projections and captured simulator prior KV, then CPU continuation"
+  },
+  "layer": 3,
+  "layer_max_absolute_error": 2.384185791015625e-07,
+  "model_sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+  "reference_layer_sha256": "edea387943ddb0bdedc1e6b5367121baf0d0be1e976357290038072d808d1097",
+  "reference_residual_sha256": "43813fe02da486f8c3383cee708c2c3c7069ececa4dc3804b137f9dfeb517be2",
+  "residual_max_absolute_error": 1.043081283569336e-07,
+  "scope": "Separate isolated 120-worker warm simulator replays and offline CPU continuation using the same input; not full model, physical device, or throughput",
+  "self_injection_matching_artifacts": 87,
+  "sim_gated_sha256": "2ec8f8a529e2edce82fc0be276281d30f57c25638fed30753e51bf2664f50b59",
+  "sim_layer_sha256": "7aeda0751859e91e5bf68d324dd64ec0b07051843e128d60ac21c78171286423",
+  "sim_residual_sha256": "7a038f96b5ca4f6109587bc84385ca8d0a3d0c9138ac057a0450b18d62d13db8"
+}
