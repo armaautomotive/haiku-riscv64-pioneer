@@ -14,7 +14,12 @@ with tempfile.TemporaryDirectory() as temporary:
     tmp = Path(temporary)
     (tmp / 'resident-host-fixture.inc').write_text(host.split(marker, 1)[0] + '\n')
     (tmp / 'resident-service-fixture.inc').write_text(service.split(marker, 1)[0] + '\n')
-    for name, flags in (('ordinary', []), ('paired', ['-DPIONEER_QWEN35_PAIRED_RECURRENCE'])):
+    fused = ['-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS', '-DPIONEER_QWEN35_PAIRED_RECURRENCE',
+             '-DPIONEER_QWEN35_FUSED_RECURRENCE', '-DPIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY',
+             '-DPIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY', '-DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS',
+             '-DPIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY', '-DPIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY']
+    for name, flags in (('ordinary', []), ('paired', ['-DPIONEER_QWEN35_PAIRED_RECURRENCE']),
+                        ('fused', fused), ('tree-fused', fused + ['-DPIONEER_QWEN35_TREE_SETTLEMENT'])):
         binary = tmp / name
         defines = ['-DPIONEER_QWEN35_DEVICE_DISPATCH', '-DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY',
                    '-DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS', '-DPIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS',

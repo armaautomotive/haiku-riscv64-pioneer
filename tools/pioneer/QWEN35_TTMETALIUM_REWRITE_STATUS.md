@@ -1,5 +1,15 @@
 # Latest offline checks, 2026-11-26
 
+The compact graph's higher-level resident runner and driver owner now pass
+simulated tests in fused and tree-fused modes. The fake service fixture was
+extended to clear and verify both previously unmodeled activation-sharing
+packets before worker startup. Additional tree-fused tests cover simulated
+transport reuse across tokens, retained failed close and proof-gated owner
+retirement. The broader target suite overlaps these test edits, so focused
+reruns validate the changed tests. All physical ownership, launch and
+recovery requirements remain open; no card was accessed. See
+`benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
 The completed baseline's all-layer same-input audit passed 30/32 checks and
 failed layers 9 and 18 under the unchanged tolerance. The separate CPU token
 check from the exact final simulated hidden state matched the audited token

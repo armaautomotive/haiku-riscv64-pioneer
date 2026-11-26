@@ -67,6 +67,9 @@ struct MockDataflowIO {
 	uint32_t barrierLocal[DataflowCoreCount][3*DataflowBarrierPacketBytes/4]{};
 	uint32_t barrierChildren[DataflowCoreCount][DataflowBarrierReleaseFanout][DataflowBarrierArrivalStride/4]{};
 	unsigned failBarrierCore=UINT32_MAX,barrierWriteCount[DataflowCoreCount]{};
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+	uint32_t activationShare[DataflowCoreCount][2][DataflowActivationSharePacketBytes/4]{};
+#endif
 	uint32_t dispatchText[DataflowCoreCount][128]{};
 	unsigned dispatchWrites[DataflowCoreCount]{},dispatchReads[DataflowCoreCount]{};
 	unsigned failDispatchWriteCore=UINT32_MAX,failDispatchReadCore=UINT32_MAX;
@@ -94,6 +97,10 @@ struct MockDataflowIO {
 			originalRunning[core]=(core%4)!=0;
 			started[core]=originalRunning[core];
 			snapshot[core].state=DataflowWorkerReady;
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+			for (auto& packet:activationShare[core])
+				for (auto& word:packet) word=0xa5a50000U|core;
+#endif
 		}
 	}
 
@@ -165,6 +172,13 @@ struct MockDataflowIO {
 			memcpy(&roleHandoff[core],input,bytes);
 #endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+		} else if ((address==DataflowActivationShareReadyAddress || address==DataflowActivationShareScratchAddress)
+			&& bytes==DataflowActivationSharePacketBytes) {
+			if (core==failBarrierCore) return false;
+			memcpy(activationShare[core][address==DataflowActivationShareScratchAddress],input,bytes);
+			barrierWriteCount[core]++;
+#endif
 		} else if (address>=DataflowBarrierOutbox && address+bytes<=DataflowBarrierReleaseCommit+64) {
 			if (core==failBarrierCore) return false;
 			memcpy(reinterpret_cast<uint8_t*>(barrierLocal[core])+address-DataflowBarrierOutbox,input,bytes);
@@ -228,6 +242,11 @@ struct MockDataflowIO {
 			memcpy(output,&roleHandoff[core],bytes);
 #endif
 #ifdef PIONEER_QWEN35_DEVICE_DISPATCH
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+		} else if ((address==DataflowActivationShareReadyAddress || address==DataflowActivationShareScratchAddress)
+			&& bytes==DataflowActivationSharePacketBytes) {
+			memcpy(output,activationShare[core][address==DataflowActivationShareScratchAddress],bytes);
+#endif
 		} else if (address>=DataflowBarrierOutbox && address+bytes<=DataflowBarrierReleaseCommit+64) {
 			memcpy(output,reinterpret_cast<const uint8_t*>(barrierLocal[core])+address-DataflowBarrierOutbox,bytes);
 		} else if (address>=DataflowBarrierArrivalBase && address+bytes<=DataflowBarrierArrivalEnd) {
@@ -248,7 +267,13 @@ struct MockDataflowIO {
 			const unsigned first=i*DataflowBarrierReleaseFanout+1;
 			const unsigned children=first>=DataflowCoreCount?0
 				:(DataflowCoreCount-first<DataflowBarrierReleaseFanout?DataflowCoreCount-first:DataflowBarrierReleaseFanout);
-			if (barrierWriteCount[i]!=3+2*children) return false;
+			unsigned expectedClears=3+2*children;
+#ifdef PIONEER_QWEN35_ACTIVATION_SHARING_WITNESS
+			expectedClears+=2;
+			for (const auto& packet:activationShare[i])
+				for (uint32_t word:packet) if (word) return false;
+#endif
+			if (barrierWriteCount[i]!=expectedClears) return false;
 		}
 #endif
 		if (core==failStartCore) return false;

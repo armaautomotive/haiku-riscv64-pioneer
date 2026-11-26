@@ -136,8 +136,14 @@ with tempfile.TemporaryDirectory() as tmp:
             '-DPIONEER_QWEN35_RECOVERY_RUN_ENABLE', '-DPIONEER_QWEN35_FABRIC_GUARD_WITNESS',
             '-DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS', '-DPIONEER_QWEN35_SNAPSHOT_TAKEOVER_WITNESS',
             '-DPIONEER_QWEN35_RESIDENT_SERVICE_WITNESS']
+    fused = ['-DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS', '-DPIONEER_QWEN35_PAIRED_RECURRENCE',
+             '-DPIONEER_QWEN35_FUSED_RECURRENCE', '-DPIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY',
+             '-DPIONEER_QWEN35_FLASH_DECODE_COMPILE_ONLY', '-DPIONEER_QWEN35_ACTIVATION_SHARING_WITNESS',
+             '-DPIONEER_QWEN35_FFN_PAIR_COMPILE_ONLY', '-DPIONEER_QWEN35_FUSED_RMS_SAVE_COMPILE_ONLY',
+             '-DPIONEER_QWEN35_TREE_SETTLEMENT']
     for name, flags in [('ordinary', []), ('paired', ['-DPIONEER_QWEN35_PAIRED_RECURRENCE']),
-                        ('tree-paired', ['-DPIONEER_QWEN35_TREE_SETTLEMENT', '-DPIONEER_QWEN35_PAIRED_RECURRENCE'])]:
+                        ('tree-paired', ['-DPIONEER_QWEN35_TREE_SETTLEMENT', '-DPIONEER_QWEN35_PAIRED_RECURRENCE']),
+                        ('tree-fused', fused)]:
         binary = d / name
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
                         '-fsanitize=address,undefined', '-I' + str(d), '-I' + str(test), '-I' + str(misc),

@@ -1,5 +1,26 @@
 # Compact resident simulator image, 2026-11-26
 
+## Higher-level resident ownership checks, 2026-11-26
+
+The service-owner simulation fixture now models both activation-sharing L1
+packets. They start nonzero, must be cleared and read back before any worker
+starts, and remain part of the existing held-fleet checks. The earlier fixture
+did not model these addresses, so using it with the fused graph correctly
+failed startup; this was a fixture limitation, not a device result.
+
+With the fused graph and tree settlement selected, the actual resident-owned
+runner and driver owner passed their simulated tests. Additional tests using
+explicitly simulated permission covered reuse of a transport and two authority
+objects across tokens, retention after failed close, and retirement only with
+matching simulated recovery evidence. Ordinary and paired controls passed as
+well; see `/private/tmp/q35-resident-owned-modes-final-20261126.log`,
+`/private/tmp/q35-resident-owner-modes-final-20261126.log`, and
+`/private/tmp/q35-resident-{cache,recovery,close_fault}-tree-fused-20261126.log`.
+The broader target suite started before these fixture and test edits, so its
+result will not by itself validate this final source state. These tests use
+fake MMIO and simulated authority; they do not qualify real firmware exclusion,
+physical owner lifetimes, launch, recovery or throughput. No card was accessed.
+
 ## Resident host metadata integration, 2026-11-26
 
 The resident host metadata previously could not prepare the fused graph: it
