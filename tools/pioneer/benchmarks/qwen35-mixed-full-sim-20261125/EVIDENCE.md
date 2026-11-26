@@ -2,6 +2,16 @@
 
 ## Two-position diagnostic result and new capture, 2026-11-26
 
+The warm boundary auditor now accepts available position-zero simulator
+recurrent-state pairs and injects the target layer's history and delta state
+with the preceding activation. It reads each injected state back exactly,
+hashes and rechecks the input files, and labels checks without supplied state
+as using CPU prior state. The caller must establish that a state capture is
+from the execution under comparison; the marker alone does not prove that.
+Synthetic full-graph tests covered mixed supplied/CPU state, failed readback,
+and incomplete state. The currently running full capture did not request
+state capture, so this extension has not yet audited that execution.
+
 The warm dense layer-3 comparison was continued from the exact simulator
 attention output **after its gate**. A standalone offline CPU reference
 injected and read back that 4,096-value tensor. Its attention residual then

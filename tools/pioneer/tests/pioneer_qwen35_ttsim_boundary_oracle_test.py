@@ -37,12 +37,21 @@ with tempfile.TemporaryDirectory() as temporary:
     oracle.write_text('#!' + sys.executable + '\n'
         'import os, pathlib, struct, sys\n'
         'out=pathlib.Path(sys.argv[2]); warm=sys.argv[3]=="two"\n'
-        'boundary=int(sys.argv[5 if warm else 4]); source=sys.argv[6 if warm else 5]\n'
         'prefix="position1-" if warm else ""\n'
-        '(out / (prefix+"layer%d.bin" % boundary)).write_bytes(pathlib.Path(source).read_bytes())\n'
+        'args=sys.argv[4:] if warm else sys.argv[3:]\n'
+        'if args[0]=="--replace-warm-state":\n'
+        ' layer=int(args[1]); source=pathlib.Path(args[2]); args=args[3:]\n'
+        ' for code,name in (("H","conv"),("D","delta")):\n'
+        '  data=(source/("%s-layer%d.bin" % (code,layer))).read_bytes()\n'
+        '  if os.environ.get("FAKE_BAD_STATE") and code=="H": data=bytes(len(data))\n'
+        '  (out/("position1-%s-state-%d.bin" % (name,layer))).write_bytes(data)\n'
         'data=bytes(2560*4)\n'
-        'if os.environ.get("FAKE_MISMATCH"): data=struct.pack("<f",1.0)+data[4:]\n'
-        '(out / (prefix+"layer%d.bin" % (boundary+1))).write_bytes(data)\n'
+        'if args:\n'
+        ' boundary=int(args[1]); source=args[2]\n'
+        ' (out / (prefix+"layer%d.bin" % boundary)).write_bytes(pathlib.Path(source).read_bytes())\n'
+        ' if os.environ.get("FAKE_MISMATCH"): data=struct.pack("<f",1.0)+data[4:]\n'
+        ' (out / (prefix+"layer%d.bin" % (boundary+1))).write_bytes(data)\n'
+        'else: (out / "position1-layer0.bin").write_bytes(data)\n'
         'if warm: (out / "token.txt").write_text("261\\n"); (out / "position1-token.txt").write_text("1850\\n")\n')
     oracle.chmod(0o700)
     def run(name, mismatch=False):
@@ -98,6 +107,29 @@ with tempfile.TemporaryDirectory() as temporary:
     report = json.loads((root / 'warm-mismatch' / 'summary.json').read_text())
     assert result.returncode == 1 and not report['passed']
     assert not report['checks'][1]['passed'] and report['token_matches']
+    state = root / 'state'; state.mkdir()
+    (state / 'worker-audit-complete.marker').touch()
+    for layer in (0, 1):
+        (state / f'H-layer{layer}.bin').write_bytes(struct.pack('<f',1.0) + bytes(24575 * 4))
+        (state / f'D-layer{layer}.bin').write_bytes(bytes(524288 * 4))
+    warm[8] = str(root / 'warm-state')
+    warm.extend(['--warm-recurrent-state', str(state)])
+    result = subprocess.run(warm, capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    report = json.loads((root / 'warm-state' / 'summary.json').read_text())
+    assert report['passed'] and set(report['recurrent_state_sha256']) == {'0', '1'}
+    assert [c['prior_state'] for c in report['checks'][:3]] == [
+        'supplied simulator recurrent state', 'supplied simulator recurrent state', 'CPU prior state']
+    assert 'caller must verify state provenance' in report['scope']
+    warm[8] = str(root / 'warm-bad-state')
+    env = os.environ.copy(); env['FAKE_BAD_STATE'] = '1'
+    result = subprocess.run(warm, capture_output=True, text=True, env=env)
+    assert result.returncode != 0 and 'did not retain exact conv state' in result.stderr
+    (state / 'D-layer1.bin').unlink()
+    warm[8] = str(root / 'warm-incomplete-state')
+    result = subprocess.run(warm, capture_output=True, text=True)
+    assert result.returncode != 0 and not (root / 'warm-incomplete-state').exists()
+    warm = warm[:-2]
     first_token.write_text('42\n')
     warm[8] = str(root / 'wrong-first-token')
     result = subprocess.run(warm, capture_output=True, text=True)

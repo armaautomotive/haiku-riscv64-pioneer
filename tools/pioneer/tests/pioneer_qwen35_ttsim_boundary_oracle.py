@@ -23,6 +23,35 @@ def read_finite(path):
     return data
 
 
+def read_recurrent_state(directory, layers):
+    """Read any complete audited recurrent-state pairs; caller proves provenance."""
+    marker = directory / 'worker-audit-complete.marker'
+    if marker.is_symlink() or not marker.is_file():
+        raise ValueError('recurrent state lacks its worker-audit marker')
+    pairs = {}
+    for layer in range(layers):
+        if layer % 4 == 3:
+            continue
+        paths = (directory / f'H-layer{layer}.bin', directory / f'D-layer{layer}.bin')
+        present = tuple(path.exists() or path.is_symlink() for path in paths)
+        if any(present) and not all(present):
+            raise ValueError(f'incomplete recurrent state for layer {layer}')
+        if not any(present):
+            continue
+        payloads = []
+        for path, count in zip(paths, (24576, 524288)):
+            if path.is_symlink() or not path.is_file():
+                raise ValueError(f'invalid recurrent state file: {path}')
+            data = path.read_bytes()
+            if len(data) != count * 4 or any(not math.isfinite(x[0]) for x in struct.iter_unpack('<f', data)):
+                raise ValueError(f'invalid recurrent state tensor: {path}')
+            payloads.append(data)
+        pairs[layer] = tuple(payloads)
+    if not pairs:
+        raise ValueError('no recurrent state pairs found')
+    return pairs
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('oracle', type=Path)
@@ -36,6 +65,8 @@ def main():
                         help='candidate token from the separately audited full simulator run')
     parser.add_argument('--warm-first-token-file', type=Path,
                         help='audit position one; file contains the audited position-zero simulator token')
+    parser.add_argument('--warm-recurrent-state', type=Path,
+                        help='inject available audited recurrent state pairs during warm checks')
     args = parser.parse_args()
     if not 2 <= args.layers <= 32:
         parser.error('layer count must be between 2 and 32')
@@ -46,6 +77,9 @@ def main():
     if args.warm_first_token_file and args.layers != 32:
         parser.error('warm comparison requires a full two-position decode')
     warm = args.warm_first_token_file is not None
+    if args.warm_recurrent_state and not warm:
+        parser.error('recurrent-state injection requires a warm comparison')
+    states = read_recurrent_state(args.warm_recurrent_state, args.layers) if args.warm_recurrent_state else {}
     prefix = 'position1-' if warm else ''
     if warm:
         first_token_bytes = args.warm_first_token_file.read_bytes()
@@ -90,20 +124,45 @@ def main():
         report['first_token'] = first_token
         report['first_token_sha256'] = hashlib.sha256(first_token_bytes).hexdigest()
         report['reference_first_token_sha256'] = hashlib.sha256(reference_token_bytes).hexdigest()
+    if states:
+        report['recurrent_state_sha256'] = {
+            str(layer): [hashlib.sha256(payload).hexdigest() for payload in pair]
+            for layer, pair in states.items()}
+        report['scope'] = ('offline warm comparison; marked recurrent layers use supplied simulator state, '
+                           'other layers use CPU prior state; caller must verify state provenance; '
+                           'no hardware or Work inference')
 
-    def compare(label, actual, expected):
+    def compare(label, actual, expected, state_layer=None):
         try:
             maximum = compare_recorded_layer(actual, expected)
             result = {'label': label, 'passed': True, 'max_absolute_error': maximum}
         except RecordedNumericalMismatch as error:
             result = {'label': label, 'passed': False, 'detail': str(error)}
+        if warm:
+            result['prior_state'] = ('supplied simulator recurrent state' if state_layer in states
+                                     else 'CPU prior state')
         report['checks'].append(result)
         print(f"{label}: {'PASS' if result['passed'] else 'FAIL'}; "
               f"{result.get('max_absolute_error', result.get('detail'))}", flush=True)
 
-    compare('initial layer 0', tensors[0], first_reference)
+    def verify_state(directory, layer):
+        for name, payload in zip(('conv', 'delta'), states[layer]):
+            if (directory / f'position1-{name}-state-{layer}.bin').read_bytes() != payload:
+                raise RuntimeError(f'oracle did not retain exact {name} state at layer {layer}')
+
+    if 0 in states:
+        directory = args.output / 'initial-state-00'; directory.mkdir()
+        with (args.output / 'initial-state-00.log').open('x') as log:
+            result = subprocess.run([str(args.oracle), str(args.model), str(directory), 'two',
+                                     '--replace-warm-state', '0', str(args.warm_recurrent_state)],
+                                    stdout=log, stderr=subprocess.STDOUT, check=False)
+        if result.returncode or int((directory / 'token.txt').read_text().strip()) != first_token:
+            raise RuntimeError('oracle failed to prepare first layer with supplied state')
+        verify_state(directory, 0)
+        first_reference = read_finite(directory / 'position1-layer0.bin')
+    compare('initial layer 0', tensors[0], first_reference, 0)
     # Each next layer receives exactly the preceding simulator activation.
-    # Warm comparisons retain CPU position-zero state, not simulator state.
+    # Only explicitly supplied recurrent layers use simulator prior state.
     for boundary in range(args.layers - 1 + int(args.actual_token is not None)):
         directory = args.output / f'boundary-{boundary:02d}'
         directory.mkdir()
@@ -111,6 +170,9 @@ def main():
             command_line = [str(args.oracle), str(args.model), str(directory)]
             if warm:
                 command_line.append('two')
+            target = boundary + 1
+            if target in states:
+                command_line.extend(['--replace-warm-state', str(target), str(args.warm_recurrent_state)])
             command_line.extend(['--replace-layer', str(boundary),
                                  str(args.snapshots / f'layer{boundary}.bin')])
             completed = subprocess.run(command_line,
@@ -119,11 +181,13 @@ def main():
             raise RuntimeError(f'oracle failed for boundary {boundary}: {completed.returncode}')
         if warm and int((directory / 'token.txt').read_text().strip()) != first_token:
             raise RuntimeError(f'oracle first token changed at boundary {boundary}')
+        if target in states:
+            verify_state(directory, target)
         if read_finite(directory / f'{prefix}layer{boundary}.bin') != tensors[boundary]:
             raise RuntimeError(f'oracle did not retain the exact boundary {boundary}')
         if boundary + 1 < args.layers:
             compare(f'layer {boundary + 1} from simulator layer {boundary}',
-                    tensors[boundary + 1], read_finite(directory / f'{prefix}layer{boundary + 1}.bin'))
+                    tensors[boundary + 1], read_finite(directory / f'{prefix}layer{boundary + 1}.bin'), target)
         else:
             token = int((directory / f'{prefix}token.txt').read_text().strip())
             report['oracle_token'] = token
@@ -136,6 +200,8 @@ def main():
     if warm and (args.warm_first_token_file.read_bytes() != first_token_bytes
                  or (args.reference / 'token.txt').read_bytes() != reference_token_bytes):
         raise RuntimeError('first-token evidence changed during warm comparison')
+    if states and read_recurrent_state(args.warm_recurrent_state, args.layers) != states:
+        raise RuntimeError('simulator recurrent state changed during oracle comparison')
     report['passed'] = all(check['passed'] for check in report['checks']) and report['token_matches'] is not False
     with (args.output / 'summary.json').open('x') as output:
         json.dump(report, output, indent=2, sort_keys=True)

@@ -1,5 +1,11 @@
 # Latest offline checks, 2026-11-26
 
+The warm boundary auditor now accepts any available audited recurrent-state
+pairs, checks their exact readback and hashes, and labels all other layers as
+using CPU prior state. Synthetic full-graph tests cover mixed state sources,
+readback failure and incomplete inputs. The currently running full capture did
+not request state snapshots, so the enhanced mode has not audited that run.
+
 For the isolated warm dense layer-3 replay, the offline CPU continuation
 using the exact simulated gated attention matched all 2,560 simulator layer
 outputs within `2.38418579e-07`; its residual matched within `1.04308128e-07`.
