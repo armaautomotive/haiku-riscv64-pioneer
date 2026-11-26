@@ -20,7 +20,7 @@ class RecordedNumericalMismatch(RuntimeError):
 
 def compare_recorded_layer(actual, reference, rows=2560):
     """Check every simulated hidden value, including aggregate error on failure."""
-    if rows not in (2560, 9216) or len(actual) != rows * 4 or len(reference) != rows * 4:
+    if rows not in (2560, 4096, 8192, 9216) or len(actual) != rows * 4 or len(reference) != rows * 4:
         raise ValueError('unexpected recorded layer output size')
     maximum = 0.0
     worst_scaled = 0.0
@@ -462,6 +462,10 @@ def main():
                         help='save a single simulated layer output before its reference comparison')
     parser.add_argument('--recorded-wide-output', action='store_true',
                         help='compare 9216 output rows for an isolated simulator-only layer slice')
+    parser.add_argument('--recorded-qkv-output', action='store_true',
+                        help='compare 8192 QKV output rows for an isolated simulator-only layer slice')
+    parser.add_argument('--recorded-z-output', action='store_true',
+                        help='compare 4096 Z output rows for an isolated simulator-only layer slice')
     parser.add_argument('--recorded-prefix-snapshots', type=Path,
                         help='save simulator-only model layer boundaries to a new directory')
     parser.add_argument('--recorded-layer-input', type=Path,
@@ -494,8 +498,10 @@ def main():
         parser.error('isolated layer replay requires a marked fixture and its input')
     if layer_slice and (args.recorded_token_reference or args.recorded_warm_layer_reference):
         parser.error('isolated layer replay does not generate tokens')
-    if args.recorded_wide_output and not layer_slice:
+    if (args.recorded_wide_output or args.recorded_qkv_output or args.recorded_z_output) and not layer_slice:
         parser.error('wide output requires an isolated simulator-only layer slice')
+    if sum((args.recorded_wide_output, args.recorded_qkv_output, args.recorded_z_output)) > 1:
+        parser.error('only one isolated output width may be selected')
     if args.recorded_export_actual and (not args.recorded_layer_fixture or args.recorded_warm_layer_reference
                                         or args.recorded_export_actual.exists()
                                         or args.recorded_export_actual.is_symlink()):
@@ -1052,7 +1058,8 @@ def main():
                                 or words[9:15] != (0x31464735, 1, executed, 120, 0x80000004, 0)
                                 or words[15] != core):
                             raise RuntimeError(f'core {core}: recorded layer failed before {executed} barriers: {words}')
-                output_rows = 9216 if args.recorded_wide_output else 2560
+                output_rows = (4096 if args.recorded_z_output else 8192 if args.recorded_qkv_output
+                               else 9216 if args.recorded_wide_output else 2560)
                 result = bytearray(output_rows * 4)
                 next_row = 0
                 for bank, address, first, rows in outputs:
@@ -1062,7 +1069,7 @@ def main():
                     if count:
                         result[first * 4:(first + count) * 4] = read_bank(bank, address, count * 4)
                     next_row += rows
-                if next_row != 9216:
+                if next_row != (output_rows if args.recorded_z_output or args.recorded_qkv_output else 9216):
                     raise ValueError('incomplete recorded output layout')
                 if args.recorded_prefix_snapshots:
                     if snapshot_index != len(snapshot_points):

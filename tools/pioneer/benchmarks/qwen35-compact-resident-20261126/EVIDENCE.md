@@ -1,5 +1,13 @@
 # Compact resident simulator image, 2026-11-26
 
+The mixed-optimization two-region image also completed the four-layer
+simulation: all 120 worker receipts were checked, the next record faulted as
+intended, and all 2,560 output values matched the reference within a maximum
+absolute error of `5.00679016e-06`. Its output was byte-for-byte identical to
+the size-optimized compact image. Log:
+`/private/tmp/q35-fused-compact-mixed-four-layer-sim-20261126.log`. This is
+simulator evidence only, not a full-model or hardware performance result.
+
 The fused hybrid resident image previously used a third code region at
 `0xd0000`, overlapping the old ROOT scratch. This simulator-only candidate
 compiles the same selected sources with GCC `-Oz` and places all worker code

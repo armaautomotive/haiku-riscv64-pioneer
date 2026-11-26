@@ -1,3 +1,18 @@
+# Latest offline checks, 2026-11-26
+
+The mixed-optimization, two-region resident image passed a four-layer
+simulation on all 120 simulated workers; all 2,560 values matched the reference
+within `5.00679016e-06` and were byte-identical to the size-optimized image.
+The layer-18 same-input replay reproduced the captured discrepancy: attention
+normalization passed bit-for-bit, but the attention residual and final layer
+failed the existing numerical tolerance. The QKV projection slice passed all
+8,192 rows with maximum error `5.00679016e-06`; the cause remains under
+investigation. These checks do not establish full-model correctness,
+physical recovery or throughput. No card was accessed. Continue only the
+resident rewrite and recovery before benchmarking and Assistant integration.
+See `benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md` and
+`benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`.
+
 > **Provisional layer-18 discrepancy (2026-11-26):** The ongoing baseline capture's same-input CPU checks passed transitions 15→16, 16→17 and 18→19 through 23→24. Transition 17→18 failed on 2,469/2,560 rows, with maximum absolute error `0.00355863571`; its cause is unknown. The captured layers remain provisional until the full fleet audit. An independently audited complete layer-18 replay and an attention-only replay using the exact layer-17 simulator input are active as sessions `85356` and `38101`. The original simulator source labels the required cycle CSR unsupported; a temporary counter experiment was discarded, the original simulator was rebuilt from its unchanged exploratory source, and existing runs remained live. Do not enable the profiled image in ttsim by bypassing that restriction. No card was accessed; see `benchmarks/qwen35-mixed-full-sim-20261125/EVIDENCE.md`. Continue only rewrite and recovery before benchmarking and Assistant integration.
 
 > **Compact two-region simulator image (2026-11-26):** An `-Oz` fused hybrid resident build fits in the service owner's declared text and dispatch limits and passed all 2,560 values of an authenticated four-layer simulation on 120 simulated workers (maximum error `5.00679016e-06`); its output matched the prior three-region fused image byte for byte. Its full 32-layer simulation is active as session `98440`. A mixed-optimization four-layer run remains active as session `99286`. Both `-Oz` and mixed images also compile with the normal cycle-counter path enabled; the largest dispatch is 39,236 bytes and its conservative graph stack envelope is 7,920/8,192 bytes including allowance, not a whole-program proof. Fake-IO service-owner checks passed at this size; explicit markers prevent driver packaging and simulator execution of the profiled build. No physical ownership, recovery, hardware execution or decode rate is established. Other full-model simulations remain active. No card was accessed; see `benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`. Continue only rewrite and recovery before benchmarking and Assistant integration.

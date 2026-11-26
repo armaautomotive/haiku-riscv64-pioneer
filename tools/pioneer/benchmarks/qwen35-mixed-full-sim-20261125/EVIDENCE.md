@@ -1,5 +1,27 @@
 # Recorded mixed-layer and full-decode simulator work, 2026-11-25
 
+## Layer-18 replay results, 2026-11-26
+
+The isolated same-input layer-18 replay completed its 120-worker audit and
+reproduced the captured simulator layer byte-for-byte, but failed the unchanged
+reference tolerance on 2,469/2,560 rows (maximum absolute difference
+`0.00355863571`). Its attention-residual slice also failed on 1,861/2,560
+rows, maximum `0.000223394483`. An earlier two-record attention-normalization
+slice passed all 2,560 values bit-for-bit, including the worker and intentional
+fault audits. These findings localize the discrepancy after normalization;
+they do not yet establish its cause. Logs:
+`/private/tmp/q35-baseline-layer18-chained-sim-20261126.log`,
+`/private/tmp/q35-baseline-layer18-attention-sim-20261126.log`, and
+`/private/tmp/q35-baseline-layer18-norm-sim-20261126.log`.
+
+An independently audited three-record QKV slice passed against the exact
+same normalized input, matching all 8,192 rows within `5.00679016e-06`.
+The first 116 workers share its 8,192-row output; the
+remaining four workers use separate 32-row outputs. All records were checked
+against the original full fixture, and the observed QKV output ranges do not
+overlap those other outputs. Log:
+`/private/tmp/q35-baseline-layer18-qkv-sim-20261126.log`. No card was accessed.
+
 ## Provisional layer-18 discrepancy, 2026-11-26
 
 The active baseline capture has not yet completed its full fleet audit. Its
@@ -12,13 +34,9 @@ to apply. Hashes and individual outcomes are in
 
 An isolated layer-18 fixture using the exact simulator layer-17 activation
 was independently checked against all 120 original worker records, input,
-output and zero-initialization ranges. Its complete replay runs in session
-`85356`, log `/private/tmp/q35-baseline-layer18-chained-sim-20261126.log`.
-An independently audited replay through the attention residual runs in
-session `38101`, log
-`/private/tmp/q35-baseline-layer18-attention-sim-20261126.log`. A CPU trace
-with the exact input reproduced the untraced layer-18 reference byte for byte.
-Neither simulator replay has a result yet; no tolerance has been changed.
+output and zero-initialization ranges. A CPU trace with the exact input
+reproduced the untraced layer-18 reference byte for byte. The replay results
+are recorded above; no tolerance has been changed.
 
 The existing ttsim checkout explicitly reports the cycle CSR read as
 `UnsupportedFunctionality`. A temporary experimental counter-read modification

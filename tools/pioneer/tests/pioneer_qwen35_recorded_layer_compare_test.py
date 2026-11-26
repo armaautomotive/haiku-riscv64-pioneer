@@ -54,6 +54,24 @@ try:
     raise AssertionError('wide output accepted without explicit width')
 except ValueError:
     pass
+qkv = struct.pack('<8192f', *([1.0] * 8192))
+assert compare_recorded_layer(qkv, qkv, 8192) == 0
+bad_qkv = bytearray(qkv)
+struct.pack_into('<f', bad_qkv, 8191 * 4, 2.0)
+try:
+    compare_recorded_layer(bad_qkv, qkv, 8192)
+    raise AssertionError('last QKV output row mismatch accepted')
+except RecordedNumericalMismatch as error:
+    assert '1/8192' in str(error) and 'row 8191' in str(error)
+z = struct.pack('<4096f', *([1.0] * 4096))
+assert compare_recorded_layer(z, z, 4096) == 0
+bad_z = bytearray(z)
+struct.pack_into('<f', bad_z, 4095 * 4, 2.0)
+try:
+    compare_recorded_layer(bad_z, z, 4096)
+    raise AssertionError('last Z output row mismatch accepted')
+except RecordedNumericalMismatch as error:
+    assert '1/4096' in str(error) and 'row 4095' in str(error)
 weights = [(0, 0x04000000, 4096, 0)]
 streams = [(0, 0, 0x04100000)]
 inputs = [(0, 0x04400000, 0, 16)]
