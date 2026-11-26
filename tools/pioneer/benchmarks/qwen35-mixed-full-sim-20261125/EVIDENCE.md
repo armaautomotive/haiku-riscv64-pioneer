@@ -89,3 +89,61 @@ checked aggregate error, non-finite data, truncation and refusal to overwrite
 an existing output. Existing simulations started before this runner change
 and do not gain those diagnostics. The two hybrid full simulations remain
 active; no physical card, recovery or throughput result is implied.
+
+## Final ranges and isolated-layer diagnosis
+
+An ASan/UBSan metadata audit inspected the last four records for all 120
+workers in the baseline, hybrid and paired full-decode fixtures. In each,
+the recorded output checked by the simulator is the final residual; final
+RMS reads that range and writes a disjoint activation, while the tied output
+and argmax use a separate logits range. A corrupted output-layout copy was
+rejected. This checks declared records, not actual runtime writes or hidden
+physical aliasing, and does not determine the numerical mismatch's cause.
+
+The simulator-only slice builder now extracts a layer's records from an
+authenticated full fixture, reindexes the stream, and injects that layer's
+independent reference input. It links the source weights without modifying
+them. An independent verifier checked all 120 records against their source,
+the deliberate fault, input/output layouts and separation from staged
+weights and streams. Baseline layer 15 uses original steps 244..260 and
+layer 31 uses 504..520; paired variants at steps 232..248 and 480..496 were
+prepared and audited but not run. The relevant independent inputs are finite.
+
+The first layer-15 attempt failed before execution because the new input
+layout rows were omitted from the runner's recognized-entry count; the count
+was fixed. Corrected layer-15 and layer-31 single-layer simulations are active
+in sessions `96093` and `11360`, with logs
+`/private/tmp/q35-baseline-layer15-slice-sim-20261126b.log` and
+`/private/tmp/q35-baseline-layer31-slice-sim-20261126.log`. An 8-layer prefix
+with full-output export and a 16-layer prefix are also active (sessions
+`83974` and `5931`). None has produced a numerical result yet. The slices
+are offline diagnostics using the exploratory simulator; their injected CPU
+reference values are not a Work inference path and establish no P100A speed
+or physical recovery.
+
+## Isolated dense passes and recurrent probes
+
+The position-zero isolated baseline layer-15 replay completed 17 records on
+120 simulated workers, then faulted intentionally; its 2,560 output values
+matched the independent layer-15 reference with maximum absolute error
+`2.68220901e-07`. Layer 31 likewise passed, maximum absolute error
+`1.04904175e-05`. Logs are
+`/private/tmp/q35-baseline-layer15-slice-sim-20261126b.log` and
+`/private/tmp/q35-baseline-layer31-slice-sim-20261126.log`; both actual outputs
+were retained separately. These inputs came from the independent offline
+oracle, so the results isolate those layers but do not validate the preceding
+model state, final-logit operations or accumulated full-model output.
+
+The slice builder now also extracts the target recurrent layer's position-zero
+convolution-history and delta-state read ranges. The simulator explicitly
+zeros those ranges before injecting the independent input. An independent
+record/ABI audit checked the exact 14 zero ranges against all 120 recorded
+workers for layers 14 and 30 and verified they do not overlap weights,
+streams, activations or one another. The runner rejects malformed, negative or
+overlapping clear ranges and non-finite input; focused negative tests passed.
+The baseline layer-14 and layer-30 replays are active in sessions `41714` and
+`91431`, with logs `/private/tmp/q35-baseline-layer14-slice-sim-20261126.log`
+and `/private/tmp/q35-baseline-layer30-slice-sim-20261126.log`. No result is
+available for these recurrent probes. The 8-/16-layer prefixes and both
+hybrid full simulations also remain active. None of this is hardware
+performance, live inference, physical recovery or a full-model pass.

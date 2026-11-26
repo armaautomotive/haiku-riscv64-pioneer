@@ -41,6 +41,39 @@ def compare_recorded_layer(actual, reference):
     return maximum
 
 
+def validate_isolated_zero_ranges(zeros, weights, streams, inputs, outputs, decode_steps):
+    """Admit simulator state clears only when disjoint from retained ranges."""
+    if not 1 <= decode_steps <= 1024:
+        raise ValueError('invalid isolated layer stream length')
+    for bank, address, size, offset in weights:
+        if (not 0 <= bank < 7 or size <= 0 or offset < 0 or address < 0x04000000
+                or address + size > 0xc4000000):
+            raise ValueError('invalid isolated layer weight range')
+    for core, bank, address in streams:
+        if (not 0 <= core < 120 or not 0 <= bank < 7 or (address & 2047)
+                or address < 0x04000000 or address + decode_steps * 2048 > 0xc4000000):
+            raise ValueError('invalid isolated layer stream range')
+    for bank, address, first, rows in inputs + outputs:
+        if (not 0 <= bank < 7 or first < 0 or rows <= 0 or (address & 4095)
+                or (first | rows) & 15 or address < 0x04000000
+                or address + rows * 4 > 0xc4000000):
+            raise ValueError('invalid isolated layer activation range')
+    protected = [(bank, address, size) for bank, address, size, _ in weights]
+    protected += [(bank, address, decode_steps * 2048) for _, bank, address in streams]
+    protected += [(bank, address, rows * 4) for bank, address, _, rows in inputs + outputs]
+    accepted = []
+    for bank, address, size in zeros:
+        if (not 0 <= bank < 7 or size <= 0 or (address & 4095) or (size & 3)
+                or address < 0x04000000 or address + size > 0xc4000000):
+            raise ValueError('invalid isolated layer zero range')
+        for other_bank, other_address, other_size in protected + accepted:
+            if (bank == other_bank and address < other_address + other_size
+                    and other_address < address + size):
+                raise ValueError('isolated layer zero range overlaps retained data')
+        accepted.append((bank, address, size))
+    return accepted
+
+
 def resident_handoff_payload(raw):
     """Decode a simulator-only state snapshot; its hash detects corruption."""
     if (len(raw) != 40 + 24576 * 4 + 524288 * 4 or raw[:8] != b'Q35SIMW1'
@@ -303,6 +336,8 @@ def main():
                         help='compare a full recorded decode token with an offline reference')
     parser.add_argument('--recorded-export-actual', type=Path,
                         help='save a single simulated layer output before its reference comparison')
+    parser.add_argument('--recorded-layer-input', type=Path,
+                        help='inject the independent input for a marked, isolated layer replay')
     parser.add_argument('--recorded-warm-layer-reference', type=Path,
                         help='compare a second resident decode layer output with an offline reference')
     parser.add_argument('--recorded-warm-token-reference', type=Path,
@@ -319,6 +354,12 @@ def main():
         parser.error('recorded layer requires both fixture and reference')
     if args.recorded_token_reference and not args.recorded_layer_fixture:
         parser.error('recorded token reference requires a recorded layer fixture')
+    layer_slice = bool(args.recorded_layer_fixture
+                       and (args.recorded_layer_fixture / 'layer-slice.marker').is_file())
+    if layer_slice != bool(args.recorded_layer_input):
+        parser.error('isolated layer replay requires a marked fixture and its input')
+    if layer_slice and (args.recorded_token_reference or args.recorded_warm_layer_reference):
+        parser.error('isolated layer replay does not generate tokens')
     if args.recorded_export_actual and (not args.recorded_layer_fixture or args.recorded_warm_layer_reference
                                         or args.recorded_export_actual.exists()
                                         or args.recorded_export_actual.is_symlink()):
@@ -669,7 +710,7 @@ def main():
             decode = len(config) == 4 and config[3] == 1
             if len(config) == 4 and config[3] not in (0, 1):
                 raise ValueError('invalid recorded decode flag')
-            full_prompt = layers == 32
+            full_prompt = layers == 32 and not layer_slice
             prompt_steps = 497 if ffn_paired else 529 if args.flash_hybrid else 521
             decode_steps = prompt_steps + 3
             if (not 1 <= layers <= 32 or not 1 <= executed <= prompt_steps
@@ -682,7 +723,14 @@ def main():
             weights = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'W' and len(row) == 5]
             streams = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'S' and len(row) == 4]
             outputs = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'O' and len(row) == 5]
-            if len(configs) + len(weights) + len(streams) + len(outputs) != len(entries) or len(streams) != 120 or not outputs:
+            inputs = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'I' and len(row) == 5]
+            zeros = [tuple(map(int, row[1:])) for row in entries if row and row[0] == 'Z' and len(row) == 4]
+            if bool(inputs) != layer_slice:
+                raise ValueError('isolated layer input layout does not match fixture marker')
+            if zeros and not layer_slice:
+                raise ValueError('state initialization is restricted to isolated layer fixtures')
+            if (len(configs) + len(weights) + len(streams) + len(outputs) + len(inputs) + len(zeros) != len(entries)
+                    or len(streams) != 120 or not outputs):
                 raise ValueError('invalid recorded layer layout')
             routes = (786, 978, 1170, 785, 977, 1169, 1361)
 
@@ -726,6 +774,33 @@ def main():
                         select_bank(bank, current)
                         write(bar + 0x400000 + (current & 0x1fffff), payload)
                         at += count
+            if layer_slice:
+                values = args.recorded_layer_input.read_bytes()
+                if len(values) != 2560 * 4:
+                    raise ValueError('isolated layer input must contain 2560 floats')
+                if any(not math.isfinite(value) for (value,) in struct.iter_unpack('<f', values)):
+                    raise ValueError('isolated layer input must be finite')
+                accepted_zeros = validate_isolated_zero_ranges(zeros, weights, streams, inputs, outputs, decode_steps)
+                for bank, address, size in accepted_zeros:
+                    offset = 0
+                    while offset < size:
+                        count = min(0x10000, size - offset)
+                        write_bank(bank, address + offset, bytes(count))
+                        offset += count
+                next_input = 0
+                input_banks = set()
+                for bank, address, first, rows in inputs:
+                    if (bank in input_banks or not 0 <= bank < len(routes) or first != next_input
+                            or not rows or (address & 4095) or (first | rows) & 15
+                            or address < 0x04000000 or address + rows * 4 > 0xc4000000):
+                        raise ValueError('invalid isolated layer input layout')
+                    input_banks.add(bank)
+                    count = min(rows, max(0, 2560 - first))
+                    if count:
+                        write_bank(bank, address, values[first * 4:(first + count) * 4])
+                    next_input += rows
+                if next_input != 9216:
+                    raise ValueError('incomplete isolated layer input layout')
             for expected_core, (core, bank, address) in enumerate(streams):
                 if core != expected_core:
                     raise ValueError('recorded stream core order mismatch')

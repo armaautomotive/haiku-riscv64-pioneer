@@ -32,4 +32,10 @@ with tempfile.TemporaryDirectory() as tmp:
     result = subprocess.run(base + ['--recorded-export-actual', str(existing)], capture_output=True, text=True)
     assert result.returncode and 'requires one fixture run and a new output path' in result.stderr
     assert existing.read_bytes() == b'preserve'
+    (fixture / 'layer-slice.marker').touch()
+    result = subprocess.run(base, capture_output=True, text=True)
+    assert result.returncode and 'requires a marked fixture and its input' in result.stderr
+    (fixture / 'layer-slice.marker').unlink()
+    result = subprocess.run(base + ['--recorded-layer-input', str(root / 'input')], capture_output=True, text=True)
+    assert result.returncode and 'requires a marked fixture and its input' in result.stderr
 print('PASS paired FFN image/fixture mismatch rejected before simulator load; NO HARDWARE')

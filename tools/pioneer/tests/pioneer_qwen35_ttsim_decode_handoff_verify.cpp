@@ -106,4 +106,5 @@ int main(int argc,char** argv) {
         ) return 1;
     std::printf("PASS second decode ticket and %u embedding, %u conv, %u delta, %u dense and %u hybrid patches; NO HARDWARE\n",
         embedding,conv,delta,dense,hybrid);
+    return 0;
 }
