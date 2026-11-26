@@ -14,6 +14,12 @@ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
  "$directory/pioneer_qwen35_flash_partial_protocol_test.cpp" -o "$temporary/protocol-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/protocol-test"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_qwen35_flash_code_owner_test.cpp" -o "$temporary/code-owner-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/code-owner-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_qwen35_flash_code_pci_view_test.cpp" -o "$temporary/code-view-test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/code-view-test"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_qwen35_flash_hybrid_graph_test.cpp" -o "$temporary/graph-test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/graph-test"
 for header in PioneerQwen35DataflowDenseAttentionPartial.h PioneerQwen35DataflowDenseAttentionHybrid.h \
@@ -25,6 +31,15 @@ for header in PioneerQwen35DataflowDenseAttentionPartial.h PioneerQwen35Dataflow
   # Deliberate word splitting provides separate compiler arguments.
   if ${CXX:-c++} -std=c++17 $flags -fsyntax-only "$temporary/guard.cpp" > /dev/null 2>&1; then
    echo 'FAIL flash-decode build guard' >&2;exit 1
+  fi
+ done
+done
+for header in PioneerQwen35DataflowFlashCodeOwner.h PioneerQwen35DataflowFlashCodePciView.h; do
+ printf '#include "%s"\n' "$directory/../$header" > "$temporary/guard.cpp"
+ for flags in '' '-DPIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS' '-DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY' \
+  '-DPIONEER_QWEN35_FLASH_CODE_OWNER_WITNESS -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY -DPIONEER_QWEN35_RECOVERY_QUALIFY'; do
+  if ${CXX:-c++} -std=c++17 $flags -fsyntax-only "$temporary/guard.cpp" > /dev/null 2>&1; then
+   echo 'FAIL flash-code owner build guard' >&2;exit 1
   fi
  done
 done

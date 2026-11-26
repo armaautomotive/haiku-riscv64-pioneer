@@ -55,3 +55,13 @@ performance from either in-progress test is claimed.
 The simulator is exploratory and includes unqualified matrix changes. No
 physical P100A test, complete-model result, two warm runs, clean physical
 unload, no-reboot recovery, or decode tokens/sec is established here.
+
+The authenticated four-layer hybrid run subsequently **passed**: all 120
+workers completed 67 real graph steps, the next record deliberately faulted,
+and all 2,560 final values matched the offline llama.cpp reference with
+maximum absolute error `5.00679016e-06` (log
+`/private/tmp/q35-flash-recorded-four-layer-sim-20261125.log`). The full
+532-step hybrid decode fixture has now started a two-consecutive-token run
+using the same resident fleet and state; it is still active and has not
+produced a verified result (`/private/tmp/q35-flash-recorded-two-decodes-sim-20261125.log`).
+The earlier checkpoint paragraph describes the prior state.
