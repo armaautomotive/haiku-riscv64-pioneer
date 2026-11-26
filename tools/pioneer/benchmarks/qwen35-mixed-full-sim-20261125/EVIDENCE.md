@@ -256,12 +256,40 @@ is running as session `96447` with log
 `/private/tmp/q35-baseline-four-layer-snapshots-fine-20261126.log`. The
 revised method is not yet validated against the layer references.
 
+The revised four-layer control captured its first provisional output after
+the previous barrier at root progress `0x51350089`; its layer-0 maximum
+absolute difference from the reference is `8.94069672e-08`. The run is still
+active, so this is not a completed capture validation. In parallel, the same
+instrumentation is running the previously failing eight-layer prefix in
+session `50479`, log
+`/private/tmp/q35-baseline-eight-layer-snapshots-fine-20261126.log`. Its
+snapshot outputs are provisional until the expected terminal fault is audited
+and should then be compared with the control and independent reference.
+
 An isolated layer-4 replay using the independent layer-3 input and explicitly
 zeroed position-zero state also started in session `80579`, after the
 120-worker record, state-range and disjointness audit passed. Its log is
 `/private/tmp/q35-baseline-layer4-slice-sim-20261126.log`; no result is
 available yet. It will complement the passing isolated layer-5 replay and
 the still-running sequential six-layer comparison.
+
+The isolated layer-4 replay subsequently completed 16 records on 120 workers,
+then intentionally faulted at record 17. All 2,560 outputs matched the
+independent reference with maximum absolute error `4.76837158e-07`
+(`/private/tmp/q35-baseline-layer4-slice-sim-20261126.log`). This uses the
+reference layer-3 input and cleared position-zero state. It is not the
+sequential six-layer result, a physical-card result or a full-model pass.
+
+An offline CPU-oracle continuation from that isolated simulated layer-4
+output remained close at layer 7: maximum absolute difference
+`1.07288361e-06`, compared with the independently observed eight-layer
+simulator difference `0.00240516663`. Its maximum difference later reached
+`0.370859146` at layer 31; both runs selected token `261`. Replacing layer 4
+with the original CPU reference gave byte-identical layers, logits and token.
+This shows that this isolated layer-4 perturbation alone does not reproduce
+the eight-layer discrepancy; it does not rule out a different perturbation
+from the sequential earlier layers or an error in a later simulated layer.
+Artifacts are `/private/tmp/q35-oracle-layer4-slice-{actual,control}-20261126*`.
 
 As a separate offline sensitivity experiment, replacing layer 7 in the CPU
 oracle with the simulator's complete observed output produced a layer-31
