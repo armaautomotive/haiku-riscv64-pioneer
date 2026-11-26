@@ -503,10 +503,11 @@ The guard now computes the supported step count from the graph markers, and
 the focused rejection/count test passes.
 
 The first full numerical simulation of this combined graph is active in
-session 31294. At poll 3,851 it had captured layers 0–11. Each 2,560-element
-F32 boundary from layer 0 through layer 11 is byte-identical to the earlier
-full simulator capture; the layer 11 SHA-256 is
-`d4bed668be7c7e27e4d7897a51087e72a4e56d43db6a86aea4237662a4ba43ea`.
+session 31294. At poll 4,201 it had captured layers 0–12. Each 2,560-element
+F32 boundary from layer 0 through layer 12 is byte-identical to the earlier
+full simulator capture. Layer 11 and 12 SHA-256 values are
+`d4bed668be7c7e27e4d7897a51087e72a4e56d43db6a86aea4237662a4ba43ea` and
+`3071fbacfe1253ce39f868b663e9500c695886e772127d4c906d4117384bb8f2`.
 The run has not reached its final output or a second position. This is
 equivalence to a prior simulator capture, not independent full-model CPU
 correctness or physical P100A execution. No model load time, prompt time,
