@@ -182,6 +182,29 @@ this is a state-handoff and template-patching check, not proof that a service
 remains resident across tokens, a complete model, a hardware warm run or a
 throughput measurement.
 
+The dense-attention fixture runs key packing, a residual-copy replacement of
+the shared projection workspace, value packing and attention through the
+resident graph. It seeds previous KV positions and uses distinct key and
+value projections. The fifth record intentionally faults after four barriers.
+Position 33 crosses the worker's 32-position KV tile boundary. This is
+synthetic attention, not a dense layer or full model. Currently only 4, 4 and
+16 workers perform the key, value and attention operations respectively; all
+120 workers participate in barriers.
+
+```sh
+c++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  -DPIONEER_QWEN35_DELTA_SHARD_COMPILE_ONLY=1 \
+  tools/pioneer/tests/pioneer_qwen35_ttsim_dense_attention_fixture.cpp -o /tmp/q35-dense-fixture
+mkdir /tmp/q35-dense-input
+/tmp/q35-dense-fixture /tmp/q35-dense-input 33 64
+python3 -B tools/pioneer/tests/pioneer_qwen35_ttsim_service_test.py LIBTTSIM RESIDENT_IMAGE ROLE_IMAGES \
+  --dense-attention-fixture /tmp/q35-dense-input
+```
+
+The simulator test uses the sharded resident image and a zero-upper-length
+patched simulator, not the matrix-exploratory simulator. See
+`benchmarks/qwen35-dense-attention-resident-sim-20261125/EVIDENCE.md`.
+
 A separate fixture tests two **consecutive prompt commands on one resident
 simulator fleet**. It reuses the validated position-zero layer fixture,
 adds 500 diagnostic residual copies to reach the actual 521-step prompt

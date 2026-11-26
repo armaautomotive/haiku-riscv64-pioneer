@@ -1,0 +1,2 @@
+PASS dense attention position 33/64: all KV values and 9216 outputs checked; maximum absolute error 1.86264515e-09; fifth record intentionally faults; active key/value/query workers 4/4/16; NO HARDWARE
+[2000000] 8.3 seconds (240.2 KHz)

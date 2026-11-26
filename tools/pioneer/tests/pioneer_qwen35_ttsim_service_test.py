@@ -209,6 +209,8 @@ def main():
                        help='run embedding, residual, RMS and fused projection steps from model weights')
     group.add_argument('--delta-shards-fixture', type=Path,
                        help='run the experimental two-stage recurrent update on 120 workers')
+    group.add_argument('--dense-attention-fixture', type=Path,
+                       help='run synthetic dense attention through the resident workers')
     group.add_argument('--silu-fixture', type=Path,
                        help='also execute the separately generated 120-core SiLU operation')
     group.add_argument('--rms-fixture', type=Path,
@@ -239,7 +241,7 @@ def main():
         parser.error('--resident-corrupt-core requires resident templates and a core in 0..119')
     if args.resident_fault_command and (not args.resident_templates or args.resident_corrupt_core is not None):
         parser.error('--resident-fault-command requires resident templates and no corrupt core')
-    template_directory = args.resident_sequence_fixture or args.delta_shards_fixture
+    template_directory = args.resident_sequence_fixture or args.delta_shards_fixture or args.dense_attention_fixture
     template_path = template_directory / 'templates.bin' if template_directory else args.resident_templates
     resident_templates = template_path.read_bytes() if template_path else None
     if resident_templates is not None and len(resident_templates) != 120 * 512:
@@ -249,7 +251,7 @@ def main():
         raise ValueError('expected sharing-enabled standalone service image')
     resident_shards = (args.resident_sequence_fixture is not None
                        and (args.resident_sequence_fixture / 'delta-params.bin').is_file())
-    if bool(args.delta_shards_fixture or resident_shards) != (image / 'delta-shard.marker').is_file():
+    if bool(args.delta_shards_fixture or args.dense_attention_fixture or resident_shards) != (image / 'delta-shard.marker').is_file():
         raise ValueError('delta shard fixture and service image do not match')
     boot = (image / 'boot.bin').read_bytes()
     text = (image / 'text.bin').read_bytes()
@@ -519,6 +521,84 @@ def main():
                 raise RuntimeError('intentionally faulted shard sequence published a candidate')
             print('PASS 120 simulated workers completed sharded update and normalization; '
                   'third record intentionally faults; NO HARDWARE')
+            return
+
+        if args.dense_attention_fixture:
+            directory = args.dense_attention_fixture
+            command = (directory / 'command.bin').read_bytes()
+            records = (directory / 'records.bin').read_bytes()
+            initial = (directory / 'initial.bin').read_bytes()
+            expected_kv = (directory / 'expected-kv.bin').read_bytes()
+            expected_output = (directory / 'expected-output.bin').read_bytes()
+            metadata = (directory / 'metadata.bin').read_bytes()
+            if len(metadata) != 8:
+                raise ValueError('unexpected dense attention metadata size')
+            position, context = struct.unpack('<2I', metadata)
+            if not 0 <= position < context <= 64:
+                raise ValueError('invalid dense attention position or context')
+            layouts = ((0x10000000, 8192 * 4), (0x11000000, 4096 * 4),
+                       (0x17000000, 9216 * 4),
+                       (0x14000000, 256 * 4), (0x15000000, 256 * 4),
+                       (0x16000000, context * 64 * 4), (0x13000000, 8 * context * 256 * 2))
+            if (len(command) != 128 or len(records) != 120 * 5 * 2048
+                    or len(initial) != sum(size for _, size in layouts)
+                    or len(expected_kv) != 8 * context * 256 * 2 or len(expected_output) != 9216 * 4):
+                raise ValueError('unexpected dense attention fixture size')
+            cursor = 0
+            for address, size in layouts:
+                for offset in range(0, size, 0x10000):
+                    current = address + offset
+                    select(2, current, 18, 12)
+                    write(bar + 0x400000 + (current & 0x1fffff),
+                          initial[cursor + offset:cursor + min(offset + 0x10000, size)])
+                cursor += size
+            select(2, 0x12000000, 18, 12)
+            write(bar + 0x400000, bytes(9216 * 4))
+            for core in range(120):
+                address = 0x04000000 + core * 0x100000
+                select(2, address, 18, 12)
+                write(bar + 0x400000 + (address & 0x1fffff), records[core * 10240:(core + 1) * 10240])
+            select_worker(0)
+            write(bar + 0xab080, command[:64])
+            write(bar + 0xab0c0, command[64:])
+            for attempt in range(1000):
+                lib.libttsim_clock(100000)
+                snapshots = []
+                for core in range(120):
+                    select_worker(core)
+                    snapshots.append(struct.unpack('<16I', read(mailbox_address, 64)))
+                if all(words[5] == 4 for words in snapshots):
+                    break
+                if any(words[5] not in (1, 2, 4) for words in snapshots):
+                    raise RuntimeError('unexpected worker state during dense attention')
+            else:
+                raise RuntimeError('dense attention did not reach its intentional terminal fault')
+            for core, words in enumerate(snapshots):
+                if (words[2:8] != (1, 0, 1, 4, 4, 5)
+                        or words[9:15] != (0x31464735, 1, 4, 120, 0x80000004, 0)
+                        or words[15] != core):
+                    raise RuntimeError(f'core {core}: dense attention failed before four barriers: {words}')
+            select(2, 0x13000000, 18, 12)
+            actual_kv = b''.join(read(bar + 0x400000 + offset, min(0x10000, len(expected_kv) - offset))
+                                 for offset in range(0, len(expected_kv), 0x10000))
+            if actual_kv != expected_kv:
+                index = next(i for i, (got, want) in enumerate(zip(actual_kv, expected_kv)) if got != want)
+                raise RuntimeError(f'dense KV byte {index}: differs from host reference')
+            select(2, 0x12000000, 18, 12)
+            actual_output = read(bar + 0x400000, len(expected_output))
+            maximum = 0.0
+            for index, ((got,), (want,)) in enumerate(zip(struct.iter_unpack('<f', actual_output),
+                                                          struct.iter_unpack('<f', expected_output))):
+                error = abs(got - want)
+                if not math.isfinite(got) or error > 2e-5 * max(1.0, abs(want)):
+                    raise RuntimeError(f'dense output {index}: {got} differs from host reference {want}')
+                maximum = max(maximum, error)
+            select_worker(0)
+            if struct.unpack('<8I', read(bar + 0xab310, 32))[7] != 0:
+                raise RuntimeError('intentionally faulted dense sequence published a candidate')
+            print(f'PASS dense attention position {position}/{context}: all KV values and 9216 outputs checked; '
+                  f'maximum absolute error {maximum:.9g}; fifth record intentionally faults; '
+                  'active key/value/query workers 4/4/16; NO HARDWARE', flush=True)
             return
 
         if args.resident_sequence_fixture:
