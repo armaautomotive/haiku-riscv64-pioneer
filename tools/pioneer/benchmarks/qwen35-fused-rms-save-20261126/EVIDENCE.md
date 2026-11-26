@@ -83,3 +83,13 @@ intermediate boundaries; synthetic wrong-core, wrong-mode and overlapping
 destination cases were rejected. This only establishes the observation
 layout. The already-running fused simulator did not use intermediate capture,
 and its numerical result remains pending.
+
+An authenticated full 32-layer decode fixture has now been prepared with
+436 records and 2,740,473,856 staged bytes. Its staged-weight SHA-256
+`591910f9cb91abd0392ac0efbb86c0b4c09f12e32a7bb4315b48972d23752be6`
+matches the earlier full fixture; records SHA-256 is
+`456b4d67a22922b7f3ae64b079440d9ad0fbd34f0bbd9e8d4c6ff5970e807523`.
+The observer independently audited all 31 intermediate boundaries across
+the 120 worker records. This prepares a full-model simulator run but is not
+execution evidence. The fused four-layer execution remains active and must
+be evaluated before treating this fixture as validated.
