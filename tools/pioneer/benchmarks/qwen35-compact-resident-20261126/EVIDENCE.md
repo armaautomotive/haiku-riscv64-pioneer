@@ -491,3 +491,23 @@ Image SHA-256: boot
 `e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b`,
 text `0cae7786d840092fecf0fa5a128b0a4a558da23d1d3ebea97caf52b68dc81d97`,
 dispatch `eb7436a3b151dab2ef46fc2027d26e6cb195765701829d4fe15f631d4bca4f0f`.
+
+## Full paired K/V and FFN graph capture, 2026-11-26
+
+The exact pinned local Qwen3.5-4B Q4_K_M file generated a 32-layer recorded
+decode fixture for the combined paired dense K/V, paired FFN, fused RMS/save,
+and flash-hybrid graph. It contains 428 decode steps, 425 prompt steps, and
+2,740,473,856 staged weight bytes. The generic simulator runner initially
+rejected it because its length guard only knew the older 436-step schedule.
+The guard now computes the supported step count from the graph markers, and
+the focused rejection/count test passes.
+
+The first full numerical simulation of this combined graph is active in
+session 31294. At poll 3,851 it had captured layers 0–11. Each 2,560-element
+F32 boundary from layer 0 through layer 11 is byte-identical to the earlier
+full simulator capture; the layer 11 SHA-256 is
+`d4bed668be7c7e27e4d7897a51087e72a4e56d43db6a86aea4237662a4ba43ea`.
+The run has not reached its final output or a second position. This is
+equivalence to a prior simulator capture, not independent full-model CPU
+correctness or physical P100A execution. No model load time, prompt time,
+decode rate, warm-run result, or clean physical unload has been established.
