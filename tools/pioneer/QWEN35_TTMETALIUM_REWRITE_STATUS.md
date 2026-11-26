@@ -1,5 +1,14 @@
 # Latest offline checks, 2026-11-26
 
+The full fused tree Haiku driver now compiles to a temporary unlinked object
+containing the actual normal-counter compact resident text and dispatch, each
+verified byte-for-byte in the object. The qualification image is still an
+older placeholder. The generated header is restricted to compile-only mode,
+and disassembly confirms `init_hardware` returns `B_NOT_ALLOWED` without I/O;
+existing image packagers still reject compact images. This does not validate
+the counter-enabled image in simulation, physical ownership, launch, recovery
+or throughput. See `benchmarks/qwen35-compact-resident-20261126/EVIDENCE.md`.
+
 The complete Haiku driver source now compiles with the fused tree resident
 configuration: incompatible old host-per-operation sequence handlers are
 explicitly denied in that configuration. The ordinary configuration passed

@@ -1317,6 +1317,7 @@ python3 -B "$directory/pioneer_qwen35_resident_graph_owner_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_model_transaction_test.py"
 python3 -B "$directory/pioneer_qwen35_resident_graph_session_test.py"
 python3 -B "$directory/pioneer_qwen35_fused_legacy_guard_test.py"
+python3 -B "$directory/pioneer_qwen35_compact_header_for_compile_test.py"
 "$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -ffp-contract=off \
 	-DPIONEER_QWEN35_DEVICE_DISPATCH -DPIONEER_QWEN35_RECOVERY_COMPILE_ONLY \
 	-DPIONEER_QWEN35_SHARED_ROLE_OWNER_WITNESS -DPIONEER_QWEN35_SHARED_ROLE_GRAPH_WITNESS \

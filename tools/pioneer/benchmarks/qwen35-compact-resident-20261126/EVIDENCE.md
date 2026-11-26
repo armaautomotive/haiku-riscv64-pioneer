@@ -1,5 +1,27 @@
 # Compact resident simulator image, 2026-11-26
 
+## Actual compact image in a driver compile, 2026-11-26
+
+A test-only header generator now supplies the actual mixed-optimization,
+normal-cycle-counter compact resident image to the complete fused tree Haiku
+driver object compile. The object contained exactly one copy each of the
+resident text (SHA-256
+`c15d1ed9048d92cf1d0d7b077b0550176e10f52213e615a70c2ca047cb2df9d6`)
+and dispatch (`4deb2c1466880fcf9045832d0702933239b90f18bcdd4a0cc31f21e614471ad2`).
+The old qualification image header remains a compilation placeholder. The
+object was not linked or installed; its compiled `init_hardware` was checked
+to return `B_NOT_ALLOWED` without I/O. Log:
+`/private/tmp/q35-actual-compact-driver-compile-final-20261126.log`.
+
+The temporary header requires the compact compile-only flag and all matching
+resident graph guards, rejects qualification, trial, dense-shard and
+unprofiled simulator modes, and is used only by the standalone object-compile
+test. Tests reject missing markers and flags, incompatible markers, a third
+code region, invalid bounds and an invalid park instruction. The existing
+resident and qualification packagers still reject compact images. This is
+compile and byte-identity evidence, not a linkable driver, simulator result
+for the cycle-counter image, physical launch, recovery or throughput.
+
 ## Fused resident driver compilation, 2026-11-26
 
 Compiling the complete Haiku driver translation unit with the fused tree
@@ -11,13 +33,12 @@ graph path. Ordinary configurations retain the existing handlers.
 
 The standard configuration passed a Haiku/RISC-V syntax check and the fused
 configuration compiled to a Haiku/RISC-V object with warnings as errors.
-The object was not linked or installed and used previously generated,
-nonmatching image headers as compilation placeholders. The compile-only
-guard remains active. A focused test compiled and called all four fused-build
-handlers and confirmed rejection. Reproduce the compile checks with
-`tests/run_pioneer_qwen35_fused_driver_compile_test.sh BUILD WITNESS_IMAGES`;
-the resulting temporary object is deleted. This does not qualify the actual
-optimized image, physical ownership, launch, recovery or throughput.
+The initial compile used previously generated image headers as placeholders;
+the newer actual-compact compile is described above. The compile-only guard
+remains active. A focused test compiled and called all four fused-build
+handlers and confirmed rejection. Reproduce the current compile checks with
+`tests/run_pioneer_qwen35_fused_driver_compile_test.sh BUILD WITNESS_IMAGES COMPACT_IMAGE`;
+the temporary object is deleted.
 
 ## Higher-level resident ownership checks, 2026-11-26
 
