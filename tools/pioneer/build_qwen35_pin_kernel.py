@@ -19,6 +19,7 @@ SPIN_SHA256 = '92310628bed8e5a030789b7886a347571cd26c992423d13c085c4ea197362c21'
 DM = 'src/system/kernel/device_manager/device_manager.cpp'
 MODULE = 'src/system/kernel/module.cpp'
 CPU = 'src/system/kernel/cpu.cpp'
+PIN_BLOCK_SHA256 = 'c8c4e5cc7dc708e1d5603e8f5073a41fd9d44ec2bb6d95a662cf7d3562c641e4'
 
 
 def digest(path):
@@ -27,9 +28,11 @@ def digest(path):
 
 def checked_sources(mirror):
     dm = (REPO / DM).read_text()
-    start = dm.index('#ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS\n')
-    end = dm.index('#endif\n', start) + len('#endif\n')
-    dm = dm[:start] + dm[end:]
+    start = dm.index('#if defined(PIONEER_DEVICE_MANAGER_RETAINED_PIN_WITNESS)')
+    end = dm.index('//\t#pragma mark -', start)
+    if hashlib.sha256(dm[start:end].encode()).hexdigest() != PIN_BLOCK_SHA256:
+        raise RuntimeError('device-manager pin witness block differs from the verified source')
+    dm = dm[:start] + '\n' + dm[end:]
     dm = dm.replace('// PIONEER_DM_INIT_LIFETIME_BEGIN\n', '').replace('// PIONEER_DM_INIT_LIFETIME_END\n', '')
     dm = dm.replace('static const char* sGenericContextPath;\n\n\n\n',
                     'static const char* sGenericContextPath;\n\n\n', 1)

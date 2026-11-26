@@ -212,6 +212,10 @@ static device_node *sRootNode;
 static recursive_lock sLock;
 static const char* sGenericContextPath;
 
+#if defined(PIONEER_DEVICE_MANAGER_RETAINED_PIN_WITNESS) \
+	&& (!defined(PIONEER_DEVICE_MANAGER_PIN_WITNESS) || !defined(PIONEER_DEVICE_MANAGER_RETAINED_PIN_COMPILE_ONLY))
+#error Retained device pin is restricted to an unexported compile witness
+#endif
 #ifdef PIONEER_DEVICE_MANAGER_PIN_WITNESS
 #include "PioneerDeviceManagerPinModule.h"
 
@@ -242,6 +246,75 @@ pioneer_run_with_initialized_driver(device_node* node,
 	return B_OK;
 }
 // PIONEER_DM_DRIVER_PIN_END
+
+#ifdef PIONEER_DEVICE_MANAGER_RETAINED_PIN_WITNESS
+// PIONEER_DM_RETAINED_DRIVER_PIN_BEGIN
+// An isolated, unexported witness. The owner must outlive this object and
+// retain it while the associated controller lease exists. Removal can still
+// invalidate hardware; this reference only preserves software lifetime.
+static uint64 sPioneerRetainedPinGeneration=0;
+class PioneerRetainedDriverPin {
+	device_node* fNode=NULL;
+	const void* fOwner=NULL;
+	uint64 fSession=0,fGeneration=0;
+	bool fRunning=false,fInvalidated=false;
+	bool Matches(const void* owner,uint64 session,uint64 generation) const {
+		return fNode && owner && owner==fOwner && session && session==fSession
+			&& generation && generation==fGeneration;
+	}
+	bool NodeUsable() const {
+		return fNode->IsRegistered() && fNode->IsInitialized()
+			&& (fNode->Flags() & NODE_FLAG_DEVICE_REMOVED)==0;
+	}
+public:
+	PioneerRetainedDriverPin()=default;
+	PioneerRetainedDriverPin(const PioneerRetainedDriverPin&)=delete;
+	PioneerRetainedDriverPin& operator=(const PioneerRetainedDriverPin&)=delete;
+	status_t Acquire(device_node* node,const void* owner,uint64 session,uint64& generation) {
+		generation=0;
+		if (!node || !owner || !session) return B_BAD_VALUE;
+		RecursiveLocker locker(sLock);
+		if (fNode || sPioneerRetainedPinGeneration==~uint64(0)) return B_BUSY;
+		if (!node->IsRegistered() || !node->IsInitialized()
+			|| (node->Flags() & NODE_FLAG_DEVICE_REMOVED)!=0) return B_NOT_ALLOWED;
+		const status_t status=node->InitDriver();
+		if (status!=B_OK) return status;
+		fNode=node;fOwner=owner;fSession=session;fGeneration=++sPioneerRetainedPinGeneration;
+		fInvalidated=false;
+		generation=fGeneration;return B_OK;
+	}
+	status_t Run(const void* owner,uint64 session,uint64 generation,
+		pioneer_dm_pinned_operation operation,void* argument,status_t* operationStatus) {
+		if (!operation || !operationStatus) return B_BAD_VALUE;
+		*operationStatus=B_ERROR;
+		{
+			RecursiveLocker locker(sLock);
+			if (!Matches(owner,session,generation)) return B_BAD_VALUE;
+			if (fRunning) return B_BUSY;
+			if (fInvalidated || !NodeUsable()) { fInvalidated=true;return B_DEV_NOT_READY; }
+			fRunning=true;
+		}
+		// The manager lock is not held during callbacks. A concurrent removal
+		// can still invalidate hardware; a postcheck is not an exclusion proof.
+		*operationStatus=operation(argument);
+		{
+			RecursiveLocker locker(sLock);
+			fRunning=false;
+			if (!NodeUsable()) { fInvalidated=true;return B_DEV_NOT_READY; }
+		}
+		return B_OK;
+	}
+	status_t Release(const void* owner,uint64 session,uint64 generation,bool releaseAuthorized) {
+		RecursiveLocker locker(sLock);
+		if (!Matches(owner,session,generation) || !releaseAuthorized) return B_BAD_VALUE;
+		if (fRunning) return B_BUSY;
+		device_node* node=fNode;
+		fNode=NULL;fOwner=NULL;fSession=0;fGeneration=0;fInvalidated=false;
+		node->UninitDriver();return B_OK;
+	}
+};
+// PIONEER_DM_RETAINED_DRIVER_PIN_END
+#endif
 
 // This separate module is absent from ordinary kernels. It is intended only
 // for qualification of the synchronous lifetime contract.
