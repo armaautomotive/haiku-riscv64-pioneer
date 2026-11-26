@@ -87,3 +87,25 @@ new BFS SHA-256 is `3bc902182084edd40b8b98032a57e2f86f44b362be144117e08d0373763d
 the generated helper SHA-256 is `d39f631eba34876f0ba1b064ebec215147962203f376c206783eea08dbf5d8fd`.
 These supersede the earlier candidate BFS and helper. The new candidate has
 not been uploaded, kexec-loaded or booted.
+
+## Live candidate boot and card-independent probe
+
+The generated helper prepared session `q35pin_20261125a` and checked the
+pinned inputs before a normal Linux shutdown kexec. Haiku started with 64 host
+CPUs. Its read-only inventory matched all 4,841 candidate exported symbol
+tuples; the old spin-idle control matched 373. This is layout evidence, not
+a full running binary hash; see `candidate-symbol-match.json`.
+
+The card-independent probe returned:
+
+```text
+PIN_PROBE version=1 pin=0 manager=0 invalid=-2147483643 root=0 callback=-2147483636 count=1
+PASS probe present and cleanup; no accelerator access
+```
+
+The test checked lookup, invalid-argument rejection, a root-node callback and
+cleanup; it did not test card or root-port pinning, concurrent removal, PCI,
+firmware, DMA or recovery. The probe stage was removed. Afterward the stable
+driver CPU-only status was `driver55`, generation 1, `cold0 active_owner0`;
+the 4B and 27B model files retained their recorded sizes, not freshly hashed.
+No card operation, model output, decode rate or no-reboot recovery was tested.

@@ -1,0 +1,26 @@
+{
+  "inventory_sha256": "5d86fbdb9b10d277819465c2748931f62ac2a12fbdbb1f1d60a43e681dac148d",
+  "results": [
+    {
+      "reference": "/private/tmp/q35-spin-pin-kernel-verified3-20261125/candidate/kernel_riscv64",
+      "reference_sha256": "6b43356be4b4f5974c555b06599b89d8008825fcbc26b40e8eb57b5edfde1372",
+      "runtime_symbols": 4841,
+      "reference_symbols": 4841,
+      "matching_symbols": 4841,
+      "runtime_only": 0,
+      "reference_only": 0,
+      "exact_exported_symbols": true
+    },
+    {
+      "reference": "generated.pioneer/vm-top-page-20261022/kernel-spin-idle-fixed",
+      "reference_sha256": "92310628bed8e5a030789b7886a347571cd26c992423d13c085c4ea197362c21",
+      "runtime_symbols": 4841,
+      "reference_symbols": 4840,
+      "matching_symbols": 373,
+      "runtime_only": 4468,
+      "reference_only": 4467,
+      "exact_exported_symbols": false
+    }
+  ],
+  "proves_binary_hash": false
+}
