@@ -18,14 +18,19 @@ force. The checked hashes and results are in
 An isolated layer-9 replay fixture was derived from the authenticated
 baseline decode graph. An independent audit checked all 120 workers' records,
 input/output and recurrent-state zero-initialization ranges, and separation from the weights;
-it passed. The replay with the exact captured layer-8 input is active as
+it passed. The replay with the exact captured layer-8 input ran as
 session `74537`, log
 `/private/tmp/q35-baseline-layer9-chained-sim-20261126b.log`, against the
 same-input oracle's layer-9 result. The first launch used an incorrect image
 path and exited before loading a fixture; the corrected launch is the one
-above. A completed replay will help distinguish capture inconsistency from
-a reproducible within-layer difference; it will not by itself qualify the
-simulator or hardware. No card was accessed.
+above. No card was accessed.
+
+The isolated layer-9 replay finished all 16 barriers on all 120 workers and
+reproduced the same 36-row numerical failure and maximum error. Its retained
+output `/private/tmp/q35-baseline-layer9-chained-actual-20261126.bin` matched
+the provisional full-capture layer-9 snapshot byte for byte. This establishes
+a reproducible same-input simulator-versus-oracle difference for this layer,
+not its cause or a physical-card result.
 
 To localize the layer-9 discrepancy, a second fixture executes only its first
 nine records through the attention residual. The independent slice audit also
@@ -33,8 +38,8 @@ passed for all 120 workers. A same-input CPU trace produced an
 `attn_residual` reference and retained a layer-9 output byte-identical to its
 untraced counterpart. The attention-only simulator replay is running as
 session `29535`, with log
-`/private/tmp/q35-baseline-layer9-attention-sim-20261126.log`; neither replay
-has a result yet.
+`/private/tmp/q35-baseline-layer9-attention-sim-20261126.log`; it has no
+result yet.
 
 The paired FFN hybrid full-decode simulation completed its first decode and
 selected the independently expected token `261`, but exited with failure on
